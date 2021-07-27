@@ -2,17 +2,72 @@ import aes256 from 'aes256'
 import axios from 'axios'
 import gateway from '../gateway.js'
 import rs from 'jsrsasign'
+import getPublicFromPrivate from '../internal/getPublicFromPrivate.js'
 
-var createAccount = async (_username, _password) => {
+const createAccount = async (_username, _password) => {
     //username must be 5-20 characters
     //password must be 1 upper case, 1 lower case, 1 number, 8 characters
 
+    //Check for window.crypto.subtle
+    let keyArr = []
+    if (!typeof window == 'undefined') {
+      if (!typeof window.crypto == 'undefined') {
+        let keyPair = await window.crypto.subtle.generateKey(
+          {
+              name: "RSA-PSS",
+              modulusLength: 4096, //can be 1024, 2048, or 4096
+              publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
+              hash: {name: "SHA-256"}, //can be "SHA-1", "SHA-256", "SHA-384", or "SHA-512"
+          },
+          true, //whether the key is extractable (i.e. can be used in exportKey)
+          ["sign", "verify"] //can be any combination of "sign" and "verify"
+      )
+      keyArr.push(keyPair.privateKey)
+      }
+    } else {
+      let keyPair = rs.KEYUTIL.generateKeypair("RSA", 512)
+      keyArr.push(keyPair.prvKeyObj)
+    }
+    /*IF THIS SECTION THROWS ERROR, EXPORT SUBTLE CRYPTO KEYPAIR AS JWK AND REIMPORT WITH JSRSASIGN
+    EX:
+    let jwk = await window.crypto.subtle.exportKey('jwk', keys.privateKey)
+    let privateKey = rs.KEYUTIL.getKey(jwk)
+    */
+    //RSAJSSIGN section
+    const privateKey = keyArr[0]
+    const publicKey = rs.KEYUTIL.getJWKFromKey(keys)
+    const rsaJWK = rs.KEYUTIL.getJWKFromKey(privateKey)
+
     const encryptKey = _username + _password
-    const encryptedKey = aes256.encrypt(encryptKey, JSON.stringify(newRSAKey))
-    let publicKey = cryptico.publicKeyString(newRSAKey)
+    const encryptedKey = aes256.encrypt(encryptKey, JSON.stringify(rsaJWK))
     const _data = {'username': _username, 'login': encryptedKey, 'publicKey': publicKey}
     
-    let dummyData = {'username': 'bubba', 'login': encryptedKey, 'publicKey': publicKey}
+    //Generate data signature with RSAJSSIGN
+    var sig = new rs.crypto.Signature({"alg": "SHA1withRSA"});
+    sig.init(privateKey)
+    sig.updateString(JSON.stringify(_data))
+    const dataSignature = sig.sign()
+    //console.log(rs.KEYUTIL.getJWKFromKey(privateKey))
+
+    let accountData = {
+      "username": _username,
+      "name": '',
+      "bio": '',
+      "pfp": '',
+      "publicKey": publicKey
+    }
+    var accountDataSig = new rs.crypto.Signature({"alg": "SHA1withRSA"});
+    accountDataSig.init(privateKey)
+    accountDataSig.updateString(JSON.stringify(accountData))
+    const accountDataSignature = accountDataSig.sign()
+
+    //Creating follower data
+    const followers = [_username]
+    var followingDataSig = new rs.crypto.Signature({"alg": "SHA1withRSA"});
+    followingDataSig.init(privateKey)
+    followingDataSig.updateString(JSON.stringify(followers))
+    const followDataSignature = followDataSig.sign()
+
 
     let _url = gateway + '/createAccount'
     const params = {
@@ -20,7 +75,7 @@ var createAccount = async (_username, _password) => {
         method: 'post',
         timeout: 20000,
         headers: {"Content-Type": "application/json"},
-        data: {data: _data, signature: dataSignature}
+        data: [{data: _data, signature: dataSignature},{data: accountData, signature: accountDataSignature}, {data: followers, signature: followDataSignature}]
       }
 
       let response = await axios(params)
@@ -30,78 +85,9 @@ var createAccount = async (_username, _password) => {
     
 }
 export default createAccount
-/*let testFunc = async () => {
-let key = await arweave.wallets.generate()
-let _transaction = await arweave.createTransaction({
-    data: 'Hi!'
-}, key);
-await arweave.transactions.sign(_transaction, key)
 
-let test = JSON.stringify(_transaction)
-let test2 = JSON.parse(test)
-console.log(arweave)
-//console.log(arweave.transactions.crypto.verify())
-console.log(await arweave.transactions.verify(test2))
-}
-/*onst testFunc = async () => {
-const test = await createAccount('Brennanjl2', 'Ecclesia1')
-}*/
-
-class RSAKey {
-    constructor(t) {
-        //let temp = new BigInteger()
-        //let temp2 = Object.assign(n)
-        //this.n = temp2
-        this.n = new BigInteger(t.n)
-        this.e = t.e
-        this.d = new BigInteger(t.d)
-        this.p = new BigInteger(t.p)
-        this.q = new BigInteger(t.q)
-        this.dmp1 = new BigInteger(t.dmp1)
-        this.dmq1 = new BigInteger(t.dmq1)
-        this.coeff = new BigInteger(t.coeff)
-        this.isPrivate = t.isPrivate;
-        this.isPublic = t.isPublic;
-      }
-}
-class BigInteger {
-    constructor(_n) {
-        for (const [_key, _value] of Object.entries(_n)) {
-            this[_key] = _value
-        }
-    }
-}
-let keys = rs.KEYUTIL.generateKeypair("RSA", 512)
-let pKey = keys.prvKeyObj
-let test = JSON.stringify(pKey)
-let test2 = {'RSAKey': JSON.parse(test)}
-let t = JSON.parse(test)
-//let test2 = new RSAKey(t)
-if (test2 === pKey) {
-    console.log('is same')
-}
-else {
-    console.log(pKey)
-    console.log('\n\n\n\n')
-    console.log(test2)
+/*const testFunc = async () => {
+const test = await createAccount('Brennanjl', 'Ecclesia1')
 }
 
-for (const [_key, _value] of Object.entries(pKey)) {
-    if (_value === test2[_key]) {
-        console.log(`${_key} is the same`)
-    }
-    else{
-        console.log(`${_value} invalid`)
-    }
-}
-var sig = new rs.crypto.Signature({"alg": "SHA1withRSA"});
-sig.init(test2)
-sig.updateString('My String!')
-let signature = sig.sign()
-var sig2 = new rs.crypto.Signature({"alg": "SHA1withRSA"});
-sig2.init(keys.pubKeyObj)
-sig2.updateString('My String!')
-var isValid = sig2.verify(signature)
-console.log(isValid)
-//console.log(sig)
-//testFunc()
+testFunc()*/

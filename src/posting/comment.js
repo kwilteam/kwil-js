@@ -7,23 +7,26 @@ import privateKey from '../devKey.js'
 import checkSignature from '../internal/checkSignature.js'
 import rs from 'jsrsasign'
 
-const createThought = async (_postText, _img, _privateJWK, _username) => {
+const comment = async (_postText, _mainPostID, _privateJWK, _username) => {
     const _privateKey = rs.KEYUTIL.getKey(_privateJWK)
+
     let randTime = Date.now()
     let _data = {
         "postText": _postText,
-        "postPhoto": _img,
         "publicKey":  getPublicJWKFromPrivateKey(_privateKey),
-        "type": "Thought",
-        "timeStamp": randTime
+        "type": "Comment",
+        "timeStamp": randTime,
+        "referencing": _mainPostID
             }
     let _signature = sign(JSON.stringify(_data), _privateKey)
     let _ID = sha256.sha256(_signature+randTime.toString())
     let postData = {"data": _data,
                     "signature": _signature,
                     "ID": _ID,
-                    "username": _username}
-    let _url = gateway + '/thought'
+                    "username": _username,
+                    "mainPostID": _mainPostID
+                    }
+    let _url = gateway + `/${_username}/comment`
     const params = {
                     url: _url,
                     method: 'post',
@@ -37,16 +40,9 @@ const createThought = async (_postText, _img, _privateJWK, _username) => {
     
     return postData
 }
-export default createThought
+export default comment
 
-/*onst testFunc = async () => {
-    console.log(await createThought('Hi!', '', privateKey, 'Brennanjl'))
+/*const testFunc = async () => {
+    await comment('Hi!', '3bf43ff441313b1fda118bceb4184bc9fc991a8ce5061553c750ae68ad3d91eb', privateKey, 'Brennanjl', 'Brennanjl', 'thought')
 }
-let go = true
 testFunc()*/
-/*const test2 = async () => {
-while (go) {
-    console.log(await testFunc())
-}
-}
-test2()*/

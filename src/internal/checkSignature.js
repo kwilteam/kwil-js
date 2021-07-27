@@ -1,11 +1,11 @@
-import crypto from 'crypto'
-import {base64encode} from '../utility/utilities.js'
-import buffer from 'buffer'
+import rs from 'jsrsasign'
 
-const checkSignature = (_incomingData) => {
-    let parsedData =_incomingData
-    let pubKeyCheck = '-----BEGIN PUBLIC KEY-----\n'+parsedData.data.publicKey+'\n-----END PUBLIC KEY-----'
-    return crypto.verify('SHA256', base64encode(parsedData.data), pubKeyCheck, buffer.Buffer.from(parsedData.signature))
+const checkSignature = (_data, _signature) => {
+    var sig2 = new rs.crypto.Signature({"alg": "SHA1withRSA"});
+    let _key = rs.KEYUTIL.getKey(_data.publicKey)
+    sig2.init(_key)
+    sig2.updateString(JSON.stringify(_data))
+    return sig2.verify(_signature)
 }
 
 export default checkSignature

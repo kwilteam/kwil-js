@@ -7,14 +7,14 @@ import privateKey from '../devKey.js'
 import checkSignature from '../internal/checkSignature.js'
 import rs from 'jsrsasign'
 
-const createThought = async (_postText, _img, _privateJWK, _username) => {
+const createThinkpiece = async (_postText, _img, _privateJWK, _username) => {
     const _privateKey = rs.KEYUTIL.getKey(_privateJWK)
     let randTime = Date.now()
     let _data = {
         "postText": _postText,
         "postPhoto": _img,
         "publicKey":  getPublicJWKFromPrivateKey(_privateKey),
-        "type": "Thought",
+        "type": "Thinkpiece",
         "timeStamp": randTime
             }
     let _signature = sign(JSON.stringify(_data), _privateKey)
@@ -23,7 +23,8 @@ const createThought = async (_postText, _img, _privateJWK, _username) => {
                     "signature": _signature,
                     "ID": _ID,
                     "username": _username}
-    let _url = gateway + '/thought'
+    let _url = gateway + '/thinkpiece'
+    //console.log(checkSignature(_data, _signature))
     const params = {
                     url: _url,
                     method: 'post',
@@ -37,16 +38,9 @@ const createThought = async (_postText, _img, _privateJWK, _username) => {
     
     return postData
 }
-export default createThought
+export default createThinkpiece
 
-/*onst testFunc = async () => {
-    console.log(await createThought('Hi!', '', privateKey, 'Brennanjl'))
+/*const testFunc = async () => {
+    console.log(await createThinkpiece('Hi!', '', privateKey, 'Brennanjl'))
 }
-let go = true
 testFunc()*/
-/*const test2 = async () => {
-while (go) {
-    console.log(await testFunc())
-}
-}
-test2()*/
