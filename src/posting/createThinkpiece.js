@@ -14,7 +14,7 @@ const createThinkpiece = async (_title, _postText, _img, _privateJWK, _username)
     let _data = {
         "postTitle": _title,
         "postText": _postText,
-        "postPhotos": _img,
+        "postPhoto": _img,
         "publicKey":  getPublicJWKFromPrivateKey(_privateKey),
         "type": "Thinkpiece",
         "timeStamp": randTime,
