@@ -2,7 +2,7 @@ import aes256 from 'aes256'
 import axios from 'axios'
 import gateway from '../gateway.js'
 import rs from 'jsrsasign'
-import getPublicFromPrivate from '../internal/getPublicFromPrivate.js'
+import getPublicJWKFromPrivateKey from '../internal/getPublicFromPrivateJWK.js'
 
 const createAccount = async (_username, _password) => {
     //username must be 5-20 characters
@@ -35,8 +35,8 @@ const createAccount = async (_username, _password) => {
     */
     //RSAJSSIGN section
     const privateKey = keyArr[0]
-    const publicKey = rs.KEYUTIL.getJWKFromKey(keys)
     const rsaJWK = rs.KEYUTIL.getJWKFromKey(privateKey)
+    const publicKey = getPublicJWKFromPrivateKey(privateKey)
 
     const encryptKey = _username + _password
     const encryptedKey = aes256.encrypt(encryptKey, JSON.stringify(rsaJWK))
@@ -66,7 +66,8 @@ const createAccount = async (_username, _password) => {
     var followingDataSig = new rs.crypto.Signature({"alg": "SHA1withRSA"});
     followingDataSig.init(privateKey)
     followingDataSig.updateString(JSON.stringify(followers))
-    const followDataSignature = followDataSig.sign()
+    const followDataSignature = followingDataSig.sign()
+    console.log(rsaJWK)
 
 
     let _url = gateway + '/createAccount'
