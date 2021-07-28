@@ -7,15 +7,18 @@ import privateKey from '../devKey.js'
 import checkSignature from '../internal/checkSignature.js'
 import rs from 'jsrsasign'
 
-const createThinkpiece = async (_postText, _img, _privateJWK, _username) => {
+const createThinkpiece = async (_title, _postText, _img, _privateJWK, _username) => {
+    //images should be entered as array of base64 encodings
     const _privateKey = rs.KEYUTIL.getKey(_privateJWK)
     let randTime = Date.now()
     let _data = {
+        "postTitle": _title,
         "postText": _postText,
-        "postPhoto": _img,
+        "postPhotos": _img,
         "publicKey":  getPublicJWKFromPrivateKey(_privateKey),
         "type": "Thinkpiece",
-        "timeStamp": randTime
+        "timeStamp": randTime,
+        "username": _username
             }
     let _signature = sign(JSON.stringify(_data), _privateKey)
     let _ID = sha256.sha256(_signature+randTime.toString())

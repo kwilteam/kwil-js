@@ -1,8 +1,8 @@
 import follow from './follow'
 import getFollowing from './getFollowing'
 
-const isFollowing = async (_follower, followee) => {
-    let followingList = getFollowing(_follower)
+const isFollowing = async (_follower, _followee) => {
+    let followingList = await getFollowing(_follower)
     if (followingList.includes(_followee)) {
         return true
     } else {

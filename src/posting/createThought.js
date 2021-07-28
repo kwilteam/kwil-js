@@ -15,7 +15,8 @@ const createThought = async (_postText, _img, _privateJWK, _username) => {
         "postPhoto": _img,
         "publicKey":  getPublicJWKFromPrivateKey(_privateKey),
         "type": "Thought",
-        "timeStamp": randTime
+        "timeStamp": randTime,
+        "username": _username
             }
     let _signature = sign(JSON.stringify(_data), _privateKey)
     let _ID = sha256.sha256(_signature+randTime.toString())
@@ -34,16 +35,20 @@ const createThought = async (_postText, _img, _privateJWK, _username) => {
                 
     let response = await axios(params)
     console.log(response.data)
+    console.log('Transaction Object:')
+    console.log(postData)
+    console.log('\nData: ')
     
-    return postData
+    return _data
 }
 export default createThought
 
-/*onst testFunc = async () => {
+/*const testFunc = async () => {
     console.log(await createThought('Hi!', '', privateKey, 'Brennanjl'))
 }
 let go = true
-testFunc()*/
+testFunc()
+
 /*const test2 = async () => {
 while (go) {
     console.log(await testFunc())

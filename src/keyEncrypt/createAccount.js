@@ -7,6 +7,9 @@ import getPublicJWKFromPrivateKey from '../internal/getPublicFromPrivateJWK.js'
 const createAccount = async (_username, _password) => {
     //username must be 5-20 characters
     //password must be 1 upper case, 1 lower case, 1 number, 8 characters
+    if (_username.length > 30) {
+      throw new Error('Name to long')
+    }
 
     //Check for window.crypto.subtle
     let keyArr = []
@@ -62,7 +65,7 @@ const createAccount = async (_username, _password) => {
     const accountDataSignature = accountDataSig.sign()
 
     //Creating follower data
-    const followers = [_username]
+    const followers = {publicKey: publicKey, username: _username, following: [_username]}
     var followingDataSig = new rs.crypto.Signature({"alg": "SHA1withRSA"});
     followingDataSig.init(privateKey)
     followingDataSig.updateString(JSON.stringify(followers))
@@ -82,7 +85,7 @@ const createAccount = async (_username, _password) => {
       let response = await axios(params)
       console.log(response.data)
 
-      return {'pubKey': publicKey, 'privateKey': privateKey}
+      return {'pubKey': publicKey, 'privateKey': rsaJWK}
     
 }
 export default createAccount

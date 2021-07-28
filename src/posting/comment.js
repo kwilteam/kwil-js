@@ -16,7 +16,8 @@ const comment = async (_postText, _mainPostID, _privateJWK, _username) => {
         "publicKey":  getPublicJWKFromPrivateKey(_privateKey),
         "type": "Comment",
         "timeStamp": randTime,
-        "referencing": _mainPostID
+        "referencing": _mainPostID,
+        "username": _username
             }
     let _signature = sign(JSON.stringify(_data), _privateKey)
     let _ID = sha256.sha256(_signature+randTime.toString())
@@ -43,6 +44,6 @@ const comment = async (_postText, _mainPostID, _privateJWK, _username) => {
 export default comment
 
 /*const testFunc = async () => {
-    await comment('Hi!', '3bf43ff441313b1fda118bceb4184bc9fc991a8ce5061553c750ae68ad3d91eb', privateKey, 'Brennanjl', 'Brennanjl', 'thought')
+    await comment('Hi!', 'bb71d85ea037edaed1f54b8bfbb8ebec61d4511fb51f37104c02223ac2c587ca', privateKey, 'Brennanjl')
 }
 testFunc()*/

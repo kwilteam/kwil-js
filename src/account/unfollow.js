@@ -31,6 +31,7 @@ const unfollow = async (_username, _usernameToUnfollow, _privateJWK) => {
         data: {data: _data, signature: dataSignature}
       }
       let response = await axios(params)
+      console.log(response)
     }
 }
 

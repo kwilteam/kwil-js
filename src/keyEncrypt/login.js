@@ -13,14 +13,20 @@ const login = async (_username, _password) => {
         method: 'get',
         timeout: 20000
       }
+      try {
       let response = await axios(params)
       if (checkSignature(response.data.data, response.data.signature)){
       let loginCipher = response.data.data.login
       const encryptKey = _username + _password
       let privateKey = aes256.decrypt(encryptKey, loginCipher)
-      return JSON.parse(privateKey)
+      return {"privateKey": JSON.parse(privateKey), "loginValid": true}
       }
-      
+      return {"privateKey": '', "loginValid": false}
+    }
+    catch (e) {
+        console.log(e)
+        return {"privateKey": '', "loginValid": false}
+    }
 }
     /*const testFunc = async () => {
     const test = await login('Brennanjl', 'Ecclesia1')

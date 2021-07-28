@@ -12,7 +12,7 @@ const getAccountData = async (_username) => {
         timeout: 20000
       }
     let response = await axios(params)
-    return response.data
+    return response.data.data
 }
 
 export default getAccountData

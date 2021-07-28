@@ -27,7 +27,8 @@ const changePFP = async (_newPFP, _privateKey, _username) => {
         data: {data: _data, signature: dataSignature}
       }
     let response = await axios(params)
-    return response.data
+    console.log(response)
+    return _data
 
 }
 export default changePFP
