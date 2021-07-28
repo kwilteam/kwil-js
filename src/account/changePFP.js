@@ -10,13 +10,12 @@ const changePFP = async (_newPFP, _privateKey, _username) => {
     //Function for changing name and bio.  If you only wish to change one, leave the other as a blank string
     const privateKey = rs.KEYUTIL.getKey(_privateKey)
     let accountData = await getAccountData(_username)
-    let _data = accountData.data
-    _data.pfp = _newPFP
+    accountData.pfp = _newPFP
 
     const firstChar = getFirstCharacter(_username.toUpperCase())
     var sig = new rs.crypto.Signature({"alg": "SHA1withRSA"});
     sig.init(privateKey)
-    sig.updateString(JSON.stringify(_data))
+    sig.updateString(JSON.stringify(accountData))
     const dataSignature = sig.sign()
     
     let _url = gateway + `/${firstChar}/${_username.toUpperCase()}/changeNameAndBio`
@@ -24,11 +23,11 @@ const changePFP = async (_newPFP, _privateKey, _username) => {
         url: _url,
         method: 'post',
         timeout: 20000,
-        data: {data: _data, signature: dataSignature}
+        data: {data: accountData, signature: dataSignature}
       }
     let response = await axios(params)
     console.log(response)
-    return _data
+    return accountData
 
 }
 export default changePFP

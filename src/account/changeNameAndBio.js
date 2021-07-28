@@ -22,14 +22,13 @@ const changeNameAndBio = async (_newName, _newBio, _privateKey, _username) => {
     } else {
         newBio = _newBio
     }
-    let _data = accountData.data
-    _data.name = newName
-    _data.bio = newBio
+    accountData.name = newName
+    accountData.bio = newBio
 
     const firstChar = getFirstCharacter(_username.toUpperCase())
     var sig = new rs.crypto.Signature({"alg": "SHA1withRSA"});
     sig.init(privateKey)
-    sig.updateString(JSON.stringify(_data))
+    sig.updateString(JSON.stringify(accountData))
     const dataSignature = sig.sign()
     
     let _url = gateway + `/${firstChar}/${_username.toUpperCase()}/changeNameAndBio`
@@ -37,11 +36,11 @@ const changeNameAndBio = async (_newName, _newBio, _privateKey, _username) => {
         url: _url,
         method: 'post',
         timeout: 20000,
-        data: {data: _data, signature: dataSignature}
+        data: {data: accountData, signature: dataSignature}
       }
     let response = await axios(params)
     console.log(response)
-    return _data
+    return accountData
 
 }
 export default changeNameAndBio
