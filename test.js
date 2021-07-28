@@ -1,3 +1,6 @@
-import getFeed from './src/internal/getFirstCharacter.js'
+import getAccountData from './src/account/getAccountData.js'
 
-console.log(getFirstCharacter("BIGBUTT"))
+/*const test = async () => {
+    console.log(await getAccountData('Bigbutt'))
+}
+test()*/

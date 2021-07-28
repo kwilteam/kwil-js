@@ -12,6 +12,7 @@ const getAccountData = async (_username) => {
         timeout: 20000
       }
     let response = await axios(params)
+    if (checkSignature(response.data.data, response.data.signature))
     return response.data.data
 }
 
