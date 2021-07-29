@@ -2,6 +2,7 @@ import axios from 'axios'
 import gateway from '../gateway.js'
 import checkSignature from '../internal/checkSignature.js'
 import getFirstCharacter from '../internal/getFirstCharacter.js'
+import destr from 'destr'
 
 const getAccountData = async (_username) => {
     let firstChar = getFirstCharacter(_username)
@@ -12,9 +13,25 @@ const getAccountData = async (_username) => {
         timeout: 20000
       }
     let response = await axios(params)
-    if (checkSignature(response.data.data, response.data.signature))
-    return response.data.data
+    console.log(typeof response.data)
+    if (typeof response.data === 'object'){
+      if (checkSignature(response.data.data, response.data.signature)){
+        return response.data.data
+        }
+    } else {
+      try{
+      let resData = JSON.parse(response.data)
+      if (checkSignature(resData.data, resData.signature)) {
+        return resData.data
+      }
+    }
+      catch(e){
+        console.log(e)
+      }
+    }
 }
+
+
 
 export default getAccountData
 /*const testFunc = async () => {

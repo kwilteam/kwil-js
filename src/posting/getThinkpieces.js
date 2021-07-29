@@ -12,7 +12,6 @@ const params = {
                   }
             
 let response = await axios(params)
-console.log(response.data)
 for (let i=0; i<response.data.length; i++) {
     if (!checkSignature(response.data[i].data, response.data[i].signature)){
         throw 'Invalid Signature'

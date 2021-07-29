@@ -17,6 +17,14 @@ const changePFP = async (_newPFP, _privateKey, _username) => {
     sig.init(privateKey)
     sig.updateString(JSON.stringify(accountData))
     const dataSignature = sig.sign()
+
+    //Check if image can be parsed
+    try{
+        JSON.parse({data: accountData, signature: dataSignature})
+    }
+    catch(e) {
+        throw new Error('Image can not be posted')
+    }
     
     let _url = gateway + `/${firstChar}/${_username.toUpperCase()}/changeNameAndBio`
     const params = {
