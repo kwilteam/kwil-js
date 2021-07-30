@@ -3,44 +3,37 @@ import gateway from '../gateway.js'
 import privateKey from '../devKey.js'
 import getAccountData from '../account/getAccountData.js'
 import getFirstCharacter from '../internal/getFirstCharacter.js'
-import getPublicFromPrivate from '../internal/getPublicFromPrivate.js'
+import axios from 'axios'
 
 const sendMessage = async (_text, _posterUsername, _receiverUsername, _privateKey) => {
-    let posterFirstC = getFirstCharacter(_posterUsername)
     let receiverFirstC = getFirstCharacter(_receiverUsername)
     let otherAccount = await getAccountData(_receiverUsername)
-    let othersPublic = otherAccount.data.publicKey
-    let posterPublic = rs.KEYUTIL.getKey(getPublicFromPrivate(_privateKey))
-    let encryptedOutMessage = rs.crypto.Cipher.encrypt(_text, rs.KEYUTIL.getKey(othersPublic), 'RSA')
-    let encryptedInMessage = rs.crypto.Cipher.encrypt(_text, posterPublic, 'RSA')
+    let othersPublicJWK = otherAccount.publicKey
+    let othersPublic = rs.KEYUTIL.getKey(othersPublicJWK)
+    let encryptedMessage = rs.crypto.Cipher.encrypt(_text, othersPublic, 'RSA')
+    let encryptedName = rs.crypto.Cipher.encrypt(_posterUsername, othersPublic, 'RSA')
 
-    let _url = gateway + `/${_mainPostUsername.toUpperCase()}/${mainPostType}/${_mainPostID}/comment`
+    //Signature
+    var sig = new rs.crypto.Signature({"alg": "SHA256withRSA"});
+    sig.init(_privateKey)
+    sig.updateString(_text)
+    let signature = sig.sign()
+
+    let _url = gateway + `/${_receiverUsername.toUpperCase()}/${receiverFirstC}/${encryptedName}/inbox`
     const params = {
                     url: _url,
                     method: 'post',
                     timeout: 20000,
                     headers: {"Content-Type": "application/json"},
-                    data: postData
+                    data: {message: encryptedMessage, signature: signature}
                       }
                 
-    let response = await axios(params)
-    console.log(response.data)
+    await axios(params)
 }
 
-const testFunc = async () => {
-    console.log(Date.now())
-    let keys = rs.KEYUTIL.generateKeypair('RSA', 4096)
-    let pKey = keys.prvKeyObj
-    let pubKey = keys.pubKeyObj
-    console.log('keys genned')
-    console.log(Date.now())
-    let encryptedMessage = rs.crypto.Cipher.encrypt('Hi there fuckface!', pubKey, 'RSA')
-    console.log('encrypted')
-    console.log(Date.now())
-    let decryptedMessage = rs.crypto.Cipher.decrypt(encryptedMessage, pKey, 'RSA')
-    console.log('decrypted')
-    console.log(Date.now())
-    
-   // await sendMessage('Hi there motherfucker!  How are you encryption!!!', 'Brennanjl', 'Brennanjl', pKey)
+export default sendMessage
+/*const testFunc = async () => {
+    await sendMessage('Encrypted message!', 'Brennanjl', 'Brennanjl', privateKey)
 }
-testFunc()
+export default sendMessage
+testFunc()*/

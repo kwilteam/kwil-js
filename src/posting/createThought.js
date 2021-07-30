@@ -34,7 +34,6 @@ const createThought = async (_postText, _img, _privateJWK, _username) => {
                       }
                 
     let response = await axios(params)
-    console.log(response.data)
     console.log('Transaction Object:')
     console.log(postData)
     console.log('\nData: ')

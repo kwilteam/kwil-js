@@ -15,6 +15,10 @@ import getFeed from './src/posting/getFeed.js'
 import getPosts from './src/posting/getPosts.js'
 import getThinkpieces from './src/posting/getThinkpieces.js'
 import getThoughts from './src/posting/getThoughts.js'
+import decryptMessage from './src/messaging/decryptMessage.js'
+import getInbox from './src/messaging/getInbox.js'
+import getMessages from './src/messaging/getMessages.js'
+import sendMessage from './src/messaging/sendMessage.js'
 
 const ecclesia = {
     createAccount,
@@ -33,7 +37,11 @@ const ecclesia = {
     getFeed,
     getPosts,
     getThinkpieces,
-    getThoughts
+    getThoughts,
+    decryptMessage,
+    getInbox,
+    getMessages,
+    sendMessage
 }
 
 export default ecclesia

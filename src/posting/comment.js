@@ -36,8 +36,7 @@ const comment = async (_postText, _mainPostID, _privateJWK, _username) => {
                     data: postData
                       }
                 
-    let response = await axios(params)
-    console.log(response.data)
+    await axios(params)
     
     return postData
 }
