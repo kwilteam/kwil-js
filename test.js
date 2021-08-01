@@ -14,7 +14,7 @@ import getMessages from './src/messaging/getMessages.js'
 
 const test = async () => {
     //console.log(await getThoughts('TEST1', 0))
-    //console.log(await createAccount('Brennanjl', 'Ecclesia1'))
+    //console.log(await createAccount('Brennanjl2', 'Ecclesia1'))
     //console.log(await getThoughts('bigbutt2', 0))
     //console.log(await getAccountData('brennanjl'))
     //console.log(await getPosts('bigbutt2',0))
