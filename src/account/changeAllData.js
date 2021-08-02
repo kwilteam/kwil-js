@@ -4,13 +4,32 @@ import gateway from '../gateway.js'
 import getFirstCharacter from '../internal/getFirstCharacter.js'
 import axios from 'axios'
 import rs from 'jsrsasign'
-import checkSignature from '../internal/checkSignature.js'
 
-const changePFP = async (_newPFP, _privateKey, _username) => {
+const changeAllData = async (_newName, _newBio, _newPFP, _privateKey, _username) => {
     //Function for changing name and bio.  If you only wish to change one, leave the other as a blank string
     const privateKey = rs.KEYUTIL.getKey(_privateKey)
     let accountData = await getAccountData(_username)
-    accountData.pfp = _newPFP
+    let newName = ''
+    if (_newName == '') {
+        newName = accountData.data.name
+    } else {
+        newName = _newName
+    }
+    let newBio = ''
+    if (_newBio == '') {
+        newBio = accountData.data.bio
+    } else {
+        newBio = _newBio
+    }
+    let newPFP = ''
+    if (_newPFP == '') {
+        newPFP = accountData.data.pfp
+    } else {
+        newPFP = _newPFP
+    }
+    accountData.name = newName
+    accountData.bio = newBio
+    accountData.pfp = newPFP
 
     const firstChar = getFirstCharacter(_username.toUpperCase())
     var sig = new rs.crypto.Signature({"alg": "SHA1withRSA"});
@@ -18,7 +37,6 @@ const changePFP = async (_newPFP, _privateKey, _username) => {
     sig.updateString(JSON.stringify(accountData))
     const dataSignature = sig.sign()
 
-    //Check if image can be parsed
     try{
         JSON.parse(`{data: ${accountData}, signature: ${dataSignature}`)
     }
@@ -38,8 +56,4 @@ const changePFP = async (_newPFP, _privateKey, _username) => {
     return accountData
 
 }
-export default changePFP
-/*let testFunc = async () => {
-    await changePFP('Brennan Lamey', privateKey, 'Brennanjl')
-}
-testFunc()*/
+export default changeAllData

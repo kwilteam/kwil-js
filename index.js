@@ -19,6 +19,7 @@ import decryptMessage from './src/messaging/decryptMessage.js'
 import getInbox from './src/messaging/getInbox.js'
 import getMessages from './src/messaging/getMessages.js'
 import sendMessage from './src/messaging/sendMessage.js'
+import changeAllData from './src/account/changeAllData.js'
 
 const ecclesia = {
     createAccount,
@@ -41,7 +42,8 @@ const ecclesia = {
     decryptMessage,
     getInbox,
     getMessages,
-    sendMessage
+    sendMessage,
+    changeAllData
 }
 
 export default ecclesia

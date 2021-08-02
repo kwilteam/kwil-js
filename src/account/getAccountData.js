@@ -13,6 +13,7 @@ const getAccountData = async (_username) => {
       }
     let response = await axios(params)
     if (typeof response.data === 'object'){
+      console.log(response)
       if (checkSignature(response.data.data, response.data.signature)){
         return response.data.data
         }

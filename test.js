@@ -20,8 +20,9 @@ const test = async () => {
     //console.log(await getPosts('bigbutt2',0))
     //await comment("Dan is an acronym for Daddy's Ape Nuts", 'f64681a683c31b9762a2f70187e1bebb33839bf45265329a39f47a95363ca837', privateKey, 'Brennanjl')
     //console.log(await getComments('f64681a683c31b9762a2f70187e1bebb33839bf45265329a39f47a95363ca837', 0))
-    //sendMessage('Hi retard 3!', 'bigbutt2', 'Brennanjl', privateKey)
+    //sendMessage('Hi 3!', 'bigbutt2', 'Brennanjl', privateKey)
     //getInbox('Brennanjl')
     //console.log(await getMessages('Brennanjl', privateKey))
+    console.log(await getAccountData('test1'))
 }
-//test()
+test()
