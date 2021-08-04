@@ -20,7 +20,9 @@ const changePFP = async (_newPFP, _privateKey, _username) => {
 
     //Check if image can be parsed
     try{
-        JSON.parse(`{data: ${accountData}, signature: ${dataSignature}`)
+        let testString = JSON.stringify({data: accountData, signature: dataSignature})
+        JSON.parse(testString)
+        //JSON.parse(`{"data": ${accountData}, "signature": ${dataSignature}}`)
     }
     catch(e) {
         throw new Error('Image can not be posted')

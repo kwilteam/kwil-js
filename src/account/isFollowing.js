@@ -1,5 +1,4 @@
-import follow from './follow'
-import getFollowing from './getFollowing'
+import getFollowing from './getFollowing.js'
 
 const isFollowing = async (_follower, _followee) => {
     let followingList = await getFollowing(_follower)

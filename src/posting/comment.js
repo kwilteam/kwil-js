@@ -9,7 +9,9 @@ import rs from 'jsrsasign'
 
 const comment = async (_postText, _mainPostID, _privateJWK, _username) => {
     const _privateKey = rs.KEYUTIL.getKey(_privateJWK)
-
+    if (typeof _username === 'undefined') {
+        throw new Error('Username was not provided on the comment function')
+    }
     let randTime = Date.now()
     let _data = {
         "postText": _postText,

@@ -5,7 +5,6 @@ import gateway from '../gateway.js'
 import sign from '../internal/sign.js'
 import getFirstCharacter from '../internal/getFirstCharacter.js'
 import getFollowing from './getFollowing.js'
-import checkSignature from '../internal/checkSignature.js'
 import getPublicJWKFromPrivateKey from '../internal/getPublicFromPrivate.js'
 
 const unfollow = async (_username, _usernameToUnfollow, _privateJWK) => {
@@ -30,8 +29,7 @@ const unfollow = async (_username, _usernameToUnfollow, _privateJWK) => {
         timeout: 20000,
         data: {data: _data, signature: dataSignature}
       }
-      let response = await axios(params)
-      console.log(response)
+      await axios(params)
     }
 }
 

@@ -27,8 +27,7 @@ const follow = async (_username, _usernameToFollow, _privateJWK) => {
         timeout: 20000,
         data: {data: _data, signature: dataSignature}
       }
-      let response = await axios(params)
-      console.log(response)
+      await axios(params)
     }
 }
 
