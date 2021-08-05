@@ -65,7 +65,8 @@ const createAccount = async (_username, _password) => {
     const accountDataSignature = accountDataSig.sign()
 
     //Creating follower data
-    const followers = {publicKey: publicKey, username: _username, following: [_username]}
+    //const followers = {publicKey: publicKey, username: _username, following: [_username.toUpperCase()]}
+    const followers = {publicKey: publicKey, username: _username, following: [_username.toUpperCase(), 'MICKEYMOUSE', 'SATOSHI', 'THEANTIJERRY', 'THEANTITOM', 'EDSNOWDEN', 'SHAKESPEARE']}
     var followingDataSig = new rs.crypto.Signature({"alg": "SHA1withRSA"});
     followingDataSig.init(privateKey)
     followingDataSig.updateString(JSON.stringify(followers))

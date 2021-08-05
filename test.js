@@ -24,7 +24,7 @@ const test = async () => {
     //console.log(await createAccount('Brennanjl2', 'Ecclesia1'))
     //console.log(await getThoughts('bigbutt2', 0))
     //console.log(await getAccountData('brennanjl'))
-    //console.log(await getPosts('test1',0))
+    //console.log(await getPosts('brennan',0))
     //await comment("Dan is an acronym for Daddy's Ape Nuts", 'f64681a683c31b9762a2f70187e1bebb33839bf45265329a39f47a95363ca837', privateKey, 'Brennanjl')
     //console.log(await getComments('16ea6209a305766fd7c1b8c81168be6c49e549ba92755d3b33532c3d20f2bb26', 0))
     //sendMessage('Hi 3!', 'bigbutt2', 'Brennanjl', privateKey)
@@ -38,6 +38,5 @@ const test = async () => {
     //console.log(await getMembers('Ecclesia'))
     //console.log(await addMember('Ecclesia', 'Thomas', 'Brennanjl', privateKey))
     //console.log(await removeMember('Ecclesia', 'Thomas', 'Brennanjl', privateKey))
-    console.log(await isFollowing('test1', 'bigbutt2'))
 }
 test()

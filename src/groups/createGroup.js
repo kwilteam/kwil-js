@@ -4,7 +4,7 @@ import getFirstCharacter from '../internal/getFirstCharacter.js'
 import getPublicJWKFromPrivateKey from '../internal/getPublicFromPrivateJWK.js'
 import axios from 'axios'
 
-const createGroup = async (_groupName, _public, _creatorUsername, _creatorPrivateJWK) => {
+const createGroup = async (_groupName, _public, _groupDescription, _groupTags, _groupImage, _links, _creatorUsername, _creatorPrivateJWK) => {
     /*Function to create a group.  Group name must be unique, a group will not be created if there is already a group of that name.
     Public must be either true or false.  False means that the group owner must manually allow individuals to join.
     Creator username and private jwk are pretty self-explanatory
@@ -23,7 +23,7 @@ const createGroup = async (_groupName, _public, _creatorUsername, _creatorPrivat
    const dataSignature = sig.sign()
 
    //Creating initial group data
-   const groupData = {description: '', tags: [], image: '', links: [], signator: {username: _creatorUsername.toUpperCase(), publicKey: getPublicJWKFromPrivateKey(_privateKey)}}
+   const groupData = {description: _groupDescription, tags: _groupTags, image: _groupImage, links: _links, signator: {username: _creatorUsername.toUpperCase(), publicKey: getPublicJWKFromPrivateKey(_privateKey)}}
    var sig2 = new rs.crypto.Signature({"alg": "SHA1withRSA"});
    sig2.init(_privateKey)
    sig2.updateString(JSON.stringify(groupData))
@@ -46,6 +46,6 @@ const createGroup = async (_groupName, _public, _creatorUsername, _creatorPrivat
         data: [{data: charter, signature: dataSignature}, {data: groupData, signature: dataSignature2}, {data: membersList, signature: dataSignature3}]
     }
     let response = await axios(params)
-    return response
+    return groupData
 }
 export default createGroup
