@@ -1,5 +1,5 @@
 import getGroupData from './getGroupData.js'
-import getPublicFromPrivateJWK from '../internal/getPublicFromPrivateJWK.js'
+import getPublicFromPrivateJWK from '../internal/getPublicJWKFromPrivateKey.js'
 import rs from 'jsrsasign'
 import sign from '../internal/sign.js'
 import getFirstCharacter from '../internal/getFirstCharacter.js'

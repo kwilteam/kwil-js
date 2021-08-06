@@ -1,5 +1,7 @@
 import getFirstCharacter from '../../internal/getFirstCharacter.js'
 import aes256 from 'aes256'
+import gateway from '../../gateway.js'
+import axios from 'axios'
 
 const getChatKeys = async (_username, _password) => {
     let firstChar = getFirstCharacter(_username)

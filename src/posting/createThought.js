@@ -1,4 +1,4 @@
-import getPublicJWKFromPrivateKey from '../internal/getPublicFromPrivate.js'
+import getPublicJWKFromPrivateKey from '../internal/getPublicJWKFromPrivateKey.js'
 import sha256 from 'js-sha256'
 import sign from '../internal/sign.js'
 import axios from 'axios'
@@ -7,7 +7,7 @@ import privateKey from '../devKey.js'
 import checkSignature from '../internal/checkSignature.js'
 import rs from 'jsrsasign'
 
-const createThought = async (_postText, _img, _privateJWK, _username) => {
+const createThought = async (_postText, _img, _privateJWK, _username, _groupTag = '') => {
     const _privateKey = rs.KEYUTIL.getKey(_privateJWK)
     let randTime = Date.now()
     let _data = {
@@ -16,7 +16,8 @@ const createThought = async (_postText, _img, _privateJWK, _username) => {
         "publicKey":  getPublicJWKFromPrivateKey(_privateKey),
         "type": "Thought",
         "timeStamp": randTime,
-        "username": _username
+        "username": _username,
+        "groupTag": _groupTag
             }
     let _signature = sign(JSON.stringify(_data), _privateKey)
     let _ID = sha256.sha256(_signature+randTime.toString())

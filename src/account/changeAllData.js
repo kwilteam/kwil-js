@@ -4,6 +4,7 @@ import gateway from '../gateway.js'
 import getFirstCharacter from '../internal/getFirstCharacter.js'
 import axios from 'axios'
 import rs from 'jsrsasign'
+import sign from '../internal/sign.js'
 
 const changeAllData = async (_newName, _newBio, _newPFP, _privateKey, _username) => {
     //Function for changing name and bio.  If you only wish to change one, leave the other as a blank string
@@ -32,10 +33,7 @@ const changeAllData = async (_newName, _newBio, _newPFP, _privateKey, _username)
     accountData.pfp = newPFP
 
     const firstChar = getFirstCharacter(_username.toUpperCase())
-    var sig = new rs.crypto.Signature({"alg": "SHA1withRSA"});
-    sig.init(privateKey)
-    sig.updateString(JSON.stringify(accountData))
-    const dataSignature = sig.sign()
+    const dataSignature = sign(JSON.stringify(accountData), privateKey)
 
     try{
         let testString = JSON.stringify({data: accountData, signature: dataSignature})

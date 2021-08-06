@@ -2,8 +2,9 @@ import aes256 from 'aes256'
 import axios from 'axios'
 import gateway from '../gateway.js'
 import rs from 'jsrsasign'
-import getPublicJWKFromPrivateKey from '../internal/getPublicFromPrivateJWK.js'
+import getPublicJWKFromPrivateKey from '../internal/getPublicJWKFromPrivateKey.js'
 import getFirstCharacter from '../internal/getFirstCharacter.js'
+import sign from '../internal/sign.js'
 
 const createAccount = async (_username, _password) => {
     //username must be 5-20 characters
@@ -48,11 +49,8 @@ const createAccount = async (_username, _password) => {
     const encryptedKey = aes256.encrypt(encryptKey, JSON.stringify(rsaJWK))
     const _data = {'username': _username, 'login': encryptedKey, 'publicKey': publicKey}
     
-    //Generate data signature with RSAJSSIGN
-    var sig = new rs.crypto.Signature({"alg": "SHA1withRSA"});
-    sig.init(privateKey)
-    sig.updateString(JSON.stringify(_data))
-    const dataSignature = sig.sign()
+    //Generate data signature with JSRSASIGN
+    const dataSignature = sign(JSON.stringify(_data), privateKey)
     //console.log(rs.KEYUTIL.getJWKFromKey(privateKey))
 
     let accountData = {
@@ -62,26 +60,18 @@ const createAccount = async (_username, _password) => {
       "pfp": '',
       "publicKey": publicKey
     }
-    var accountDataSig = new rs.crypto.Signature({"alg": "SHA1withRSA"});
-    accountDataSig.init(privateKey)
-    accountDataSig.updateString(JSON.stringify(accountData))
-    const accountDataSignature = accountDataSig.sign()
+
+    const accountDataSignature = sign(JSON.stringify(accountData), privateKey)
 
     //Creating follower data
     //const followers = {publicKey: publicKey, username: _username, following: [_username.toUpperCase()]}
     const followers = {publicKey: publicKey, username: _username, following: [_username.toUpperCase(), 'MICKEYMOUSE', 'SATOSHI', 'THEANTIJERRY', 'THEANTITOM', 'EDSNOWDEN', 'SHAKESPEARE']}
-    var followingDataSig = new rs.crypto.Signature({"alg": "SHA1withRSA"});
-    followingDataSig.init(privateKey)
-    followingDataSig.updateString(JSON.stringify(followers))
-    const followDataSignature = followingDataSig.sign()
+    const followDataSignature = sign(JSON.stringify(followers), privateKey)
 
     //Creating chats passphrase data
     const chats = {}
     const encryptedChats = aes256.encrypt(encryptKey, JSON.stringify(chats))
-    var chatsDataSig = new rs.crypto.Signature({"alg": "SHA1withRSA"});
-    chatsDataSig.init(privateKey)
-    chatsDataSig.updateString(encryptedChats)
-    const chatsDataSignature = chatsDataSig.sign()
+    const chatsDataSignature = sign(encryptedChats, privateKey)
 
     let _url = gateway + '/'+firstChar +'/'+ _username.toUpperCase() +'/createAccount'
     const params = {

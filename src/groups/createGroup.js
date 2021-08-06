@@ -1,8 +1,9 @@
 import rs from 'jsrsasign'
 import gateway from '../gateway.js'
 import getFirstCharacter from '../internal/getFirstCharacter.js'
-import getPublicJWKFromPrivateKey from '../internal/getPublicFromPrivateJWK.js'
+import getPublicJWKFromPrivateKey from '../internal/getPublicJWKFromPrivateKey.js'
 import axios from 'axios'
+import sign from '../internal/sign.js'
 
 const createGroup = async (_groupName, _public, _groupDescription, _groupTags, _groupImage, _links, _creatorUsername, _creatorPrivateJWK) => {
     /*Function to create a group.  Group name must be unique, a group will not be created if there is already a group of that name.
@@ -17,24 +18,15 @@ const createGroup = async (_groupName, _public, _groupDescription, _groupTags, _
        membership = [_creatorUsername]
    }
    let charter = {name: _groupName, public: _public, creator: _creatorUsername, publicKey: getPublicJWKFromPrivateKey(_privateKey), timeStamp: Date.now()}
-   var sig = new rs.crypto.Signature({"alg": "SHA1withRSA"});
-   sig.init(_privateKey)
-   sig.updateString(JSON.stringify(charter))
-   const dataSignature = sig.sign()
+   const dataSignature = sign(JSON.stringify(charter), _privateKey)
 
    //Creating initial group data
-   const groupData = {description: _groupDescription, tags: _groupTags, image: _groupImage, links: _links, signator: {username: _creatorUsername.toUpperCase(), publicKey: getPublicJWKFromPrivateKey(_privateKey)}}
-   var sig2 = new rs.crypto.Signature({"alg": "SHA1withRSA"});
-   sig2.init(_privateKey)
-   sig2.updateString(JSON.stringify(groupData))
-   const dataSignature2 = sig2.sign()
+   const groupData = {owner: _creatorUsername, description: _groupDescription, tags: _groupTags, image: _groupImage, links: _links, signator: {username: _creatorUsername.toUpperCase(), publicKey: getPublicJWKFromPrivateKey(_privateKey)}}
+   const dataSignature2 = sign(JSON.stringify(groupData), _privateKey)
 
    //Creating members list
    const membersList = {owner: _creatorUsername, members: [_creatorUsername.toUpperCase()], signator: {username: _creatorUsername.toUpperCase(), publicKey: getPublicJWKFromPrivateKey(_privateKey)}}
-   var sig3 = new rs.crypto.Signature({"alg": "SHA1withRSA"});
-   sig3.init(_privateKey)
-   sig3.updateString(JSON.stringify(membersList))
-   const dataSignature3 = sig3.sign()
+   const dataSignature3 = sign(JSON.stringify(membersList), _privateKey)
 
    let firstChar = getFirstCharacter(_groupName)
 

@@ -18,9 +18,11 @@ import getMembers from './src/groups/getMembers.js'
 import addMember from './src/groups/addMember.js'
 import removeMember from './src/groups/removeMember.js'
 import isFollowing from './src/account/isFollowing.js'
+import createChat from './src/messaging/chats/createChat.js'
+import createThought from './src/posting/createThought.js'
 
 const test = async () => {
-    console.log(await createAccount('Bill', 'Ecclesia1'))
+    //console.log(await createAccount('Brennan', 'Ecclesia1'))
     //console.log(await getThoughts('bigbutt2', 0))
     //console.log(await getAccountData('brennanjl'))
     //console.log(await getPosts('brennan',0))
@@ -37,5 +39,8 @@ const test = async () => {
     //console.log(await getMembers('Ecclesia'))
     //console.log(await addMember('Ecclesia', 'Thomas', 'Brennanjl', privateKey))
     //console.log(await removeMember('Ecclesia', 'Thomas', 'Brennanjl', privateKey))
+    //console.log(await createChat(['Thomas', 'Dan'], 'Bill', 'Ecclesia1', privateKey))
+    //console.log(await getGroupData('test'))
+    //console.log(await createThought('Hi!', '', privateKey))
 }
 test()

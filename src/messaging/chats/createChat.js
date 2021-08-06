@@ -6,6 +6,9 @@ import getChatKeys from '../common/getChatKeys.js'
 import axios from 'axios'
 import getFirstCharacter from '../../internal/getFirstCharacter.js'
 import sha256 from 'js-sha256'
+import gateway from '../../gateway.js'
+import aes256 from 'aes256'
+import sign from '../../internal/sign.js'
 
 const createChat = async (_members, _username, _password, _privateJWK) => {
     if (!Array.isArray(_members)) {
@@ -18,21 +21,23 @@ const createChat = async (_members, _username, _password, _privateJWK) => {
 
     //Distributing passphrase to all members
     let passphrase = generateRandomString(100)
-    _members.forEach(member => {
+    _members.forEach(async member => {
+        try {
         await invite(passphrase, _username, member, _privateKey)
+        }
+        catch (e) {
+            console.log(e)
+        }
     })
     let chatKeys = await getChatKeys(_username, _password)
     const encryptKey = _username+_password
-    let chatName = sha256.sha256(JSON.stringify(_members.sort()))
+    let chatName = sha256.sha256(JSON.stringify(_members.sort())+Date.now())
     if (chatKeys.hasOwnProperty(chatName)) { //Checks to see if this user is in a chat with these same members
         throw new Error('Already a group with these members')
     } else {
         chatKeys[chatName] = passphrase
         const encryptedChats = aes256.encrypt(encryptKey, JSON.stringify(chatKeys))
-        var chatsDataSig = new rs.crypto.Signature({"alg": "SHA1withRSA"});
-        chatsDataSig.init(privateKey)
-        chatsDataSig.updateString(encryptedChats)
-        const chatsDataSignature = chatsDataSig.sign()
+        const chatsDataSignature = sign(encryptedChats, privateKey)
         let _url = gateway + `/${getFirstCharacter(_username)}/${_username.toUpperCase()}/editChats`
         const params = {
                         url: _url,
@@ -44,5 +49,5 @@ const createChat = async (_members, _username, _password, _privateJWK) => {
         await axios(params)
     }
 }
-
-createChat('Brennan', privateKey)
+export default createChat
+//createChat('Brennan', privateKey)

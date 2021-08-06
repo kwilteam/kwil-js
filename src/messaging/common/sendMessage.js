@@ -4,6 +4,7 @@ import privateKey from '../../devKey.js'
 import getAccountData from '../../account/getAccountData.js'
 import getFirstCharacter from '../../internal/getFirstCharacter.js'
 import axios from 'axios'
+import sign from '../../internal/sign.js'
 
 const sendMessage = async (_text, _posterUsername, _receiverUsername, _privateKey) => {
     let receiverFirstC = getFirstCharacter(_receiverUsername)
@@ -14,10 +15,7 @@ const sendMessage = async (_text, _posterUsername, _receiverUsername, _privateKe
     let encryptedName = rs.crypto.Cipher.encrypt(_posterUsername, othersPublic, 'RSA')
 
     //Signature
-    var sig = new rs.crypto.Signature({"alg": "SHA1withRSA"});
-    sig.init(_privateKey)
-    sig.updateString(_text)
-    let signature = sig.sign()
+    let signature = sign(_text, _privateKey)
 
     let _url = gateway + `/${_receiverUsername.toUpperCase()}/${receiverFirstC}/${encryptedName}/inbox`
     const params = {

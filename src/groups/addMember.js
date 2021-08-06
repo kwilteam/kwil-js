@@ -3,7 +3,7 @@ import axios from 'axios'
 import gateway from '../gateway.js'
 import getFirstCharacter from '../internal/getFirstCharacter.js'
 import getMembersJSON from './getMembersJSON.js'
-import getPublicJWKFromPrivateKey from '../internal/getPublicFromPrivateJWK.js'
+import getPublicJWKFromPrivateKey from '../internal/getPublicJWKFromPrivateKey.js'
 import sign from '../internal/sign.js'
 
 const addMember = async (groupName, newMember, yourUsername, _privateJWK) => {

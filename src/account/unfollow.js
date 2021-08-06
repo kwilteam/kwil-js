@@ -5,7 +5,7 @@ import gateway from '../gateway.js'
 import sign from '../internal/sign.js'
 import getFirstCharacter from '../internal/getFirstCharacter.js'
 import getFollowing from './getFollowing.js'
-import getPublicJWKFromPrivateKey from '../internal/getPublicFromPrivate.js'
+import getPublicJWKFromPrivateKey from '../internal/getPublicJWKFromPrivateKey.js'
 
 const unfollow = async (_username, _usernameToUnfollow, _privateJWK) => {
     const _privateKey = rs.KEYUTIL.getKey(_privateJWK)

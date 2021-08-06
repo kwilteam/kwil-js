@@ -1,7 +1,7 @@
 import rs from 'jsrsasign'
 
 const checkSignature = (_data, _signature) => {
-    var sig2 = new rs.crypto.Signature({"alg": "SHA1withRSA"});
+    var sig2 = new rs.crypto.Signature({"alg": "SHA256withRSA"});
     let _key = rs.KEYUTIL.getKey(_data.publicKey)
     sig2.init(_key)
     sig2.updateString(JSON.stringify(_data))

@@ -13,6 +13,3 @@ const getPublicJWKFromPrivateKey = (_privateKey) => {
 }
 
 export default getPublicJWKFromPrivateKey
-
-/*let pKey = rs.KEYUTIL.generateKeypair('RSA', 512)
-console.log(getPublicJWKFromPrivateKey(pKey.prvKeyObj))*/
