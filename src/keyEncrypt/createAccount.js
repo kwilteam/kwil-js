@@ -5,6 +5,7 @@ import rs from 'jsrsasign'
 import getPublicJWKFromPrivateKey from '../internal/getPublicJWKFromPrivateKey.js'
 import getFirstCharacter from '../internal/getFirstCharacter.js'
 import sign from '../internal/sign.js'
+import checkSignature from '../internal/checkSignature.js'
 
 const createAccount = async (_username, _password) => {
     //username must be 5-20 characters
@@ -44,7 +45,6 @@ const createAccount = async (_username, _password) => {
     const privateKey = keyArr[0]
     const rsaJWK = rs.KEYUTIL.getJWKFromKey(privateKey)
     const publicKey = getPublicJWKFromPrivateKey(privateKey)
-
     const encryptKey = _username + _password
     const encryptedKey = aes256.encrypt(encryptKey, JSON.stringify(rsaJWK))
     const _data = {'username': _username, 'login': encryptedKey, 'publicKey': publicKey}

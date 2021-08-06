@@ -22,7 +22,7 @@ import createChat from './src/messaging/chats/createChat.js'
 import createThought from './src/posting/createThought.js'
 
 const test = async () => {
-    //console.log(await createAccount('Brennan', 'Ecclesia1'))
+    console.log(await createAccount('Brennan', 'Ecclesia1'))
     //console.log(await getThoughts('bigbutt2', 0))
     //console.log(await getAccountData('brennanjl'))
     //console.log(await getPosts('brennan',0))
