@@ -18,8 +18,15 @@ import getThoughts from './src/posting/getThoughts.js'
 import decryptMessage from './src/messaging/decryptMessage.js'
 import getInbox from './src/messaging/getInbox.js'
 import getMessages from './src/messaging/getMessages.js'
-import sendMessage from './src/messaging/sendMessage.js'
+import sendMessage from './src/messaging/common/sendMessage.js'
 import changeAllData from './src/account/changeAllData.js'
+import createGroup from './src/groups/createGroup.js'
+import editGroup from './src/groups/editGroup.js'
+import addMember from './src/groups/addMember.js'
+import removeMember from './src/groups/removeMember.js'
+import getGroupData from './src/groups/getGroupData.js'
+import getMembers from './src/groups/getMembers.js'
+
 
 const ecclesia = {
     createAccount,
@@ -43,7 +50,13 @@ const ecclesia = {
     getInbox,
     getMessages,
     sendMessage,
-    changeAllData
+    changeAllData,
+    createGroup,
+    editGroup,
+    addMember,
+    removeMember,
+    getGroupData,
+    getMembers
 }
 
 export default ecclesia

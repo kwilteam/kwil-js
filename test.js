@@ -7,7 +7,7 @@ import getThoughts from './src/posting/getThoughts.js'
 import comment from './src/posting/comment.js'
 import privateKey from './src/devKey.js'
 import getComments from './src/posting/getComments.js'
-import sendMessage from './src/messaging/sendMessage.js'
+import sendMessage from './src/messaging/common/sendMessage.js'
 import getInbox from './src/messaging/getInbox.js'
 import rs from 'jsrsasign'
 import getMessages from './src/messaging/getMessages.js'
@@ -20,8 +20,7 @@ import removeMember from './src/groups/removeMember.js'
 import isFollowing from './src/account/isFollowing.js'
 
 const test = async () => {
-    //console.log(await getThoughts('TEST1', 0))
-    //console.log(await createAccount('Brennanjl2', 'Ecclesia1'))
+    console.log(await createAccount('Bill', 'Ecclesia1'))
     //console.log(await getThoughts('bigbutt2', 0))
     //console.log(await getAccountData('brennanjl'))
     //console.log(await getPosts('brennan',0))

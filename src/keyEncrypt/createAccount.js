@@ -3,6 +3,7 @@ import axios from 'axios'
 import gateway from '../gateway.js'
 import rs from 'jsrsasign'
 import getPublicJWKFromPrivateKey from '../internal/getPublicFromPrivateJWK.js'
+import getFirstCharacter from '../internal/getFirstCharacter.js'
 
 const createAccount = async (_username, _password) => {
     //username must be 5-20 characters
@@ -10,6 +11,8 @@ const createAccount = async (_username, _password) => {
     if (_username.length > 30) {
       throw new Error('Name to long')
     }
+
+    const firstChar = getFirstCharacter(_username)
 
     //Check for window.crypto.subtle
     let keyArr = []
@@ -71,16 +74,22 @@ const createAccount = async (_username, _password) => {
     followingDataSig.init(privateKey)
     followingDataSig.updateString(JSON.stringify(followers))
     const followDataSignature = followingDataSig.sign()
-    console.log(rsaJWK)
 
+    //Creating chats passphrase data
+    const chats = {}
+    const encryptedChats = aes256.encrypt(encryptKey, JSON.stringify(chats))
+    var chatsDataSig = new rs.crypto.Signature({"alg": "SHA1withRSA"});
+    chatsDataSig.init(privateKey)
+    chatsDataSig.updateString(encryptedChats)
+    const chatsDataSignature = chatsDataSig.sign()
 
-    let _url = gateway + '/createAccount'
+    let _url = gateway + '/'+firstChar +'/'+ _username.toUpperCase() +'/createAccount'
     const params = {
         url: _url,
         method: 'post',
         timeout: 20000,
         headers: {"Content-Type": "application/json"},
-        data: [{data: _data, signature: dataSignature},{data: accountData, signature: accountDataSignature}, {data: followers, signature: followDataSignature}]
+        data: [{data: _data, signature: dataSignature},{data: accountData, signature: accountDataSignature}, {data: followers, signature: followDataSignature}, {data: encryptedChats, signature: chatsDataSignature}]
       }
 
       let response = await axios(params)
