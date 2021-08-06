@@ -1,4 +1,4 @@
-import getPublicJWKFromPrivateKey from '../internal/getPublicFromPrivate.js'
+import getPublicJWKFromPrivateKey from '../internal/getPublicJWKFromPrivateKey.js'
 import sha256 from 'js-sha256'
 import sign from '../internal/sign.js'
 import axios from 'axios'
