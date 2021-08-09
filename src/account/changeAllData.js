@@ -51,8 +51,7 @@ const changeAllData = async (_newName, _newBio, _newPFP, _privateKey, _username)
         timeout: 20000,
         data: {data: accountData, signature: dataSignature}
       }
-    let response = await axios(params)
-    console.log(response)
+    await axios(params)
     return accountData
 
 }

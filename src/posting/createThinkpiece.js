@@ -6,6 +6,7 @@ import gateway from '../gateway.js'
 import privateKey from '../devKey.js'
 import checkSignature from '../internal/checkSignature.js'
 import rs from 'jsrsasign'
+import getFirstCharacter from '../internal/getFirstCharacter.js'
 
 const createThinkpiece = async (_title, _postText, _img, _privateJWK, _username, _groupTag = '') => {
     //images should be entered as array of base64 encodings
@@ -27,8 +28,8 @@ const createThinkpiece = async (_title, _postText, _img, _privateJWK, _username,
                     "signature": _signature,
                     "ID": _ID,
                     "username": _username}
-    let _url = gateway + '/thinkpiece'
-    //console.log(checkSignature(_data, _signature))
+
+    let _url = gateway +`/${getFirstCharacter(_username)}/${_username.toUpperCase()}/thinkpiece`
     const params = {
                     url: _url,
                     method: 'post',

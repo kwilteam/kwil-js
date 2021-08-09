@@ -9,15 +9,15 @@ import sign from '../../internal/sign.js'
 const invite = async (_text, _posterUsername, _receiverUsername, _privateKey) => {
     let receiverFirstC = getFirstCharacter(_receiverUsername)
     let otherAccount = await getAccountData(_receiverUsername)
-    let othersPublicJWK = otherAccount.publicKey
-    let othersPublic = rs.KEYUTIL.getKey(othersPublicJWK)
+    let othersPublic = rs.KEYUTIL.getKey(otherAccount.publicKey)
+    console.log(rs.KEYUTIL.getJWKFromKey(othersPublic))
     let encryptedMessage = rs.crypto.Cipher.encrypt(_text, othersPublic, 'RSA')
     let encryptedName = rs.crypto.Cipher.encrypt(_posterUsername, othersPublic, 'RSA')
 
     //Signature
     let signature = sign(_text, _privateKey)
 
-    let _url = gateway + `/${_receiverUsername.toUpperCase()}/${receiverFirstC}/${encryptedName}/invites`
+    let _url = gateway + `/${receiverFirstC}/${_receiverUsername.toUpperCase()}/${encryptedName}/invites`
     const params = {
                     url: _url,
                     method: 'post',
@@ -30,8 +30,3 @@ const invite = async (_text, _posterUsername, _receiverUsername, _privateKey) =>
 }
 
 export default invite
-/*const testFunc = async () => {
-    await sendMessage('Encrypted message!', 'Brennanjl', 'Brennanjl', privateKey)
-}
-export default sendMessage
-testFunc()*/

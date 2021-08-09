@@ -6,6 +6,7 @@ import gateway from '../gateway.js'
 import privateKey from '../devKey.js'
 import checkSignature from '../internal/checkSignature.js'
 import rs from 'jsrsasign'
+import getFirstCharacter from '../internal/getFirstCharacter.js'
 
 const comment = async (_postText, _mainPostID, _privateJWK, _username) => {
     const _privateKey = rs.KEYUTIL.getKey(_privateJWK)
@@ -29,7 +30,8 @@ const comment = async (_postText, _mainPostID, _privateJWK, _username) => {
                     "username": _username,
                     "mainPostID": _mainPostID
                     }
-    let _url = gateway + `/${_username}/comment`
+
+    let _url = gateway +`/${getFirstCharacter(_username)}/${_username.toUpperCase()}/thought`
     const params = {
                     url: _url,
                     method: 'post',

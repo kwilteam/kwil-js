@@ -6,6 +6,7 @@ import gateway from '../gateway.js'
 import privateKey from '../devKey.js'
 import checkSignature from '../internal/checkSignature.js'
 import rs from 'jsrsasign'
+import getFirstCharacter from '../internal/getFirstCharacter.js'
 
 const createThought = async (_postText, _img, _privateJWK, _username, _groupTag = '') => {
     const _privateKey = rs.KEYUTIL.getKey(_privateJWK)
@@ -25,7 +26,7 @@ const createThought = async (_postText, _img, _privateJWK, _username, _groupTag 
                     "signature": _signature,
                     "ID": _ID,
                     "username": _username}
-    let _url = gateway + '/thought'
+    let _url = gateway +`/${getFirstCharacter(_username)}/${_username.toUpperCase()}/thought`
     const params = {
                     url: _url,
                     method: 'post',

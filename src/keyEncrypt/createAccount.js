@@ -5,7 +5,6 @@ import rs from 'jsrsasign'
 import getPublicJWKFromPrivateKey from '../internal/getPublicJWKFromPrivateKey.js'
 import getFirstCharacter from '../internal/getFirstCharacter.js'
 import sign from '../internal/sign.js'
-import checkSignature from '../internal/checkSignature.js'
 
 const createAccount = async (_username, _password) => {
     //username must be 5-20 characters
@@ -18,8 +17,8 @@ const createAccount = async (_username, _password) => {
 
     //Check for window.crypto.subtle
     let keyArr = []
-    if (!typeof window == 'undefined') {
-      if (!typeof window.crypto == 'undefined') {
+    if (typeof window === 'object') {
+      if (typeof window.crypto === 'object') {
         let keyPair = await window.crypto.subtle.generateKey(
           {
               name: "RSA-PSS",
@@ -30,10 +29,14 @@ const createAccount = async (_username, _password) => {
           true, //whether the key is extractable (i.e. can be used in exportKey)
           ["sign", "verify"] //can be any combination of "sign" and "verify"
       )
-      keyArr.push(keyPair.privateKey)
+      let jwk = await window.crypto.subtle.exportKey('jwk', keyPair.privateKey)
+      console.log(jwk)
+      let privateKey = rs.KEYUTIL.getKey(jwk)
+      keyArr.push(privateKey)
       }
     } else {
-      let keyPair = rs.KEYUTIL.generateKeypair("RSA", 512)
+      console.log('window.crypto not available.  Key generation may take a while...')
+      let keyPair = rs.KEYUTIL.generateKeypair("RSA", 4096)
       keyArr.push(keyPair.prvKeyObj)
     }
     /*IF THIS SECTION THROWS ERROR, EXPORT SUBTLE CRYPTO KEYPAIR AS JWK AND REIMPORT WITH JSRSASIGN
@@ -81,7 +84,6 @@ const createAccount = async (_username, _password) => {
         headers: {"Content-Type": "application/json"},
         data: [{data: _data, signature: dataSignature},{data: accountData, signature: accountDataSignature}, {data: followers, signature: followDataSignature}, {data: encryptedChats, signature: chatsDataSignature}]
       }
-
       let response = await axios(params)
       console.log(response.data)
 

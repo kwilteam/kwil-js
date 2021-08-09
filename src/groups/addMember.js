@@ -29,7 +29,7 @@ const addMember = async (groupName, newMember, yourUsername, _privateJWK) => {
             timeout: 20000,
             data: {data: finalData, signature: dataSignature}
         }
-        console.log(await axios(params))
+        await axios(params)
         return {isValid: true, members: members}
     } else {console.log(`${_yourUsername} is not allowed to add users to group ${_groupName}`)
         return {isValid: false, members: members}}

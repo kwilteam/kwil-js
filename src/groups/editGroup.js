@@ -41,8 +41,7 @@ const editGroup = async (_groupName, _groupDescription, _public, _groupTags, _gr
                 timeout: 20000,
                 data: {data: groupData, signature: dataSignature}
             }
-            let response = await axios(params)
-            console.log(response)
+            await axios(params)
             return groupData
         }
     }
