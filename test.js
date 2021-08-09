@@ -20,12 +20,21 @@ import removeMember from './src/groups/removeMember.js'
 import isFollowing from './src/account/isFollowing.js'
 import createChat from './src/messaging/chats/createChat.js'
 import createThought from './src/posting/createThought.js'
+import login from './src/keyEncrypt/login.js'
+import followGroup from './src/groups/followGroup.js'
+import getFollowing from './src/account/getFollowing.js'
+import getFollowingData from './src/internal/getFollowingData.js'
+import unfollowGroup from './src/groups/unfollowGroup.js'
 
 const test = async () => {
     //console.log(await createAccount('Brennan', 'Ecclesia1'))
-    //console.log(await getThoughts('bigbutt2', 0))
+    //console.log(await followGroup('Ecclesia', 'Brennan', privateKey))
+    //console.log(await unfollowGroup('Ecclesia', 'Brennan', privateKey))
+    //console.log(await getFollowingData('Brennan'))
+    //console.log(await getThoughts('brennan', 0))
+    //console.log(await login('Brennan', 'Ecclesia1'))
     //console.log(await getAccountData('brennanjl'))
-    console.log(await getPosts('brennan',0))
+    //console.log(await getPosts('brennan',0))
     //await comment("Dan is an acronym for Daddy's Ape Nuts", 'f64681a683c31b9762a2f70187e1bebb33839bf45265329a39f47a95363ca837', privateKey, 'Brennanjl')
     //console.log(await getComments('16ea6209a305766fd7c1b8c81168be6c49e549ba92755d3b33532c3d20f2bb26', 0))
     //sendMessage('Hi 3!', 'bigbutt2', 'Brennanjl', privateKey)
@@ -42,5 +51,6 @@ const test = async () => {
     //console.log(await createChat(['Thomas', 'Dan'], 'Bill', 'Ecclesia1', privateKey))
     //console.log(await getGroupData('test'))
     //console.log(await createThought('Hi!', '', privateKey))
+    //console.log(await getFeed('Brennan', 0))
 }
 test()

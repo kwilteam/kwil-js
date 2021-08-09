@@ -65,7 +65,7 @@ const createAccount = async (_username, _password) => {
 
     //Creating follower data
     //const followers = {publicKey: publicKey, username: _username, following: [_username.toUpperCase()]}
-    const followers = {publicKey: publicKey, username: _username, following: [_username.toUpperCase(), 'MICKEYMOUSE', 'SATOSHI', 'THEANTIJERRY', 'THEANTITOM', 'EDSNOWDEN', 'SHAKESPEARE']}
+    const followers = {publicKey: publicKey, username: _username, following: [_username.toUpperCase(), 'MICKEYMOUSE', 'SATOSHI', 'THEANTIJERRY', 'THEANTITOM', 'EDSNOWDEN', 'SHAKESPEARE'], groups: []}
     const followDataSignature = sign(JSON.stringify(followers), privateKey)
 
     //Creating chats passphrase data
