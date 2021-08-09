@@ -5,6 +5,7 @@ import sign from '../internal/sign.js'
 import getFirstCharacter from '../internal/getFirstCharacter.js'
 import gateway from '../gateway.js'
 import axios from 'axios'
+import checkSignator from '../internal/checkSignator.js'
 
 const editGroup = async (_groupName, _groupDescription, _public, _groupTags, _groupImage, _links, _username, _privateJWK) => {
     //For any input that you do not want to change, pass the input an empty string
@@ -30,8 +31,6 @@ const editGroup = async (_groupName, _groupDescription, _public, _groupTags, _gr
                 groupData.links = _links
             }
             groupData.signator = {username: _username.toUpperCase(), publicKey: getPublicFromPrivateJWK(_privateKey)}
-            console.log(groupData)
-
             const dataSignature = sign(JSON.stringify(groupData), _privateKey)
             let firstChar = getFirstCharacter(_groupName)
             let _url = gateway + `/${firstChar}/${_groupName.toUpperCase()}/editGroup`

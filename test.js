@@ -25,6 +25,7 @@ import followGroup from './src/groups/followGroup.js'
 import getFollowing from './src/account/getFollowing.js'
 import getFollowingData from './src/internal/getFollowingData.js'
 import unfollowGroup from './src/groups/unfollowGroup.js'
+import invite from './src/messaging/chats/invite.js'
 
 const test = async () => {
     //console.log(await createAccount('Brennan', 'Ecclesia1'))
@@ -43,14 +44,15 @@ const test = async () => {
     //console.log(await getAccountData('test1'))
     //console.log(await createGroup('Ecclesia', true, 'Ecclesia group', '', '', '', 'Brennan', privateKey))
     //console.log(await getGroupData('Ecclesia'))
-    //console.log(await editGroup('Ecclesia', 'Ecclesia description!', ['Yuh!'], '', ['www.google.com'], 'brennanjl', privateKey))
+    //console.log(await editGroup('Ecclesia', 'Ecclesia description!', '',['Yuh!'], '', ['www.google.com'], 'brennan', privateKey))
     //console.log(await comment('This post sucks', '16ea6209a305766fd7c1b8c81168be6c49e549ba92755d3b33532c3d20f2bb26', privateKey, 'brennanjl'))
     //console.log(await getMembers('Ecclesia'))
     //console.log(await addMember('Ecclesia', 'Thomas', 'Brennanjl', privateKey))
     //console.log(await removeMember('Ecclesia', 'Thomas', 'Brennanjl', privateKey))
     //await createChat(['test3'], 'Brennan', 'Ecclesia1', privateKey)
+    await invite('hi', 'brennan', 'test3', privateKey)
     //console.log(await getGroupData('test'))
-    console.log(await createThought('Hi!', '', privateKey, 'Brennan'))
+    //console.log(await createThought('Hi!', '', privateKey, 'Brennan'))
     //console.log(await getFeed('Brennan', 0))
 }
 test()

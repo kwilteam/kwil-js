@@ -26,6 +26,8 @@ import addMember from './src/groups/addMember.js'
 import removeMember from './src/groups/removeMember.js'
 import getGroupData from './src/groups/getGroupData.js'
 import getMembers from './src/groups/getMembers.js'
+import isFollowingGroup from './src/groups/isFollowingGroup.js'
+import isMember from './src/groups/isMember.js'
 
 
 const ecclesia = {
@@ -56,7 +58,9 @@ const ecclesia = {
     addMember,
     removeMember,
     getGroupData,
-    getMembers
+    getMembers,
+    isFollowingGroup,
+    isMember
 }
 
 export default ecclesia
