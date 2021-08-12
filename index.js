@@ -28,6 +28,8 @@ import getGroupData from './src/groups/getGroupData.js'
 import getMembers from './src/groups/getMembers.js'
 import isFollowingGroup from './src/groups/isFollowingGroup.js'
 import isMember from './src/groups/isMember.js'
+import getGroups from './src/groups/getGroups.js'
+import ifUserExists from './src/account/ifUserExists.js'
 
 
 const ecclesia = {
@@ -60,7 +62,9 @@ const ecclesia = {
     getGroupData,
     getMembers,
     isFollowingGroup,
-    isMember
+    isMember,
+    getGroups,
+    ifUserExists
 }
 
 export default ecclesia

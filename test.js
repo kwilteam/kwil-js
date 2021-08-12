@@ -26,6 +26,8 @@ import getFollowing from './src/account/getFollowing.js'
 import getFollowingData from './src/internal/getFollowingData.js'
 import unfollowGroup from './src/groups/unfollowGroup.js'
 import invite from './src/messaging/chats/invite.js'
+import createThinkpiece from './src/posting/createThinkpiece.js'
+import ecclesia from './index.js'
 
 const test = async () => {
     //console.log(await createAccount('Brennan', 'Ecclesia1'))
@@ -54,6 +56,10 @@ const test = async () => {
     //console.log(await getGroupData('test'))
     //console.log(await createThought('Hi!', '', privateKey, 'Brennan'))
     //console.log(await getFeed('Brennan', 0))
-    console.log(await getFeed('test1', 0))
+    //console.log(await getFeed('test1', 0))
+    //console.log(await createThinkpiece('yuh', 'yuh', '', privateKey, 'brennan', 'Ecclesia'))
+    //console.log(await ecclesia.ifUserExists('brennan!!'))
+    let regex = /^#[0-9A-F]{6}$/i
+    console.log(regex.test('#2596BE'))
 }
 test()

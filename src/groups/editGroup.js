@@ -30,6 +30,10 @@ const editGroup = async (_groupName, _groupDescription, _public, _groupTags, _gr
             if (_links !== '') {
                 groupData.links = _links
             }
+            let regex = /^#[0-9A-F]{6}$/i
+            if (_color !== '' && regex.test(_color)) {
+                groupData.color = _color
+            }
             groupData.signator = {username: _username.toUpperCase(), publicKey: getPublicFromPrivateJWK(_privateKey)}
             const dataSignature = sign(JSON.stringify(groupData), _privateKey)
             let firstChar = getFirstCharacter(_groupName)
