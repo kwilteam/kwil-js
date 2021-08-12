@@ -50,9 +50,10 @@ const test = async () => {
     //console.log(await addMember('Ecclesia', 'Thomas', 'Brennanjl', privateKey))
     //console.log(await removeMember('Ecclesia', 'Thomas', 'Brennanjl', privateKey))
     //await createChat(['test3'], 'Brennan', 'Ecclesia1', privateKey)
-    await invite('hi', 'brennan', 'test3', privateKey)
+    //await invite('hi', 'brennan', 'test3', privateKey)
     //console.log(await getGroupData('test'))
     //console.log(await createThought('Hi!', '', privateKey, 'Brennan'))
     //console.log(await getFeed('Brennan', 0))
+    console.log(await getFeed('test1', 0))
 }
 test()
