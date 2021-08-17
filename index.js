@@ -30,7 +30,10 @@ import isFollowingGroup from './src/groups/isFollowingGroup.js'
 import isMember from './src/groups/isMember.js'
 import getGroups from './src/groups/getGroups.js'
 import ifUserExists from './src/account/ifUserExists.js'
-
+import invite from './src/messaging/chats/invite.js'
+import createChat from './src/messaging/chats/createChat.js'
+import getGroupPosts from './src/groups/getGroupPosts.js'
+import getGroupPreview from './src/groups/getGroupPreview.js'
 
 const ecclesia = {
     createAccount,
@@ -64,7 +67,11 @@ const ecclesia = {
     isFollowingGroup,
     isMember,
     getGroups,
-    ifUserExists
+    ifUserExists,
+    invite,
+    createChat,
+    getGroupPosts,
+    getGroupPreview
 }
 
 export default ecclesia

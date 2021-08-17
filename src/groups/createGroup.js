@@ -45,7 +45,7 @@ const createGroup = async (_groupName, _public, _groupDescription, _groupTags, _
         data: [{data: charter, signature: dataSignature}, {data: groupData, signature: dataSignature2}, {data: membersList, signature: dataSignature3}]
     }
     await axios(params)
-    followGroup(_groupName, _creatorUsername, _privateKey)
+    await followGroup(_groupName, _creatorUsername, _privateKey)
     return groupData
 }
 export default createGroup

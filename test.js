@@ -56,10 +56,11 @@ const test = async () => {
     //console.log(await getGroupData('test'))
     //console.log(await createThought('Hi!', '', privateKey, 'Brennan'))
     //console.log(await getFeed('Brennan', 0))
-    //console.log(await getFeed('test1', 0))
     //console.log(await createThinkpiece('yuh', 'yuh', '', privateKey, 'brennan', 'Ecclesia'))
-    //console.log(await ecclesia.ifUserExists('brennan!!'))
-    let regex = /^#[0-9A-F]{6}$/i
-    console.log(regex.test('#2596BE'))
+    //console.log(await ecclesia.ifUserExists('brennan'))
+    //console.log(ecclesia.invite('hi!', 'brennan', 'bob', privateKey))
+    //console.log(ecclesia.createChat(['bob'], 'brennan', 'Ecclesia1', privateKey))
+    //console.log(await ecclesia.getGroupPosts('test2', 0))
+    //console.log(await ecclesia.getGroupPreview('test'))
 }
 test()

@@ -48,7 +48,7 @@ const createAccount = async (_username, _password) => {
     const privateKey = keyArr[0]
     const rsaJWK = rs.KEYUTIL.getJWKFromKey(privateKey)
     const publicKey = getPublicJWKFromPrivateKey(privateKey)
-    const encryptKey = _username + _password
+    const encryptKey = _username.toUpperCase() + _password.toUpperCase()
     const encryptedKey = aes256.encrypt(encryptKey, JSON.stringify(rsaJWK))
     const _data = {'username': _username, 'login': encryptedKey, 'publicKey': publicKey}
     

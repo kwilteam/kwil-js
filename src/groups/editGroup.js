@@ -7,7 +7,7 @@ import gateway from '../gateway.js'
 import axios from 'axios'
 import checkSignator from '../internal/checkSignator.js'
 
-const editGroup = async (_groupName, _groupDescription, _public, _groupTags, _groupImage, _links, _username, _privateJWK) => {
+const editGroup = async (_groupName, _groupDescription, _public, _groupTags, _groupImage, _links, _color, _username, _privateJWK) => {
     //For any input that you do not want to change, pass the input an empty string
     const _privateKey = rs.KEYUTIL.getKey(_privateJWK)
     //Getting previous group data

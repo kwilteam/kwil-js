@@ -13,7 +13,7 @@ const getChatKeys = async (_username, _password) => {
       }
     let response = await axios(params)
     let encryptedChats = response.data.data
-    const encryptKey = _username+_password
+    const encryptKey = _username.toUpperCase()+_password.toUpperCase()
     let decryptedChats = ''
     try{
         decryptedChats = aes256.decrypt(encryptKey, encryptedChats)
@@ -22,6 +22,7 @@ const getChatKeys = async (_username, _password) => {
         console.log(e)
         throw new Error('There was an error.  Possibly an invalid username / password')
     }
+    console.log(decryptedChats)
     return JSON.parse(decryptedChats)
 }
 

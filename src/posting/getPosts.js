@@ -3,7 +3,7 @@ import axios from 'axios'
 import checkSignature from '../internal/checkSignature.js'
 
 const getPosts = async (_username, _offset) => {
-let _url = gateway + `/${_username.toUpperCase()}/${_offset}/posts`
+let _url = gateway + `/${_username.toUpperCase()}/${_offset}///posts`
 const params = {
                 url: _url,
                 method: 'get',

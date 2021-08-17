@@ -1,5 +1,3 @@
-import axios from 'axios'
-import gateway from '../gateway.js'
 import getAccountData from '../account/getAccountData.js'
 const ifUserExists = async (_usernameReg) => {
     let _username = _usernameReg.toUpperCase()
