@@ -17,7 +17,7 @@ const addMember = async (groupName, newMember, yourUsername, _privateJWK) => {
     if (members.includes(_newMember)) {
         console.log(`${_newMember} is already a member of ${_groupName}`)
         return {isValid: false, members: members}
-    } else if (members.includes(_yourUsername)){
+    } else if (membersJSON.owner.toUpperCase() === _yourUsername){
         members.push(_newMember)
         let finalData = {owner: membersJSON.owner, members: members, signator: {username: _yourUsername.toUpperCase(), publicKey: getPublicJWKFromPrivateKey(_privateKey)}}
         const dataSignature = sign(JSON.stringify(finalData), _privateKey)

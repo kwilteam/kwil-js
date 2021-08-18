@@ -10,6 +10,7 @@ const changeNameAndBio = async (_newName, _newBio, _privateKey, _username) => {
     //Function for changing name and bio.  If you only wish to change one, leave the other as a blank string
     const privateKey = rs.KEYUTIL.getKey(_privateKey)
     let accountData = await getAccountData(_username)
+    console.log(accountData)
     let newName = ''
     if (_newName == '') {
         newName = accountData.data.name

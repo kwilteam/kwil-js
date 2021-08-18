@@ -17,7 +17,7 @@ const removeMember = async (groupName, removeMember, yourUsername, _privateJWK) 
     if (!members.includes(_removeMember)) {
         console.log(`${_removeMember} is not a member of ${_groupName}`)
         return {isValid: false, members: members}
-    } else if (members.includes(_yourUsername)){
+    } else if (membersJSON.owner.toUpperCase() === _yourUsername){
         let index = members.indexOf(_removeMember)
         if (index > -1) {
             members.splice(index, 1)

@@ -35,7 +35,7 @@ const test = async () => {
     //console.log(await unfollowGroup('Ecclesia', 'Brennan', privateKey))
     //console.log(await getFollowingData('Brennan'))
     //console.log(await getThoughts('brennan', 0))
-    //console.log(await login('Brennan', 'Ecclesia1'))
+    console.log(await login('brennan', 'Ecclesia1'))
     //console.log(await getAccountData('brennanjl'))
     //console.log(await getPosts('brennan',0))
     //await comment("Dan is an acronym for Daddy's Ape Nuts", 'f64681a683c31b9762a2f70187e1bebb33839bf45265329a39f47a95363ca837', privateKey, 'Brennanjl')
@@ -61,6 +61,7 @@ const test = async () => {
     //console.log(ecclesia.invite('hi!', 'brennan', 'bob', privateKey))
     //console.log(ecclesia.createChat(['bob'], 'brennan', 'Ecclesia1', privateKey))
     //console.log(await ecclesia.getGroupPosts('test2', 0))
-    //console.log(await ecclesia.getGroupPreview('test'))
+    //console.log(await ecclesia.createThinkpiece('hi','Hi!', [], privateKey, 'brennan'))
+    //console.log(await ecclesia.changeNameAndBio('Brennan', 'Brennan!!', privateKey, 'brennan'))
 }
 test()

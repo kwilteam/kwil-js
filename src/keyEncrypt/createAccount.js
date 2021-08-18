@@ -35,9 +35,9 @@ const createAccount = async (_username, _password) => {
       keyArr.push(privateKey)
       }
     } else {
-      console.log('window.crypto not available.  Key generation may take a while...')
-      let keyPair = rs.KEYUTIL.generateKeypair("RSA", 4096)
-      keyArr.push(keyPair.prvKeyObj)
+        console.log('window.crypto not available.  Key generation may take a while...')
+        let keyPair = rs.KEYUTIL.generateKeypair("RSA", 4096)
+        keyArr.push(keyPair.prvKeyObj)
     }
     /*IF THIS SECTION THROWS ERROR, EXPORT SUBTLE CRYPTO KEYPAIR AS JWK AND REIMPORT WITH JSRSASIGN
     EX:
@@ -48,7 +48,7 @@ const createAccount = async (_username, _password) => {
     const privateKey = keyArr[0]
     const rsaJWK = rs.KEYUTIL.getJWKFromKey(privateKey)
     const publicKey = getPublicJWKFromPrivateKey(privateKey)
-    const encryptKey = _username.toUpperCase() + _password.toUpperCase()
+    const encryptKey = _username.toLowerCase() + _password.toLowerCase()
     const encryptedKey = aes256.encrypt(encryptKey, JSON.stringify(rsaJWK))
     const _data = {'username': _username, 'login': encryptedKey, 'publicKey': publicKey}
     

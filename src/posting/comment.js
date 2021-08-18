@@ -31,7 +31,7 @@ const comment = async (_postText, _mainPostID, _privateJWK, _username) => {
                     "mainPostID": _mainPostID
                     }
 
-    let _url = gateway +`/${getFirstCharacter(_username)}/${_username.toUpperCase()}/thought`
+    let _url = gateway +`/${getFirstCharacter(_username)}/${_username.toUpperCase()}/comment`
     const params = {
                     url: _url,
                     method: 'post',
