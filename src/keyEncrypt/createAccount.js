@@ -5,6 +5,7 @@ import rs from 'jsrsasign'
 import getPublicJWKFromPrivateKey from '../internal/getPublicJWKFromPrivateKey.js'
 import getFirstCharacter from '../internal/getFirstCharacter.js'
 import sign from '../internal/sign.js'
+import {User} from '../classes.js'
 
 const createAccount = async (_username, _password) => {
     //username must be 5-20 characters
@@ -60,11 +61,15 @@ const createAccount = async (_username, _password) => {
       "username": _username,
       "name": '',
       "bio": '',
-      "pfp": '',
       "publicKey": publicKey
     }
 
     const accountDataSignature = sign(JSON.stringify(accountData), privateKey)
+
+    let pfp = {
+      "pfp": ''
+    }
+    const pfpSignature = sign(JSON.stringify(pfp), privateKey)
 
     //Creating follower data
     //const followers = {publicKey: publicKey, username: _username, following: [_username.toUpperCase()]}
@@ -85,8 +90,7 @@ const createAccount = async (_username, _password) => {
         data: [{data: _data, signature: dataSignature},{data: accountData, signature: accountDataSignature}, {data: followers, signature: followDataSignature}, {data: encryptedChats, signature: chatsDataSignature}]
       }
       let response = await axios(params)
-      console.log(response.data)
-
+      //let newUser = new User(_username, publicKey, encryptKey, dataSignature, accountDataSignature, pfpSignature, followDataSignature)
       return {'pubKey': publicKey, 'privateKey': rsaJWK}
     
 }

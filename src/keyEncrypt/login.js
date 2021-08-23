@@ -19,7 +19,6 @@ const login = async (_username, _password) => {
       let loginCipher = response.data.data.login
       const encryptKey = _username.toLowerCase() + _password.toLowerCase()
       let privateKey = aes256.decrypt(encryptKey, loginCipher)
-      console.log(privateKey)
       return {"privateKey": JSON.parse(privateKey), "loginValid": true}
       }
       return {"privateKey": '', "loginValid": false}

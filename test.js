@@ -28,6 +28,7 @@ import unfollowGroup from './src/groups/unfollowGroup.js'
 import invite from './src/messaging/chats/invite.js'
 import createThinkpiece from './src/posting/createThinkpiece.js'
 import ecclesia from './index.js'
+import {Post} from './src/classes.js'
 
 const test = async () => {
     //console.log(await createAccount('Brennan', 'Ecclesia1'))
@@ -35,7 +36,7 @@ const test = async () => {
     //console.log(await unfollowGroup('Ecclesia', 'Brennan', privateKey))
     //console.log(await getFollowingData('Brennan'))
     //console.log(await getThoughts('brennan', 0))
-    console.log(await login('brennan', 'Ecclesia1'))
+    //console.log(await login('brennan', 'Ecclesia1'))
     //console.log(await getAccountData('brennanjl'))
     //console.log(await getPosts('brennan',0))
     //await comment("Dan is an acronym for Daddy's Ape Nuts", 'f64681a683c31b9762a2f70187e1bebb33839bf45265329a39f47a95363ca837', privateKey, 'Brennanjl')
@@ -60,8 +61,19 @@ const test = async () => {
     //console.log(await ecclesia.ifUserExists('brennan'))
     //console.log(ecclesia.invite('hi!', 'brennan', 'bob', privateKey))
     //console.log(ecclesia.createChat(['bob'], 'brennan', 'Ecclesia1', privateKey))
-    //console.log(await ecclesia.getGroupPosts('test2', 0))
+    //console.log(await ecclesia.getGroupPosts('testgroup', 0))
     //console.log(await ecclesia.createThinkpiece('hi','Hi!', [], privateKey, 'brennan'))
-    //console.log(await ecclesia.changeNameAndBio('Brennan', 'Brennan!!', privateKey, 'brennan'))
+    //console.log(await ecclesia.getPostByID('578923a40149e990de5030d6d8842270fdef69f8f65f3ce1fe7df446f566e2de', 'BIGBUTT2', 'thought'))
 }
+
 test()
+
+
+
+/*
+let pKey = rs.KEYUTIL.getKey(privateKey)
+let yuh = rs.KEYUTIL.getPEM(pKey, 'PKCS5PRV', 'password')
+//yuh = rs.KEYUTIL._getPlainPKCS8HexFromEncryptedPKCS8PEM(yuh, 'password')
+//console.log(rs.KEYUTIL.parseHexOfEncryptedPKCS8('password'))
+//yuh = rs.KEYUTIL.getPBKDF2KeyHexFromParam(yuh, 'password')
+console.log(yuh)*/

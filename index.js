@@ -34,6 +34,7 @@ import invite from './src/messaging/chats/invite.js'
 import createChat from './src/messaging/chats/createChat.js'
 import getGroupPosts from './src/groups/getGroupPosts.js'
 import getGroupPreview from './src/groups/getGroupPreview.js'
+import getPostByID from './src/posting/getPostByID.js'
 
 const ecclesia = {
     createAccount,
@@ -71,7 +72,8 @@ const ecclesia = {
     invite,
     createChat,
     getGroupPosts,
-    getGroupPreview
+    getGroupPreview,
+    getPostByID
 }
 
 export default ecclesia
