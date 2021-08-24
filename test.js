@@ -29,6 +29,7 @@ import invite from './src/messaging/chats/invite.js'
 import createThinkpiece from './src/posting/createThinkpiece.js'
 import ecclesia from './index.js'
 import {Post} from './src/classes.js'
+import sha256 from 'js-sha256'
 
 const test = async () => {
     //console.log(await createAccount('Brennan', 'Ecclesia1'))
@@ -58,7 +59,7 @@ const test = async () => {
     //console.log(await createThought('Hi!', '', privateKey, 'Brennan'))
     //console.log(await getFeed('Brennan', 0))
     //console.log(await createThinkpiece('yuh', 'yuh', '', privateKey, 'brennan', 'Ecclesia'))
-    //console.log(await ecclesia.ifUserExists('brennan'))
+    //console.log(await ecclesia.ifUserExists('bigbutt2'))
     //console.log(ecclesia.invite('hi!', 'brennan', 'bob', privateKey))
     //console.log(ecclesia.createChat(['bob'], 'brennan', 'Ecclesia1', privateKey))
     //console.log(await ecclesia.getGroupPosts('testgroup', 0))
@@ -77,3 +78,9 @@ let yuh = rs.KEYUTIL.getPEM(pKey, 'PKCS5PRV', 'password')
 //console.log(rs.KEYUTIL.parseHexOfEncryptedPKCS8('password'))
 //yuh = rs.KEYUTIL.getPBKDF2KeyHexFromParam(yuh, 'password')
 console.log(yuh)*/
+
+/*
+console.log(sha256)
+let yuh = sha256.arrayBuffer('1')
+console.log(yuh)
+*/
