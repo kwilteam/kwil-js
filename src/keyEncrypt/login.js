@@ -17,7 +17,7 @@ const login = async (_username, _password) => {
       let response = await axios(params)
       if (checkSignature(response.data.data, response.data.signature)){
       let loginCipher = response.data.data.login
-      const encryptKey = _username.toLowerCase() + _password.toLowerCase()
+      const encryptKey = _username.toLowerCase() + _password
       let privateKey = aes256.decrypt(encryptKey, loginCipher)
       return {"privateKey": JSON.parse(privateKey), "loginValid": true}
       }

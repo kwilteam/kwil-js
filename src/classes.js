@@ -152,6 +152,7 @@ class NewUser {
         this.following = {
             data: {
                 following: [_username],
+                groups: [],
                 publicKey: publicKey
             },
             signature: sign({
