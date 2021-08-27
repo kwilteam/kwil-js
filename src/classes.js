@@ -2,6 +2,8 @@ import {sha256} from 'js-sha256'
 import rs from 'jsrsasign'
 import sign from './internal/sign.js'
 import getPublicJWKFromPrivateJWK from './internal/getPublicJWKFromPrivateJWK.js'
+import aes256 from 'aes256'
+import privateKey from './devKey.js'
 
 class Chat {
     constructor(_name) {
@@ -105,64 +107,63 @@ class User {
     }
 }
 
-/*class NewUser {
-    constructor(_username, _password) {
-        let keyArr = []
-        if (typeof window === 'object') {
-          if (typeof window.crypto === 'object') {
-            let keyPair = await window.crypto.subtle.generateKey(
-              {
-                  name: "RSA-PSS",
-                  modulusLength: 4096, //can be 1024, 2048, or 4096
-                  publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
-                  hash: {name: "SHA-256"}, //can be "SHA-1", "SHA-256", "SHA-384", or "SHA-512"
-              },
-              true, //whether the key is extractable (i.e. can be used in exportKey)
-              ["sign", "verify"] //can be any combination of "sign" and "verify"
-          )
-          let jwk = await window.crypto.subtle.exportKey('jwk', keyPair.privateKey)
-          console.log(jwk)
-          let privateKey = rs.KEYUTIL.getKey(jwk)
-          keyArr.push(privateKey)
-          }
-        } else {
-            console.log('window.crypto not available.  Key generation may take a while...')
-            let keyPair = rs.KEYUTIL.generateKeypair("RSA", 4096)
-            keyArr.push(keyPair.prvKeyObj)
-        }
+class NewUser {
+    constructor(_usernameReg, _password, _privateJWK) {
+        const _username = _usernameReg.toLowerCase()
+        const publicKey = getPublicJWKFromPrivateJWK(_privateJWK)
+        const encryptKey = _username.toLowerCase() + _password
+        const cipher = aes256.encrypt(encryptKey, JSON.stringify(_privateJWK)) //This generates the AES-256 cipher based on Username, Password, and the Private JWK
         this.info = {
             data: {
-                username: _username.toLowerCase(), 
-                publicKey: _publicKey, 
-                login: _login
+                username: _username, 
+                publicKey: publicKey, 
+                login: cipher
             },
-            signature: _infoSignature
+            signature: sign({
+                username: _username, 
+                publicKey: publicKey, 
+                login: cipher
+            }, _privateJWK)
         }
         this.data = {
             data: {
-                username: _username.toLowerCase(),
+                username: _username,
                 name: '',
                 bio: '',
-                publicKey: _publicKey
+                publicKey: publicKey
             },
-            signature: _dataSignature
+            signature: sign({
+                username: _username,
+                name: '',
+                bio: '',
+                publicKey: publicKey
+            }, _privateJWK)
         }
         this.pfp = {
             data: {
                 pfp: '',
-                publicKey: _publicKey
+                publicKey: publicKey
             },
-            signature: _pfpSignature
+            signature: sign({
+                pfp: '',
+                publicKey: publicKey
+            }, _privateJWK)
         }
         this.following = {
             data: {
-                following: [_username.toLowerCase()],
-                publicKey: _publicKey
+                following: [_username],
+                publicKey: publicKey
             },
-            signature: _followingSignature
+            signature: sign({
+                following: [_username],
+                publicKey: publicKey
+            }, _privateJWK)
         }
     }
-}*/
+}
 
 
-export {Chat, Post, Group, User}
+export {Chat, Post, Group, User, NewUser}
+/*let test1 = new NewUser('brennan', 'Ecclesia1', privateKey)
+console.log(JSON.stringify(test1))
+*/

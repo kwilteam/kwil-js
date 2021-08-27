@@ -37,6 +37,8 @@ import getGroupPreview from './src/groups/getGroupPreview.js'
 import getPostByID from './src/posting/getPostByID.js'
 import followGroup from './src/groups/followGroup.js'
 import unfollowGroup from './src/groups/unfollowGroup.js'
+import sign from './src/internal/sign.js'
+import like from './src/interactions/like.js'
 
 const ecclesia = {
     createAccount,
@@ -77,7 +79,9 @@ const ecclesia = {
     getGroupPreview,
     getPostByID,
     followGroup,
-    unfollowGroup
+    unfollowGroup,
+    sign,
+    like
 }
 
 export default ecclesia

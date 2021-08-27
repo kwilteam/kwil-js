@@ -5,9 +5,11 @@ import rs from 'jsrsasign'
 import getPublicJWKFromPrivateKey from '../internal/getPublicJWKFromPrivateKey.js'
 import getFirstCharacter from '../internal/getFirstCharacter.js'
 import sign from '../internal/sign.js'
-import {User} from '../classes.js'
+import {NewUser} from '../classes.js'
+import getPublicJWKFromPrivateJWK from '../internal/getPublicJWKFromPrivateJWK.js'
 
-const createAccount = async (_username, _password) => {
+const createAccount = async (_usernameReg, _password) => {
+  const _username = _usernameReg.toLowerCase()
     //username must be 5-20 characters
     //password must be 1 upper case, 1 lower case, 1 number, 8 characters
     if (_username.length > 30) {
@@ -48,38 +50,7 @@ const createAccount = async (_username, _password) => {
     //RSAJSSIGN section
     const privateKey = keyArr[0]
     const rsaJWK = rs.KEYUTIL.getJWKFromKey(privateKey)
-    const publicKey = getPublicJWKFromPrivateKey(privateKey)
-    const encryptKey = _username.toLowerCase() + _password.toLowerCase()
-    const encryptedKey = aes256.encrypt(encryptKey, JSON.stringify(rsaJWK))
-    const _data = {'username': _username, 'login': encryptedKey, 'publicKey': publicKey}
-    
-    //Generate data signature with JSRSASIGN
-    const dataSignature = sign(JSON.stringify(_data), privateKey)
-    //console.log(rs.KEYUTIL.getJWKFromKey(privateKey))
-
-    let accountData = {
-      "username": _username,
-      "name": '',
-      "bio": '',
-      "publicKey": publicKey
-    }
-
-    const accountDataSignature = sign(JSON.stringify(accountData), privateKey)
-
-    let pfp = {
-      "pfp": ''
-    }
-    const pfpSignature = sign(JSON.stringify(pfp), privateKey)
-
-    //Creating follower data
-    //const followers = {publicKey: publicKey, username: _username, following: [_username.toUpperCase()]}
-    const followers = {publicKey: publicKey, username: _username, following: [_username.toUpperCase(), 'MICKEYMOUSE', 'SATOSHI', 'THEANTIJERRY', 'THEANTITOM', 'EDSNOWDEN', 'SHAKESPEARE'], groups: []}
-    const followDataSignature = sign(JSON.stringify(followers), privateKey)
-
-    //Creating chats passphrase data
-    const chats = {}
-    const encryptedChats = aes256.encrypt(encryptKey, JSON.stringify(chats))
-    const chatsDataSignature = sign(encryptedChats, privateKey)
+    const user = new NewUser(_username, _password, rsaJWK)
 
     let _url = gateway + '/'+firstChar +'/'+ _username.toUpperCase() +'/createAccount'
     const params = {
@@ -87,11 +58,11 @@ const createAccount = async (_username, _password) => {
         method: 'post',
         timeout: 20000,
         headers: {"Content-Type": "application/json"},
-        data: [{data: _data, signature: dataSignature},{data: accountData, signature: accountDataSignature}, {data: followers, signature: followDataSignature}, {data: encryptedChats, signature: chatsDataSignature}]
+        data: user
       }
       let response = await axios(params)
       //let newUser = new User(_username, publicKey, encryptKey, dataSignature, accountDataSignature, pfpSignature, followDataSignature)
-      return {'pubKey': publicKey, 'privateKey': rsaJWK}
+      return {'pubKey': getPublicJWKFromPrivateJWK(rsaJWK), 'privateKey': rsaJWK}
     
 }
 export default createAccount

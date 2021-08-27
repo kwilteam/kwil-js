@@ -30,16 +30,17 @@ import createThinkpiece from './src/posting/createThinkpiece.js'
 import ecclesia from './index.js'
 import {Post} from './src/classes.js'
 import sha256 from 'js-sha256'
+import sign from './src/internal/sign.js'
 
 const test = async () => {
-    //console.log(await createAccount('Brennan', 'Ecclesia1'))
+    //console.log(await createAccount('jon1', 'Ecclesia1'))
     //console.log(await followGroup('Ecclesia', 'Brennan', privateKey))
     //console.log(await unfollowGroup('Ecclesia', 'Brennan', privateKey))
     //console.log(await getFollowingData('Brennan'))
     //console.log(await getThoughts('brennan', 0))
     //console.log(await login('brennan', 'Ecclesia1'))
     //console.log(await getAccountData('brennanjl'))
-    //console.log(await getPosts('brennan',0))
+    //console.log(await getPosts('brennanlamey',0))
     //await comment("Dan is an acronym for Daddy's Ape Nuts", 'f64681a683c31b9762a2f70187e1bebb33839bf45265329a39f47a95363ca837', privateKey, 'Brennanjl')
     //console.log(await getComments('16ea6209a305766fd7c1b8c81168be6c49e549ba92755d3b33532c3d20f2bb26', 0))
     //sendMessage('Hi 3!', 'bigbutt2', 'Brennanjl', privateKey)
@@ -63,14 +64,15 @@ const test = async () => {
     //console.log(ecclesia.invite('hi!', 'brennan', 'bob', privateKey))
     //console.log(ecclesia.createChat(['bob'], 'brennan', 'Ecclesia1', privateKey))
     //console.log(await ecclesia.getGroupPosts('testgroup', 0))
-    //console.log(await ecclesia.createThinkpiece('hi','Hi!', [], privateKey, 'brennan'))
+    //console.log(await ecclesia.comment('hi', 'qe21', privateKey, 'brennanlamey'))
     //console.log(await ecclesia.getPostByID('578923a40149e990de5030d6d8842270fdef69f8f65f3ce1fe7df446f566e2de', 'BIGBUTT2', 'thought'))
+    //console.log(await ecclesia.like(true, '12', 'brennanlamey', privateKey))
 }
 
-test()
+//test()
 
 
-
+//console.log(sign('hiiiii', privateKey))
 /*
 let pKey = rs.KEYUTIL.getKey(privateKey)
 let yuh = rs.KEYUTIL.getPEM(pKey, 'PKCS5PRV', 'password')
