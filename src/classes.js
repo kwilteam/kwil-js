@@ -151,7 +151,7 @@ class NewUser {
         }
         this.following = {
             data: {
-                following: [_username],
+                following: [_username, 'ecclesia'],
                 groups: [],
                 publicKey: publicKey
             },

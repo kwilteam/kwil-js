@@ -13,13 +13,13 @@ const changeNameAndBio = async (_newName, _newBio, _privateKey, _username) => {
     console.log(accountData)
     let newName = ''
     if (_newName == '') {
-        newName = accountData.data.name
+        newName = accountData.name
     } else {
         newName = _newName
     }
     let newBio = ''
     if (_newBio == '') {
-        newBio = accountData.data.bio
+        newBio = accountData.bio
     } else {
         newBio = _newBio
     }

@@ -38,7 +38,7 @@ const test = async () => {
     //console.log(await unfollowGroup('Ecclesia', 'Brennan', privateKey))
     //console.log(await getFollowingData('Brennan'))
     //console.log(await getThoughts('brennan', 0))
-    //console.log(await login('betatesting', 'Ecclesia1'))
+    //console.log(await login('ecclesia', 'Ecclesia2TheMoon!'))
     //console.log(await getAccountData('brennanjl'))
     //console.log(await getPosts('brennanlamey',0))
     //await comment("Dan is an acronym for Daddy's Ape Nuts", 'f64681a683c31b9762a2f70187e1bebb33839bf45265329a39f47a95363ca837', privateKey, 'Brennanjl')
@@ -69,6 +69,7 @@ const test = async () => {
     //console.log(await ecclesia.getPostByID('578923a40149e990de5030d6d8842270fdef69f8f65f3ce1fe7df446f566e2de', 'BIGBUTT2', 'thought'))
     //console.log(await ecclesia.like(true, '12', 'brennanlamey', privateKey))
     //console.log(await ecclesia.getGroups('bubby'))
+    //console.log(await ecclesia.ifGroupExists('ecclesia'))
 }
 
 //test()

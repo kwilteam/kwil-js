@@ -12,19 +12,19 @@ const changeAllData = async (_newName, _newBio, _newPFP, _privateKey, _username)
     let accountData = await getAccountData(_username)
     let newName = ''
     if (_newName == '') {
-        newName = accountData.data.name
+        newName = accountData.name
     } else {
         newName = _newName
     }
     let newBio = ''
     if (_newBio == '') {
-        newBio = accountData.data.bio
+        newBio = accountData.bio
     } else {
         newBio = _newBio
     }
     let newPFP = ''
     if (_newPFP == '') {
-        newPFP = accountData.data.pfp
+        newPFP = accountData.pfp
     } else {
         newPFP = _newPFP
     }

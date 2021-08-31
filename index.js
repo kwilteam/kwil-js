@@ -39,6 +39,7 @@ import followGroup from './src/groups/followGroup.js'
 import unfollowGroup from './src/groups/unfollowGroup.js'
 import sign from './src/internal/sign.js'
 import like from './src/interactions/like.js'
+import ifGroupExists from './src/groups/ifGroupExists.js'
 
 const ecclesia = {
     createAccount,
@@ -81,7 +82,8 @@ const ecclesia = {
     followGroup,
     unfollowGroup,
     sign,
-    like
+    like,
+    ifGroupExists
 }
 
 export default ecclesia
