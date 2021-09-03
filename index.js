@@ -1,6 +1,7 @@
 import createAccount from './src/keyEncrypt/createAccount.js'
 import changeNameAndBio from './src/account/changeNameAndBio.js'
 import changePFP from './src/account/changePFP.js'
+import getPFP from './src/account/getPFP.js'
 import follow from './src/account/follow.js'
 import getAccountData from './src/account/getAccountData.js'
 import getFollowing from './src/account/getFollowing.js'
@@ -40,11 +41,15 @@ import unfollowGroup from './src/groups/unfollowGroup.js'
 import sign from './src/internal/sign.js'
 import like from './src/interactions/like.js'
 import ifGroupExists from './src/groups/ifGroupExists.js'
+import createEvent from './src/groups/createEvent.js'
+import getNameAndBio from './src/account/getNameAndBio.js'
 
 const ecclesia = {
     createAccount,
     changeNameAndBio,
+    getNameAndBio,
     changePFP,
+    getPFP,
     follow,
     getAccountData,
     getFollowing,
@@ -83,7 +88,8 @@ const ecclesia = {
     unfollowGroup,
     sign,
     like,
-    ifGroupExists
+    ifGroupExists,
+    createEvent
 }
 
 export default ecclesia

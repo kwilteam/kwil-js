@@ -5,6 +5,24 @@ import getPublicJWKFromPrivateJWK from './internal/getPublicJWKFromPrivateJWK.js
 import aes256 from 'aes256'
 import privateKey from './devKey.js'
 
+class Event {
+    constructor(_eventName, _desc, _time, _country, _city, _tags, _group, _username, _publicKey) {
+        this.name = _eventName
+        this.description = _desc
+        this.time = _time
+        this.country = _country
+        this.city = _city
+        this.tags = _tags
+        this.group = _group
+        this.creator = _username
+        this.ID = sha256(_eventName+_eventTime.toString()+_group)
+        this.signator = {
+            username: _username,
+            publicKey: _publicKey
+        }
+    }
+}
+
 class Chat {
     constructor(_name) {
         this.name = _name
@@ -24,7 +42,7 @@ class Post {
             username: _username,
             groupTag: _groupTag
         }
-        this.signature = sign(this.data, rs.KEYUTIL.getKey(_privateJWK))
+        this.signature = sign(JSON.stringify(this.data), rs.KEYUTIL.getKey(_privateJWK))
         this.ID = sha256(this.signature+this.data.timeStamp)
     }
 }
@@ -119,11 +137,11 @@ class NewUser {
                 publicKey: publicKey, 
                 login: cipher
             },
-            signature: sign({
+            signature: sign(JSON.stringify({
                 username: _username, 
                 publicKey: publicKey, 
                 login: cipher
-            }, _privateJWK)
+            }), _privateJWK)
         }
         this.data = {
             data: {
@@ -132,22 +150,22 @@ class NewUser {
                 bio: '',
                 publicKey: publicKey
             },
-            signature: sign({
+            signature: sign(JSON.stringify({
                 username: _username,
                 name: '',
                 bio: '',
                 publicKey: publicKey
-            }, _privateJWK)
+            }), _privateJWK)
         }
         this.pfp = {
             data: {
                 pfp: '',
                 publicKey: publicKey
             },
-            signature: sign({
+            signature: sign(JSON.stringify({
                 pfp: '',
                 publicKey: publicKey
-            }, _privateJWK)
+            }), _privateJWK)
         }
         this.following = {
             data: {
@@ -155,16 +173,17 @@ class NewUser {
                 groups: [],
                 publicKey: publicKey
             },
-            signature: sign({
-                following: [_username],
+            signature: sign(JSON.stringify({
+                following: [_username, 'ecclesia'],
+                groups: [],
                 publicKey: publicKey
-            }, _privateJWK)
+            }), _privateJWK)
         }
     }
 }
 
 
-export {Chat, Post, Group, User, NewUser}
+export {Chat, Post, Group, User, NewUser, Event}
 /*let test1 = new NewUser('brennan', 'Ecclesia1', privateKey)
 console.log(JSON.stringify(test1))
 */

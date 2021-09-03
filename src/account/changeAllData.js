@@ -7,7 +7,7 @@ import rs from 'jsrsasign'
 import sign from '../internal/sign.js'
 
 const changeAllData = async (_newName, _newBio, _newPFP, _privateKey, _username) => {
-    //Function for changing name and bio.  If you only wish to change one, leave the other as a blank string
+    //THIS DOESN'T WORK ANYMORE
     const privateKey = rs.KEYUTIL.getKey(_privateKey)
     let accountData = await getAccountData(_username)
     let newName = ''

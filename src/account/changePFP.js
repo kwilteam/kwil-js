@@ -1,4 +1,4 @@
-import getAccountData from './getAccountData.js'
+import getPFP from './getPFP.js'
 import privateKey from '../devKey.js'
 import gateway from '../gateway.js'
 import getFirstCharacter from '../internal/getFirstCharacter.js'
@@ -9,15 +9,15 @@ import sign from '../internal/sign.js'
 const changePFP = async (_newPFP, _privateKey, _username) => {
     //Function for changing name and bio.  If you only wish to change one, leave the other as a blank string
     const privateKey = rs.KEYUTIL.getKey(_privateKey)
-    let accountData = await getAccountData(_username)
-    accountData.pfp = _newPFP
+    let pfpData = await getPFP(_username)
+    pfpData.pfp = _newPFP
 
     const firstChar = getFirstCharacter(_username.toUpperCase())
-    const dataSignature = sign(JSON.stringify(accountData), privateKey)
+    const dataSignature = sign(JSON.stringify(pfpData), privateKey)
 
     //Check if image can be parsed
     try{
-        let testString = JSON.stringify({data: accountData, signature: dataSignature})
+        let testString = JSON.stringify({data: pfpData, signature: dataSignature})
         JSON.parse(testString)
         //JSON.parse(`{"data": ${accountData}, "signature": ${dataSignature}}`)
     }
@@ -25,15 +25,15 @@ const changePFP = async (_newPFP, _privateKey, _username) => {
         throw new Error('Image can not be posted')
     }
     
-    let _url = gateway + `/${firstChar}/${_username.toUpperCase()}/changeNameAndBio`
+    let _url = gateway + `/${firstChar}/${_username.toUpperCase()}/changePFP`
     const params = {
         url: _url,
         method: 'post',
         timeout: 20000,
-        data: {data: accountData, signature: dataSignature}
+        data: {data: pfpData, signature: dataSignature}
       }
     await axios(params)
-    return accountData
+    return pfpData
 
 }
 export default changePFP

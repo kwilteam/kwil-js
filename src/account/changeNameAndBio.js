@@ -1,4 +1,4 @@
-import getAccountData from './getAccountData.js'
+import getNameAndBio from './getNameAndBio.js'
 import privateKey from '../devKey.js'
 import gateway from '../gateway.js'
 import getFirstCharacter from '../internal/getFirstCharacter.js'
@@ -9,7 +9,7 @@ import sign from '../internal/sign.js'
 const changeNameAndBio = async (_newName, _newBio, _privateKey, _username) => {
     //Function for changing name and bio.  If you only wish to change one, leave the other as a blank string
     const privateKey = rs.KEYUTIL.getKey(_privateKey)
-    let accountData = await getAccountData(_username)
+    let accountData = await getNameAndBio(_username)
     console.log(accountData)
     let newName = ''
     if (_newName == '') {

@@ -1,3 +1,4 @@
+import pbkdf2 from 'pbkdf2'
 import getAccountData from './src/account/getAccountData.js'
 import getPosts from './src/posting/getPosts.js'
 import createAccount from './src/keyEncrypt/createAccount.js'
@@ -33,13 +34,13 @@ import sha256 from 'js-sha256'
 import sign from './src/internal/sign.js'
 
 const test = async () => {
-    //console.log(await createAccount('bubby', 'Ecclesia1'))
-    //console.log(await followGroup('Ecclesia', 'Brennan', privateKey))
+    //console.log(await createAccount('bubby7', 'Ecclesia1'))
+    //console.log(await followGroup('HEY', 'bubby7', privateKey))
     //console.log(await unfollowGroup('Ecclesia', 'Brennan', privateKey))
     //console.log(await getFollowingData('Brennan'))
     //console.log(await getThoughts('brennan', 0))
-    //console.log(await login('ecclesia', 'Ecclesia2TheMoon!'))
-    //console.log(await getAccountData('brennanjl'))
+    //console.log(await login('theantitom', 'Ecclesia1'))
+    //console.log(await getAccountData('bubby7'))
     //console.log(await getPosts('brennanlamey',0))
     //await comment("Dan is an acronym for Daddy's Ape Nuts", 'f64681a683c31b9762a2f70187e1bebb33839bf45265329a39f47a95363ca837', privateKey, 'Brennanjl')
     //console.log(await getComments('16ea6209a305766fd7c1b8c81168be6c49e549ba92755d3b33532c3d20f2bb26', 0))
@@ -70,6 +71,9 @@ const test = async () => {
     //console.log(await ecclesia.like(true, '12', 'brennanlamey', privateKey))
     //console.log(await ecclesia.getGroups('bubby'))
     //console.log(await ecclesia.ifGroupExists('ecclesia'))
+    //console.log(rs.KEYUTIL.getPBKDF2KeyHexFromParam('123','hi'))
+    //console.log(pbkdf2.pbkdf2('hi', '123', 100, 64, sha256.sha256))
+    //console.log(await ecclesia.createEvent('', '', '', '', 'ECCLESIA', 'bubby7', privateKey))
 }
 
 //test()

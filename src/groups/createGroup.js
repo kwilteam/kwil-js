@@ -16,7 +16,7 @@ const createGroup = async (_groupName, _public, _groupDescription, _groupTags, _
    if (!regex.test(_color)){
        throw new Error('Invalid Color')
    }
-   const _creatorUsername = _creatorUsernameReg.toUpperCase()
+   const _creatorUsername = _creatorUsernameReg.toLowerCase()
    const _privateKey = rs.KEYUTIL.getKey(_creatorPrivateJWK)
    var membership = ''
    if (_public === true) {
@@ -24,15 +24,15 @@ const createGroup = async (_groupName, _public, _groupDescription, _groupTags, _
    } else {
        membership = [_creatorUsername]
    }
-   let charter = {name: _groupName, public: _public, creator: _creatorUsernameReg, publicKey: getPublicJWKFromPrivateKey(_privateKey), timeStamp: Date.now()}
+   let charter = {name: _groupName, public: _public, creator: _creatorUsername, publicKey: getPublicJWKFromPrivateKey(_privateKey), timeStamp: Date.now()}
    const dataSignature = sign(JSON.stringify(charter), _privateKey)
 
    //Creating initial group data
-   const groupData = {owner: _creatorUsernameReg, public: _public, description: _groupDescription, tags: _groupTags, image: _groupImage, links: _links, color: _color, signator: {username: _creatorUsername.toUpperCase(), publicKey: getPublicJWKFromPrivateKey(_privateKey)}}
+   const groupData = {owner: _creatorUsername, public: _public, description: _groupDescription, tags: _groupTags, image: _groupImage, links: _links, color: _color, signator: {username: _creatorUsername.toUpperCase(), publicKey: getPublicJWKFromPrivateKey(_privateKey)}}
    const dataSignature2 = sign(JSON.stringify(groupData), _privateKey)
 
    //Creating members list
-   const membersList = {owner: _creatorUsernameReg, members: [_creatorUsernameReg], signator: {username: _creatorUsername.toUpperCase(), publicKey: getPublicJWKFromPrivateKey(_privateKey)}}
+   const membersList = {owner: _creatorUsername, members: [_creatorUsername], signator: {username: _creatorUsername, publicKey: getPublicJWKFromPrivateKey(_privateKey)}}
    const dataSignature3 = sign(JSON.stringify(membersList), _privateKey)
 
    let firstChar = getFirstCharacter(_groupName)
