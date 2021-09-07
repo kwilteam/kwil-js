@@ -1,37 +1,37 @@
-import pbkdf2 from 'pbkdf2'
-import getAccountData from './src/account/getAccountData.js'
-import getPosts from './src/posting/getPosts.js'
-import createAccount from './src/keyEncrypt/createAccount.js'
-import getFeed from './src/posting/getFeed.js'
-import getThinkpieces from './src/posting/getThinkpieces.js'
-import getThoughts from './src/posting/getThoughts.js'
-import comment from './src/posting/comment.js'
-import privateKey from './src/devKey.js'
-import getComments from './src/posting/getComments.js'
-import sendMessage from './src/messaging/common/sendMessage.js'
-import getInbox from './src/messaging/getInbox.js'
-import rs from 'jsrsasign'
-import getMessages from './src/messaging/getMessages.js'
-import createGroup from './src/groups/createGroup.js'
-import getGroupData from './src/groups/getGroupData.js'
-import editGroup from './src/groups/editGroup.js'
-import getMembers from './src/groups/getMembers.js'
-import addMember from './src/groups/addMember.js'
-import removeMember from './src/groups/removeMember.js'
-import isFollowing from './src/account/isFollowing.js'
-import createChat from './src/messaging/chats/createChat.js'
-import createThought from './src/posting/createThought.js'
-import login from './src/keyEncrypt/login.js'
-import followGroup from './src/groups/followGroup.js'
-import getFollowing from './src/account/getFollowing.js'
-import getFollowingData from './src/internal/getFollowingData.js'
-import unfollowGroup from './src/groups/unfollowGroup.js'
-import invite from './src/messaging/chats/invite.js'
-import createThinkpiece from './src/posting/createThinkpiece.js'
-import ecclesia from './index.js'
-import {Post} from './src/classes.js'
-import sha256 from 'js-sha256'
-import sign from './src/internal/sign.js'
+import pbkdf2 from 'pbkdf2';
+import getAccountData from './src/account/getAccountData.js';
+import getPosts from './src/posting/getPosts.js';
+import createAccount from './src/keyEncrypt/createAccount.js';
+import getFeed from './src/posting/getFeed.js';
+import getThinkpieces from './src/posting/getThinkpieces.js';
+import getThoughts from './src/posting/getThoughts.js';
+import comment from './src/posting/comment.js';
+import privateKey from './src/devKey.js';
+import getComments from './src/posting/getComments.js';
+import sendMessage from './src/messaging/common/sendMessage.js';
+import getInbox from './src/messaging/getInbox.js';
+import rs from 'jsrsasign';
+import getMessages from './src/messaging/getMessages.js';
+import createGroup from './src/groups/createGroup.js';
+import getGroupData from './src/groups/getGroupData.js';
+import editGroup from './src/groups/editGroup.js';
+import getMembers from './src/groups/getMembers.js';
+import addMember from './src/groups/addMember.js';
+import removeMember from './src/groups/removeMember.js';
+import isFollowing from './src/account/isFollowing.js';
+import createChat from './src/messaging/chats/createChat.js';
+import createThought from './src/posting/createThought.js';
+import login from './src/keyEncrypt/login.js';
+import followGroup from './src/groups/followGroup.js';
+import getFollowing from './src/account/getFollowing.js';
+import getFollowingData from './src/internal/getFollowingData.js';
+import unfollowGroup from './src/groups/unfollowGroup.js';
+import invite from './src/messaging/chats/invite.js';
+import createThinkpiece from './src/posting/createThinkpiece.js';
+import ecclesia from './index.js';
+import { Post } from './src/classes.js';
+import sha256 from 'js-sha256';
+import sign from './src/internal/sign.js';
 
 const test = async () => {
     //console.log(await createAccount('bubby7', 'Ecclesia1'))
@@ -48,7 +48,7 @@ const test = async () => {
     //getInbox('Brennanjl')
     //console.log(await getMessages('Brennanjl', privateKey))
     //console.log(await getAccountData('test1'))
-    //console.log(await createGroup('Ecclesia', true, 'Ecclesia group', '', '', '', 'Brennan', privateKey))
+    //console.log(await createGroup('EcclesiaTest', true, 'Ecclesia group', '', '', '', '#c45f2e', 'bubby7', privateKey))
     //console.log(await getGroupData('Ecclesia'))
     //console.log(await editGroup('Ecclesia', 'Ecclesia description!', '',['Yuh!'], '', ['www.google.com'], 'brennan', privateKey))
     //console.log(await comment('This post sucks', '16ea6209a305766fd7c1b8c81168be6c49e549ba92755d3b33532c3d20f2bb26', privateKey, 'brennanjl'))
@@ -74,10 +74,9 @@ const test = async () => {
     //console.log(rs.KEYUTIL.getPBKDF2KeyHexFromParam('123','hi'))
     //console.log(pbkdf2.pbkdf2('hi', '123', 100, 64, sha256.sha256))
     //console.log(await ecclesia.createEvent('', '', '', '', 'ECCLESIA', 'bubby7', privateKey))
-}
+};
 
 //test()
-
 
 //console.log(sign('hiiiii', privateKey))
 /*

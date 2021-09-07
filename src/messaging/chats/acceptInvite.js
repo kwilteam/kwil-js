@@ -1,4 +1,1 @@
-
-const acceptInvite = async () => {
-
-}
+//const acceptInvite = async () => {};

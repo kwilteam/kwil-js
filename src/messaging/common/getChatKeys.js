@@ -1,29 +1,28 @@
-import getFirstCharacter from '../../internal/getFirstCharacter.js'
-import aes256 from 'aes256'
-import gateway from '../../gateway.js'
-import axios from 'axios'
+import getFirstCharacter from '../../internal/getFirstCharacter.js';
+import aes256 from 'aes256';
+import gateway from '../../gateway.js';
+import axios from 'axios';
 
 const getChatKeys = async (_username, _password) => {
-    let firstChar = getFirstCharacter(_username)
-    let _url = gateway + `/accounts/${firstChar}/${_username.toUpperCase()}/chats`
+    let firstChar = getFirstCharacter(_username);
+    let _url = gateway + `/accounts/${firstChar}/${_username.toUpperCase()}/chats`;
     const params = {
         url: _url,
         method: 'get',
-        timeout: 20000
-      }
-    let response = await axios(params)
-    let encryptedChats = response.data.data
-    const encryptKey = _username.toUpperCase()+_password.toUpperCase()
-    let decryptedChats = ''
-    try{
-        decryptedChats = aes256.decrypt(encryptKey, encryptedChats)
+        timeout: 20000,
+    };
+    let response = await axios(params);
+    let encryptedChats = response.data.data;
+    const encryptKey = _username.toUpperCase() + _password.toUpperCase();
+    let decryptedChats = '';
+    try {
+        decryptedChats = aes256.decrypt(encryptKey, encryptedChats);
+    } catch (e) {
+        console.log(e);
+        throw new Error('There was an error.  Possibly an invalid username / password');
     }
-    catch(e){
-        console.log(e)
-        throw new Error('There was an error.  Possibly an invalid username / password')
-    }
-    console.log(decryptedChats)
-    return JSON.parse(decryptedChats)
-}
+    console.log(decryptedChats);
+    return JSON.parse(decryptedChats);
+};
 
-export default getChatKeys
+export default getChatKeys;

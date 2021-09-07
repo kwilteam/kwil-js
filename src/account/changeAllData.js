@@ -1,58 +1,58 @@
-import getAccountData from './getAccountData.js'
-import privateKey from '../devKey.js'
-import gateway from '../gateway.js'
-import getFirstCharacter from '../internal/getFirstCharacter.js'
-import axios from 'axios'
-import rs from 'jsrsasign'
-import sign from '../internal/sign.js'
+import getAccountData from './getAccountData.js';
+import gateway from '../gateway.js';
+import getFirstCharacter from '../internal/getFirstCharacter.js';
+import axios from 'axios';
+import rs from 'jsrsasign';
+import sign from '../internal/sign.js';
 
 const changeAllData = async (_newName, _newBio, _newPFP, _privateKey, _username) => {
     //THIS DOESN'T WORK ANYMORE
-    const privateKey = rs.KEYUTIL.getKey(_privateKey)
-    let accountData = await getAccountData(_username)
-    let newName = ''
+    const privateKey = rs.KEYUTIL.getKey(_privateKey);
+    let accountData = await getAccountData(_username);
+    let newName = '';
     if (_newName == '') {
-        newName = accountData.name
+        newName = accountData.name;
     } else {
-        newName = _newName
+        newName = _newName;
     }
-    let newBio = ''
+    let newBio = '';
     if (_newBio == '') {
-        newBio = accountData.bio
+        newBio = accountData.bio;
     } else {
-        newBio = _newBio
+        newBio = _newBio;
     }
-    let newPFP = ''
+    let newPFP = '';
     if (_newPFP == '') {
-        newPFP = accountData.pfp
+        newPFP = accountData.pfp;
     } else {
-        newPFP = _newPFP
+        newPFP = _newPFP;
     }
-    accountData.name = newName
-    accountData.bio = newBio
-    accountData.pfp = newPFP
+    accountData.name = newName;
+    accountData.bio = newBio;
+    accountData.pfp = newPFP;
 
-    const firstChar = getFirstCharacter(_username.toUpperCase())
-    const dataSignature = sign(JSON.stringify(accountData), privateKey)
+    const firstChar = getFirstCharacter(_username.toUpperCase());
+    const dataSignature = sign(JSON.stringify(accountData), privateKey);
 
-    try{
-        let testString = JSON.stringify({data: accountData, signature: dataSignature})
-        JSON.parse(testString)
+    try {
+        let testString = JSON.stringify({
+            data: accountData,
+            signature: dataSignature,
+        });
+        JSON.parse(testString);
         //JSON.parse(`{"data": ${accountData}, "signature": ${dataSignature}}`)
+    } catch (e) {
+        throw new Error('Image can not be posted');
     }
-    catch(e) {
-        throw new Error('Image can not be posted')
-    }
-    
-    let _url = gateway + `/${firstChar}/${_username.toUpperCase()}/changeNameAndBio`
+
+    let _url = gateway + `/${firstChar}/${_username.toUpperCase()}/changeNameAndBio`;
     const params = {
         url: _url,
         method: 'post',
         timeout: 20000,
-        data: {data: accountData, signature: dataSignature}
-      }
-    await axios(params)
-    return accountData
-
-}
-export default changeAllData
+        data: { data: accountData, signature: dataSignature },
+    };
+    await axios(params);
+    return accountData;
+};
+export default changeAllData;

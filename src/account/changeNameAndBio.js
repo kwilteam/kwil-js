@@ -1,46 +1,44 @@
-import getNameAndBio from './getNameAndBio.js'
-import privateKey from '../devKey.js'
-import gateway from '../gateway.js'
-import getFirstCharacter from '../internal/getFirstCharacter.js'
-import axios from 'axios'
-import rs from 'jsrsasign'
-import sign from '../internal/sign.js'
+import getNameAndBio from './getNameAndBio.js';
+import gateway from '../gateway.js';
+import getFirstCharacter from '../internal/getFirstCharacter.js';
+import axios from 'axios';
+import rs from 'jsrsasign';
+import sign from '../internal/sign.js';
 
 const changeNameAndBio = async (_newName, _newBio, _privateKey, _username) => {
     //Function for changing name and bio.  If you only wish to change one, leave the other as a blank string
-    const privateKey = rs.KEYUTIL.getKey(_privateKey)
-    let accountData = await getNameAndBio(_username)
-    console.log(accountData)
-    let newName = ''
+    const privateKey = rs.KEYUTIL.getKey(_privateKey);
+    let accountData = await getNameAndBio(_username);
+    console.log(accountData);
+    let newName = '';
     if (_newName == '') {
-        newName = accountData.name
+        newName = accountData.name;
     } else {
-        newName = _newName
+        newName = _newName;
     }
-    let newBio = ''
+    let newBio = '';
     if (_newBio == '') {
-        newBio = accountData.bio
+        newBio = accountData.bio;
     } else {
-        newBio = _newBio
+        newBio = _newBio;
     }
-    accountData.name = newName
-    accountData.bio = newBio
+    accountData.name = newName;
+    accountData.bio = newBio;
 
-    const firstChar = getFirstCharacter(_username.toUpperCase())
-    const dataSignature = sign(JSON.stringify(accountData), privateKey)
-    
-    let _url = gateway + `/${firstChar}/${_username.toUpperCase()}/changeNameAndBio`
+    const firstChar = getFirstCharacter(_username.toUpperCase());
+    const dataSignature = sign(JSON.stringify(accountData), privateKey);
+
+    let _url = gateway + `/${firstChar}/${_username.toUpperCase()}/changeNameAndBio`;
     const params = {
         url: _url,
         method: 'post',
         timeout: 20000,
-        data: {data: accountData, signature: dataSignature}
-      }
-    await axios(params)
-    return accountData
-
-}
-export default changeNameAndBio
+        data: { data: accountData, signature: dataSignature },
+    };
+    await axios(params);
+    return accountData;
+};
+export default changeNameAndBio;
 /*let testFunc = async () => {
     await changeNameAndBio('Brennan Lamey', 'Hi im brennan', privateKey, 'Brennanjl')
 }

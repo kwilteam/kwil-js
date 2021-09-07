@@ -1,31 +1,30 @@
-import {sha256} from 'js-sha256'
-import rs from 'jsrsasign'
-import sign from './internal/sign.js'
-import getPublicJWKFromPrivateJWK from './internal/getPublicJWKFromPrivateJWK.js'
-import aes256 from 'aes256'
-import privateKey from './devKey.js'
+import { sha256 } from 'js-sha256';
+import rs from 'jsrsasign';
+import sign from './internal/sign.js';
+import getPublicJWKFromPrivateJWK from './internal/getPublicJWKFromPrivateJWK.js';
+import aes256 from 'aes256';
 
 class Event {
     constructor(_eventName, _desc, _time, _country, _city, _tags, _group, _username, _publicKey) {
-        this.name = _eventName
-        this.description = _desc
-        this.time = _time
-        this.country = _country
-        this.city = _city
-        this.tags = _tags
-        this.group = _group
-        this.creator = _username
-        this.ID = sha256(_eventName+_eventTime.toString()+_group)
+        this.name = _eventName;
+        this.description = _desc;
+        this.time = _time;
+        this.country = _country;
+        this.city = _city;
+        this.tags = _tags;
+        this.group = _group;
+        this.creator = _username;
+        this.ID = sha256(_eventName + _time.toString() + _group);
         this.signator = {
             username: _username,
-            publicKey: _publicKey
-        }
+            publicKey: _publicKey,
+        };
     }
 }
 
 class Chat {
     constructor(_name) {
-        this.name = _name
+        this.name = _name;
     }
 }
 
@@ -40,26 +39,40 @@ class Post {
             timeStamp: Date.now(),
             referencing: _referencing,
             username: _username,
-            groupTag: _groupTag
-        }
-        this.signature = sign(JSON.stringify(this.data), rs.KEYUTIL.getKey(_privateJWK))
-        this.ID = sha256(this.signature+this.data.timeStamp)
+            groupTag: _groupTag,
+        };
+        this.signature = sign(JSON.stringify(this.data), rs.KEYUTIL.getKey(_privateJWK));
+        this.ID = sha256(this.signature + this.data.timeStamp);
     }
 }
 
-class Group {
-    constructor(_groupName, _public, _description, _tags, _image, _links, _color, _creator, _charterSignature, _publicKey, _dataSignature, _members, _membersSignature) {
+/*class Group {
+    constructor(
+        _groupName,
+        _public,
+        _description,
+        _tags,
+        _image,
+        _links,
+        _color,
+        _creator,
+        _charterSignature,
+        _publicKey,
+        _dataSignature,
+        _members,
+        _membersSignature
+    ) {
         //Groups must contain charter, data, and members
         this.charter = {
             data: {
-                groupName: _groupName, 
-                public: _public, 
+                groupName: _groupName,
+                public: _public,
                 creator: _creator.toLowerCase(),
                 publicKey: _publicKey,
-                timeStamp: _timeStamp
-            }, 
-            signature: _charterSignature
-        }
+                timeStamp: _timeStamp,
+            },
+            signature: _charterSignature,
+        };
         this.data = {
             data: {
                 owner: _creator.toLowerCase(),
@@ -71,119 +84,135 @@ class Group {
                 color: _color,
                 signator: {
                     username: _creator.toLowerCase(),
-                    publicKey: _publicKey
-                }
+                    publicKey: _publicKey,
+                },
             },
-            signature: _dataSignature
-        }
+            signature: _dataSignature,
+        };
         this.members = {
             data: {
                 owner: _creator.toLowerCase(),
                 members: [_creator.toLowerCase()],
                 signator: {
                     username: _creator.toLowerCase(),
-                    publicKey: _publicKey
-                }
-            }
-        }
+                    publicKey: _publicKey,
+                },
+            },
+        };
     }
-}
+}*/
 
 class User {
-    constructor(_username, _publicKey, _login, _infoSignature, _dataSignature, _pfpSignature, _followingSignature) {
+    constructor(
+        _username,
+        _publicKey,
+        _login,
+        _infoSignature,
+        _dataSignature,
+        _pfpSignature,
+        _followingSignature
+    ) {
         this.info = {
             data: {
-                username: _username.toLowerCase(), 
-                publicKey: _publicKey, 
-                login: _login
+                username: _username.toLowerCase(),
+                publicKey: _publicKey,
+                login: _login,
             },
-            signature: _infoSignature
-        }
+            signature: _infoSignature,
+        };
         this.data = {
             data: {
                 username: _username.toLowerCase(),
                 name: '',
                 bio: '',
-                publicKey: _publicKey
+                publicKey: _publicKey,
             },
-            signature: _dataSignature
-        }
+            signature: _dataSignature,
+        };
         this.pfp = {
             data: {
                 pfp: '',
-                publicKey: _publicKey
+                publicKey: _publicKey,
             },
-            signature: _pfpSignature
-        }
+            signature: _pfpSignature,
+        };
         this.following = {
             data: {
                 following: [_username.toLowerCase()],
-                publicKey: _publicKey
+                publicKey: _publicKey,
             },
-            signature: _followingSignature
-        }
+            signature: _followingSignature,
+        };
     }
 }
 
 class NewUser {
     constructor(_usernameReg, _password, _privateJWK) {
-        const _username = _usernameReg.toLowerCase()
-        const publicKey = getPublicJWKFromPrivateJWK(_privateJWK)
-        const encryptKey = _username.toLowerCase() + _password
-        const cipher = aes256.encrypt(encryptKey, JSON.stringify(_privateJWK)) //This generates the AES-256 cipher based on Username, Password, and the Private JWK
+        const _username = _usernameReg.toLowerCase();
+        const publicKey = getPublicJWKFromPrivateJWK(_privateJWK);
+        const encryptKey = _username.toLowerCase() + _password;
+        const cipher = aes256.encrypt(encryptKey, JSON.stringify(_privateJWK)); //This generates the AES-256 cipher based on Username, Password, and the Private JWK
         this.info = {
             data: {
-                username: _username, 
-                publicKey: publicKey, 
-                login: cipher
+                username: _username,
+                publicKey: publicKey,
+                login: cipher,
             },
-            signature: sign(JSON.stringify({
-                username: _username, 
-                publicKey: publicKey, 
-                login: cipher
-            }), _privateJWK)
-        }
+            signature: sign(
+                JSON.stringify({
+                    username: _username,
+                    publicKey: publicKey,
+                    login: cipher,
+                }),
+                _privateJWK
+            ),
+        };
         this.data = {
             data: {
                 username: _username,
                 name: '',
                 bio: '',
-                publicKey: publicKey
+                publicKey: publicKey,
             },
-            signature: sign(JSON.stringify({
-                username: _username,
-                name: '',
-                bio: '',
-                publicKey: publicKey
-            }), _privateJWK)
-        }
+            signature: sign(
+                JSON.stringify({
+                    username: _username,
+                    name: '',
+                    bio: '',
+                    publicKey: publicKey,
+                }),
+                _privateJWK
+            ),
+        };
         this.pfp = {
             data: {
                 pfp: '',
-                publicKey: publicKey
+                publicKey: publicKey,
             },
-            signature: sign(JSON.stringify({
-                pfp: '',
-                publicKey: publicKey
-            }), _privateJWK)
-        }
+            signature: sign(
+                JSON.stringify({
+                    pfp: '',
+                    publicKey: publicKey,
+                }),
+                _privateJWK
+            ),
+        };
         this.following = {
             data: {
                 following: [_username, 'ecclesia'],
                 groups: [],
-                publicKey: publicKey
+                publicKey: publicKey,
             },
-            signature: sign(JSON.stringify({
-                following: [_username, 'ecclesia'],
-                groups: [],
-                publicKey: publicKey
-            }), _privateJWK)
-        }
+            signature: sign(
+                JSON.stringify({
+                    following: [_username, 'ecclesia'],
+                    groups: [],
+                    publicKey: publicKey,
+                }),
+                _privateJWK
+            ),
+        };
     }
 }
 
-
-export {Chat, Post, Group, User, NewUser, Event}
-/*let test1 = new NewUser('brennan', 'Ecclesia1', privateKey)
-console.log(JSON.stringify(test1))
-*/
+export { Chat, Post, /*Group,*/ User, NewUser, Event };

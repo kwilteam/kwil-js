@@ -1,15 +1,15 @@
-import getFollowing from './getFollowing.js'
+import getFollowing from './getFollowing.js';
 
 const isFollowing = async (_follower, _followee) => {
-    let followingList = await getFollowing(_follower)
+    let followingList = await getFollowing(_follower);
     if (followingList.includes(_followee)) {
-        return true
+        return true;
     } else {
-        return false
+        return false;
     }
-}
+};
 
-export default isFollowing
+export default isFollowing;
 
 /*let testFunc = async () => {
     console.log(await isFollowing('Brennanjl', 'Brennanjl'))

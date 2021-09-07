@@ -1,12 +1,12 @@
-import getMembers from './getMembers.js'
+import getMembers from './getMembers.js';
 
 const isMember = async (_username, _groupName) => {
-    let groupData = await getMembers(_groupName)
-    let members = groupData.map(member => member.toUpperCase())
+    let groupData = await getMembers(_groupName);
+    let members = groupData.map((member) => member.toUpperCase());
     if (members.includes(_username.toUpperCase())) {
-        return true
+        return true;
     } else {
-        return false
+        return false;
     }
-}
-export default isMember
+};
+export default isMember;
