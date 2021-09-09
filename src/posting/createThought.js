@@ -8,8 +8,8 @@ import axios from 'axios';
 
 const createThought = async (_postText, _img, _privateJWK, _username, _groupTag = '') => {
     const _privateKey = rs.KEYUTIL.getKey(_privateJWK);
-    let randTime = Date.now();
-    let _data = {
+    const randTime = Date.now();
+    const _data = {
         postText: _postText,
         postPhoto: _img,
         publicKey: getPublicJWKFromPrivateKey(_privateKey),
@@ -18,9 +18,9 @@ const createThought = async (_postText, _img, _privateJWK, _username, _groupTag 
         username: _username,
         groupTag: _groupTag,
     };
-    let _signature = sign(JSON.stringify(_data), _privateKey);
-    let _ID = sha256.sha256(_signature + randTime.toString());
-    let postData = {
+    const _signature = sign(JSON.stringify(_data), _privateKey);
+    const _ID = sha256.sha256(_signature + randTime.toString());
+    const postData = {
         data: _data,
         signature: _signature,
         ID: _ID,

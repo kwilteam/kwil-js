@@ -9,10 +9,11 @@ import getFirstCharacter from '../internal/getFirstCharacter.js';
 const comment = async (_postText, _mainPostID, _privateJWK, _username) => {
     const _privateKey = rs.KEYUTIL.getKey(_privateJWK);
     if (typeof _username === 'undefined') {
+        //The only reason this is added is because the _username field was added in v2 of the API
         throw new Error('Username was not provided on the comment function');
     }
-    let randTime = Date.now();
-    let _data = {
+    const randTime = Date.now();
+    const _data = {
         postText: _postText,
         publicKey: getPublicJWKFromPrivateKey(_privateKey),
         type: 'Comment',
@@ -20,9 +21,9 @@ const comment = async (_postText, _mainPostID, _privateJWK, _username) => {
         referencing: _mainPostID,
         username: _username,
     };
-    let _signature = sign(JSON.stringify(_data), _privateKey);
-    let _ID = sha256.sha256(_signature + randTime.toString());
-    let postData = {
+    const _signature = sign(JSON.stringify(_data), _privateKey);
+    const _ID = sha256.sha256(_signature + randTime.toString());
+    const postData = {
         data: _data,
         signature: _signature,
         ID: _ID,
@@ -30,7 +31,7 @@ const comment = async (_postText, _mainPostID, _privateJWK, _username) => {
         mainPostID: _mainPostID,
     };
 
-    let _url = gateway + `/${getFirstCharacter(_username)}/${_username.toUpperCase()}/comment`;
+    const _url = gateway + `/${getFirstCharacter(_username)}/${_username.toUpperCase()}/comment`;
     const params = {
         url: _url,
         method: 'post',
