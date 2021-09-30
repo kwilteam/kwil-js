@@ -1,11 +1,11 @@
 import axios from 'axios';
-import gateway from '../gateway.js';
+import gateway from './gateway.js';
 import rs from 'jsrsasign';
-import getFirstCharacter from '../internal/getFirstCharacter.js';
-import { NewUser } from '../classes.js';
-import getPublicJWKFromPrivateJWK from '../internal/getPublicJWKFromPrivateJWK.js';
+import getFirstCharacter from './internal/getFirstCharacter.js';
+import { NewUser } from './serverClasses.js';
+import getPublicJWKFromPrivateJWK from './internal/getPublicJWKFromPrivateJWK.js';
 
-const createAccount = async (_usernameReg, _password) => {
+const createAccountTest = async (_usernameReg, _password, _email = '') => {
     const _username = _usernameReg.toLowerCase();
     //username must be 5-20 characters
     //password must be 1 upper case, 1 lower case, 1 number, 8 characters
@@ -39,15 +39,12 @@ const createAccount = async (_usernameReg, _password) => {
         let keyPair = rs.KEYUTIL.generateKeypair('RSA', 4096);
         keyArr.push(keyPair.prvKeyObj);
     }
-    /*IF THIS SECTION THROWS ERROR, EXPORT SUBTLE CRYPTO KEYPAIR AS JWK AND REIMPORT WITH JSRSASIGN
-    EX:
-    let jwk = await window.crypto.subtle.exportKey('jwk', keys.privateKey)
-    let privateKey = rs.KEYUTIL.getKey(jwk)
-    */
-    //RSAJSSIGN section
+
+    //JSRSASIGN section
     const privateKey = keyArr[0];
     const rsaJWK = rs.KEYUTIL.getJWKFromKey(privateKey);
-    const user = new NewUser(_username, _password, rsaJWK);
+    const user = new NewUser(_username, _password, rsaJWK, _email);
+    console.log(user)
 
     const _url = gateway + '/' + firstChar + '/' + _username.toUpperCase() + '/createAccount';
     const params = {
@@ -57,8 +54,8 @@ const createAccount = async (_usernameReg, _password) => {
         headers: { 'Content-Type': 'application/json' },
         data: user,
     };
-    await axios(params);
+    //await axios(params);
     //let newUser = new User(_username, publicKey, encryptKey, dataSignature, accountDataSignature, pfpSignature, followDataSignature)
     return { pubKey: getPublicJWKFromPrivateJWK(rsaJWK), privateKey: rsaJWK };
 };
-export default createAccount;
+export default createAccountTest;

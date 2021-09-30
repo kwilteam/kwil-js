@@ -19,7 +19,6 @@ import getThoughts from './src/posting/getThoughts.js';
 import decryptMessage from './src/messaging/decryptMessage.js';
 import getInbox from './src/messaging/getInbox.js';
 import getMessages from './src/messaging/getMessages.js';
-import sendMessage from './src/messaging/common/sendMessage.js';
 import createGroup from './src/groups/createGroup.js';
 import editGroup from './src/groups/editGroup.js';
 import addMember from './src/groups/addMember.js';
@@ -42,6 +41,10 @@ import like from './src/interactions/like.js';
 import ifGroupExists from './src/groups/ifGroupExists.js';
 import createEvent from './src/groups/createEvent.js';
 import getNameAndBio from './src/account/getNameAndBio.js';
+import getPublicJWKFromPrivateJWK from './src/internal/getPublicJWKFromPrivateJWK.js'
+import generateSalt from './src/internal/generateSalt.js'
+import sha384 from './src/internal/sha384.js'
+import sendMessage from './src/messaging/temp/sendMessage.js'
 
 const ecclesia = {
     createAccount,
@@ -66,7 +69,6 @@ const ecclesia = {
     decryptMessage,
     getInbox,
     getMessages,
-    sendMessage,
     createGroup,
     editGroup,
     addMember,
@@ -88,6 +90,10 @@ const ecclesia = {
     like,
     ifGroupExists,
     createEvent,
+    getPublicJWKFromPrivateJWK,
+    generateSalt,
+    sha384,
+    sendMessage
 };
 
 export default ecclesia;

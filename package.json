@@ -1,7 +1,7 @@
 {
     "type": "module",
     "name": "ecclesia",
-    "version": "2.1.22",
+    "version": "2.1.23",
     "description": "ecclesia client for bundler",
     "main": "index.js",
     "scripts": {
@@ -14,6 +14,7 @@
         "axios": "^0.21.1",
         "js-sha256": "^0.9.0",
         "jsrsasign": "^10.3.0",
+        "jssha": "^3.2.0",
         "pbkdf2": "^3.1.2"
     },
     "devDependencies": {

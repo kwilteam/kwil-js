@@ -12,6 +12,9 @@ const comment = async (_postText, _mainPostID, _privateJWK, _username) => {
         //The only reason this is added is because the _username field was added in v2 of the API
         throw new Error('Username was not provided on the comment function');
     }
+    if (_postText.length > 300) {
+        throw new Error('Comment is longer than 300 characters')
+    }
     const randTime = Date.now();
     const _data = {
         postText: _postText,
