@@ -1,7 +1,7 @@
 import axios from 'axios'
 import gateway from '../../gateway.js'
 import rs from 'jsrsasign'
-import {Message, MessageBody, NewMessage, TempMessage} from '../../serverClasses.js'
+import {Message, MessageBody, NewMessage, TempMessage} from '../../classes.js'
 
 const sendMessage = async(_sender, _receiver, _message, _privateJWK) => {
     _sender = _sender.toLowerCase()

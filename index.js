@@ -3,6 +3,7 @@ import changeNameAndBio from './src/account/changeNameAndBio.js';
 import changePFP from './src/account/changePFP.js';
 import getPFP from './src/account/getPFP.js';
 import follow from './src/account/follow.js';
+import getFullAccountData from './src/account/getFullAccountData.js'
 import getAccountData from './src/account/getAccountData.js';
 import getFollowing from './src/account/getFollowing.js';
 import isFollowing from './src/account/isFollowing.js';
@@ -18,7 +19,6 @@ import getThinkpieces from './src/posting/getThinkpieces.js';
 import getThoughts from './src/posting/getThoughts.js';
 import decryptMessage from './src/messaging/decryptMessage.js';
 import getInbox from './src/messaging/getInbox.js';
-import getMessages from './src/messaging/getMessages.js';
 import createGroup from './src/groups/createGroup.js';
 import editGroup from './src/groups/editGroup.js';
 import addMember from './src/groups/addMember.js';
@@ -45,6 +45,7 @@ import getPublicJWKFromPrivateJWK from './src/internal/getPublicJWKFromPrivateJW
 import generateSalt from './src/internal/generateSalt.js'
 import sha384 from './src/internal/sha384.js'
 import sendMessage from './src/messaging/temp/sendMessage.js'
+import getMessages from './src/messaging/temp/getMessages.js'
 
 const ecclesia = {
     createAccount,
@@ -56,6 +57,7 @@ const ecclesia = {
     getAccountData,
     getFollowing,
     isFollowing,
+    getFullAccountData,
     unfollow,
     login,
     comment,
@@ -93,7 +95,8 @@ const ecclesia = {
     getPublicJWKFromPrivateJWK,
     generateSalt,
     sha384,
-    sendMessage
+    sendMessage,
+    getMessages
 };
 
 export default ecclesia;

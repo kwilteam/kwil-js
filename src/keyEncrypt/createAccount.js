@@ -1,19 +1,16 @@
 import axios from 'axios';
 import gateway from '../gateway.js';
 import rs from 'jsrsasign';
-import getFirstCharacter from '../internal/getFirstCharacter.js';
 import { NewUser } from '../classes.js';
 import getPublicJWKFromPrivateJWK from '../internal/getPublicJWKFromPrivateJWK.js';
 
-const createAccount = async (_usernameReg, _password) => {
+const createAccount = async (_usernameReg, _password, _email = '') => {
     const _username = _usernameReg.toLowerCase();
     //username must be 5-20 characters
     //password must be 1 upper case, 1 lower case, 1 number, 8 characters
     if (_username.length > 30) {
         throw new Error('Name to long');
     }
-
-    const firstChar = getFirstCharacter(_username);
 
     //Check for window.crypto.subtle
     let keyArr = [];
@@ -36,20 +33,21 @@ const createAccount = async (_usernameReg, _password) => {
         }
     } else {
         console.log('window.crypto not available.  Key generation may take a while...');
+        try {
         let keyPair = rs.KEYUTIL.generateKeypair('RSA', 4096);
         keyArr.push(keyPair.prvKeyObj);
+        }
+        catch (e) {
+            console.log(e)
+            alert('There was an error.  Please try again.  If this issue persists, try using a different browser')
+        }
     }
-    /*IF THIS SECTION THROWS ERROR, EXPORT SUBTLE CRYPTO KEYPAIR AS JWK AND REIMPORT WITH JSRSASIGN
-    EX:
-    let jwk = await window.crypto.subtle.exportKey('jwk', keys.privateKey)
-    let privateKey = rs.KEYUTIL.getKey(jwk)
-    */
-    //RSAJSSIGN section
+    //JSRSASIGN section
     const privateKey = keyArr[0];
     const rsaJWK = rs.KEYUTIL.getJWKFromKey(privateKey);
-    const user = new NewUser(_username, _password, rsaJWK);
+    const user = new NewUser(_username, _password, rsaJWK, _email);
 
-    const _url = gateway + '/' + firstChar + '/' + _username.toUpperCase() + '/createAccount';
+    const _url = gateway + '/createAccount';
     const params = {
         url: _url,
         method: 'post',
@@ -57,7 +55,8 @@ const createAccount = async (_usernameReg, _password) => {
         headers: { 'Content-Type': 'application/json' },
         data: user,
     };
-    await axios(params);
+    const response = await axios(params);
+    console.log(response.data)
     //let newUser = new User(_username, publicKey, encryptKey, dataSignature, accountDataSignature, pfpSignature, followDataSignature)
     return { pubKey: getPublicJWKFromPrivateJWK(rsaJWK), privateKey: rsaJWK };
 };

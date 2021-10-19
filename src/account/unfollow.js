@@ -2,34 +2,33 @@ import rs from 'jsrsasign';
 import axios from 'axios';
 import gateway from '../gateway.js';
 import sign from '../internal/sign.js';
-import getFirstCharacter from '../internal/getFirstCharacter.js';
-import getFollowingData from '../internal/getFollowingData.js';
+import isFollowing from './isFollowing.js'
 
-const unfollow = async (_username, _usernameToUnfollow, _privateJWK) => {
+const follow = async (username, usernameToFollow, _privateJWK) => {
+    const _username = username.toLowerCase()
+    const _usernameToFollow = usernameToFollow.toLowerCase()
     const _privateKey = rs.KEYUTIL.getKey(_privateJWK);
-    let firstChar = getFirstCharacter(_username);
-    let followingData = await getFollowingData(_username);
-    let followingList = followingData.following;
-    if (!followingList.includes(_usernameToUnfollow)) {
-        console.log('User does not follow');
-    } else {
-        const index = followingList.indexOf(_usernameToUnfollow);
-        if (index > -1) {
-            followingList.splice(index, 1);
+    const userIsFollowing = await isFollowing(_username, _usernameToFollow)
+    if (userIsFollowing) {
+        const followingReceipt = {
+            username: _username,
+            followee: _usernameToFollow,
+            follow: false
         }
-        followingData.following = followingList;
-        //Generate data signature
-        const dataSignature = sign(JSON.stringify(followingData), _privateKey);
-
-        let _url = gateway + '/' + firstChar + '/' + _username.toUpperCase() + '/following';
+        const dataSignature = sign(JSON.stringify(followingReceipt), _privateKey);
+        let _url = gateway + '/follow';
         const params = {
             url: _url,
             method: 'post',
             timeout: 20000,
-            data: { data: followingData, signature: dataSignature },
+            data: { data: followingReceipt, signature: dataSignature },
         };
         await axios(params);
+        return
+    } else {
+        console.log('User does not follow this user')
+        return
     }
 };
 
-export default unfollow;
+export default follow;

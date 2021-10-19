@@ -5,8 +5,7 @@ import checkSignature from '../internal/checkSignature.js';
 import getFirstCharacter from '../internal/getFirstCharacter.js';
 
 const login = async (_username, _password) => {
-    let firstChar = getFirstCharacter(_username);
-    let _url = gateway + '/accounts/' + firstChar + '/' + _username.toUpperCase() + '/info';
+    let _url = gateway + '/' +_username.toLowerCase() + '/login';
     const params = {
         url: _url,
         method: 'get',
@@ -14,13 +13,21 @@ const login = async (_username, _password) => {
     };
     try {
         let response = await axios(params);
-        if (checkSignature(response.data.data, response.data.signature)) {
-            let loginCipher = response.data.data.login;
-            const encryptKey = _username.toLowerCase() + _password;
-            let privateKey = aes256.decrypt(encryptKey, loginCipher);
-            return { privateKey: JSON.parse(privateKey), loginValid: true };
+        const loginCipher = response.data[0]
+        const encryptKey = _username.toLowerCase() + _password + loginCipher.salt;
+        const decryptedKey = aes256.decrypt(encryptKey, loginCipher.login_ciphertext)
+        let privateKey = ''
+        try {
+            privateKey = JSON.parse(decryptedKey)
+        } catch (e) {
+            return { privateKey: '', loginValid: false }
         }
-        return { privateKey: '', loginValid: false };
+        if (privateKey.e == 'AQAB') {
+            return { privateKey: privateKey, loginValid: true }
+        } else {
+            console.log('Invalid private key format.  Decryption likely failed.')
+            return { privateKey: '', loginValid: false }
+        }
     } catch (e) {
         console.log(e);
         return { privateKey: '', loginValid: false };

@@ -1,4 +1,4 @@
-import { Event } from '../classes.js';
+import { Event } from '../oldClasses.js';
 import sign from '../internal/sign.js';
 import rs from 'jsrsasign';
 import gateway from '../gateway.js';

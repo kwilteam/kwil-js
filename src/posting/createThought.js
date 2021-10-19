@@ -5,37 +5,25 @@ import gateway from '../gateway.js';
 import rs from 'jsrsasign';
 import getFirstCharacter from '../internal/getFirstCharacter.js';
 import axios from 'axios';
+import {NewThought} from '../classes.js'
 
-const createThought = async (_postText, _img, _privateJWK, _username, _groupTag = '') => {
-    const _privateKey = rs.KEYUTIL.getKey(_privateJWK);
-    const randTime = Date.now();
-    const _data = {
-        postText: _postText,
-        postPhoto: _img,
-        publicKey: getPublicJWKFromPrivateKey(_privateKey),
-        type: 'Thought',
-        timeStamp: randTime,
-        username: _username,
-        groupTag: _groupTag,
-    };
-    const _signature = sign(JSON.stringify(_data), _privateKey);
-    const _ID = sha256.sha256(_signature + randTime.toString());
-    const postData = {
-        data: _data,
-        signature: _signature,
-        ID: _ID,
-        username: _username,
-    };
-    const _url = gateway + `/${getFirstCharacter(_username)}/${_username.toUpperCase()}/thought`;
+const createThought = async (_postText, _img, _privateJWK, _username, _groupTag = null) => {
+    let data = ''
+    if (_groupTag != null) {
+        data = new NewThought(_postText, _img, _privateJWK, _username.toLowerCase(), _groupTag.toUpperCase())
+    } else {
+        data = new NewThought(_postText, _img, _privateJWK, _username.toLowerCase())
+    }
+    const _url = gateway + `/post`;
     const params = {
         url: _url,
         method: 'post',
         timeout: 20000,
         headers: { 'Content-Type': 'application/json' },
-        data: postData,
+        data: data,
     };
     await axios(params);
 
-    return _data;
+    return data;
 };
 export default createThought;

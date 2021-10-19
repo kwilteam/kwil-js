@@ -2,7 +2,7 @@ import axios from 'axios';
 import gateway from './gateway.js';
 import rs from 'jsrsasign';
 import getFirstCharacter from './internal/getFirstCharacter.js';
-import { NewUser } from './serverClasses.js';
+import { NewUser } from './classes.js';
 import getPublicJWKFromPrivateJWK from './internal/getPublicJWKFromPrivateJWK.js';
 
 const createAccountTest = async (_usernameReg, _password, _email = '') => {
@@ -12,8 +12,6 @@ const createAccountTest = async (_usernameReg, _password, _email = '') => {
     if (_username.length > 30) {
         throw new Error('Name to long');
     }
-
-    const firstChar = getFirstCharacter(_username);
 
     //Check for window.crypto.subtle
     let keyArr = [];
@@ -46,7 +44,7 @@ const createAccountTest = async (_usernameReg, _password, _email = '') => {
     const user = new NewUser(_username, _password, rsaJWK, _email);
     console.log(user)
 
-    const _url = gateway + '/' + firstChar + '/' + _username.toUpperCase() + '/createAccount';
+    const _url = gateway + '/createAccount';
     const params = {
         url: _url,
         method: 'post',
@@ -54,7 +52,8 @@ const createAccountTest = async (_usernameReg, _password, _email = '') => {
         headers: { 'Content-Type': 'application/json' },
         data: user,
     };
-    //await axios(params);
+    const response = await axios(params);
+    console.log(response.data)
     //let newUser = new User(_username, publicKey, encryptKey, dataSignature, accountDataSignature, pfpSignature, followDataSignature)
     return { pubKey: getPublicJWKFromPrivateJWK(rsaJWK), privateKey: rsaJWK };
 };

@@ -5,8 +5,10 @@ import axios from 'axios';
 import gateway from '../gateway.js';
 import rs from 'jsrsasign';
 import getFirstCharacter from '../internal/getFirstCharacter.js';
+import {NewComment} from '../classes.js'
 
-const comment = async (_postText, _mainPostID, _privateJWK, _username) => {
+const comment = async (_postText, _mainPostID, _privateJWK, _username, _referenceType) => {
+    //_referenceType must be thought, thinkpiece, or comment
     const _privateKey = rs.KEYUTIL.getKey(_privateJWK);
     if (typeof _username === 'undefined') {
         //The only reason this is added is because the _username field was added in v2 of the API
@@ -15,36 +17,23 @@ const comment = async (_postText, _mainPostID, _privateJWK, _username) => {
     if (_postText.length > 300) {
         throw new Error('Comment is longer than 300 characters')
     }
-    const randTime = Date.now();
-    const _data = {
-        postText: _postText,
-        publicKey: getPublicJWKFromPrivateKey(_privateKey),
-        type: 'Comment',
-        timeStamp: randTime,
-        referencing: _mainPostID,
-        username: _username,
-    };
-    const _signature = sign(JSON.stringify(_data), _privateKey);
-    const _ID = sha256.sha256(_signature + randTime.toString());
-    const postData = {
-        data: _data,
-        signature: _signature,
-        ID: _ID,
-        username: _username,
-        mainPostID: _mainPostID,
-    };
+    if (_referenceType != 'thought' && _referenceType != 'thinkpiece' && _referenceType != 'comment') {
+        throw new Error('Parameter _referenceType must be thought, thinkpiece, or comment')
+    }
 
-    const _url = gateway + `/${getFirstCharacter(_username)}/${_username.toUpperCase()}/comment`;
+    const data = new NewComment(_postText, _username.toLowerCase(), _mainPostID, _referenceType, _privateJWK)
+
+    const _url = gateway + `/comment`;
     const params = {
         url: _url,
         method: 'post',
         timeout: 20000,
         headers: { 'Content-Type': 'application/json' },
-        data: postData,
+        data: data,
     };
 
     await axios(params);
 
-    return postData;
+    return data;
 };
 export default comment;

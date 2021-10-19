@@ -5,6 +5,7 @@ import getPublicJWKFromPrivateKey from '../internal/getPublicJWKFromPrivateKey.j
 import axios from 'axios';
 import sign from '../internal/sign.js';
 import followGroup from './followGroup.js';
+import { NewGroup } from '../classes.js';
 
 const createGroup = async (
     _groupName,
@@ -26,65 +27,18 @@ const createGroup = async (
     if (!regex.test(_color)) {
         throw new Error('Invalid Color');
     }
-    const _creatorUsername = _creatorUsernameReg.toLowerCase();
-    const _privateKey = rs.KEYUTIL.getKey(_creatorPrivateJWK);
-    /*var membership = '';
-    if (_public === true) {
-        membership = ['public'];
-    } else {
-        membership = [_creatorUsername];
-    }*/
-    const charter = {
-        name: _groupName,
-        public: _public,
-        creator: _creatorUsername,
-        publicKey: getPublicJWKFromPrivateKey(_privateKey),
-        timeStamp: Date.now(),
-    };
-    const dataSignature = sign(JSON.stringify(charter), _privateKey);
 
-    //Creating initial group data
-    const groupData = {
-        owner: _creatorUsername,
-        public: _public,
-        description: _groupDescription,
-        tags: _groupTags,
-        image: _groupImage,
-        links: _links,
-        color: _color,
-        signator: {
-            username: _creatorUsername.toUpperCase(),
-            publicKey: getPublicJWKFromPrivateKey(_privateKey),
-        },
-    };
-    const dataSignature2 = sign(JSON.stringify(groupData), _privateKey);
+    const data = new NewGroup(_groupName, _public, _groupDescription, _groupTags, _groupImage, _links, _color, _creatorUsernameReg, _creatorPrivateJWK)
 
-    //Creating members list
-    const membersList = {
-        owner: _creatorUsername,
-        members: [_creatorUsername],
-        signator: {
-            username: _creatorUsername,
-            publicKey: getPublicJWKFromPrivateKey(_privateKey),
-        },
-    };
-    const dataSignature3 = sign(JSON.stringify(membersList), _privateKey);
-
-    let firstChar = getFirstCharacter(_groupName);
-
-    let _url = gateway + `/${firstChar}/${_groupName.toUpperCase()}/createGroup`;
+    let _url = gateway + `/createGroup`;
     const params = {
         url: _url,
         method: 'post',
         timeout: 20000,
-        data: [
-            { data: charter, signature: dataSignature },
-            { data: groupData, signature: dataSignature2 },
-            { data: membersList, signature: dataSignature3 },
-        ],
+        data: data,
     };
     await axios(params);
-    await followGroup(_groupName, _creatorUsername, _privateKey);
-    return groupData;
+    //await followGroup(_groupName, _creatorUsername, _privateKey);
+    return data;
 };
 export default createGroup;

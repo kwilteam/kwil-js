@@ -5,6 +5,7 @@ import axios from 'axios';
 import gateway from '../gateway.js';
 import rs from 'jsrsasign';
 import getFirstCharacter from '../internal/getFirstCharacter.js';
+import {NewThinkpiece} from '../classes.js'
 
 const createThinkpiece = async (
     _title,
@@ -12,42 +13,29 @@ const createThinkpiece = async (
     _img,
     _privateJWK,
     _username,
-    _groupTag = ''
+    _groupTag = null
 ) => {
     //images should be entered as array of base64 encodings
-    const _privateKey = rs.KEYUTIL.getKey(_privateJWK);
-    let randTime = Date.now();
-    let _data = {
-        postTitle: _title,
-        postText: _postText,
-        postPhoto: _img,
-        publicKey: getPublicJWKFromPrivateKey(_privateKey),
-        type: 'Thinkpiece',
-        timeStamp: randTime,
-        username: _username,
-        groupTag: _groupTag,
-    };
-    let _signature = sign(JSON.stringify(_data), _privateKey);
-    let _ID = sha256.sha256(_signature + randTime.toString());
-    let postData = {
-        data: _data,
-        signature: _signature,
-        ID: _ID,
-        username: _username,
-    };
 
-    let _url = gateway + `/${getFirstCharacter(_username)}/${_username.toUpperCase()}/thinkpiece`;
+    let data = ''
+    if (_groupTag != null) {
+        data = new NewThinkpiece(_title, _postText, _img, _privateJWK, _username.toLowerCase(), _groupTag.toUpperCase())
+    } else {
+        data = new NewThinkpiece(_title, _postText, _img, _privateJWK, _username.toLowerCase())
+    }
+
+    let _url = gateway + `/post`;
     const params = {
         url: _url,
         method: 'post',
         timeout: 20000,
         headers: { 'Content-Type': 'application/json' },
-        data: postData,
+        data: data,
     };
 
     let response = await axios(params);
     console.log(response.data);
 
-    return postData;
+    return data;
 };
 export default createThinkpiece;

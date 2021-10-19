@@ -1,42 +1,30 @@
-import getNameAndBio from './getNameAndBio.js';
 import gateway from '../gateway.js';
-import getFirstCharacter from '../internal/getFirstCharacter.js';
 import axios from 'axios';
 import rs from 'jsrsasign';
 import sign from '../internal/sign.js';
+import getFullAccountData from './getFullAccountData.js'
 
 const changeNameAndBio = async (_newName, _newBio, _privateKey, _username) => {
-    //Function for changing name and bio.  If you only wish to change one, leave the other as a blank string
-    const privateKey = rs.KEYUTIL.getKey(_privateKey);
-    let accountData = await getNameAndBio(_username);
-    console.log(accountData);
-    let newName = '';
-    if (_newName == '') {
-        newName = accountData.name;
-    } else {
-        newName = _newName;
+    const account = await getFullAccountData(_username.toLowerCase())
+    const changed = []
+    if (account.name != _newName) {
+        changed.push('display_name')
+        account.name = _newName
     }
-    let newBio = '';
-    if (_newBio == '') {
-        newBio = accountData.bio;
-    } else {
-        newBio = _newBio;
+    if (account.bio != _newBio) {
+        changed.push('bio')
+        account.bio = _newBio
     }
-    accountData.name = newName;
-    accountData.bio = newBio;
 
-    const firstChar = getFirstCharacter(_username.toUpperCase());
-    const dataSignature = sign(JSON.stringify(accountData), privateKey);
-
-    let _url = gateway + `/${firstChar}/${_username.toUpperCase()}/changeNameAndBio`;
+    let _url = gateway + `/changeAccountData`;
     const params = {
         url: _url,
         method: 'post',
         timeout: 20000,
-        data: { data: accountData, signature: dataSignature },
+        data: {data: account, signature: sign(account, rs.KEYUTIL.getKey(_privateKey)), changed: changed},
     };
     await axios(params);
-    return accountData;
+    return account;
 };
 export default changeNameAndBio;
 /*let testFunc = async () => {
