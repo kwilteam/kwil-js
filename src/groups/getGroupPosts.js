@@ -3,7 +3,7 @@ import axios from 'axios';
 import checkSignature from '../internal/checkSignature.js';
 
 const getGroupPosts = async (_group, _offset, numPosts = 20) => {
-    let _url = gateway + `//${_offset}/${_group}/${numPosts}/posts`;
+    let _url = gateway + `/${_group.toUpperCase()}/getGroupPosts`;
     const params = {
         url: _url,
         method: 'get',
@@ -12,11 +12,6 @@ const getGroupPosts = async (_group, _offset, numPosts = 20) => {
     };
 
     let response = await axios(params);
-    for (let i = 0; i < response.data.length; i++) {
-        if (!checkSignature(response.data[i].data, response.data[i].signature)) {
-            throw 'Invalid Signature';
-        }
-    }
     return response.data;
 };
 

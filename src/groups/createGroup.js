@@ -37,8 +37,8 @@ const createGroup = async (
         timeout: 20000,
         data: data,
     };
-    await axios(params);
-    //await followGroup(_groupName, _creatorUsername, _privateKey);
+    const response = await axios(params)
+    console.log(response.data)
     return data;
 };
 export default createGroup;

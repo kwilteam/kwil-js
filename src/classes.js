@@ -197,7 +197,10 @@ class TempMessage {
 class NewThought {
     constructor(_text, _img, _privateJWK, _username, _groupTag = null) {
         const timestamp = new Date()
-        const imgHash = [sha384(_img)]
+        let imgHash
+        if (_img != '' && _img !=[]) {
+            imgHash = [sha384(_img)]
+        }
         const _ID = sha384(_username+_text+imgHash+timestamp.toString())
         this.data = {
             id: _ID,
@@ -206,22 +209,25 @@ class NewThought {
             text: _text,
             type: true,
             timestamp: timestamp,
-            photoHash: imgHash,
+            photoHash: [imgHash],
             group: _groupTag
         }
-        this.photoURL = ''
-        this.photo = [_img]
+        if (_img == '') {
+            this.photo= []
+        } else {
+            this.photo = [_img]
+        }
         this.signature = sign(
-            {
+            JSON.stringify({
                 id: _ID,
                 username: _username.toLowerCase(),
                 title: null,
                 text: _text,
                 type: true,
                 timestamp: timestamp,
-                photoHash: imgHash,
+                photoHash: [imgHash],
                 group: _groupTag
-            },
+            }),
             rs.KEYUTIL.getKey(_privateJWK)
         )
     }
@@ -245,10 +251,9 @@ class NewThinkpiece {
             photoHash: hashArr,
             group: _groupTag
         }
-        this.photoURL = []
         this.photo = _img
         this.signature = sign(
-            {
+            JSON.stringify({
                 id: _ID,
                 username: _username.toLowerCase(),
                 title: _title,
@@ -257,7 +262,7 @@ class NewThinkpiece {
                 timestamp: timestamp,
                 photoHash: hashArr,
                 group: _groupTag
-            },
+            }),
             rs.KEYUTIL.getKey(_privateJWK)
         )
     }
@@ -295,37 +300,38 @@ class NewGroup {
         _groupImage,
         _links,
         _color,
-        _creatorUsernameReg,
+        _username,
         _creatorPrivateJWK
         ) {
+            _username = _username.toLowerCase()
+            _groupName = _groupName.toUpperCase()
             let imgHash = ''
             if (_groupImage != '') {
                 imgHash = sha384(_groupImage)
             }
             this.data = {
-                groupName: _groupName.toUpperCase(),
+                groupName: _groupName,
                 public: _public,
                 description: _groupDescription,
                 tags: _groupTags,
                 photoHash: imgHash,
                 links: _links,
                 color: _color,
-                username: _creatorUsernameReg.toLowerCase(),
-                moderators: [],
-
+                username: _username,
+                moderators: [_username]
             }
-            this.photoURL = ''
             this.photo = _groupImage
-            this.signature = sign({
-                groupName: _groupName.toUpperCase(),
+            this.signature = sign(JSON.stringify({
+                groupName: _groupName,
                 public: _public,
                 description: _groupDescription,
                 tags: _groupTags,
                 photoHash: imgHash,
                 links: _links,
                 color: _color,
-                username: _creatorUsernameReg.toLowerCase()
-            },
+                username: _username,
+                moderators: [_username]
+            }),
             rs.KEYUTIL.getKey(_creatorPrivateJWK)
             )
         }

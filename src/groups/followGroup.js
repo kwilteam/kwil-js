@@ -1,33 +1,28 @@
-import getFollowingData from '../internal/getFollowingData.js';
-import getFirstCharacter from '../internal/getFirstCharacter.js';
+import checkSignature from '../internal/checkSignature.js'
 import rs from 'jsrsasign';
 import axios from 'axios';
 import gateway from '../gateway.js';
 import sign from '../internal/sign.js';
 
 const followGroup = async (_group, _username, _privateJWK) => {
-    let followingData = await getFollowingData(_username);
-    let groups = followingData.groups;
+    _username = _username.toLowerCase()
+    _group = _group.toUpperCase()
     const _privateKey = rs.KEYUTIL.getKey(_privateJWK);
-    let firstChar = getFirstCharacter(_username);
-    if (groups.includes(_group.toUpperCase())) {
-        console.log('User already follows');
-    } else {
-        groups.push(_group.toUpperCase());
-        followingData.groups = groups;
-        //Generate data signature
-        const dataSignature = sign(JSON.stringify(followingData), _privateKey);
-
-        let _url = gateway + '/' + firstChar + '/' + _username.toUpperCase() + '/following';
-        const params = {
-            url: _url,
-            method: 'post',
-            timeout: 20000,
-            data: { data: followingData, signature: dataSignature },
-        };
-        await axios(params);
+    const followReceipt = {
+        username: _username,
+        group: _group,
+        follow: true
     }
-    return followingData.groups;
+    const dataSignature = sign(JSON.stringify(followReceipt), _privateKey)
+    let _url = gateway +'/followGroup';
+    const params = {
+        url: _url,
+        method: 'post',
+        timeout: 20000,
+        data: { data: followReceipt, signature: dataSignature },
+    };
+    const response = await axios(params);
+    return response.data
 };
 
 export default followGroup;

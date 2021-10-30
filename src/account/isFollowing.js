@@ -2,7 +2,7 @@ import axios from 'axios'
 import gateway from '../gateway.js'
 
 const isFollowing = async (_follower, _followee) => {
-    let _url = gateway + `/`+_follower.toLowerCase()+'/'+_followee.toLowerCase()+'/isFollowing';
+    const _url = gateway + `/`+_follower.toLowerCase()+'/'+_followee.toLowerCase()+'/isFollowing';
     const params = {
         url: _url,
         method: 'get',

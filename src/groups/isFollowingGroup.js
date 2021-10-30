@@ -1,12 +1,18 @@
-import getFollowingData from '../internal/getFollowingData.js';
+import axios from 'axios'
+import gateway from '../gateway.js'
 
-const isFollowingGroup = async (_username, _groupName) => {
-    let _data = await getFollowingData(_username);
-    let groupList = _data.groups.map((group) => group.toUpperCase());
-    if (groupList.includes(_groupName.toUpperCase())) {
-        return true;
+const isFollowingGroup = async (_username, _group) => {
+    const _url = gateway + `/`+_username.toLowerCase()+'/'+_group.toUpperCase()+'/isFollowingGroup';
+    const params = {
+        url: _url,
+        method: 'get',
+        timeout: 20000,
+    };
+    const response = await axios(params);
+    if (response.data == '') {
+        return false
     } else {
-        return false;
+        return true
     }
 };
 export default isFollowingGroup;

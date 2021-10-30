@@ -3,7 +3,7 @@ import hashPath from '../internal/hashPath.js'
 import getFullAccountData from './getFullAccountData.js'
 
 const getAccountData = async (_username) => {
-    const accountData = await getFullAccountData(_username.toLowerCase())
+    const accountData = await getFullAccountData(_username)
     let photoURL = ''
     if (accountData.pfpHash!='') {
         photoURL = gateway+'/images'+hashPath(accountData.pfpHash)+accountData.pfpHash

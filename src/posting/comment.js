@@ -1,10 +1,6 @@
-import getPublicJWKFromPrivateKey from '../internal/getPublicJWKFromPrivateKey.js';
-import sha256 from 'js-sha256';
-import sign from '../internal/sign.js';
 import axios from 'axios';
 import gateway from '../gateway.js';
 import rs from 'jsrsasign';
-import getFirstCharacter from '../internal/getFirstCharacter.js';
 import {NewComment} from '../classes.js'
 
 const comment = async (_postText, _mainPostID, _privateJWK, _username, _referenceType) => {

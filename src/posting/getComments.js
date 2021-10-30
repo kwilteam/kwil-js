@@ -1,9 +1,13 @@
 import gateway from '../gateway.js';
 import axios from 'axios';
-import checkSignature from '../internal/checkSignature.js';
 
-const getComments = async (_mainPost, _offset) => {
-    let _url = gateway + `/${_mainPost}/${_offset}/comments`;
+const getComments = async (_postID, _postType, _date= new Date, _limit=20) => {
+    //_postType should be thought, thinkpiece, or comment
+    if (typeof _date == 'string') {
+        _date = new Date(_date)
+        }
+    _date = _date.getTime()
+    const _url = gateway + `/${_postID}/${_date}/${_limit}/${_postType.toLowerCase()}_comments/getComments`;
     const params = {
         url: _url,
         method: 'get',
@@ -11,12 +15,7 @@ const getComments = async (_mainPost, _offset) => {
         headers: { 'Content-Type': 'application/json' },
     };
 
-    let response = await axios(params);
-    for (let i = 0; i < response.data.length; i++) {
-        if (!checkSignature(response.data[i].data, response.data[i].signature)) {
-            throw 'Invalid Signature';
-        }
-    }
+    const response = await axios(params);
     return response.data;
 };
 

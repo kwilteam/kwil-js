@@ -1,9 +1,12 @@
 import gateway from '../gateway.js';
 import axios from 'axios';
-import checkSignature from '../internal/checkSignature.js';
 
-const getThoughts = async (_username, _offset) => {
-    let _url = gateway + `/${_username.toUpperCase()}/${_offset}/thoughts`;
+const getThoughts = async (_username, _date= new Date, _limit=20) => {
+    if (typeof _date == 'string') {
+        _date = new Date(_date)
+        }
+    _date = _date.getTime()
+    const _url = gateway + `/${_username.toLowerCase()}/${_date}/${_limit}/getThoughts`;
     const params = {
         url: _url,
         method: 'get',
@@ -12,11 +15,6 @@ const getThoughts = async (_username, _offset) => {
     };
 
     let response = await axios(params);
-    for (let i = 0; i < response.data.length; i++) {
-        if (!checkSignature(response.data[i].data, response.data[i].signature)) {
-            throw 'Invalid Signature';
-        }
-    }
     return response.data;
 };
 
