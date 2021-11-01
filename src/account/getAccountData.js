@@ -5,7 +5,8 @@ import getFullAccountData from './getFullAccountData.js'
 const getAccountData = async (_username) => {
     const accountData = await getFullAccountData(_username)
     let photoURL = ''
-    if (accountData.pfpHash!='') {
+    if (accountData.pfpHash!='' && accountData.pfpHash!=undefined) {
+        console.log(accountData.pfpHash)
         photoURL = gateway+'/images'+hashPath(accountData.pfpHash)+accountData.pfpHash
     }
     return {

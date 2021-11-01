@@ -4,6 +4,7 @@ import getFirstCharacter from '../internal/getFirstCharacter.js';
 import checkSignature from '../internal/checkSignature.js';
 
 const getFollowing = async (_username) => {
+    throw new Error('This is broken')
     const firstChar = getFirstCharacter(_username);
     const _url = gateway + '/accounts/' + firstChar + '/' + _username.toUpperCase() + '/following';
     const params = {

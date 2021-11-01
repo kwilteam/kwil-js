@@ -7,7 +7,8 @@ import aes from 'aes256'
 
 
 const test = async () => {
-    //console.log(await ecclesia.createAccount('brennan1', 'Ecclesia1'))
+    //console.log(await ecclesia.createAccount('brennan', 'Ecclesia1'))
+    //console.log(await ecclesia.getAccountData('brennan'))
     //let photoData = fs.readFileSync('./headshot.jpg')
     //photoData = photoData.toString('base64')
     //console.log(await ecclesia.createThought('Test post2!', '', privateKey, 'brennan1', 'ecclesia'))
