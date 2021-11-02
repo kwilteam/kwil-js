@@ -15,7 +15,7 @@ class User {
         this.salt = _salt
         this.login = _loginCipherText
         this.name = _namethis.bio = _bio
-        this.pfpHash = _pfpHash
+        this.photoHash = _pfpHash
         this.pfpURL = gateway+'/images'+hashPath(_pfpHash)+_pfpHash
         this.signature = _rsaSignature
     }
@@ -40,12 +40,12 @@ class NewUser {
         this.login = ciphertext
         this.name = ''
         this.bio = ''
-        this.pfpHash = hashedPFP
+        this.photoHash = hashedPFP
         this.signature = sign(JSON.stringify({
             username: _username,
             name: '',
             bio: '',
-            pfpHash: hashedPFP
+            photoHash: hashedPFP
         }), rs.KEYUTIL.getKey(_privateJWK))
         this.creationSignature = sign(JSON.stringify({
             username: _usernameReg.toLowerCase(),
@@ -54,7 +54,6 @@ class NewUser {
             salt: passSalt,
             login: ciphertext
         }), rs.KEYUTIL.getKey(_privateJWK))
-        this.pfpURL = '' //It is important that the pfp url is not included in the RSA signature
     }
 }
 
@@ -209,7 +208,7 @@ class NewThought {
             text: _text,
             type: true,
             timestamp: timestamp,
-            photoHash: [imgHash],
+            photoHash: imgHash,
             group: _groupTag
         }
         if (_img == '') {
@@ -225,7 +224,7 @@ class NewThought {
                 text: _text,
                 type: true,
                 timestamp: timestamp,
-                photoHash: [imgHash],
+                photoHash: imgHash,
                 group: _groupTag
             }),
             rs.KEYUTIL.getKey(_privateJWK)
@@ -237,9 +236,11 @@ class NewThinkpiece {
     constructor(_title, _text, _img, _privateJWK, _username, _groupTag = null) {
         const timestamp = new Date()
         let hashArr = []
+        if (_img != []) {
         for (let i=0; i<_img.length; i++) {
             hashArr.push(sha384(_img[i]))
         }
+    }
         const _ID = sha384(_username+_text+JSON.stringify(hashArr)+timestamp.toString())
         this.data = {
             id: _ID,

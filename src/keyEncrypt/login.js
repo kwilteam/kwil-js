@@ -14,6 +14,7 @@ const login = async (_username, _password) => {
     try {
         let response = await axios(params);
         const loginCipher = response.data[0]
+        console.log(response.data)
         const encryptKey = _username.toLowerCase() + _password + loginCipher.salt;
         const decryptedKey = aes256.decrypt(encryptKey, loginCipher.login_ciphertext)
         let privateKey = ''

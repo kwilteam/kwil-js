@@ -16,7 +16,7 @@ const getFullAccountData = async (_username) => {
         username: _username,
         name: response.display_name,
         bio: response.bio,
-        pfpHash: response.pfp_hash,
+        photoHash: response.pfp_hash,
     };
 };
 

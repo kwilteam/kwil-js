@@ -21,7 +21,7 @@ const changeNameAndBio = async (_newName, _newBio, _privateKey, _username) => {
         url: _url,
         method: 'post',
         timeout: 20000,
-        data: {data: account, signature: sign(account, rs.KEYUTIL.getKey(_privateKey)), changed: changed},
+        data: {data: account, signature: sign(JSON.stringify(account), rs.KEYUTIL.getKey(_privateKey)), changed: changed},
     };
     await axios(params);
     return account;

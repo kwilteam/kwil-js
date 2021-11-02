@@ -7,13 +7,14 @@ import aes from 'aes256'
 
 
 const test = async () => {
-    //console.log(await ecclesia.createAccount('brennan', 'Ecclesia1'))
-    //console.log(await ecclesia.getAccountData('brennan'))
+    //console.log(await ecclesia.createAccount('brennan1', 'Ecclesia1'))
+    //console.log(await ecclesia.login('brennan', 'Ecclesia1'))
+    //console.log(await ecclesia.getAccountData('test1'))
     //let photoData = fs.readFileSync('./headshot.jpg')
     //photoData = photoData.toString('base64')
     //console.log(await ecclesia.createThought('Test post2!', '', privateKey, 'brennan1', 'ecclesia'))
     //console.log(await ecclesia.changePFP(photoData, privateKey, 'brennan'))
-    //console.log(await ecclesia.createThinkpiece('Yuh', 'yuh', [photoData], privateKey, 'brennan'))
+    console.log(await ecclesia.createThinkpiece('Yuh', 'yuh', [], privateKey, 'brennan'))
     //console.log(await ecclesia.login('brennan', 'Ecclesia1'))
     //console.log(await ecclesia.changeNameAndBio('Brennan Lamey', 'Founder', privateKey, 'brennan'))
     //console.log(await ecclesia.follow('brennan', 'brennan1', privateKey))
@@ -30,6 +31,8 @@ const test = async () => {
     //console.log(await ecclesia.getThoughts('brennan'))
     //console.log(await ecclesia.getComments('f3mkf3', 'thought'))
     //console.log(await ecclesia.getPostByID('oC/QxhSHdX04CT0LgXG0z6150dDT8U7NSaKy6DEvtonCXsFNLMfaJB5p6LiWOwMR'))
+    //console.log(ecclesia.getPhotoURL('9220607886134fc25f2b10b2663c2cf9d4f15aa8'))
+    //console.log(await ecclesia.getAccountData('test1'))
 };
 test()
 

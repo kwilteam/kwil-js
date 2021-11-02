@@ -15,7 +15,11 @@ const getThoughts = async (_username, _date= new Date, _limit=20) => {
     };
 
     let response = await axios(params);
-    return response.data;
+    try {
+        return {posts: response.data, lastDate: new Date(response.data[response.data.length-1].post_time)};
+    } catch(e) {
+        return {posts: [], lastDate: ''}
+    }
 };
 
 export default getThoughts;

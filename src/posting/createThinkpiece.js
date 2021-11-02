@@ -29,8 +29,7 @@ const createThinkpiece = async (
     };
 
     let response = await axios(params);
-    console.log(response.data);
-
+    console.log(response.data)
     return data;
 };
 export default createThinkpiece;

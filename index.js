@@ -46,6 +46,7 @@ import generateSalt from './src/internal/generateSalt.js'
 import sha384 from './src/internal/sha384.js'
 import sendMessage from './src/messaging/temp/sendMessage.js'
 import getMessages from './src/messaging/temp/getMessages.js'
+import getPhotoURL from './src/internal/getPhotoURL.js'
 
 const ecclesia = {
     createAccount,
@@ -96,7 +97,9 @@ const ecclesia = {
     generateSalt,
     sha384,
     sendMessage,
-    getMessages
+    getMessages,
+    getPostByID,
+    getPhotoURL
 };
 
 export default ecclesia;
