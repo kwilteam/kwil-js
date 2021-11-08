@@ -17,6 +17,7 @@ const createEvent = async (
     _username,
     _privateJWK
 ) => {
+    //Use this function to create an event.  Currently this is broken for the new node structure
     const _privateKey = rs.KEYUTIL.getKey(_privateJWK);
     const _publicKey = getPublicJWKFromPrivateJWK(_privateJWK);
     const event = new Event(

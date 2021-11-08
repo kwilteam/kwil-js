@@ -4,6 +4,7 @@ import checkSignature from '../internal/checkSignature.js';
 import getFirstCharacter from '../internal/getFirstCharacter.js';
 
 const getNameAndBio = async (_username) => {
+    //Gets the name and bio for a user.  Not really a great reason to use this, however in previous versions it was necessary so it is upkept incase anyone still has it in their stack.
     let firstChar = getFirstCharacter(_username);
     let _url = gateway + `/accounts/${firstChar}/${_username.toUpperCase()}/data`;
     const params = {

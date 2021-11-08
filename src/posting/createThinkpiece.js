@@ -1,6 +1,6 @@
 import axios from 'axios';
 import gateway from '../gateway.js';
-import {NewThinkpiece} from '../classes.js'
+import { NewThinkpiece } from '../classes.js';
 
 const createThinkpiece = async (
     _title,
@@ -12,11 +12,23 @@ const createThinkpiece = async (
 ) => {
     //images should be entered as array of base64 encodings
 
-    let data = ''
+    if (_img.length == 1) {
+        if (_img[0] == '') {
+            _img = [];
+        }
+    }
+    let data = '';
     if (_groupTag != null) {
-        data = new NewThinkpiece(_title, _postText, _img, _privateJWK, _username.toLowerCase(), _groupTag.toUpperCase())
+        data = new NewThinkpiece(
+            _title,
+            _postText,
+            _img,
+            _privateJWK,
+            _username.toLowerCase(),
+            _groupTag.toUpperCase()
+        );
     } else {
-        data = new NewThinkpiece(_title, _postText, _img, _privateJWK, _username.toLowerCase())
+        data = new NewThinkpiece(_title, _postText, _img, _privateJWK, _username.toLowerCase());
     }
 
     let _url = gateway + `/post`;
@@ -28,8 +40,8 @@ const createThinkpiece = async (
         data: data,
     };
 
-    let response = await axios(params);
-    console.log(response.data)
+    const response = await axios(params);
+    console.log(response.data);
     return data;
 };
 export default createThinkpiece;

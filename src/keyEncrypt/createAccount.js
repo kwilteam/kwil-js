@@ -34,12 +34,13 @@ const createAccount = async (_usernameReg, _password, _email = '') => {
     } else {
         console.log('window.crypto not available.  Key generation may take a while...');
         try {
-        let keyPair = rs.KEYUTIL.generateKeypair('RSA', 4096);
-        keyArr.push(keyPair.prvKeyObj);
-        }
-        catch (e) {
-            console.log(e)
-            alert('There was an error.  Please try again.  If this issue persists, try using a different browser')
+            let keyPair = rs.KEYUTIL.generateKeypair('RSA', 4096);
+            keyArr.push(keyPair.prvKeyObj);
+        } catch (e) {
+            console.log(e);
+            alert(
+                'There was an error.  Please try again.  If this issue persists, try using a different browser'
+            );
         }
     }
     //JSRSASIGN section
@@ -56,7 +57,7 @@ const createAccount = async (_usernameReg, _password, _email = '') => {
         data: user,
     };
     const response = await axios(params);
-    console.log(response.data)
+    console.log(response.data);
     //let newUser = new User(_username, publicKey, encryptKey, dataSignature, accountDataSignature, pfpSignature, followDataSignature)
     return { pubKey: getPublicJWKFromPrivateJWK(rsaJWK), privateKey: rsaJWK };
 };

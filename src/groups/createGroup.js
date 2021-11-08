@@ -1,10 +1,5 @@
-import rs from 'jsrsasign';
 import gateway from '../gateway.js';
-import getFirstCharacter from '../internal/getFirstCharacter.js';
-import getPublicJWKFromPrivateKey from '../internal/getPublicJWKFromPrivateKey.js';
 import axios from 'axios';
-import sign from '../internal/sign.js';
-import followGroup from './followGroup.js';
 import { NewGroup } from '../classes.js';
 
 const createGroup = async (
@@ -28,7 +23,17 @@ const createGroup = async (
         throw new Error('Invalid Color');
     }
 
-    const data = new NewGroup(_groupName, _public, _groupDescription, _groupTags, _groupImage, _links, _color, _creatorUsernameReg, _creatorPrivateJWK)
+    const data = new NewGroup(
+        _groupName,
+        _public,
+        _groupDescription,
+        _groupTags,
+        _groupImage,
+        _links,
+        _color,
+        _creatorUsernameReg,
+        _creatorPrivateJWK
+    );
 
     let _url = gateway + `/createGroup`;
     const params = {
@@ -37,8 +42,8 @@ const createGroup = async (
         timeout: 20000,
         data: data,
     };
-    const response = await axios(params)
-    console.log(response.data)
+    const response = await axios(params);
+    console.log(response.data);
     return data;
 };
 export default createGroup;

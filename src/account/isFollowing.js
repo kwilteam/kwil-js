@@ -1,8 +1,10 @@
-import axios from 'axios'
-import gateway from '../gateway.js'
+import axios from 'axios';
+import gateway from '../gateway.js';
 
 const isFollowing = async (_follower, _followee) => {
-    const _url = gateway + `/`+_follower.toLowerCase()+'/'+_followee.toLowerCase()+'/isFollowing';
+    //Check if this individual is following others
+    const _url =
+        gateway + `/` + _follower.toLowerCase() + '/' + _followee.toLowerCase() + '/isFollowing';
     const params = {
         url: _url,
         method: 'get',
@@ -10,15 +12,10 @@ const isFollowing = async (_follower, _followee) => {
     };
     const response = await axios(params);
     if (response.data == '') {
-        return false
+        return false;
     } else {
-        return true
+        return true;
     }
 };
 
 export default isFollowing;
-
-/*let testFunc = async () => {
-    console.log(await isFollowing('Brennanjl', 'Brennanjl'))
-}
-testFunc()*/

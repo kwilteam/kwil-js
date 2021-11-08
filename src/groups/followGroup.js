@@ -1,20 +1,20 @@
-import checkSignature from '../internal/checkSignature.js'
 import rs from 'jsrsasign';
 import axios from 'axios';
 import gateway from '../gateway.js';
 import sign from '../internal/sign.js';
 
 const followGroup = async (_group, _username, _privateJWK) => {
-    _username = _username.toLowerCase()
-    _group = _group.toUpperCase()
+    _username = _username.toLowerCase();
+    _group = _group.toUpperCase();
     const _privateKey = rs.KEYUTIL.getKey(_privateJWK);
     const followReceipt = {
         username: _username,
         group: _group,
-        follow: true
-    }
-    const dataSignature = sign(JSON.stringify(followReceipt), _privateKey)
-    let _url = gateway +'/followGroup';
+        follow: true,
+        timeStamp: new Date()
+    };
+    const dataSignature = sign(JSON.stringify(followReceipt), _privateKey);
+    let _url = gateway + '/followGroup';
     const params = {
         url: _url,
         method: 'post',
@@ -22,7 +22,7 @@ const followGroup = async (_group, _username, _privateJWK) => {
         data: { data: followReceipt, signature: dataSignature },
     };
     const response = await axios(params);
-    return response.data
+    return response.data;
 };
 
 export default followGroup;

@@ -1,23 +1,31 @@
 import axios from 'axios';
 import gateway from '../gateway.js';
-import rs from 'jsrsasign';
-import {NewComment} from '../classes.js'
+import { NewComment } from '../classes.js';
 
 const comment = async (_postText, _mainPostID, _privateJWK, _username, _referenceType) => {
     //_referenceType must be thought, thinkpiece, or comment
-    const _privateKey = rs.KEYUTIL.getKey(_privateJWK);
     if (typeof _username === 'undefined') {
         //The only reason this is added is because the _username field was added in v2 of the API
         throw new Error('Username was not provided on the comment function');
     }
     if (_postText.length > 300) {
-        throw new Error('Comment is longer than 300 characters')
+        throw new Error('Comment is longer than 300 characters');
     }
-    if (_referenceType != 'thought' && _referenceType != 'thinkpiece' && _referenceType != 'comment') {
-        throw new Error('Parameter _referenceType must be thought, thinkpiece, or comment')
+    if (
+        _referenceType != 'thought' &&
+        _referenceType != 'thinkpiece' &&
+        _referenceType != 'comment'
+    ) {
+        throw new Error('Parameter _referenceType must be thought, thinkpiece, or comment');
     }
 
-    const data = new NewComment(_postText, _username.toLowerCase(), _mainPostID, _referenceType, _privateJWK)
+    const data = new NewComment(
+        _postText,
+        _username.toLowerCase(),
+        _mainPostID,
+        _referenceType,
+        _privateJWK
+    );
 
     const _url = gateway + `/comment`;
     const params = {

@@ -1,18 +1,19 @@
-import getPublicJWKFromPrivateKey from '../internal/getPublicJWKFromPrivateKey.js';
-import sha256 from 'js-sha256';
-import sign from '../internal/sign.js';
 import gateway from '../gateway.js';
-import rs from 'jsrsasign';
-import getFirstCharacter from '../internal/getFirstCharacter.js';
 import axios from 'axios';
-import {NewThought} from '../classes.js'
+import { NewThought } from '../classes.js';
 
 const createThought = async (_postText, _img, _privateJWK, _username, _groupTag = null) => {
-    let data = ''
+    let data = '';
     if (_groupTag != null) {
-        data = new NewThought(_postText, _img, _privateJWK, _username.toLowerCase(), _groupTag.toUpperCase())
+        data = new NewThought(
+            _postText,
+            _img,
+            _privateJWK,
+            _username.toLowerCase(),
+            _groupTag.toUpperCase()
+        );
     } else {
-        data = new NewThought(_postText, _img, _privateJWK, _username.toLowerCase())
+        data = new NewThought(_postText, _img, _privateJWK, _username.toLowerCase());
     }
     const _url = gateway + `/post`;
     const params = {

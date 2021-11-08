@@ -1,7 +1,6 @@
 import axios from 'axios';
 import gateway from './gateway.js';
 import rs from 'jsrsasign';
-import getFirstCharacter from './internal/getFirstCharacter.js';
 import { NewUser } from './classes.js';
 import getPublicJWKFromPrivateJWK from './internal/getPublicJWKFromPrivateJWK.js';
 
@@ -42,7 +41,7 @@ const createAccountTest = async (_usernameReg, _password, _email = '') => {
     const privateKey = keyArr[0];
     const rsaJWK = rs.KEYUTIL.getJWKFromKey(privateKey);
     const user = new NewUser(_username, _password, rsaJWK, _email);
-    console.log(user)
+    console.log(user);
 
     const _url = gateway + '/createAccount';
     const params = {
@@ -53,7 +52,7 @@ const createAccountTest = async (_usernameReg, _password, _email = '') => {
         data: user,
     };
     const response = await axios(params);
-    console.log(response.data)
+    console.log(response.data);
     //let newUser = new User(_username, publicKey, encryptKey, dataSignature, accountDataSignature, pfpSignature, followDataSignature)
     return { pubKey: getPublicJWKFromPrivateJWK(rsaJWK), privateKey: rsaJWK };
 };

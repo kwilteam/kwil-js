@@ -1,11 +1,11 @@
 import gateway from '../gateway.js';
 import axios from 'axios';
 
-const getFeed = async (_username, _date= new Date, _limit=20) => {
+const getFeed = async (_username, _date = new Date(), _limit = 20) => {
     if (typeof _date == 'string') {
-        _date = new Date(_date)
-        }
-    _date = _date.getTime()
+        _date = new Date(_date);
+    }
+    _date = _date.getTime();
     const _url = gateway + `/${_username.toLowerCase()}/${_date}/${_limit}/getFeed`;
     const params = {
         url: _url,
@@ -16,9 +16,12 @@ const getFeed = async (_username, _date= new Date, _limit=20) => {
 
     const response = await axios(params);
     try {
-        return {posts: response.data, lastDate: new Date(response.data[response.data.length-1].post_time)};
-    } catch(e) {
-        return {posts: [], lastDate: ''}
+        return {
+            posts: response.data,
+            lastDate: new Date(response.data[response.data.length - 1].post_time),
+        };
+    } catch (e) {
+        return { posts: [], lastDate: '' };
     }
 };
 

@@ -1,9 +1,8 @@
 import createAccount from './src/keyEncrypt/createAccount.js';
 import changeNameAndBio from './src/account/changeNameAndBio.js';
 import changePFP from './src/account/changePFP.js';
-import getPFP from './src/account/getPFP.js';
 import follow from './src/account/follow.js';
-import getFullAccountData from './src/account/getFullAccountData.js'
+import getFullAccountData from './src/account/getFullAccountData.js';
 import getAccountData from './src/account/getAccountData.js';
 import getFollowing from './src/account/getFollowing.js';
 import isFollowing from './src/account/isFollowing.js';
@@ -41,19 +40,18 @@ import like from './src/interactions/like.js';
 import ifGroupExists from './src/groups/ifGroupExists.js';
 import createEvent from './src/groups/createEvent.js';
 import getNameAndBio from './src/account/getNameAndBio.js';
-import getPublicJWKFromPrivateJWK from './src/internal/getPublicJWKFromPrivateJWK.js'
-import generateSalt from './src/internal/generateSalt.js'
-import sha384 from './src/internal/sha384.js'
-import sendMessage from './src/messaging/temp/sendMessage.js'
-import getMessages from './src/messaging/temp/getMessages.js'
-import getPhotoURL from './src/internal/getPhotoURL.js'
+import getPublicJWKFromPrivateJWK from './src/internal/getPublicJWKFromPrivateJWK.js';
+import generateSalt from './src/internal/generateSalt.js';
+import sha384 from './src/internal/sha384.js';
+import sendMessage from './src/messaging/temp/sendMessage.js';
+import getMessages from './src/messaging/temp/getMessages.js';
+import getPhotoURL from './src/internal/getPhotoURL.js';
 
 const ecclesia = {
     createAccount,
     changeNameAndBio,
     getNameAndBio,
     changePFP,
-    getPFP,
     follow,
     getAccountData,
     getFollowing,
@@ -97,9 +95,7 @@ const ecclesia = {
     generateSalt,
     sha384,
     sendMessage,
-    getMessages,
-    getPostByID,
-    getPhotoURL
+    getPhotoURL,
 };
 
 export default ecclesia;
