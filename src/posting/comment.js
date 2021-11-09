@@ -36,8 +36,8 @@ const comment = async (_postText, _mainPostID, _privateJWK, _username, _referenc
         data: data,
     };
 
-    await axios(params);
-
+    const response = await axios(params);
+    console.log(response.data)
     return data;
 };
 export default comment;

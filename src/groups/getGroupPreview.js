@@ -9,7 +9,6 @@ const getGroupPreview = async (_group) => {
         timeout: 20000,
     };
     const response = await axios(params);
-    console.log(response.data);
-    return { groupData: '', recentPost: '' };
+    return response.data;
 };
 export default getGroupPreview;

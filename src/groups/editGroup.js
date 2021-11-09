@@ -52,6 +52,7 @@ const editGroup = async (
             changed.color = _color;
         }
     }
+    groupData.timestamp = Date.now()
     const signator = {
         signature: sign(JSON.stringify(groupData), _privateKey),
         username: _username.toLowerCase(),
@@ -67,7 +68,7 @@ const editGroup = async (
         dataObj.signator = signator;
         dataObj.changed = changed;
     }
-    let _url = gateway + `/editGroup`;
+    const _url = gateway + `/editGroup`;
     const params = {
         url: _url,
         method: 'post',

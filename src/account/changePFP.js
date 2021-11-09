@@ -11,8 +11,8 @@ const changePFP = async (_newPFP, _privateKey, _username) => {
     const newHash = sha384(_newPFP);
     if (account.photoHash != [newHash]) {
         account.photoHash = [newHash];
-
-        let _url = gateway + `/changeAccountData`;
+        account.timestamp = Date.now()
+        const _url = gateway + `/changeAccountData`;
         const params = {
             url: _url,
             method: 'post',

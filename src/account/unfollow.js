@@ -12,7 +12,7 @@ const unfollow = async (_username, _usernameToFollow, _privateJWK) => {
         username: _username,
         followee: _usernameToFollow,
         follow: false,
-        timeStamp: new Date()
+        timestamp: Date.now()
     };
     const dataSignature = sign(JSON.stringify(followingReceipt), _privateKey);
     let _url = gateway + '/follow';

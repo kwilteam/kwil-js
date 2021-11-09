@@ -1,8 +1,12 @@
 import gateway from '../gateway.js';
 import axios from 'axios';
 
-const getGroupPosts = async (_group, _offset, numPosts = 20) => {
-    let _url = gateway + `/${_group.toUpperCase()}/getGroupPosts`;
+const getGroupPosts = async (_group, _date = new Date(), numPosts = 20) => {
+    if (typeof _date == 'string') {
+        _date = new Date(_date);
+    }
+    _date = _date.getTime();
+    let _url = gateway + `/${_group.toUpperCase()}/${_date}/${numPosts}/getGroupPosts`;
     const params = {
         url: _url,
         method: 'get',

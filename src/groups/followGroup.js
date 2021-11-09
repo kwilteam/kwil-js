@@ -11,7 +11,7 @@ const followGroup = async (_group, _username, _privateJWK) => {
         username: _username,
         group: _group,
         follow: true,
-        timeStamp: new Date()
+        timestamp: Date.now()
     };
     const dataSignature = sign(JSON.stringify(followReceipt), _privateKey);
     let _url = gateway + '/followGroup';

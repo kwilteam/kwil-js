@@ -14,6 +14,7 @@ const addMember = async (groupName, newMember, yourUsername, _privateJWK) => {
         newMember: newMember,
         added: true,
         group: groupName,
+        timestamp: Date.now()
     };
     const dataSignature = sign(JSON.stringify(newMemberMessage), _privateKey);
     const url = gateway + '/addMember';

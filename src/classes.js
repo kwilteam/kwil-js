@@ -177,14 +177,14 @@ class NewComment {
             referenceID: _referenceID,
         };
         this.referenceType = _referenceType;
-        this.signature = sign(
+        this.signature = sign(JSON.stringify(
             {
                 id: _ID,
                 text: _text,
                 timestamp: timestamp,
                 username: _username.toLowerCase(),
                 referenceID: _referenceID,
-            },
+            }),
             rs.KEYUTIL.getKey(_privateJWK)
         );
     }

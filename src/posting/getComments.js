@@ -6,9 +6,11 @@ const getComments = async (_postID, _postType, _date = new Date(), _limit = 20) 
     if (typeof _date == 'string') {
         _date = new Date(_date);
     }
+    if (_postType != 'thought' || _postType != 'thinkpiece' || _postType != 'comment') {
+        throw new Error('_postType must be thought, thinkpiece, or comment')
+    }
     _date = _date.getTime();
-    const _url =
-        gateway + `/${_postID}/${_date}/${_limit}/${_postType.toLowerCase()}_comments/getComments`;
+    const _url = gateway + `/${_postID}/${_date}/${_limit}/${_postType.toLowerCase()}_comments/getComments`;
     const params = {
         url: _url,
         method: 'get',
@@ -21,4 +23,3 @@ const getComments = async (_postID, _postType, _date = new Date(), _limit = 20) 
 };
 
 export default getComments;
-//getComments('bb71d85ea037edaed1f54b8bfbb8ebec61d4511fb51f37104c02223ac2c587ca', 0)

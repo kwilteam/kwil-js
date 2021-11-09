@@ -16,8 +16,8 @@ const changeNameAndBio = async (_newName, _newBio, _privateKey, _username) => {
         changed.push('bio');
         account.bio = _newBio;
     }
-
-    let _url = gateway + `/changeAccountData`;
+    account.timestamp = Date.now()
+    const _url = gateway + `/changeAccountData`;
     const params = {
         url: _url,
         method: 'post',
