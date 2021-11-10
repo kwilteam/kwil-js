@@ -9,6 +9,7 @@ const getGroupPreview = async (_group) => {
         timeout: 20000,
     };
     const response = await axios(params);
-    return response.data;
+    return response.data
+
 };
 export default getGroupPreview;

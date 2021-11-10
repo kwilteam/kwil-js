@@ -13,7 +13,7 @@ const addMember = async (groupName, newMember, yourUsername, _privateJWK) => {
         moderator: yourUsername,
         newMember: newMember,
         added: true,
-        group: groupName,
+        group_name: groupName,
         timestamp: Date.now()
     };
     const dataSignature = sign(JSON.stringify(newMemberMessage), _privateKey);

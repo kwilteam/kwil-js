@@ -13,7 +13,7 @@ const removeMember = async (groupName, newMember, yourUsername, _privateJWK) => 
         moderator: yourUsername,
         newMember: newMember,
         added: false,
-        group: groupName,
+        group_name: groupName,
     };
     const dataSignature = sign(JSON.stringify(newMemberMessage), _privateKey);
     const url = gateway + '/addMember';

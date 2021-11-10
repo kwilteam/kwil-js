@@ -1,6 +1,7 @@
 import gateway from '../gateway.js';
 import axios from 'axios';
 import { NewGroup } from '../classes.js';
+import followGroup from './followGroup.js';
 
 const createGroup = async (
     _groupName,
@@ -44,6 +45,7 @@ const createGroup = async (
     };
     const response = await axios(params);
     console.log(response.data);
+    await followGroup(_groupName.toUpperCase(), _creatorUsernameReg.toLowerCase(), _creatorPrivateJWK)
     return data;
 };
 export default createGroup;

@@ -15,7 +15,14 @@ const getGroupPosts = async (_group, _date = new Date(), numPosts = 20) => {
     };
 
     let response = await axios(params);
-    return response.data;
+    try {
+        return {
+            posts: response.data,
+            lastDate: new Date(response.data[response.data.length - 1].post_time),
+        };
+    } catch (e) {
+        return { posts: [], lastDate: '' };
+    }
 };
 
 export default getGroupPosts;
