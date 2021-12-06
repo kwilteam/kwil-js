@@ -2,16 +2,15 @@ import getKeyIDFromPrivateJWK from './internal/getKeyIDFromPrivateJWK.js';
 import sign from './internal/sign.js';
 import sha384 from './internal/sha384.js';
 import generateSalt from './internal/generateSalt.js';
-import aes256 from 'aes256';
+import aes256 from 'react-native-crypto-js';
 import rs from 'jsrsasign';
 
 class NewUser {
-    constructor(_usernameReg, _password, _privateJWK, _email = '') {
-        const _username = _usernameReg.toLowerCase();
+    constructor(_username, _ciphertext, _privateJWK, _salt, _settingsCipherText, _email = '') {
+        _username = _username.toLowerCase()
         const modulus = _privateJWK.n;
-        const passSalt = generateSalt();
-        const encryptKey = _username.toLowerCase() + _password + passSalt;
-        const ciphertext = aes256.encrypt(encryptKey, JSON.stringify(_privateJWK)); //This generates the AES-256 cipher based on Username, Password, and the Private JWK
+        const passSalt = _salt;
+        const currentDate = new Date
         let emailHash = '';
         if (_email !== '') {
             emailHash = sha384(_email); //These values are all declared up here because they are used twice
@@ -21,10 +20,12 @@ class NewUser {
         this.modulus = modulus;
         this.email = emailHash;
         this.salt = passSalt;
-        this.login = ciphertext;
+        this.login = _ciphertext;
         this.name = '';
         this.bio = '';
         this.photoHash = hashedPFP;
+        this.settings = _settingsCipherText
+        this.settingsTime = currentDate
         this.signature = sign(
             JSON.stringify({
                 username: _username,
@@ -34,13 +35,19 @@ class NewUser {
             }),
             rs.KEYUTIL.getKey(_privateJWK)
         );
+        this.settingsSignature = sign(
+            JSON.stringify({
+                settings: _settingsCipherText,
+                date: currentDate
+            }), rs.KEYUTIL.getKey(_privateJWK)
+        )
         this.creationSignature = sign(
             JSON.stringify({
-                username: _usernameReg.toLowerCase(),
+                username: _username,
                 modulus: modulus,
                 email: emailHash,
                 salt: passSalt,
-                login: ciphertext,
+                login: _ciphertext,
             }),
             rs.KEYUTIL.getKey(_privateJWK)
         );
@@ -74,7 +81,7 @@ class NewMessage {
         const _time = Date.now();
         const _body = new MessageBody(_username, _keyID, _msgText, true, _time);
         this.chatID = _chatID;
-        this.body = aes256.encrypt(_chatKey, JSON.stringify(_body));
+        this.body = aes256.AES.encrypt(JSON.stringify(_body), _chatKey);
         this.timestamp = _time;
         this.signature = sign(_body, _privateKey);
     }
@@ -246,5 +253,5 @@ export {
     NewThought,
     NewThinkpiece,
     NewComment,
-    NewGroup,
+    NewGroup
 };

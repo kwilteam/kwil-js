@@ -5,7 +5,7 @@ import checkSignature from '../internal/checkSignature.js';
 
 const getFollowingData = async (_username) => {
     let firstChar = getFirstCharacter(_username);
-    let _url = gateway + '/accounts/' + firstChar + '/' + _username.toUpperCase() + '/following';
+    const _url = gateway + '/accounts/' + firstChar + '/' + _username.toUpperCase() + '/following';
     const params = {
         url: _url,
         method: 'get',

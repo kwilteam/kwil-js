@@ -6,7 +6,7 @@ const getComments = async (_postID, _postType, _date = new Date(), _limit = 20) 
     if (typeof _date == 'string') {
         _date = new Date(_date);
     }
-    if (_postType != 'thought' || _postType != 'thinkpiece' || _postType != 'comment') {
+    if (_postType != 'thought' && _postType != 'thinkpiece' && _postType != 'comment') {
         throw new Error('_postType must be thought, thinkpiece, or comment')
     }
     _date = _date.getTime();
@@ -19,7 +19,15 @@ const getComments = async (_postID, _postType, _date = new Date(), _limit = 20) 
     };
 
     const response = await axios(params);
-    return response.data;
+    try {
+        const newDate = new Date(response.data[response.data.length - 1].post_time)
+        return {
+            posts: response.data,
+            lastDate: newDate.toString(),
+        };
+    } catch (e) {
+        return { posts: [], lastDate: '' };
+    }
 };
 
 export default getComments;

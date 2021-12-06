@@ -1,7 +1,7 @@
 {
     "type": "module",
     "name": "ecclesia",
-    "version": "3.0.22",
+    "version": "3.1.8",
     "description": "ecclesia client for bundler",
     "main": "index.js",
     "scripts": {
@@ -10,12 +10,13 @@
     "author": "Brennan Lamey",
     "license": "ISC",
     "dependencies": {
-        "aes256": "^1.1.0",
         "axios": "^0.21.1",
         "js-sha256": "^0.9.0",
         "jsrsasign": "^10.3.0",
         "jssha": "^3.2.0",
-        "pbkdf2": "^3.1.2"
+        "pbkdf2": "^3.1.2",
+        "react-native-crypto-js": "^1.0.0",
+        "scrypt-js": "^3.0.1"
     },
     "devDependencies": {
         "eslint": "^7.32.0",

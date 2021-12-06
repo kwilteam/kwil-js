@@ -7,8 +7,8 @@ import sha384 from '../internal/sha384.js';
 
 const editGroup = async (
     _groupName,
-    _groupDescription,
     _public,
+    _groupDescription,
     _groupTags,
     _groupImage,
     _links,
@@ -40,6 +40,7 @@ const editGroup = async (
         }
         if (photoHash !== '') {
             groupData.photo_hash = photoHash;
+            groupData.photoHash = photoHash; //This is here because the backend reads photo writes in camel case
             changed.photo_hash = photoHash;
         }
         if (_links !== '' && Array.isArray(_links)) {
@@ -62,7 +63,7 @@ const editGroup = async (
         dataObj.data = groupData;
         dataObj.signator = signator;
         dataObj.changed = changed;
-        dataObj.image = _groupImage;
+        dataObj.photo = _groupImage;
     } else {
         dataObj.data = groupData;
         dataObj.signator = signator;

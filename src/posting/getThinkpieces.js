@@ -16,9 +16,10 @@ const getThinkpieces = async (_username, _date = new Date(), _limit = 20) => {
 
     let response = await axios(params);
     try {
+        const newDate = new Date(response.data[response.data.length - 1].post_time)
         return {
             posts: response.data,
-            lastDate: new Date(response.data[response.data.length - 1].post_time),
+            lastDate: newDate.toString(),
         };
     } catch (e) {
         return { posts: [], lastDate: '' };

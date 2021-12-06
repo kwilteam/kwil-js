@@ -1,5 +1,6 @@
 import createAccount from './src/keyEncrypt/createAccount.js';
 import changeNameAndBio from './src/account/changeNameAndBio.js';
+import getFollowers from './src/account/getFollowers.js';
 import changePFP from './src/account/changePFP.js';
 import follow from './src/account/follow.js';
 import getFullAccountData from './src/account/getFullAccountData.js';
@@ -28,8 +29,6 @@ import isFollowingGroup from './src/groups/isFollowingGroup.js';
 import isMember from './src/groups/isMember.js';
 import getGroups from './src/groups/getGroups.js';
 import ifUserExists from './src/account/ifUserExists.js';
-import invite from './src/messaging/chats/invite.js';
-import createChat from './src/messaging/chats/createChat.js';
 import getGroupPosts from './src/groups/getGroupPosts.js';
 import getGroupPreview from './src/groups/getGroupPreview.js';
 import getPostByID from './src/posting/getPostByID.js';
@@ -37,6 +36,7 @@ import followGroup from './src/groups/followGroup.js';
 import unfollowGroup from './src/groups/unfollowGroup.js';
 import sign from './src/internal/sign.js';
 import like from './src/interactions/like.js';
+import unlike from './src/interactions/unlike.js';
 import ifGroupExists from './src/groups/ifGroupExists.js';
 import createEvent from './src/groups/createEvent.js';
 import getNameAndBio from './src/account/getNameAndBio.js';
@@ -80,8 +80,6 @@ const ecclesia = {
     isMember,
     getGroups,
     ifUserExists,
-    invite,
-    createChat,
     getGroupPosts,
     getGroupPreview,
     getPostByID,
@@ -96,6 +94,8 @@ const ecclesia = {
     sha384,
     sendMessage,
     getPhotoURL,
+    unlike,
+    getFollowers
 };
 
 export default ecclesia;

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import gateway from '../gateway.js';
+import getPhotoURL from '../internal/getPhotoURL.js';
 
 const getGroupData = async (_groupName) => {
     _groupName = _groupName.toUpperCase();
@@ -12,6 +13,9 @@ const getGroupData = async (_groupName) => {
     let response = await axios(params);
     response = response.data;
     response.group_name = _groupName;
+    if (response.photo_hash != '') {
+        response.photo_url = getPhotoURL(response.photo_hash)
+    }
     return response;
 };
 export default getGroupData;

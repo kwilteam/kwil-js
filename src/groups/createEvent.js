@@ -1,4 +1,4 @@
-import { Event } from '../oldClasses.js';
+//import { Event } from '../oldClasses.js';
 import sign from '../internal/sign.js';
 import rs from 'jsrsasign';
 import gateway from '../gateway.js';
@@ -20,7 +20,7 @@ const createEvent = async (
     //Use this function to create an event.  Currently this is broken for the new node structure
     const _privateKey = rs.KEYUTIL.getKey(_privateJWK);
     const _publicKey = getPublicJWKFromPrivateJWK(_privateJWK);
-    const event = new Event(
+    /*const event = new Event(
         _eventName,
         _eventDesc,
         _eventTime,
@@ -44,6 +44,6 @@ const createEvent = async (
         },
     };
     await axios(params);
-    return event;
+    return event;*/
 };
 export default createEvent;
