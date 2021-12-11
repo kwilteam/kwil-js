@@ -11,6 +11,7 @@ const editGroup = async (
     _groupDescription,
     _groupTags,
     _groupImage,
+    _groupBanner,
     _links,
     _color,
     _username,
@@ -21,9 +22,14 @@ const editGroup = async (
     //Getting previous group data
     const groupData = await getGroupData(_groupName);
     let photoHash = '';
+    let bannerHash = ''
     const changed = {};
+    let dataObj = {};
     if (_groupImage != '') {
         photoHash = sha384(_groupImage);
+    }
+    if (_groupBanner != '') {
+        bannerHash = sha384(_groupBanner);
     }
     if (groupData.group_name) {
         if (_groupDescription !== '') {
@@ -42,6 +48,13 @@ const editGroup = async (
             groupData.photo_hash = photoHash;
             groupData.photoHash = photoHash; //This is here because the backend reads photo writes in camel case
             changed.photo_hash = photoHash;
+            dataObj.photo = _groupImage
+        }
+        if (bannerHash !== '') {
+            groupData.banner_hash = bannerHash;
+            groupData.bannerHash = bannerHash; //This is here because the backend reads photo writes in camel case
+            changed.banner_hash = bannerHash;
+            dataObj.banner = _groupBanner
         }
         if (_links !== '' && Array.isArray(_links)) {
             groupData.links = _links;
@@ -58,17 +71,11 @@ const editGroup = async (
         signature: sign(JSON.stringify(groupData), _privateKey),
         username: _username.toLowerCase(),
     };
-    let dataObj = {};
-    if (_groupImage != '') {
-        dataObj.data = groupData;
-        dataObj.signator = signator;
-        dataObj.changed = changed;
-        dataObj.photo = _groupImage;
-    } else {
-        dataObj.data = groupData;
-        dataObj.signator = signator;
-        dataObj.changed = changed;
-    }
+
+    dataObj.data = groupData;
+    dataObj.signator = signator;
+    dataObj.changed = changed;
+
     const _url = gateway + `/editGroup`;
     const params = {
         url: _url,

@@ -9,6 +9,7 @@ const createGroup = async (
     _groupDescription,
     _groupTags,
     _groupImage,
+    _groupBanner,
     _links,
     _color,
     _creatorUsernameReg,
@@ -19,10 +20,12 @@ const createGroup = async (
     Creator username and private jwk are pretty self-explanatory.
     Color must be fed in as hexidecimal
     */
+   if (_color != '') {
     let regex = /^#[0-9A-F]{6}$/i;
     if (!regex.test(_color)) {
         throw new Error('Invalid Color');
     }
+}
 
     const data = new NewGroup(
         _groupName,
@@ -30,6 +33,7 @@ const createGroup = async (
         _groupDescription,
         _groupTags,
         _groupImage,
+        _groupBanner,
         _links,
         _color,
         _creatorUsernameReg,

@@ -16,6 +16,9 @@ const getGroupData = async (_groupName) => {
     if (response.photo_hash != '') {
         response.photo_url = getPhotoURL(response.photo_hash)
     }
+    if (response.banner_hash != '') {
+        response.banner_url = getPhotoURL(response.banner_hash)
+    }
     return response;
 };
 export default getGroupData;

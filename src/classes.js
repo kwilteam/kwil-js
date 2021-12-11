@@ -24,6 +24,7 @@ class NewUser {
         this.name = '';
         this.bio = '';
         this.photoHash = hashedPFP;
+        this.bannerHash = ''
         this.settings = _settingsCipherText
         this.settingsTime = currentDate
         this.signature = sign(
@@ -32,6 +33,7 @@ class NewUser {
                 name: '',
                 bio: '',
                 photoHash: hashedPFP,
+                bannerHash: ''
             }),
             rs.KEYUTIL.getKey(_privateJWK)
         );
@@ -204,6 +206,7 @@ class NewGroup {
         _groupDescription,
         _groupTags,
         _groupImage,
+        _groupBanner,
         _links,
         _color,
         _username,
@@ -212,8 +215,12 @@ class NewGroup {
         _username = _username.toLowerCase();
         _groupName = _groupName.toUpperCase();
         let imgHash = '';
+        let bannerHash = '';
         if (_groupImage != '') {
             imgHash = sha384(_groupImage);
+        }
+        if (_groupBanner != '') {
+            bannerHash = sha384(_groupBanner);
         }
         this.data = {
             groupName: _groupName,
@@ -221,12 +228,14 @@ class NewGroup {
             description: _groupDescription,
             tags: _groupTags,
             photoHash: imgHash,
+            bannerHash: bannerHash,
             links: _links,
             color: _color,
             username: _username,
             moderators: [_username],
         };
         this.photo = _groupImage;
+        this.banner = [_groupBanner];
         this.signature = sign(
             JSON.stringify({
                 groupName: _groupName,
@@ -234,6 +243,7 @@ class NewGroup {
                 description: _groupDescription,
                 tags: _groupTags,
                 photoHash: imgHash,
+                bannerHash: bannerHash,
                 links: _links,
                 color: _color,
                 username: _username,

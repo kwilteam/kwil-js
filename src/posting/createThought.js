@@ -24,6 +24,7 @@ const createThought = async (_postText, _img, _privateJWK, _username, _groupTag 
         data: data,
     };
     await axios(params);
+    console.log(data)
     return data;
 };
 export default createThought;

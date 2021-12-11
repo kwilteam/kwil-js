@@ -16,6 +16,7 @@ const like = async (_like, _postID, _username, _privateJWK) => {
         headers: { 'Content-Type': 'application/json' },
         data: { data: likeData, signature: dataSignature },
     };
-    console.log(await axios(params));
+    let response = await axios(params);
+    return response.data
 };
 export default like;

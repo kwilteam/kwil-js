@@ -5,7 +5,7 @@ import { NewUser } from '../classes.js';
 import generateKeyPair from './generateKeyPair.js';
 import generateSalt from '../internal/generateSalt.js';
 import scrypt from 'scrypt-js'
-
+import generateChatAESKey from '../internal/generateChatAESKey.js'
 const createAccount = async (_username, _password, salt = generateSalt(), _email = '') => {
     _username = _username.toLowerCase();
     //username must be 5-20 characters
@@ -17,7 +17,8 @@ const createAccount = async (_username, _password, salt = generateSalt(), _email
     const passKey = _username+_password+salt
     const scryptHash = await scrypt.scrypt(Buffer.from(passKey.normalize('NFKC')), Buffer.from(salt.normalize('NFKC')), 8192, 8, 1, 32)
     const cipherText = aes256.AES.encrypt(JSON.stringify(keys.privateKey), scryptHash.toString())
-    const settingsCipherText = aes256.AES.encrypt(JSON.stringify({chats: []}), scryptHash.toString())
+    const settingsScryptHash = await generateChatAESKey(keys.privateKey.p, keys.privateKey.q)
+    const settingsCipherText = aes256.AES.encrypt(JSON.stringify({chats: []}), settingsScryptHash.toString())
     const user = new NewUser(_username, cipherText.toString(), keys.privateKey, salt, settingsCipherText.toString());
                 const _url = gateway + '/createAccount';
                 const params = {
@@ -28,7 +29,6 @@ const createAccount = async (_username, _password, salt = generateSalt(), _email
                     data: user,
                 };
                 await axios(params);
-                console.log('Using 3.1.8')
                 return { privateKey: keys.privateKey, loginValid: true };
 };
 export default createAccount;

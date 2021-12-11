@@ -1,16 +1,12 @@
 import gateway from '../gateway.js';
 import axios from 'axios';
 
-const getComments = async (_postID, _postType, _date = new Date(), _limit = 20) => {
-    //_postType should be post or comment
+const getFeedUsersOnly = async (_username, _date = new Date(), _limit = 20) => {
     if (typeof _date == 'string') {
         _date = new Date(_date);
     }
-    if (_postType != 'post' && _postType != 'comment') {
-        throw new Error('_postType must be thought, thinkpiece, or comment')
-    }
     _date = _date.getTime();
-    const _url = gateway + `/${_postID}/${_date}/${_limit}/${_postType.toLowerCase()}_comments/getComments`;
+    const _url = gateway + `/${_username.toLowerCase()}/${_date}/${_limit}/getFeedUsersOnly`;
     const params = {
         url: _url,
         method: 'get',
@@ -30,4 +26,4 @@ const getComments = async (_postID, _postType, _date = new Date(), _limit = 20) 
     }
 };
 
-export default getComments;
+export default getFeedUsersOnly;

@@ -4,7 +4,7 @@ import gateway from '../gateway.js';
 import sign from '../internal/sign.js';
 
 const removeMember = async (groupName, newMember, yourUsername, _privateJWK) => {
-    //Adds a member to a group
+    //Removes a member to a group
     groupName = groupName.toUpperCase();
     newMember = newMember.toLowerCase();
     yourUsername = yourUsername.toLowerCase();

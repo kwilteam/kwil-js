@@ -46,6 +46,13 @@ import sha384 from './src/internal/sha384.js';
 import sendMessage from './src/messaging/temp/sendMessage.js';
 import getMessages from './src/messaging/temp/getMessages.js';
 import getPhotoURL from './src/internal/getPhotoURL.js';
+import changeBanner from './src/account/changeBanner.js';
+import getPostStats from './src/interactions/getPostStats.js'
+import countLikes from './src/interactions/countLikes.js'
+import getFeedGroupsOnly from './src/posting/getFeedGroupsOnly.js'
+import getFeedUsersOnly from './src/posting/getFeedUsersOnly.js'
+import changeAllAccountData from './src/account/changeAllAccountData.js'
+
 
 const ecclesia = {
     createAccount,
@@ -95,7 +102,13 @@ const ecclesia = {
     sendMessage,
     getPhotoURL,
     unlike,
-    getFollowers
+    getFollowers,
+    changeBanner,
+    getPostStats,
+    countLikes,
+    getFeedGroupsOnly,
+    getFeedUsersOnly,
+    changeAllAccountData
 };
 
 export default ecclesia;
