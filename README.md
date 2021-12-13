@@ -60,7 +60,32 @@ const following = await kwil.getFollowing('brennanjl')
 ## Groups
 Groups functionality is one of the most powerful aspects of the Kwil protocol.  In this section, I will cover how to utilize groups functionality.  In the future, I would like to paste a link to a section of a whitepaper / informational site explaining the technicalities behind groups.
 
+To create a group, user the createGroup method: createGroup(group_name, publicity, group_description, group_tags, group_image, group_banner, links, color, your_username, your_private_jwk).  If you wish to leave image or banner blank, pass an empty string.  To leave links and tags blank, use an empty array.
+
 #### Creating a Group
+```
 if (!await kwil.ifGroupExists('arweavers')){
-  await kwil.createGroup
+  await kwil.createGroup('arweavers', true, 'Arweavers community!', ['blockchain', 'technology'], groupImage, groupBanner, [], '#65b110', 'brennanjl', privateKey)
 }
+```
+#### Editing a Group
+The editGroup method uses the same params as the createGroup method.  For any inputs that you don't want to change, you should pass an empty string (Even if for the links and tags parameters, you should pass an empty string).  Any group moderator can edit a group.
+```
+await kwil.editGroup('arweavers', false, '', '', newGroupImage, '', ['https://kwil.com'], '', 'brennanjl', privateKey)
+```
+#### Getting Group Data
+Group data can be retrieved with the getGroupData method. Parameters: getGroupData(group_name).  Group posts can be retrieved with the getGroupPosts method.  Parameters: getGroupPosts(group_name, date_cursor, query_limit).  date_cursor and query_limit are optional.
+```
+const groupData = await kwil.getGroupData('arweavers')
+const groupPosts = await kwil.getGroupPosts('arweavers', new Date, 20)
+```
+Group data can also be retrieved with the getGroupPreview method.  This method returns the group data, as well as the most recent post for the group.
+```
+await kwil.getGroupPreview('arweavers')
+```
+#### Adding Moderators
+Group moderators can control all aspects of a group that an owner can.  The only difference is that a moderator can not remove a group owner.  The group owner, and other moderators, can remove a moderator.  Parameters: addMember/removeMember(group_name, user_to_add/remove, your_username, your_private_key)
+```
+await kwil.addMember('arweavers', 'satoshi', 'brennanjl', privateKey)
+await kwil.removeMember('arweavers', 'satoshi', 'brennanjl', privateKey)
+```
