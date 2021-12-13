@@ -135,12 +135,12 @@ To get posts, use the getPosts, getThoughts, getThinkpieces, getComments, getPos
 Parameters:
    - getPosts(username, date_cursor (optional), query_limit (optional))
    - getThoughts(username, date_cursor (optional), query_limit (optional))
-   getThinkpieces(username, date_cursor (optional), query_limt(optional))
-   getComments(post_ID, post_type (either 'post' or 'comment'), date_cursor (optional), query_limit(optional))
-   getPostByID(post_ID)
-   getFeed(username, date_cursor (optional), query_limit (optional))
-   getFeedUsersOnly(username, date_cursor (optional), query_limit (optional))
-   getFeedGroupsOnly(username, date_cursor (optional), query_limit (optional))
+   - getThinkpieces(username, date_cursor (optional), query_limt(optional))
+   - getComments(post_ID, post_type (either 'post' or 'comment'), date_cursor (optional), query_limit(optional))
+   - getPostByID(post_ID)
+   - getFeed(username, date_cursor (optional), query_limit (optional))
+   - getFeedUsersOnly(username, date_cursor (optional), query_limit (optional))
+   - getFeedGroupsOnly(username, date_cursor (optional), query_limit (optional))
 ```
 const posts = await kwil.getPosts('brennanjl', new Date, 20)
 const thoughts = await kwil.getThoughts('brennanjl', new Date, 20)
