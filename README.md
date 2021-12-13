@@ -133,8 +133,8 @@ await comment('Nice post!', referenceID, privateKey, 'brennanjl', 'comment')
 #### Getting Posts
 To get posts, use the getPosts, getThoughts, getThinkpieces, getComments, getPostByID, getFeed, getFeedUsersOnly, and getFeedGroupsOnly methods.
 Parameters:
-   getPosts(username, date_cursor (optional), query_limit (optional))
-   getThoughts(username, date_cursor (optional), query_limit (optional))
+   - getPosts(username, date_cursor (optional), query_limit (optional))
+   - getThoughts(username, date_cursor (optional), query_limit (optional))
    getThinkpieces(username, date_cursor (optional), query_limt(optional))
    getComments(post_ID, post_type (either 'post' or 'comment'), date_cursor (optional), query_limit(optional))
    getPostByID(post_ID)
