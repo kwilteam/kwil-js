@@ -83,9 +83,30 @@ Group data can also be retrieved with the getGroupPreview method.  This method r
 ```
 await kwil.getGroupPreview('arweavers')
 ```
+#### Group Followers
+You can follow and unfollow groups using the followGroup and unfollowGroup methods.  Parameters for both: followGroup/unfollowGroup(group_name, your_username, your_private_jwk)
+```
+await kwil.followGroup('arweavers', 'brennanjl', privateKey)
+```
+Group followers can be found using the getGroupFollowers method.  You can also check if someone follows a specific group using the isFollowingGroup method.
+```
+const followers = await kwil.getGroupFollowers('arweavers')
+const isFollowing = await kwil.isFollowingGroup('brennanjl', 'arweavers')
+```
+You can also find what groups a user is following using the getGroups method.
+```
+const groups = await kwil.getGroups('brennanjl')
+```
 #### Adding Moderators
 Group moderators can control all aspects of a group that an owner can.  The only difference is that a moderator can not remove a group owner.  The group owner, and other moderators, can remove a moderator.  Parameters: addMember/removeMember(group_name, user_to_add/remove, your_username, your_private_key)
 ```
-await kwil.addMember('arweavers', 'satoshi', 'brennanjl', privateKey)
-await kwil.removeMember('arweavers', 'satoshi', 'brennanjl', privateKey)
+if (!await kwil.isMember('satoshi') {
+   await kwil.addMember('arweavers', 'satoshi', 'brennanjl', privateKey)
+}
+
+//or
+
+if (await kwil.isMember('satoshi') {
+   await kwil.removeMember('arweavers', 'satoshi', 'brennanjl', privateKey)
+}
 ```
