@@ -8,6 +8,10 @@ npm i ecclesia
 Currently this library auto-initializes to a URL.  This will change in the near future.
 ```
 const kwil = require('ecclesia')
+
+//OR
+
+import kwil from 'ecclesia'
 ```
 
 ## Creating an account
@@ -109,4 +113,8 @@ if (!await kwil.isMember('satoshi') {
 if (await kwil.isMember('satoshi') {
    await kwil.removeMember('arweavers', 'satoshi', 'brennanjl', privateKey)
 }
+```
+A list of moderators can be retrieved using the getMembers method.
+```
+const members = await kwil.getMembers('arweavers')
 ```
