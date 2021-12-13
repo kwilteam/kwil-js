@@ -2,6 +2,7 @@ import ecclesia from './index.js';
 import { bruhjwk, bruh3jwk, rjwk } from './src/devKey.js'
 import fs from 'fs'
 import getAccountData from './src/account/getAccountData.js';
+import ifGroupExists from './src/groups/ifGroupExists.js';
 
 const test = async () => {
     //console.log(await ecclesia.createAccount('brennanjl3', 'Ecclesia1'))
@@ -48,6 +49,7 @@ const test = async () => {
     //console.log(await ecclesia.follow('brennanjl1', 'test1', bruhjwk))
     //console.log(await ecclesia.getFeedGroupsOnly('brennanjl1'))
     //console.log(await ecclesia.getFeedUsersOnly('brennanjl1'))
-    //console.log(await ecclesia.changeAllAccountData('Brennan', 'Brennans account', '', '', bruhjwk, 'brennanjl1'))
+    //console.log(await ecclesia.changeAllAccountData('Brennan', 'Brennans account', '', '', bruhjwk, 'brennanjl1'))\
+    //console.log(await ecclesia.getGroupFollowers('ecclesia123'))
 };
 test();

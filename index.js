@@ -52,6 +52,7 @@ import countLikes from './src/interactions/countLikes.js'
 import getFeedGroupsOnly from './src/posting/getFeedGroupsOnly.js'
 import getFeedUsersOnly from './src/posting/getFeedUsersOnly.js'
 import changeAllAccountData from './src/account/changeAllAccountData.js'
+import getGroupFollowers from './src/groups/getGroupFollowers.js'
 
 
 const ecclesia = {
@@ -108,7 +109,8 @@ const ecclesia = {
     countLikes,
     getFeedGroupsOnly,
     getFeedUsersOnly,
-    changeAllAccountData
+    changeAllAccountData,
+    getGroupFollowers
 };
 
 export default ecclesia;
