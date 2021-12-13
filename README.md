@@ -118,3 +118,32 @@ A list of moderators can be retrieved using the getMembers method.
 ```
 const members = await kwil.getMembers('arweavers')
 ```
+## Posting
+The Kwil protocol supports three types of posts: thoughts, thinkpieces, and comments.  Thoughts are short-form pieces of content.  They can have a max of 300 characters, as well as a photo.  Thinkpieces are long-form pieces of content.  They can have a maximum of 12,000 characters (roughly four pages typed), and can have up to five photos associated with them.  Lastly, comments are maximum 300 characters that can not have an image associated.  They can be used to reference any thought, thinkpiece, or comment.  Parameters: createThought(post_text, post_image, private_key, username, group_name (optional)).  createThinkpiece(title, post_text, [myImage1, myImage2], private_key, username, groupTag (optional)).  comment(post_text, referencing_post_id, private_key, username, reference_type(post/comment)).  The last paramter of comment (reference_type) should be either post or comment.
+#### Creating a Post
+```
+await createThought('My first thought!', myImage, privateKey, 'brennanjl', 'arweavers')
+await createThinkpiece('My Thinkpiece', 'Lorem ipsum...', [img1, img2], privateKey, 'brennanjl', 'arweavers')
+
+await comment('Nice post!', referenceID, privateKey, 'brennanjl', 'post')
+// OR
+
+await comment('Nice post!', referenceID, privateKey, 'brennanjl', 'comment')
+```
+#### Getting Posts
+To get posts, use the getPosts, getThoughts, getThinkpieces, getComments, getPostByID, getFeed, getFeedUsersOnly, and getFeedGroupsOnly methods.
+Parameters:
+   getPosts(username, date_cursor (optional), query_limit (optional))
+   getThoughts(username, date_cursor (optional), query_limit (optional))
+   getThinkpieces(username, date_cursor (optional), query_limt(optional))
+   getComments(post_ID, post_type (either 'post' or 'comment'), date_cursor (optional), query_limit(optional))
+   getPostByID(post_ID)
+   getFeed(username, date_cursor (optional), query_limit (optional))
+   getFeedUsersOnly(username, date_cursor (optional), query_limit (optional))
+   getFeedGroupsOnly(username, date_cursor (optional), query_limit (optional))
+```
+const posts = await kwil.getPosts('brennanjl', new Date, 20)
+const thoughts = await kwil.getThoughts('brennanjl', new Date, 20)
+const thinkpieces = await kwil.getThinkpieces('brennanjl', new Date, 20)
+const comments = await kwil.getComments(postID, 'post', new Date, 20)
+```
