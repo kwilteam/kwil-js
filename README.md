@@ -147,3 +147,15 @@ const thoughts = await kwil.getThoughts('brennanjl', new Date, 20)
 const thinkpieces = await kwil.getThinkpieces('brennanjl', new Date, 20)
 const comments = await kwil.getComments(postID, 'post', new Date, 20)
 ```
+## Likes
+Kwil allows users to like and dislike thoughts, thinkpieces, and comments.  The like() method is as follows: like(type, post_ID, your_username, your_private_jwk).  The "type" parameter should be true or false, where true is a like and false is a dislike.  If you have previous liked a post and then dislike (or vice versa), it will automatically overwrite your previous entry.  To remove a like or dislike, use the unlike() method: unlike(post_ID, your_username, your_private_jwk).
+#### Liking
+```
+await kwil.like(true, 'abc123', 'brennanjl', privateKey)
+await kwil.unlike('abc123', 'brennanjl', privateKey)
+```
+#### Post Stats
+You can get a posts stats using the getPostStats() method: getPostStats(post_ID, username (optional)).  If you pass a username, it will return if you have liked the post or not.
+```
+await kwil.getPostStats('abc123', 'brennanjl')
+```
