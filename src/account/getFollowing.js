@@ -1,21 +1,20 @@
-/*import gateway from '../gateway.js';
+import gateway from '../gateway.js';
 import axios from 'axios';
-import getFirstCharacter from '../internal/getFirstCharacter.js';
-import checkSignature from '../internal/checkSignature.js';*/
 
 const getFollowing = async (_username) => {
-    //This function is currently broken
-    console.log(_username);
-    throw new Error('This is broken');
-    /*const firstChar = getFirstCharacter(_username);
-    const _url = gateway + '/accounts/' + firstChar + '/' + _username.toUpperCase() + '/following';
+    _username = _username.toLowerCase()
+    const _url = gateway + `/${_username}/following`
     const params = {
         url: _url,
         method: 'get',
         timeout: 20000,
     };
     let response = await axios(params);
-    */
+    const following = []
+    for (let i = 0; i<response.data.length; i++) {
+        following.push(response.data[i].followee)
+    }
+    return following
 };
 
 export default getFollowing;

@@ -3,6 +3,7 @@ import { bruhjwk, bruh3jwk, rjwk } from './src/devKey.js'
 import fs from 'fs'
 import getAccountData from './src/account/getAccountData.js';
 import ifGroupExists from './src/groups/ifGroupExists.js';
+import getFollowing from './src/account/getFollowing.js';
 
 const test = async () => {
     //console.log(await ecclesia.createAccount('brennanjl3', 'Ecclesia1'))
@@ -26,12 +27,12 @@ const test = async () => {
     //console.log(await ecclesia.addMember('ecclesia', 'brennanjl', 'brennanjl1', privateKey))
     //console.log(await ecclesia.followGroup('ecclesia', 'brennan', privateKey))
     //console.log(await ecclesia.getGroupPosts('ECCLESIA'))
-    //console.log(await ecclesia.getPosts('brennanjl1'))
+    //console.log(await ecclesia.getPosts('brennanjl1', new Date, 20))
     //console.log(await ecclesia.getFeed('brennanjl10', new Date('Mon Nov 15 2021 13:28:14 GMT-0800 (Pacific Standard Time)')))
     //console.log(await ecclesia.getGroupPreview('ECCLESIA123'))
     //console.log(await ecclesia.getGroups('brennanjl1'))
     //console.log(await ecclesia.isFollowingGroup('brennan','ecclesia'))
-    //console.log(await ecclesia.getThoughts('brennan'))
+    //console.log(await ecclesia.getThoughts('brennanjl1', new Date, 20))
     //console.log(await ecclesia.getComments('f3mkf3', 'thought'))
     //console.log(await ecclesia.getPostByID('oC/QxhSHdX04CT0LgXG0z6150dDT8U7NSaKy6DEvtonCXsFNLMfaJB5p6LiWOwMR'))
     //console.log(ecclesia.getPhotoURL('9220607886134fc25f2b10b2663c2cf9d4f15aa8'))

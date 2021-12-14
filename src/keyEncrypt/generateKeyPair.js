@@ -20,7 +20,6 @@ const generateKeyPair = async () => {
                     let privateKey = rs.KEYUTIL.getKey(jwk);
                     const rsaJWK = rs.KEYUTIL.getJWKFromKey(privateKey);
                     return { pubKey: getPublicJWKFromPrivateJWK(rsaJWK), privateKey: rsaJWK };
-
                 }
                 catch ({ message } ) {
                     return {
