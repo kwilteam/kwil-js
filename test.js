@@ -4,6 +4,7 @@ import fs from 'fs'
 import getAccountData from './src/account/getAccountData.js';
 import ifGroupExists from './src/groups/ifGroupExists.js';
 import getFollowing from './src/account/getFollowing.js';
+import sha384 from './src/internal/sha384.js';
 
 const test = async () => {
     //console.log(await ecclesia.createAccount('brennanjl3', 'Ecclesia1'))
