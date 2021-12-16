@@ -39,7 +39,6 @@ const createGroup = async (
         _creatorUsernameReg,
         _creatorPrivateJWK
     );
-
     let _url = gateway + `/createGroup`;
     const params = {
         url: _url,
@@ -49,7 +48,7 @@ const createGroup = async (
     };
     const response = await axios(params);
     console.log(response.data);
-    await followGroup(_groupName.toUpperCase(), _creatorUsernameReg.toLowerCase(), _creatorPrivateJWK)
+    //await followGroup(_groupName.toUpperCase(), _creatorUsernameReg.toLowerCase(), _creatorPrivateJWK)
     return data;
 };
 export default createGroup;

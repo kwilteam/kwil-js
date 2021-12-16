@@ -1,7 +1,7 @@
 {
     "type": "module",
     "name": "ecclesia",
-    "version": "3.1.24",
+    "version": "3.1.26",
     "description": "ecclesia client for bundler",
     "main": "index.js",
     "scripts": {

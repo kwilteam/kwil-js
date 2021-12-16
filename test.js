@@ -1,5 +1,5 @@
 import ecclesia from './index.js';
-import { bruhjwk, bruh3jwk, rjwk } from './src/devKey.js'
+import { bruhjwk, bruh3jwk, rjwk, ljwk } from './src/devKey.js'
 import fs from 'fs'
 import getAccountData from './src/account/getAccountData.js';
 import ifGroupExists from './src/groups/ifGroupExists.js';
@@ -7,7 +7,7 @@ import getFollowing from './src/account/getFollowing.js';
 import sha384 from './src/internal/sha384.js';
 
 const test = async () => {
-    //console.log(await ecclesia.createAccount('brennanjl3', 'Ecclesia1'))
+    //console.log(await ecclesia.createAccount('brennanjl', 'Ecclesia1'))
     //console.log(await ecclesia.login('test1', 'TestAccount1'))
     //console.log(await ecclesia.login('brennanjl', 'Ecclesia1'))
     //console.log(await ecclesia.getAccountData('brennan'))
@@ -15,14 +15,14 @@ const test = async () => {
     //photoData = photoData.toString('base64')
     //console.log(await ecclesia.comment('Comment!', '171E0SdMmlLi38wEaTTAh-sDGDUZhKN7fgQvHIVfrVW3ZShQ9QidFBhkVnellGHM', bruhjwk, 'brennanjl1', 'post'))
     //console.log(await ecclesia.changeBanner(photoData, bruhjwk, 'brennanjl1'))
-    //console.log(await ecclesia.createThought('Test post with justin!', '', bruhjwk, 'brennanjl1'))
+    //console.log(await ecclesia.createThought('Test post group!', '', ljwk, 'brennanjl', 'ecclesia'))
     //console.log(await ecclesia.changePFP(photoData, privateKey, 'brennan'))
     //console.log(await ecclesia.createThinkpiece('Yuh', 'yuh', [''], privateKey, 'brennan'))
     //console.log(await ecclesia.login('brennan', 'Ecclesia1'))
     //console.log(await ecclesia.changeNameAndBio('Brennan Lamey', 'Founder', privateKey, 'brennan'))
     //console.log(await ecclesia.follow('brennanjl1', 'brennanjl', privateKey))
     //console.log(await ecclesia.ifUserExists('brennan'))
-    //console.log(await ecclesia.createGroup('ecclesia12', false, 'test!', ['tag1', 'tag2'], photoData, '', [], '#148FA0', 'brennanjl1', bruhjwk))
+    //console.log(await ecclesia.createGroup('ecclesia', false, 'test!', ['tag1', 'tag2'], '', '', [], '#148FA0', 'brennanjl', ljwk))
     //console.log(await ecclesia.getAccountData('brennanjl1'))
     //console.log(await ecclesia.editGroup('ecclesia123', false, 'Test image!', ['tag1', 'tag2', 'tag3'], photoData, '', '#148FA0', 'brennanjl10', privateKey))
     //console.log(await ecclesia.addMember('ecclesia', 'brennanjl', 'brennanjl1', privateKey))
@@ -53,5 +53,7 @@ const test = async () => {
     //console.log(await ecclesia.getFeedUsersOnly('brennanjl1'))
     //console.log(await ecclesia.changeAllAccountData('Brennan', 'Brennans account', '', '', bruhjwk, 'brennanjl1'))\
     //console.log(await ecclesia.getGroupFollowers('ecclesia123'))
+    //console.log(await ecclesia.searchUsers('Moop'))
+    //console.log(await ecclesia.ifUserExists('test2'))
 };
 test();

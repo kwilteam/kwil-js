@@ -231,6 +231,7 @@ class NewGroup {
             bannerHash: bannerHash,
             links: _links,
             color: _color,
+            timestamp: new Date,
             username: _username,
             moderators: [_username],
         };
@@ -246,6 +247,7 @@ class NewGroup {
                 bannerHash: bannerHash,
                 links: _links,
                 color: _color,
+                timestamp: new Date,
                 username: _username,
                 moderators: [_username],
             }),

@@ -13,6 +13,11 @@ const createAccount = async (_username, _password, salt = generateSalt(), _email
     if (_email != '') {
         throw new Error('This library does not support the email parameter anymore.')
     }
+    for (let i = 0; i<_username.length; i++) {
+        if (_username.charAt(i) == '%') {
+            throw new Error('You can not have a paercent sign (%) in a username')
+        }
+    }
     _username = _username.toLowerCase();
     //username must be 5-20 characters
     //password must be 1 upper case, 1 lower case, 1 number, 8 characters

@@ -53,6 +53,8 @@ import getFeedGroupsOnly from './src/posting/getFeedGroupsOnly.js'
 import getFeedUsersOnly from './src/posting/getFeedUsersOnly.js'
 import changeAllAccountData from './src/account/changeAllAccountData.js'
 import getGroupFollowers from './src/groups/getGroupFollowers.js'
+import searchUsers from './src/account/searchUsers.js'
+import searchGroups from './src/groups/searchGroups.js'
 
 
 const ecclesia = {
@@ -110,7 +112,9 @@ const ecclesia = {
     getFeedGroupsOnly,
     getFeedUsersOnly,
     changeAllAccountData,
-    getGroupFollowers
+    getGroupFollowers,
+    searchUsers,
+    searchGroups
 };
 
 export default ecclesia;
