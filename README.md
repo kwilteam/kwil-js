@@ -8,6 +8,10 @@ npm i ecclesia
 Currently this library auto-initializes to a URL.  This will change in the near future.
 ```
 const kwil = require('ecclesia')
+
+//OR
+
+import kwil from 'ecclesia'
 ```
 
 ## Creating an account
@@ -83,9 +87,75 @@ Group data can also be retrieved with the getGroupPreview method.  This method r
 ```
 await kwil.getGroupPreview('arweavers')
 ```
+#### Group Followers
+You can follow and unfollow groups using the followGroup and unfollowGroup methods.  Parameters for both: followGroup/unfollowGroup(group_name, your_username, your_private_jwk)
+```
+await kwil.followGroup('arweavers', 'brennanjl', privateKey)
+```
+Group followers can be found using the getGroupFollowers method.  You can also check if someone follows a specific group using the isFollowingGroup method.
+```
+const followers = await kwil.getGroupFollowers('arweavers')
+const isFollowing = await kwil.isFollowingGroup('brennanjl', 'arweavers')
+```
+You can also find what groups a user is following using the getGroups method.
+```
+const groups = await kwil.getGroups('brennanjl')
+```
 #### Adding Moderators
 Group moderators can control all aspects of a group that an owner can.  The only difference is that a moderator can not remove a group owner.  The group owner, and other moderators, can remove a moderator.  Parameters: addMember/removeMember(group_name, user_to_add/remove, your_username, your_private_key)
 ```
-await kwil.addMember('arweavers', 'satoshi', 'brennanjl', privateKey)
-await kwil.removeMember('arweavers', 'satoshi', 'brennanjl', privateKey)
+if (!await kwil.isMember('satoshi') {
+   await kwil.addMember('arweavers', 'satoshi', 'brennanjl', privateKey)
+}
+
+//or
+
+if (await kwil.isMember('satoshi') {
+   await kwil.removeMember('arweavers', 'satoshi', 'brennanjl', privateKey)
+}
+```
+A list of moderators can be retrieved using the getMembers method.
+```
+const members = await kwil.getMembers('arweavers')
+```
+## Posting
+The Kwil protocol supports three types of posts: thoughts, thinkpieces, and comments.  Thoughts are short-form pieces of content.  They can have a max of 300 characters, as well as a photo.  Thinkpieces are long-form pieces of content.  They can have a maximum of 12,000 characters (roughly four pages typed), and can have up to five photos associated with them.  Lastly, comments are maximum 300 characters that can not have an image associated.  They can be used to reference any thought, thinkpiece, or comment.  Parameters: createThought(post_text, post_image, private_key, username, group_name (optional)).  createThinkpiece(title, post_text, [myImage1, myImage2], private_key, username, groupTag (optional)).  comment(post_text, referencing_post_id, private_key, username, reference_type(post/comment)).  The last paramter of comment (reference_type) should be either post or comment.
+#### Creating a Post
+```
+await createThought('My first thought!', myImage, privateKey, 'brennanjl', 'arweavers')
+await createThinkpiece('My Thinkpiece', 'Lorem ipsum...', [img1, img2], privateKey, 'brennanjl', 'arweavers')
+
+await comment('Nice post!', referenceID, privateKey, 'brennanjl', 'post')
+// OR
+
+await comment('Nice post!', referenceID, privateKey, 'brennanjl', 'comment')
+```
+#### Getting Posts
+To get posts, use the getPosts, getThoughts, getThinkpieces, getComments, getPostByID, getFeed, getFeedUsersOnly, and getFeedGroupsOnly methods.
+Parameters:
+   - getPosts(username, date_cursor (optional), query_limit (optional))
+   - getThoughts(username, date_cursor (optional), query_limit (optional))
+   - getThinkpieces(username, date_cursor (optional), query_limt(optional))
+   - getComments(post_ID, post_type (either 'post' or 'comment'), date_cursor (optional), query_limit(optional))
+   - getPostByID(post_ID)
+   - getFeed(username, date_cursor (optional), query_limit (optional))
+   - getFeedUsersOnly(username, date_cursor (optional), query_limit (optional))
+   - getFeedGroupsOnly(username, date_cursor (optional), query_limit (optional))
+```
+const posts = await kwil.getPosts('brennanjl', new Date, 20)
+const thoughts = await kwil.getThoughts('brennanjl', new Date, 20)
+const thinkpieces = await kwil.getThinkpieces('brennanjl', new Date, 20)
+const comments = await kwil.getComments(postID, 'post', new Date, 20)
+```
+## Likes
+Kwil allows users to like and dislike thoughts, thinkpieces, and comments.  The like() method is as follows: like(type, post_ID, your_username, your_private_jwk).  The "type" parameter should be true or false, where true is a like and false is a dislike.  If you have previous liked a post and then dislike (or vice versa), it will automatically overwrite your previous entry.  To remove a like or dislike, use the unlike() method: unlike(post_ID, your_username, your_private_jwk).
+#### Liking
+```
+await kwil.like(true, 'abc123', 'brennanjl', privateKey)
+await kwil.unlike('abc123', 'brennanjl', privateKey)
+```
+#### Post Stats
+You can get a posts stats using the getPostStats() method: getPostStats(post_ID, username (optional)).  If you pass a username, it will return if you have liked the post or not.
+```
+await kwil.getPostStats('abc123', 'brennanjl')
 ```
