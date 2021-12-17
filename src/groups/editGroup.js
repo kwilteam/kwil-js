@@ -25,10 +25,11 @@ const editGroup = async (
     let bannerHash = ''
     const changed = {};
     let dataObj = {};
-    if (_groupImage != '') {
+    if (_groupImage != '' && _groupImage != null) {
+        console.log(1)
         photoHash = sha384(_groupImage);
     }
-    if (_groupBanner != '') {
+    if (_groupBanner != '' && _groupBanner != null) {
         bannerHash = sha384(_groupBanner);
     }
     if (groupData.group_name) {
@@ -44,17 +45,21 @@ const editGroup = async (
             groupData.tags = _groupTags;
             changed.tags = _groupTags;
         }
-        if (photoHash !== '') {
-            groupData.photo_hash = photoHash;
+        if (photoHash != '') {
             groupData.photoHash = photoHash; //This is here because the backend reads photo writes in camel case
             changed.photo_hash = photoHash;
-            dataObj.photo = _groupImage
+            dataObj.photo = [_groupImage]
+        } else if (_groupImage == null) {
+            groupData.photoHash = ''
+            changed.photo_hash = ''
         }
-        if (bannerHash !== '') {
-            groupData.banner_hash = bannerHash;
+        if (bannerHash != '') {
             groupData.bannerHash = bannerHash; //This is here because the backend reads photo writes in camel case
             changed.banner_hash = bannerHash;
-            dataObj.banner = _groupBanner
+            dataObj.banner = [_groupBanner]
+        } else if (_groupBanner == null) {
+            groupData.bannerHash = ''
+            changed.banner_hash = ''
         }
         if (_links !== '' && Array.isArray(_links)) {
             groupData.links = _links;
@@ -65,7 +70,7 @@ const editGroup = async (
             groupData.color = _color;
             changed.color = _color;
         }
-    }
+    } else {throw new Error('Group data could not be found for this group')}
     groupData.timestamp = Date.now()
     const signator = {
         signature: sign(JSON.stringify(groupData), _privateKey),
@@ -83,6 +88,7 @@ const editGroup = async (
         timeout: 20000,
         data: dataObj,
     };
+    console.log(dataObj)
     const response = await axios(params);
     console.log(response.data);
     return groupData;

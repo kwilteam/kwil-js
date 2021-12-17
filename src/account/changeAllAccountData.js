@@ -48,7 +48,8 @@ const changeAllAccountData = async (_newName, _newBio, _newPFP, _newBanner, _pri
         timeout: 20000,
         data: sendData
     };
-    await axios(params);
+    const response = await axios(params);
+    console.log(response.data)
     return account;
 };
 export default changeAllAccountData;

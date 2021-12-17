@@ -55,6 +55,7 @@ import changeAllAccountData from './src/account/changeAllAccountData.js'
 import getGroupFollowers from './src/groups/getGroupFollowers.js'
 import searchUsers from './src/account/searchUsers.js'
 import searchGroups from './src/groups/searchGroups.js'
+import editRules from './src/groups/editRules.js'
 
 
 const ecclesia = {
@@ -114,7 +115,8 @@ const ecclesia = {
     changeAllAccountData,
     getGroupFollowers,
     searchUsers,
-    searchGroups
+    searchGroups,
+    editRules
 };
 
 export default ecclesia;

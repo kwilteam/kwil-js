@@ -34,7 +34,6 @@ const generateKeyPair = async () => {
             try {
                 let keyPair = await rs.KEYUTIL.generateKeypair('RSA', 4096);
                 const rsaJWK = await rs.KEYUTIL.getJWKFromKey(keyPair.prvKeyObj);
-                //let newUser = new User(_username, publicKey, encryptKey, dataSignature, accountDataSignature, pfpSignature, followDataSignature)
                 return { pubKey: getPublicJWKFromPrivateJWK(rsaJWK), privateKey: rsaJWK };
             } catch (e) {
                 console.log(e);

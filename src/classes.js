@@ -205,6 +205,7 @@ class NewGroup {
         _public,
         _groupDescription,
         _groupTags,
+        _rules,
         _groupImage,
         _groupBanner,
         _links,
@@ -230,27 +231,16 @@ class NewGroup {
             photoHash: imgHash,
             bannerHash: bannerHash,
             links: _links,
+            rules: _rules,
             color: _color,
             timestamp: new Date,
             username: _username,
             moderators: [_username],
         };
-        this.photo = _groupImage;
+        this.photo = [_groupImage];
         this.banner = [_groupBanner];
         this.signature = sign(
-            JSON.stringify({
-                groupName: _groupName,
-                public: _public,
-                description: _groupDescription,
-                tags: _groupTags,
-                photoHash: imgHash,
-                bannerHash: bannerHash,
-                links: _links,
-                color: _color,
-                timestamp: new Date,
-                username: _username,
-                moderators: [_username],
-            }),
+            JSON.stringify(this.data),
             rs.KEYUTIL.getKey(_creatorPrivateJWK)
         );
     }

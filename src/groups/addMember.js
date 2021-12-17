@@ -2,6 +2,7 @@ import rs from 'jsrsasign';
 import axios from 'axios';
 import gateway from '../gateway.js';
 import sign from '../internal/sign.js';
+import getGroupData from './getGroupData.js';
 
 const addMember = async (groupName, newMember, yourUsername, _privateJWK) => {
     //Adds a member to a group
@@ -9,21 +10,26 @@ const addMember = async (groupName, newMember, yourUsername, _privateJWK) => {
     newMember = newMember.toLowerCase();
     yourUsername = yourUsername.toLowerCase();
     const _privateKey = rs.KEYUTIL.getKey(_privateJWK);
-    const newMemberMessage = {
-        moderator: yourUsername,
-        newMember: newMember,
-        added: true,
-        group_name: groupName,
-        timestamp: Date.now()
-    };
-    const dataSignature = sign(JSON.stringify(newMemberMessage), _privateKey);
-    const url = gateway + '/addMember';
+    const groupData = await getGroupData(groupName)
+    const changed = {}
+    const time = new Date
+    if (!groupData.moderators.includes(newMember)) {
+        groupData.moderators.push(newMember)
+        groupData.timestamp = time
+        changed['moderators'] = groupData.moderators
+        changed['post_time'] = time
+    } else {
+        console.log('User is already a moderator in the group')
+    }
+    const dataSignature = sign(JSON.stringify(groupData), _privateKey);
+    const url = gateway + '/editGroup';
     const params = {
         url: url,
         method: 'post',
         timeout: 20000,
         data: {
-            data: newMemberMessage,
+            data: groupData,
+            changed: changed,
             signator: { signature: dataSignature, username: yourUsername },
         },
     };

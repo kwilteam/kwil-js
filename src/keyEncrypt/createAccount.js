@@ -32,7 +32,7 @@ const createAccount = async (_username, _password, salt = generateSalt(), _email
     const settingsScryptHash = await generateChatAESKey(keys.privateKey.p, keys.privateKey.q)
     let settingsCipherText = aes256.AES.encrypt(JSON.stringify({chats: []}), settingsScryptHash.toString())
         settingsCipherText = settingsCipherText.toString()
-    let settingsHash = sha384(settingsCipherText)
+    const settingsHash = sha384(settingsCipherText)
     const currentDate = new Date
     const user = {
         username: _username,
@@ -42,7 +42,8 @@ const createAccount = async (_username, _password, salt = generateSalt(), _email
         pfpHash: '',
         bannerHash: '',
         timestamp: currentDate,
-        settings: settingsHash,
+        settingsHash: settingsHash,
+        settings: settingsCipherText,
         signature: sign(JSON.stringify({
             username: _username,
             modulus: keys.privateKey.n,
@@ -51,7 +52,7 @@ const createAccount = async (_username, _password, salt = generateSalt(), _email
             pfpHash: '',
             bannerHash: '',
             timestamp: currentDate,
-            settings: settingsHash,
+            settingsHash: settingsHash,
         }), rs.KEYUTIL.getKey(keys.privateKey)),
         salt: salt,
         login: cipherText,
@@ -69,7 +70,6 @@ const createAccount = async (_username, _password, salt = generateSalt(), _email
                     headers: { 'Content-Type': 'application/json' },
                     data: user,
                 };
-                console.log(user)
                 const response = await axios(params);
                 console.log(response.data)
                 return { privateKey: keys.privateKey, loginValid: true };

@@ -15,6 +15,8 @@ const unlike = async (_postID, _username, _privateJWK) => {
         headers: { 'Content-Type': 'application/json' },
         data: { data: likeData, signature: dataSignature },
     };
-    console.log(await axios(params));
+    const response = await axios(params);
+    console.log(response.data)
+    return response.data
 };
 export default unlike;

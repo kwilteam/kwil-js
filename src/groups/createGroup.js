@@ -8,6 +8,7 @@ const createGroup = async (
     _public,
     _groupDescription,
     _groupTags,
+    _rules,
     _groupImage,
     _groupBanner,
     _links,
@@ -32,6 +33,7 @@ const createGroup = async (
         _public,
         _groupDescription,
         _groupTags,
+        _rules,
         _groupImage,
         _groupBanner,
         _links,
@@ -48,7 +50,7 @@ const createGroup = async (
     };
     const response = await axios(params);
     console.log(response.data);
-    //await followGroup(_groupName.toUpperCase(), _creatorUsernameReg.toLowerCase(), _creatorPrivateJWK)
+    await followGroup(_groupName.toUpperCase(), _creatorUsernameReg.toLowerCase(), _creatorPrivateJWK)
     return data;
 };
 export default createGroup;
