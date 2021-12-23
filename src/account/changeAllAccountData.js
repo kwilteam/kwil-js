@@ -4,6 +4,7 @@ import rs from 'jsrsasign';
 import sign from '../internal/sign.js';
 import getFullAccountData from './getFullAccountData.js';
 import sha384 from '../internal/sha384.js';
+import changePFP from './changePFP.js';
 
 const changeAllAccountData = async (_newName, _newBio, _newPFP, _newBanner, _privateKey, _username) => {
     //Function to change a user's name and bio.  If you don't want to change one, pass it an empty string.  EX: ecclesia.changeNameAndBio('Brennan Lamey Jr. The 5th', '', _privateKey, 'brennan')
@@ -34,7 +35,6 @@ const changeAllAccountData = async (_newName, _newBio, _newPFP, _newBanner, _pri
             sendData.photo = [_newPFP]
         }
     }
-
     //Set all of these
     account.timestamp = Date.now()
     sendData.data = account
@@ -45,7 +45,7 @@ const changeAllAccountData = async (_newName, _newBio, _newPFP, _newBanner, _pri
     const params = {
         url: _url,
         method: 'post',
-        timeout: 20000,
+        timeout: 80000,
         data: sendData
     };
     const response = await axios(params);

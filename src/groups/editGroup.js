@@ -4,12 +4,14 @@ import sign from '../internal/sign.js';
 import gateway from '../gateway.js';
 import axios from 'axios';
 import sha384 from '../internal/sha384.js';
+import changePFP from '../account/changePFP.js';
 
 const editGroup = async (
     _groupName,
     _public,
     _groupDescription,
     _groupTags,
+    _rules,
     _groupImage,
     _groupBanner,
     _links,
@@ -26,24 +28,27 @@ const editGroup = async (
     const changed = {};
     let dataObj = {};
     if (_groupImage != '' && _groupImage != null) {
-        console.log(1)
         photoHash = sha384(_groupImage);
     }
     if (_groupBanner != '' && _groupBanner != null) {
         bannerHash = sha384(_groupBanner);
     }
     if (groupData.group_name) {
-        if (_groupDescription !== '') {
+        if (_groupDescription != '') {
             groupData.group_description = _groupDescription;
             changed.group_description = _groupDescription;
         }
-        if (_public !== '') {
+        if (_public != '') {
             groupData.public = _public;
             changed.public = _public;
         }
-        if (_groupTags !== '' && Array.isArray(_groupTags)) {
+        if (_groupTags != '' && Array.isArray(_groupTags)) {
             groupData.tags = _groupTags;
             changed.tags = _groupTags;
+        }
+        if (_rules != '' && Array.isArray(_rules)) {
+            groupData.rules = _rules
+            changed.rules = _rules
         }
         if (photoHash != '') {
             groupData.photoHash = photoHash; //This is here because the backend reads photo writes in camel case
@@ -80,6 +85,8 @@ const editGroup = async (
     dataObj.data = groupData;
     dataObj.signator = signator;
     dataObj.changed = changed;
+    console.log('   CHANGED OBJECT: ')
+    console.log(dataObj.changed)
 
     const _url = gateway + `/editGroup`;
     const params = {
@@ -88,7 +95,6 @@ const editGroup = async (
         timeout: 20000,
         data: dataObj,
     };
-    console.log(dataObj)
     const response = await axios(params);
     console.log(response.data);
     return groupData;

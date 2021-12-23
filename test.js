@@ -6,30 +6,38 @@ import ifGroupExists from './src/groups/ifGroupExists.js';
 import getFollowing from './src/account/getFollowing.js';
 import sha384 from './src/internal/sha384.js';
 
+
 const test = async () => {
-    //console.log(await ecclesia.createAccount('brennanjl1', 'Ecclesia1'))
-    //console.log(await ecclesia.login('test1', 'TestAccount1'))
-    //console.log(await ecclesia.login('brennanjl', 'Ecclesia1'))
-    //console.log(await ecclesia.getAccountData('brennan'))
     //let photoData = fs.readFileSync('./headshot.jpg')
     //photoData = photoData.toString('base64')
+    //console.log(await ecclesia.createAccount('brennanjl334', 'Ecclesia1'))
+    //console.log(await ecclesia.login('brennanjl222', 'Ecclesia1'))
+    //console.log(await ecclesia.ifUserExists('brennanjl1209'))
+    //console.log(await ecclesia.getFeed('brennanjl1209'))
+
+    //console.log(await ecclesia.changeAllAccountData('Brennan Lamey', 'Founder of Kwil!', null, '', ljwk, 'brennanjl222'))
+    //console.log(await ecclesia.changeAllAccountData('Brennan Lamey', 'Founder of Kwil!', '', photoData, ljwk, 'brennanjl222'))
+
+    //console.log(await ecclesia.login('brennanjl', 'Ecclesia1'))
+    //console.log(await ecclesia.getAccountData('brennanjl222'))
+    
     //console.log(await ecclesia.comment('Comment!', '9zld_RGCtAXIMIGFTmTqwkSBSjqw2sc3RNEymY_lLab81hefec51Lzgkfo7zWU8d', ljwk, 'brennanjl', 'post'))
     //console.log(await ecclesia.comment('Re-comment', '9zld_RGCtAXIMIGFTmTqwkSBSjqw2sc3RNEymY_lLab81hefec51Lzgkfo7zWU8d', ljwk, 'brennanjl', 'comment'))
     //console.log(await ecclesia.changeBanner(photoData, bruhjwk, 'brennanjl1'))
-    //console.log(await ecclesia.createThought('Test post group!', '', ljwk, 'brennanjl', 'testgroup'))
+    //console.log(await ecclesia.createThought('Test post group!', '', ljwk, 'brennanjl222'))
     //console.log(await ecclesia.changePFP(photoData, privateKey, 'brennan'))
     //console.log(await ecclesia.createThinkpiece('Yuh', 'yuh', [''], privateKey, 'brennan'))
     //console.log(await ecclesia.login('brennan', 'Ecclesia1'))
     //console.log(await ecclesia.changeAllAccountData('Brennan Lamey', 'Founder of Kwil!', photoData, photoData, ljwk, 'brennanjl'))
     //console.log(await ecclesia.unfollow('brennanjl', 'brennanjl3', ljwk))
     //console.log(await ecclesia.ifUserExists('test1'))
-    //console.log(await ecclesia.createGroup('testgroup', false, 'test!', ['tag1', 'tag2'], '', photoData, '', [], '', 'brennanjl1', ljwk))
+    //console.log(await ecclesia.createGroup('testgroup1', false, 'test!', ['tag1', 'tag2'], '', photoData, '', [], '', 'brennanjl222', ljwk))
     //console.log(await ecclesia.getAccountData('brennanjl1'))
-    //console.log(await ecclesia.editGroup('testgroup', false, 'Test image!', ['tag1', 'tag2', 'tag3'], photoData, photoData, '', '#148FA0', 'brennanjl', ljwk))
+    //console.log(await ecclesia.editGroup('testgroup1', false, 'Test image!', ['tag1', 'tag2', 'tag3'],'', '', photoData, '', '', 'brennanjl222', ljwk))
     //console.log(await ecclesia.addMember('testgroup', 'brennanjl3', 'brennanjl', ljwk))
-    //console.log(await ecclesia.getGroupData('testgroup'))
+    //console.log(await ecclesia.getGroupData('testgroup1'))
     //console.log(await ecclesia.followGroup('testgroup', 'brennanjl', ljwk))
-    //console.log(await ecclesia.getGroupPosts('ECCLESIA'))
+    //console.log(await ecclesia.getGroupPosts('test_group'))
     //console.log(await ecclesia.getPosts('brennanjl1', new Date, 20))
     //console.log(await ecclesia.getFeed('brennanjl10', new Date('Mon Nov 15 2021 13:28:14 GMT-0800 (Pacific Standard Time)')))
     //console.log(await ecclesia.getGroupPreview('ECCLESIA123'))
@@ -56,7 +64,7 @@ const test = async () => {
     //console.log(await ecclesia.changeAllAccountData('Brennan', 'Brennans account', '', '', bruhjwk, 'brennanjl1'))\
     //console.log(await ecclesia.getGroupFollowers('ecclesia123'))
     //console.log(await ecclesia.searchUsers('Moop'))
-    //console.log(await ecclesia.ifUserExists('test2'))
+    //console.log(await ecclesia.ifUserExists('test1'))
     //console.log(await ecclesia.editRules([], 'testgroup', 'brennanjl1', ljwk))
 };
 //test();

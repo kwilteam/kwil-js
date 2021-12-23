@@ -11,7 +11,6 @@ const ifUserExists = async (_username) => {
         timeout: 20000,
     };
     const response = await axios(params);
-    console.log(response.data)
     if (response.data == '') {
         return false;
     } else {

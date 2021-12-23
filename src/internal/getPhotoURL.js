@@ -1,9 +1,10 @@
-import gateway from '../gateway.js';
 import hashPath from './hashPath.js';
+import getFilePath from './getFilePath.js'
 
 const getPhotoURL = (_hash) => {
     const path = hashPath(_hash);
-    return gateway + `/images` + path + _hash + '.jpg';
+    const filePath = getFilePath()
+    return filePath + `/images` + path + _hash + '.jpg';
 };
 
 export default getPhotoURL;

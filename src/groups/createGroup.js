@@ -45,7 +45,7 @@ const createGroup = async (
     const params = {
         url: _url,
         method: 'post',
-        timeout: 20000,
+        timeout: 30000,
         data: data,
     };
     const response = await axios(params);

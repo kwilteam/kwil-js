@@ -13,7 +13,7 @@ const getGroupData = async (_groupName) => {
     let response = await axios(params);
     response = response.data;
     response.group_name = _groupName;
-    if (response.photo_hash != '') {
+    if (response.photo_hash != '' && response.photo_hash != null) {
         response.photo_url = getPhotoURL(response.photo_hash)
     }
     if (response.banner_hash != '') {
