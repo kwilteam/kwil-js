@@ -4,7 +4,6 @@ import rs from 'jsrsasign';
 import sign from '../internal/sign.js';
 import getFullAccountData from './getFullAccountData.js';
 import sha384 from '../internal/sha384.js';
-import changePFP from './changePFP.js';
 
 const changeAllAccountData = async (_newName, _newBio, _newPFP, _newBanner, _privateKey, _username) => {
     //Function to change a user's name and bio.  If you don't want to change one, pass it an empty string.  EX: ecclesia.changeNameAndBio('Brennan Lamey Jr. The 5th', '', _privateKey, 'brennan')

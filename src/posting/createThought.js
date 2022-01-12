@@ -15,7 +15,6 @@ const createThought = async (_postText, _img, _privateJWK, _username, _groupTag 
     } else {
         data = new NewThought(_postText, _img, _privateJWK, _username.toLowerCase());
     }
-    return
     const _url = gateway + `/post`;
     const params = {
         url: _url,
@@ -24,8 +23,7 @@ const createThought = async (_postText, _img, _privateJWK, _username, _groupTag 
         headers: { 'Content-Type': 'application/json' },
         data: data,
     };
-    await axios(params);
-    console.log(data)
+    const response = await axios(params);
     return data;
 };
 export default createThought;

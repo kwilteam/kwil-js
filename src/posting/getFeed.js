@@ -15,6 +15,7 @@ const getFeed = async (_username, _date = new Date(), _limit = 20) => {
     };
 
     const response = await axios(params);
+    console.log(response)
     try {
         const newDate = new Date(response.data[response.data.length - 1].post_time)
         return {
