@@ -6,6 +6,7 @@ const getFeed = async (_username, _date = new Date(), _limit = 20) => {
         _date = new Date(_date);
     }
     _date = _date.getTime();
+    console.log(_date)
     const _url = gateway + `/${_username.toLowerCase()}/${_date}/${_limit}/getFeed`;
     const params = {
         url: _url,
@@ -15,7 +16,6 @@ const getFeed = async (_username, _date = new Date(), _limit = 20) => {
     };
 
     const response = await axios(params);
-    console.log(response)
     try {
         const newDate = new Date(response.data[response.data.length - 1].post_time)
         return {

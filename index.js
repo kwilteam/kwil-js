@@ -56,6 +56,8 @@ import getGroupFollowers from './src/groups/getGroupFollowers.js'
 import searchUsers from './src/account/searchUsers.js'
 import searchGroups from './src/groups/searchGroups.js'
 import editRules from './src/groups/editRules.js'
+import isHolder from './src/web3/isHolder.js'
+import getSalt from './src/account/getSalt.js'
 
 
 const ecclesia = {
@@ -116,7 +118,9 @@ const ecclesia = {
     getGroupFollowers,
     searchUsers,
     searchGroups,
-    editRules
+    editRules,
+    isHolder,
+    getSalt
 };
 
 export default ecclesia;

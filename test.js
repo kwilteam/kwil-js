@@ -12,34 +12,38 @@ import gateway from './src/gateway.js';
 const test = async () => {
     //let photoData = fs.readFileSync('./headshot.jpg')
     //photoData = photoData.toString('base64')
-    //console.log(await ecclesia.createAccount('brennanjl1e2', 'Ecclesia1'))
-    //console.log(await ecclesia.login('brennanjl', 'Ecclesia1'))
-    console.time('yuh')
-    for (let i = 0; i<1000; i++) {
-        await ecclesia.ifUserExists('brennanjl1e2')
-    }
-    console.timeEnd('yuh')
+    console.log(await ecclesia.createAccount('brennanjl2ee21', 'Ecclesia1'))
+    //console.log(await ecclesia.login('brennanjl2222', 'Ecclesia1'))
+    //console.time('yuh')
+    //console.log(await ecclesia.getPosts('kwil'))
+    //console.log(response)
+    //console.log(response)
+    //console.log(await ecclesia.getAccountData('brennanjl2222'))
+    //console.log(await ecclesia.ifUserExists('hellobud'))
+    //console.log(await ecclesia.isHolder('0xEF94BD30AA33de1677D7614D17aA39D493a485F1', '0xbfcd68ded9d511a632d45333155350a1907d4977'))
+    //console.log(await ecclesia.getSalt('brennanjl2222'))
     //console.log(await ecclesia.ifUserExists('brennanjl1e2'))
+    //console.timeEnd('yuh')
     //console.log(await ecclesia.getFeed('brennanjl'))
     //console.log(await ecclesia.getPosts('brennanjl222'))
 
     //console.log(await ecclesia.changeAllAccountData('Brennan Lamey', 'Founder of Kwil!', null, '', ljwk, 'brennanjl222'))
-    //console.log(await ecclesia.changeAllAccountData('Brennan Lamey', 'Founder of Kwil!', '', photoData, ljwk, 'brennanjl222'))
+    //console.log(await ecclesia.changeAllAccountData('Brennan Lamey', 'Founder of Kwil!', photoData, null, bjwk, 'brennanjl2222'))
 
     //console.log(await ecclesia.login('brennanjl222', 'Ecclesia1'))
-    //console.log(await ecclesia.getAccountData('brennanjl222'))
+    //console.log(await ecclesia.getAccountData('brennanjl2222'))
     
     //console.log(await ecclesia.comment('Comment!', '9zld_RGCtAXIMIGFTmTqwkSBSjqw2sc3RNEymY_lLab81hefec51Lzgkfo7zWU8d', ljwk, 'brennanjl', 'post'))
     //console.log(await ecclesia.comment('Re-comment', '9zld_RGCtAXIMIGFTmTqwkSBSjqw2sc3RNEymY_lLab81hefec51Lzgkfo7zWU8d', ljwk, 'brennanjl', 'comment'))
     //console.log(await ecclesia.changeBanner(photoData, bruhjwk, 'brennanjl1'))
-    //console.log(await ecclesia.createThought('Test post!', '', ljwk, 'brennanjl1'))
+    //console.log(await ecclesia.createThought('Test post BREAK DA BUNDLE PT 3!!', '', bjwk, 'brennanjl2222', 'TESTGROUP1'))
     //console.log(await ecclesia.changePFP(photoData, privateKey, 'brennan'))
     //console.log(await ecclesia.createThinkpiece('Yuh', 'yuh', [''], privateKey, 'brennan'))
     //console.log(await ecclesia.login('brennan', 'Ecclesia1'))
     //console.log(await ecclesia.changeAllAccountData('Brennan Lamey', 'Founder of Kwil!', photoData, photoData, ljwk, 'brennanjl'))
-    //console.log(await ecclesia.unfollow('brennanjl', 'brennanjl3', ljwk))
+    //console.log(await ecclesia.follow('brennanjl2222', 'test1', bjwk))
     //console.log(await ecclesia.ifUserExists('test1'))
-    //console.log(await ecclesia.createGroup('testgroup1', false, 'test!', ['tag1', 'tag2'], '', photoData, '', [], '', 'brennanjl222', ljwk))
+    //console.log(await ecclesia.createGroup('testgroup1', false, 'test!', ['tag1', 'tag2'], '', '', '', [], '', 'brennanjl2222', bjwk))
     //console.log(await ecclesia.getAccountData('brennanjl1'))
     //console.log(await ecclesia.editGroup('testgroup1', false, 'Test image!', ['tag1', 'tag2', 'tag3'],'', '', photoData, '', '', 'brennanjl222', ljwk))
     //console.log(await ecclesia.addMember('testgroup', 'brennanjl3', 'brennanjl', ljwk))
@@ -67,21 +71,17 @@ const test = async () => {
     //171E0SdMmlLi38wEaTTAh-sDGDUZhKN7fgQvHIVfrVW3ZShQ9QidFBhkVnellGHM
     //console.log(await ecclesia.getGroups('brennanjl1'))
     //console.log(await ecclesia.follow('brennanjl1', 'test1', bruhjwk))
-    //console.log(await ecclesia.getFeedGroupsOnly('brennanjl1'))
-    //console.log(await ecclesia.getFeedUsersOnly('brennanjl1'))
+    //console.log(await ecclesia.getFeed('brennanjl2222'))
+    //console.log(await ecclesia.getFeed('brennanjl2222'))
+    //console.log(await ecclesia.getFeedGroupsOnly('brennanjl2222'))
+    //console.log(await ecclesia.getFeedUsersOnly('test1'))
+
     //console.log(await ecclesia.changeAllAccountData('Brennan', 'Brennans account', '', '', bruhjwk, 'brennanjl1'))\
     //console.log(await ecclesia.getGroupFollowers('ecclesia123'))
     //console.log(await ecclesia.searchUsers('Moop'))
     //console.log(await ecclesia.ifUserExists('test1'))
     //console.log(await ecclesia.editRules([], 'testgroup', 'brennanjl1', ljwk))
-    /*const params = {
-        url: gateway+'/ping',
-        method: 'post',
-        timeout: 20000,
-        headers: { 'Content-Type': 'application/json' },
-    };
-    console.log(await axios(params))*/
 };
 
 
-test();
+//test();
