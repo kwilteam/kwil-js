@@ -1,7 +1,8 @@
-import gateway from '../gateway.js';
+import {gateway} from '../gateway.js';
 import axios from 'axios';
 
 const getPosts = async (_username, _date = new Date(), _limit = 20) => {
+    console.log(gateway)
     if (typeof _date == 'string') {
         _date = new Date(_date);
     }
@@ -13,7 +14,6 @@ const getPosts = async (_username, _date = new Date(), _limit = 20) => {
         timeout: 20000,
         headers: { 'Content-Type': 'application/json' },
     };
-
     let response = await axios(params);
     try {
         const newDate = new Date(response.data[response.data.length - 1].post_time)

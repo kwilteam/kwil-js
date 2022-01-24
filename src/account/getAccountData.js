@@ -8,7 +8,6 @@ const getAccountData = async (_username) => {
     const accountData = await getFullAccountData(_username);
     let photoURL = '';
     let bannerURL = '';
-    console.log(accountData)
     if (accountData.pfpHash != '' && accountData.pfpHash != undefined) {
         photoURL = getPhotoURL(accountData.pfpHash)
     }

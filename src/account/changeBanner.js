@@ -9,8 +9,8 @@ const changeBanner = async (_newBanner, _privateKey, _username) => {
     //Function for changing banner.
     const account = await getFullAccountData(_username.toLowerCase());
     const newHash = sha384(_newBanner);
-    if (account.bannerHash != [newHash]) {
-        account.bannerHash = [newHash];
+    if (account.bannerHash != newHash) {
+        account.bannerHash = newHash;
         account.timestamp = Date.now()
         const _url = gateway + `/changeAccountData`;
         const params = {

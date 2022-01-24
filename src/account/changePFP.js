@@ -9,8 +9,8 @@ const changePFP = async (_newPFP, _privateKey, _username) => {
     //Function for changing pfp.
     const account = await getFullAccountData(_username.toLowerCase());
     const newHash = sha384(_newPFP);
-    if (account.photoHash != [newHash]) {
-        account.photoHash = [newHash];
+    if (account.photoHash != newHash) {
+        account.photoHash = newHash;
         account.timestamp = Date.now()
         const _url = gateway + `/changeAccountData`;
         const params = {

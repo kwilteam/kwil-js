@@ -32,7 +32,7 @@ const generateKeyPair = async () => {
         } else {
             console.log('window.crypto not available.  Key generation may take a while...');
             try {
-                let keyPair = await rs.KEYUTIL.generateKeypair('RSA', 512);
+                let keyPair = await rs.KEYUTIL.generateKeypair('RSA', 4096);
                 const rsaJWK = await rs.KEYUTIL.getJWKFromKey(keyPair.prvKeyObj);
                 return { pubKey: getPublicJWKFromPrivateJWK(rsaJWK), privateKey: rsaJWK };
             } catch (e) {
