@@ -1,7 +1,7 @@
 import getGroupData from './getGroupData.js';
 import rs from 'jsrsasign';
 import sign from '../internal/sign.js';
-import gateway from '../gateway.js';
+import { gateway } from '../gateway.js';
 import axios from 'axios';
 import sha384 from '../internal/sha384.js';
 import changePFP from '../account/changePFP.js';

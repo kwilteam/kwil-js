@@ -1,5 +1,5 @@
 import axios from "axios";
-import gateway from "../gateway.js"
+import { gateway } from "../gateway.js"
 
 const getGroupFollowers = async (_group) => {
     _group = _group.toUpperCase()

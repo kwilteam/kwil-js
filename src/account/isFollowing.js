@@ -1,5 +1,5 @@
 import axios from 'axios';
-import gateway from '../gateway.js';
+import { gateway } from '../gateway.js';
 
 const isFollowing = async (_follower, _followee) => {
     //Check if this individual is following others

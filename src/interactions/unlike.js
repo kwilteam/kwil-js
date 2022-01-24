@@ -1,7 +1,7 @@
 import axios from 'axios';
 import sign from '../internal/sign.js';
 import rs from 'jsrsasign';
-import gateway from '../gateway.js';
+import { gateway } from '../gateway.js';
 
 const unlike = async (_postID, _username, _privateJWK) => {
     const _privateKey = rs.KEYUTIL.getKey(_privateJWK);

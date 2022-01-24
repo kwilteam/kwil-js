@@ -1,4 +1,4 @@
-import gateway from '../gateway.js';
+import { gateway } from '../gateway.js';
 import axios from 'axios';
 import getFirstCharacter from '../internal/getFirstCharacter.js';
 import checkSignature from '../internal/checkSignature.js';

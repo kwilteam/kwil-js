@@ -1,5 +1,5 @@
 import axios from 'axios';
-import gateway from '../gateway.js';
+import { gateway } from '../gateway.js';
 import aes256 from 'react-native-crypto-js';
 import generateKeyPair from './generateKeyPair.js';
 import generateSalt from '../internal/generateSalt.js';

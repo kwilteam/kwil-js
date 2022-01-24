@@ -1,7 +1,7 @@
 import axios from 'axios';
 import sign from '../internal/sign.js';
 import rs from 'jsrsasign';
-import gateway from '../gateway.js';
+import { gateway } from '../gateway.js';
 
 const like = async (_like, _postID, _username, _privateJWK) => {
     //like should be true if a like, false if a dislike

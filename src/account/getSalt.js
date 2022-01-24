@@ -1,5 +1,5 @@
 import axios from 'axios'
-import gateway from '../gateway.js'
+import { gateway } from '../gateway.js'
 
 const getSalt = async(_username) => {
     _username = _username.toLowerCase()

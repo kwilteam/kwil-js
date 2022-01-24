@@ -1,5 +1,5 @@
 import axios from 'axios';
-import gateway from '../gateway.js';
+import { gateway } from '../gateway.js';
 const isMember = async (_username, _groupName) => {
     _username = _username.toLowerCase();
     _groupName = _groupName.toUpperCase();

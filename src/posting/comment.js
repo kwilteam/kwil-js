@@ -1,5 +1,5 @@
 import axios from 'axios';
-import gateway from '../gateway.js';
+import { gateway } from '../gateway.js';
 import { NewComment } from '../classes.js';
 
 const comment = async (_postText, _mainPostID, _privateJWK, _username, _referenceType) => {

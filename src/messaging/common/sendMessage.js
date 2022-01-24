@@ -1,5 +1,5 @@
 import rs from 'jsrsasign';
-import gateway from '../../gateway.js';
+import { gateway } from '../../gateway.js';
 import getAccountData from '../../account/getAccountData.js';
 import getFirstCharacter from '../../internal/getFirstCharacter.js';
 import axios from 'axios';

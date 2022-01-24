@@ -1,4 +1,4 @@
-import gateway from '../gateway.js';
+import { gateway } from '../gateway.js';
 import getPhotoURL from '../internal/getPhotoURL.js';
 import hashPath from '../internal/hashPath.js';
 import getFullAccountData from './getFullAccountData.js';

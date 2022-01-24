@@ -1,4 +1,4 @@
-import gateway from '../gateway.js';
+import { gateway } from '../gateway.js';
 import axios from 'axios';
 
 const getFeed = async (_username, _date = new Date(), _limit = 20) => {

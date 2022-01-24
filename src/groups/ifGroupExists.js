@@ -1,5 +1,5 @@
 import axios from 'axios';
-import gateway from '../gateway.js';
+import { gateway } from '../gateway.js';
 const ifGroupExists = async (_group) => {
     const _url = gateway + '/' + _group.toUpperCase() + '/ifGroupExists';
     const params = {

@@ -1,6 +1,6 @@
 import rs from 'jsrsasign';
 import axios from 'axios';
-import gateway from '../gateway.js';
+import { gateway } from '../gateway.js';
 import sign from '../internal/sign.js';
 import getGroupData from './getGroupData.js';
 

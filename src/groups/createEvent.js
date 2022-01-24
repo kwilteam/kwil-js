@@ -1,7 +1,7 @@
 //import { Event } from '../oldClasses.js';
 import sign from '../internal/sign.js';
 import rs from 'jsrsasign';
-import gateway from '../gateway.js';
+import { gateway } from '../gateway.js';
 import getPublicJWKFromPrivateJWK from '../internal/getPublicJWKFromPrivateJWK.js';
 import getFirstCharacter from '../internal/getFirstCharacter.js';
 import axios from 'axios';

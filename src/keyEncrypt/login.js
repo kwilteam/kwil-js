@@ -1,4 +1,4 @@
-import gateway from '../gateway.js';
+import { gateway } from '../gateway.js';
 import aes256 from 'react-native-crypto-js';
 import axios from 'axios';
 import scrypt from 'scrypt-js'

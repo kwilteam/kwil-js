@@ -1,5 +1,5 @@
 import axios from 'axios';
-import gateway from '../gateway.js';
+import { gateway } from '../gateway.js';
 
 const getFullAccountData = async (_username) => {
     //Same as getAccountData, but returns the photoHash instead of the URL

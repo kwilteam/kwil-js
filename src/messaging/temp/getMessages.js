@@ -1,4 +1,4 @@
-import gateway from '../../gateway.js';
+import { gateway } from '../../gateway.js';
 import axios from 'axios';
 
 const getMessages = async (_username) => {

@@ -1,4 +1,4 @@
-import gateway from '../gateway.js'
+import { gateway } from '../gateway.js'
 import axios from 'axios'
 
 const searchGroups = async (_group) => {

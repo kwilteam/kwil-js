@@ -1,4 +1,4 @@
-import gateway from '../gateway.js';
+import { gateway } from '../gateway.js';
 import axios from 'axios';
 
 const getGroupPosts = async (_group, _date = new Date(), numPosts = 20) => {

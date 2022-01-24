@@ -1,5 +1,5 @@
 import axios from 'axios';
-import gateway from '../gateway.js';
+import { gateway } from '../gateway.js';
 import getPhotoURL from '../internal/getPhotoURL.js';
 
 const getGroupPreview = async (_group) => {

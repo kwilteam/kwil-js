@@ -1,5 +1,5 @@
 import axios from 'axios';
-import gateway from '../gateway.js';
+import { gateway } from '../gateway.js';
 import getFirstCharacter from '../internal/getFirstCharacter.js';
 
 const getInbox = async (_username) => {

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import gateway from '../../gateway.js';
+import { gateway } from '../../gateway.js';
 
 const getChatPreviews = async (_username) => {
     const _url = gateway + '/' + _username.toLowerCase() + `/getChatPreviews`;

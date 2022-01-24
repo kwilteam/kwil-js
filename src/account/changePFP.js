@@ -1,4 +1,4 @@
-import gateway from '../gateway.js';
+import { gateway } from '../gateway.js';
 import axios from 'axios';
 import rs from 'jsrsasign';
 import sign from '../internal/sign.js';

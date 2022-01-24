@@ -1,5 +1,5 @@
 import axios from 'axios';
-import gateway from '../gateway.js';
+import { gateway } from '../gateway.js';
 import checkSignature from '../internal/checkSignature.js';
 import getFirstCharacter from '../internal/getFirstCharacter.js';
 

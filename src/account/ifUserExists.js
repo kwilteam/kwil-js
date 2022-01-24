@@ -1,5 +1,5 @@
 import axios from 'axios';
-import gateway from '../gateway.js';
+import { gateway } from '../gateway.js';
 
 const ifUserExists = async (_username) => {
     //Check to see if this user exists.

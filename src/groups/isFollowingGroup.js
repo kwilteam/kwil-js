@@ -1,5 +1,5 @@
 import axios from 'axios';
-import gateway from '../gateway.js';
+import { gateway } from '../gateway.js';
 
 const isFollowingGroup = async (_username, _group) => {
     const _url =

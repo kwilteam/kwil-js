@@ -1,5 +1,5 @@
 import axios from 'axios';
-import gateway from '../gateway.js';
+import { gateway } from '../gateway.js';
 
 const getMembers = async (_groupName) => {
     const _url = gateway + '/' + _groupName.toUpperCase() + '/getModerators';

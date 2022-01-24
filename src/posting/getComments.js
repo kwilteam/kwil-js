@@ -1,4 +1,4 @@
-import gateway from '../gateway.js';
+import { gateway } from '../gateway.js';
 import axios from 'axios';
 
 const getComments = async (_postID, _postType, _date = new Date(), _limit = 20) => {

@@ -1,4 +1,4 @@
-import gateway from '../gateway.js';
+import { gateway } from '../gateway.js';
 import axios from 'axios';
 import { NewGroup } from '../classes.js';
 import followGroup from './followGroup.js';

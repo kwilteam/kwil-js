@@ -1,5 +1,5 @@
 import axios from 'axios';
-import gateway from '../gateway.js';
+import { gateway } from '../gateway.js';
 import { NewThinkpiece } from '../classes.js';
 
 const createThinkpiece = async (
