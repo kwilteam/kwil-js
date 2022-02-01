@@ -58,6 +58,7 @@ import searchGroups from './src/groups/searchGroups.js'
 import editRules from './src/groups/editRules.js'
 import isHolder from './src/web3/isHolder.js'
 import getSalt from './src/account/getSalt.js'
+import {setGateway, getGateway, setMoat} from './src/gateway.js'
 
 
 const ecclesia = {
@@ -120,7 +121,10 @@ const ecclesia = {
     searchGroups,
     editRules,
     isHolder,
-    getSalt
+    getSalt,
+    setGateway,
+    getGateway,
+    setMoat
 };
 
 export default ecclesia;

@@ -23,6 +23,7 @@ const removeMember = async (groupName, newMember, yourUsername, _privateJWK) => 
         changed['post_time'] = time
     } else {
         console.log('User is already not a moderator in the group')
+        return
     }
     const dataSignature = sign(JSON.stringify(groupData), _privateKey);
     const url = gateway + '/editGroup';
