@@ -1,0 +1,31 @@
+version: "3"
+
+tasks:
+  default:
+    cmds:
+      - task: build
+  
+  build:
+    desc: Builds all resources
+
+  build:ts:
+    desc: Compiles Typescript
+    cmds: 
+      - tsc
+    generates:
+      - dist
+
+  build:proto:
+    desc: Builds proto bindings for GRPC Gateway for all services
+    cmds:
+      - |
+        mkdir -p src/proto
+        protoc -I proto \
+        --grpc-gateway-ts_out=src/proto ./proto/kwil/tx/v0/*.proto \
+        ./proto/kwil/common/v0/*.proto \
+        ./proto/kwil/account/v0/*.proto \
+        ./proto/kwil/pricing/v0/*.proto \
+    sources:
+      - proto/kwil/
+    generates:
+      - src/proto/tx
