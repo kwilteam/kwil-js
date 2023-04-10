@@ -8,7 +8,7 @@ async function test() {
     const provider = new ethers.providers.JsonRpcProvider("http://localhost:64960")
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
 
-    const kwil = new kwiljs.Kwil({
+    const kwil = new kwiljs.NodeKwil({
         kwilProvider: "http://localhost:64966",
         timeout: 10000,
         logging: true,
@@ -19,7 +19,7 @@ async function test() {
     // broadcast(kwil, testDB, wallet)
     // getSchema(kwil, wallet.address, "testdb")
     // getAccount(kwil, wallet.address)
-    listDatabases(kwil, wallet.address)
+    // listDatabases(kwil, wallet.address)
     // ping(kwil)
     // getFunder(kwil, wallet)
     // getAllowance(kwil, wallet)
