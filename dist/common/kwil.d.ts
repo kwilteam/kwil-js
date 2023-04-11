@@ -11,7 +11,8 @@ import { DBBuilder } from "./builder/builder";
 export declare class Kwil {
     private client;
     constructor(opts: Config);
-    getSchema(owner: string, name: string): Promise<GenericResponse<Database<string>>>;
+    getDBID(owner: string, name: string): string;
+    getSchema(dbid: string): Promise<GenericResponse<Database<string>>>;
     estimateCost(tx: ITx): Promise<GenericResponse<string>>;
     getAccount(owner: string): Promise<GenericResponse<Account>>;
     getAction(dbid: string, actionName: string): Promise<Action>;

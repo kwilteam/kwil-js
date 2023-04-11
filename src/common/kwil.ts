@@ -28,11 +28,12 @@ export class Kwil {
         this.client = client;
     }
 
-    public async getSchema(owner: string, name: string): Promise<GenericResponse<Database<string>>> {
-        owner = owner.toLowerCase();
-        name = name.toLowerCase();
-
-        const res = await this.client.Accounts.getSchema(generateDBID(name, owner));
+    public getDBID(owner: string, name: string): string {
+        return generateDBID(name, owner);
+    }
+    
+    public async getSchema(dbid: string): Promise<GenericResponse<Database<string>>> {
+        const res = await this.client.Accounts.getSchema(dbid);
         return res;
     }
 

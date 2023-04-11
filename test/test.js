@@ -5,20 +5,20 @@ require("dotenv").config()
 
 async function test() {
     //update to goerli when live
-    const provider = new ethers.providers.JsonRpcProvider("http://localhost:64960")
+    const provider = new ethers.providers.JsonRpcProvider("http://localhost:54009")
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
 
     const kwil = new kwiljs.NodeKwil({
-        kwilProvider: "http://localhost:64966",
+        kwilProvider: "http://localhost:54028",
         timeout: 10000,
         logging: true,
     })
 
-    const signer = wallet
+    const dbid = kwil.getDBID(wallet.address, "testdb")
 
     // broadcast(kwil, testDB, wallet)
-    // getSchema(kwil, wallet.address, "testdb")
-    // getAccount(kwil, wallet.address)
+    // getSchema(kwil, dbid)
+    getAccount(kwil, wallet.address)
     // listDatabases(kwil, wallet.address)
     // ping(kwil)
     // getFunder(kwil, wallet)
@@ -28,17 +28,18 @@ async function test() {
     // deposit(kwil, wallet, 25000)
     // getDepositedBalance(kwil, wallet)
     // getTokenAddress(kwil, wallet)
-    // getAction(kwil, "x04fa403431edab4f2933cb249c365f02cfd11ad7783fb52028fff45a", "create_post")
-    // newAction(kwil, "x04fa403431edab4f2933cb249c365f02cfd11ad7783fb52028fff45a", "create_user", wallet)
-    // select(kwil, "x04fa403431edab4f2933cb249c365f02cfd11ad7783fb52028fff45a", "SELECT * FROM users")
-    // bulkAction(kwil, "x04fa403431edab4f2933cb249c365f02cfd11ad7783fb52028fff45a", "create_user", wallet)
+    // getAction(kwil, dbid, "create_post")
+    // newAction(kwil, dbid, "create_user", wallet)
+    // select(kwil, dbid, "SELECT * FROM users")
+    // bulkAction(kwil, dbid, "create_user", wallet)
+    // getSelectAction(kwil, dbid, "get_user_by_wallet", wallet)
 }
 
 test()
 
-async function getSchema(kwil, owner, n) {
-    const schema = await kwil.getSchema(owner, n)
-    console.log(schema.data.actions)
+async function getSchema(kwil, d) {
+    const schema = await kwil.getSchema(d)
+    console.log(schema)
 }
 
 async function getAccount(kwil, owner) {
@@ -140,6 +141,15 @@ async function newAction(kwil, dbid, action, w) {
     console.log(res2)
 }
 
+async function getSelectAction(kwil, dbid, selectAction, wallet) {
+    let action = await kwil.getAction(dbid, selectAction)
+    let act1 = action.newAction()
+    act1.set("$address", wallet.address)
+    const tx= await action.prepareAction(wallet)
+    const res = await kwil.broadcast(tx)
+    console.log(res)
+}
+
 async function select(kwil, dbid, query) {
     const res = await kwil.selectQuery(dbid, query)
     console.log(res)
@@ -147,22 +157,22 @@ async function select(kwil, dbid, query) {
 
 const bulkActions = [
     {
-        "$id": 9,
+        "$id": 101,
         "$username": "Hello World 3",
         "$age": 1
     },
     {
-        "$id": 10,
+        "$id": 102,
         "$username": "Hello World 4",
         "$age": 2
     },
     {
-        "$id": 11,
+        "$id": 103,
         "$username": "Hello World 5",
         "$age": 3
     },
     {
-        "$id": 12,
+        "$id": 104,
         "$username": "Hello World 6",
         "$age": 4
     }

@@ -31,11 +31,12 @@ class Kwil {
         });
         this.client = client;
     }
-    getSchema(owner, name) {
+    getDBID(owner, name) {
+        return (0, dbid_1.generateDBID)(name, owner);
+    }
+    getSchema(dbid) {
         return __awaiter(this, void 0, void 0, function* () {
-            owner = owner.toLowerCase();
-            name = name.toLowerCase();
-            const res = yield this.client.Accounts.getSchema((0, dbid_1.generateDBID)(name, owner));
+            const res = yield this.client.Accounts.getSchema(dbid);
             return res;
         });
     }

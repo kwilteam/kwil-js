@@ -7,6 +7,7 @@ import { ITx, SelectQuery, TxReceipt } from "../interfaces/tx";
 import { Api } from "./api";
 import Config from "./config";
 import { GenericResponse, AcctSvc, TxSvc, ConfigSvc } from "./requests";
+import { unmarshal } from "../marshal";
 
 export default class Client {
     public readonly Tx: TxClient;
@@ -85,10 +86,34 @@ export class TxClient {
         }
         const res = await this.api.post<TxSvc.BroadcastRes>(`/api/v1/broadcast`, req);
         checkRes(res);
-        const cleanReceipt: TxReceipt = {
+
+        let body
+
+        if (res.data.receipt.body) {
+            const uint8 = new Uint8Array(base64ToBytes(res.data.receipt.body));
+            const decoder = new TextDecoder('utf-8');
+            const jsonString = decoder.decode(uint8);
+            body = JSON.parse(jsonString);
+        }
+
+        function isContentBody(body: Array<any>): boolean {
+            for (const item of body) {
+                if(item.length > 0) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        const cleanReceipt: TxReceipt = !isContentBody(body) ? {
             txHash: Uint8ArrayToHex(base64ToBytes(res.data.receipt.txHash)),
             fee: res.data.receipt.fee,
-        }
+        } : {
+            txHash: Uint8ArrayToHex(base64ToBytes(res.data.receipt.txHash)),
+            fee: res.data.receipt.fee,
+            body: body
+        };
+        
         return {
             status: res.status,
             data: cleanReceipt

@@ -73,22 +73,24 @@ class Action {
     prepareAction(signer) {
         return __awaiter(this, void 0, void 0, function* () {
             //serialize action values
-            if (!this.actions) {
-                throw new Error("No actions have been created. Please call newAction() before calling prepareTx().");
+            if (!this.actions && this.inputs) {
+                throw new Error("No action inputs have been set. Please call newAction() or bulkAction() before calling prepareTx().");
             }
             console.log(this.actions);
-            for (const action of this.actions) {
-                const inputs = action.map;
-                for (const val in inputs) {
-                    const dataType = (0, enums_1.inputToDataType)(inputs[val]);
-                    const encodedValue = (0, base64_1.bytesToBase64)((0, marshal_1.marshal)(inputs[val], dataType));
-                    inputs[val] = encodedValue;
+            let actions = [];
+            if (this.actions) {
+                for (const action of this.actions) {
+                    const inputs = action.map;
+                    for (const val in inputs) {
+                        const dataType = (0, enums_1.inputToDataType)(inputs[val]);
+                        const encodedValue = (0, base64_1.bytesToBase64)((0, marshal_1.marshal)(inputs[val], dataType));
+                        inputs[val] = encodedValue;
+                    }
                 }
+                actions = this.actions.map((action) => {
+                    return action.map;
+                });
             }
-            //create payload obj
-            let actions = this.actions.map((action) => {
-                return action.map;
-            });
             const payload = {
                 "action": this.name,
                 "dbid": this.dbid,

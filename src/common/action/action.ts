@@ -77,24 +77,28 @@ export class Action {
 
     public async prepareAction(signer: ethers.providers.JsonRpcSigner | ethers.Wallet): Promise<Transaction> {
         //serialize action values
-        if(!this.actions) {
-            throw new Error("No actions have been created. Please call newAction() before calling prepareTx().")
+        if(!this.actions && this.inputs) {
+            throw new Error("No action inputs have been set. Please call newAction() or bulkAction() before calling prepareTx().")
         }
         console.log(this.actions)
-        for(const action of this.actions) {
-            const inputs = action.map
-            for (const val in inputs) {
-                const dataType = inputToDataType(inputs[val]) as DataType;
-                const encodedValue = bytesToBase64(marshal(inputs[val], dataType));
-                inputs[val] = encodedValue;
+
+        let actions = []
+
+        if(this.actions) {
+            for(const action of this.actions) {
+                const inputs = action.map
+                for (const val in inputs) {
+                    const dataType = inputToDataType(inputs[val]) as DataType;
+                    const encodedValue = bytesToBase64(marshal(inputs[val], dataType));
+                    inputs[val] = encodedValue;
+                }
             }
+   
+            actions = this.actions.map((action) => {
+                return action.map
+            })
         }
-
-        //create payload obj
-        let actions = this.actions.map((action) => {
-            return action.map
-        })
-
+        
         const payload = {
             "action": this.name,
             "dbid": this.dbid,
