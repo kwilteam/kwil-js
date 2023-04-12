@@ -96,16 +96,8 @@ export class TxClient {
             body = JSON.parse(jsonString);
         }
 
-        function isContentBody(body: Array<any>): boolean {
-            for (const item of body) {
-                if(item.length > 0) {
-                    return true;
-                }
-            }
-            return false;
-        }
 
-        const cleanReceipt: TxReceipt = !isContentBody(body) ? {
+        const cleanReceipt: TxReceipt = !body ? {
             txHash: Uint8ArrayToHex(base64ToBytes(res.data.receipt.txHash)),
             fee: res.data.receipt.fee,
         } : {

@@ -1,6 +1,6 @@
 {
     "owner": "0xc89D42189f0450C2b2c3c61f58Ec5d628176A1E7",
-    "name": "testdb",
+    "name": "testdb2",
     "tables": [
       {
         "name": "users",
