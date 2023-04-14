@@ -14,7 +14,7 @@ type NewAction = Record<any, any>
 export class Action {
     private readonly dbid: string;
     private readonly name: string;
-    private readonly client: Client;
+    private client: Client;
     public inputs?: string[];
     public actions?: AnyMap<any>[]
 
@@ -41,16 +41,16 @@ export class Action {
         }
     }
 
-    public newAction(): AnyMap<any> {
+    public newInstance(): AnyMap<any> {
         const action = new AnyMap<any>();
         this.actions = [...(this.actions ?? []), action];
         return action;
     }
 
     
-    public bulkAction(bulkActions: NewAction[]) {
+    public bulk(bulkActions: NewAction[]) {
         for (const action of bulkActions) {
-            const newAction = this.newAction();
+            const newAction = this.newInstance();
             for (const key in action) {
                 newAction.set(key, action[key]);
             }

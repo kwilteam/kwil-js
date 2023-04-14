@@ -5,11 +5,11 @@ require("dotenv").config()
 
 async function test() {
     //update to goerli when live
-    const provider = new ethers.providers.JsonRpcProvider("http://localhost:54009")
+    const provider = new ethers.providers.JsonRpcProvider("http://localhost:61507")
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
 
     const kwil = new kwiljs.NodeKwil({
-        kwilProvider: "http://localhost:54028",
+        kwilProvider: "http://localhost:54037",
         timeout: 10000,
         logging: true,
     })
@@ -32,14 +32,14 @@ async function test() {
     // newAction(kwil, dbid, "create_user", wallet)
     // select(kwil, dbid, "SELECT * FROM users")
     // bulkAction(kwil, dbid, "create_user", wallet)
-    // getSelectAction(kwil, dbid, "get_user_by_wallet", wallet)
+    getSelectAction(kwil, dbid, "list_users", wallet)
 }
 
 test()
 
 async function getSchema(kwil, d) {
     const schema = await kwil.getSchema(d)
-    console.log(schema)
+    console.log(schema.data.actions)
 }
 
 async function getAccount(kwil, owner) {
@@ -122,12 +122,12 @@ async function getAction(kwil, dbid, action) {
 
 async function newAction(kwil, dbid, action, w) {
     const newAct = await kwil.getAction(dbid, action)
-    let act1 = newAct.newAction()
-    act1.set("$id", 7)
+    let act1 = newAct.newInstance()
+    act1.set("$id", 13)
     act1.set("$username", "Hello World")
     act1.set("$age", 1)
-    let act2 = newAct.newAction()
-    act2.set("$id", 8)
+    let act2 = newAct.newInstance()
+    act2.set("$id", 14)
     act2.set("$username", "Hello World 2")
     act2.set("$age", 2)
 
@@ -143,7 +143,7 @@ async function newAction(kwil, dbid, action, w) {
 
 async function getSelectAction(kwil, dbid, selectAction, wallet) {
     let action = await kwil.getAction(dbid, selectAction)
-    let act1 = action.newAction()
+    let act1 = action.newInstance()
     act1.set("$address", wallet.address)
     const tx= await action.prepareAction(wallet)
     const res = await kwil.broadcast(tx)
@@ -180,7 +180,7 @@ const bulkActions = [
 
 async function bulkAction(kwil, dbid, action, w) {
     let newAct = await kwil.getAction(dbid, action)
-    newAct.bulkAction(bulkActions)
+    newAct.bulk(bulkActions)
     const tx = await newAct.prepareAction(w)
     const res = await kwil.broadcast(tx)
     console.log(res)

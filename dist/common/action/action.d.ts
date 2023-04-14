@@ -6,13 +6,13 @@ type NewAction = Record<any, any>;
 export declare class Action {
     private readonly dbid;
     private readonly name;
-    private readonly client;
+    private client;
     inputs?: string[];
     actions?: AnyMap<any>[];
     constructor(dbid: string, name: string, client: Client);
     init(): Promise<void>;
-    newAction(): AnyMap<any>;
-    bulkAction(bulkActions: NewAction[]): void;
+    newInstance(): AnyMap<any>;
+    bulk(bulkActions: NewAction[]): void;
     isComplete(): boolean;
     prepareAction(signer: ethers.providers.JsonRpcSigner | ethers.Wallet): Promise<Transaction>;
 }

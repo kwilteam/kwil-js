@@ -66,7 +66,7 @@ const dbid = kwil.getDBID("0xOwner_address", "database_name")
 const action = await kwil.getAction(dbid, "create_user")
 
 //preparing to set inputs for "create_user" action
-let execution = action.newAction()
+let execution = action.newInstance()
 
 //setting $id, $username, and $realname inputs
 execution.set("$id", 1)

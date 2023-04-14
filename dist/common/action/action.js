@@ -40,15 +40,15 @@ class Action {
             }
         });
     }
-    newAction() {
+    newInstance() {
         var _a;
         const action = new anyMap_1.AnyMap();
         this.actions = [...((_a = this.actions) !== null && _a !== void 0 ? _a : []), action];
         return action;
     }
-    bulkAction(bulkActions) {
+    bulk(bulkActions) {
         for (const action of bulkActions) {
-            const newAction = this.newAction();
+            const newAction = this.newInstance();
             for (const key in action) {
                 newAction.set(key, action[key]);
             }
