@@ -1,15 +1,15 @@
-import { ethers } from "ethers";
+import { BigNumberish, ethers, InterfaceAbi, JsonRpcSigner } from "ethers";
 import { createOverride } from "./override";
 
 export class Token{
     private contract: ethers.Contract;
-    private provider: ethers.providers.JsonRpcSigner | ethers.Wallet;
+    private provider: JsonRpcSigner | ethers.Wallet;
     private name?: string;
     private symbol?: string;
     private decimals?: number;
     private totalSupply?: number;
 
-    constructor(tokenAddress: string, abi: ethers.ContractInterface, provider: ethers.providers.JsonRpcSigner | ethers.Wallet){
+    constructor(tokenAddress: string, abi: InterfaceAbi, provider: JsonRpcSigner | ethers.Wallet){
         this.contract = new ethers.Contract(tokenAddress, abi, provider)
         this.provider = provider;
     }
@@ -54,12 +54,12 @@ export class Token{
         return totalSupply;
     }
 
-    public async getBalance(address: string): Promise<ethers.BigNumber> {
+    public async getBalance(address: string): Promise<BigNumberish> {
         const balance = await this.contract.balanceOf(address);
         return balance;
     }
 
-    public async getAllowance(owner: string, spender: string): Promise<ethers.BigNumber> {
+    public async getAllowance(owner: string, spender: string): Promise<BigNumberish> {
         const allowance = await this.contract.allowance(owner, spender);
         return allowance;
     }
@@ -69,7 +69,7 @@ export class Token{
         return await createOverride(this.provider, this.contract, method, args);
     }
 
-    public async approve(spender: string, amount: ethers.BigNumber, override?: object): Promise<ethers.ContractTransaction> {
+    public async approve(spender: string, amount: BigNumberish, override?: object): Promise<ethers.ContractTransaction> {
         if (!override) {
             override = this.createOverride('approve', [spender, amount]);
         }

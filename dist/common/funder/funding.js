@@ -13,7 +13,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Funder = void 0;
-const ethers_1 = require("ethers");
 const escrow_1 = require("./escrow");
 const token_1 = require("./token");
 const erc20_json_1 = __importDefault(require("./abi/erc20.json"));
@@ -37,7 +36,7 @@ class Funder {
                 throw new Error("Funder not initialized");
             }
             const res = yield this.erc20Contract.getAllowance(address, this.poolAddress);
-            const num = ethers_1.ethers.BigNumber.from(res._hex);
+            const num = BigInt(res);
             return {
                 allowance_balance: num.toString(),
             };
@@ -49,7 +48,7 @@ class Funder {
                 throw new Error("Funder not initialized");
             }
             const res = yield this.erc20Contract.getBalance(address);
-            const num = ethers_1.ethers.BigNumber.from(res._hex);
+            const num = BigInt(res);
             return {
                 balance: num.toString(),
             };
@@ -77,7 +76,7 @@ class Funder {
                 throw new Error("Funder not initialized");
             }
             const res = yield this.escrowContract.getDepositedBalance(address);
-            const num = ethers_1.ethers.BigNumber.from(res._hex);
+            const num = BigInt(res);
             return {
                 deposited_balance: num.toString(),
             };

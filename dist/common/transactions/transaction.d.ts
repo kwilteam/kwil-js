@@ -1,4 +1,4 @@
-import { ethers } from "ethers";
+import { ethers, JsonRpcSigner } from "ethers";
 import { ITx, PayloadType } from "../interfaces/tx";
 interface Txifiable {
     toObject(): object;
@@ -7,7 +7,7 @@ interface Txifiable {
 export declare class Transaction {
     tx: ITx;
     constructor(tx: Txifiable);
-    sign(signer: ethers.providers.JsonRpcSigner | ethers.Wallet): Promise<void>;
+    sign(signer: JsonRpcSigner | ethers.Wallet): Promise<void>;
     generateHash(): void;
 }
 export {};

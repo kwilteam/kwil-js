@@ -1,4 +1,4 @@
-import { ethers } from "ethers";
+import { ethers, JsonRpcSigner } from "ethers";
 import { Types } from "../..";
 import Client from "../client/client";
 import { ITx } from "../interfaces/tx";
@@ -13,7 +13,7 @@ export class DBBuilder {
         this.client = client;
     }
 
-    public async prepareJson(signer: ethers.providers.JsonRpcSigner | ethers.Wallet): Promise<Transaction> {
+    public async prepareJson(signer: JsonRpcSigner | ethers.Wallet): Promise<Transaction> {
         const readyTx = {
             toObject: () => this.json,
             payloadType: Types.PayloadType.DEPLOY_DATABASE

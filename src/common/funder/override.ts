@@ -1,19 +1,19 @@
-import { ethers } from "ethers";
+import { ethers, FeeData, JsonRpcProvider, JsonRpcSigner } from "ethers";
 
-export async function createOverride(provider: ethers.providers.JsonRpcSigner | ethers.Wallet, contract: ethers.Contract, method: string, args: any[]): Promise<object> {
+export async function createOverride(provider: JsonRpcSigner | ethers.Wallet, contract: ethers.Contract, method: string, args: any[]): Promise<object> {
             // if provider is jsonrpc, then this gas esimates will be made by provider
-            if (provider instanceof ethers.providers.JsonRpcProvider) {
+            if (provider instanceof JsonRpcProvider) {
                 return {};
             }
     
-            let gas = await contract.estimateGas[method](...args);
-            const fee = await contract.provider.getFeeData();
+            let gas = await contract[method].estimateGas(...args);
+            const fee = new FeeData(gas);
             
             // gas as ethers.BigNumber
-            gas = ethers.BigNumber.from(gas);
+            gas = BigInt(gas);
     
             // multiply by 1.3
-            gas = gas.mul(13).div(10);
+            gas = gas * (BigInt(13) / BigInt(10));
     
             return {
                 gasPrice: fee.gasPrice,

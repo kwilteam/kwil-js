@@ -1,4 +1,4 @@
-import { ethers } from "ethers";
+import { ethers, JsonRpcSigner } from "ethers";
 import { AnyMap } from "../../utils/anyMap";
 import Client from "../client/client";
 import { Transaction } from "../transactions/transaction";
@@ -14,6 +14,6 @@ export declare class Action {
     newInstance(): AnyMap<any>;
     bulk(bulkActions: NewAction[]): void;
     isComplete(): boolean;
-    prepareAction(signer: ethers.providers.JsonRpcSigner | ethers.Wallet): Promise<Transaction>;
+    prepareAction(signer: JsonRpcSigner | ethers.Wallet): Promise<Transaction>;
 }
 export {};

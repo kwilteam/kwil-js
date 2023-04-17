@@ -1,11 +1,10 @@
-import { ethers } from "ethers";
+import { ethers, JsonRpcSigner } from "ethers";
 import { Types } from "../..";
 import { AnyMap } from "../../utils/anyMap";
 import { bytesToBase64 } from "../../utils/base64";
 import Client from "../client/client";
-import { GenericResponse } from "../client/requests";
 import { DataType, inputToDataType } from "../interfaces/enums";
-import { ITx, TxReceipt } from "../interfaces/tx";
+import { ITx } from "../interfaces/tx";
 import { marshal } from "../marshal";
 import { Transaction } from "../transactions/transaction";
 
@@ -75,7 +74,7 @@ export class Action {
         return true;
     }
 
-    public async prepareAction(signer: ethers.providers.JsonRpcSigner | ethers.Wallet): Promise<Transaction> {
+    public async prepareAction(signer: JsonRpcSigner | ethers.Wallet): Promise<Transaction> {
         //serialize action values
         if(!this.actions && this.inputs) {
             throw new Error("No action inputs have been set. Please call newAction() or bulkAction() before calling prepareTx().")

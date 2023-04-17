@@ -14,15 +14,15 @@ const ethers_1 = require("ethers");
 function createOverride(provider, contract, method, args) {
     return __awaiter(this, void 0, void 0, function* () {
         // if provider is jsonrpc, then this gas esimates will be made by provider
-        if (provider instanceof ethers_1.ethers.providers.JsonRpcProvider) {
+        if (provider instanceof ethers_1.JsonRpcProvider) {
             return {};
         }
-        let gas = yield contract.estimateGas[method](...args);
-        const fee = yield contract.provider.getFeeData();
+        let gas = yield contract[method].estimateGas(...args);
+        const fee = new ethers_1.FeeData(gas);
         // gas as ethers.BigNumber
-        gas = ethers_1.ethers.BigNumber.from(gas);
+        gas = BigInt(gas);
         // multiply by 1.3
-        gas = gas.mul(13).div(10);
+        gas = gas * (BigInt(13) / BigInt(10));
         return {
             gasPrice: fee.gasPrice,
             gasLimit: gas

@@ -5,11 +5,11 @@ require("dotenv").config()
 
 async function test() {
     //update to goerli when live
-    const provider = new ethers.providers.JsonRpcProvider("http://localhost:61507")
+    const provider = new ethers.JsonRpcProvider(process.env.ETH_PROVIDER)
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
 
     const kwil = new kwiljs.NodeKwil({
-        kwilProvider: "http://localhost:54037",
+        kwilProvider: "https://provider-dev.kwil.com/",
         timeout: 10000,
         logging: true,
     })
@@ -24,15 +24,15 @@ async function test() {
     // getFunder(kwil, wallet)
     // getAllowance(kwil, wallet)
     // getBalance(kwil, wallet)
-    // approve(kwil, wallet, ethers.BigNumber.from("100005000000000000000"))
-    // deposit(kwil, wallet, ethers.BigNumber.from("100005000000000000000"))
+    approve(kwil, wallet, BigInt("100005"))
+    // deposit(kwil, wallet, BigInt("100005"))
     // getDepositedBalance(kwil, wallet)
     // getTokenAddress(kwil, wallet)
     // getAction(kwil, dbid, "create_post")
     // newAction(kwil, dbid, "create_user", wallet)
     // select(kwil, dbid, "SELECT * FROM users")
     // bulkAction(kwil, dbid, "create_user", wallet)
-    getSelectAction(kwil, dbid, "list_users", wallet)
+    // getSelectAction(kwil, dbid, "list_users", wallet)
 }
 
 test()

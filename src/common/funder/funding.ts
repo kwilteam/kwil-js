@@ -1,4 +1,4 @@
-import { ethers } from "ethers";
+import { BigNumberish, ethers, JsonRpcSigner } from "ethers";
 import { FundingConfig } from "../interfaces/configs";
 import { Escrow } from "./escrow";
 import { Token } from "./token";
@@ -7,13 +7,13 @@ import kwilAbi from './abi/kwil.json';
 import { AllowanceRes, BalanceRes, DepositRes, TokenRes } from "../interfaces/funding";
 
 export class Funder {
-    private signer: ethers.providers.JsonRpcSigner | ethers.Wallet;
+    private signer: JsonRpcSigner | ethers.Wallet;
     private poolAddress: string;
     private providerAddress: string;
     private erc20Contract?: Token;
     private escrowContract?: Escrow;
 
-    constructor(signer: ethers.providers.JsonRpcSigner | ethers.Wallet, config: FundingConfig) {
+    constructor(signer: JsonRpcSigner | ethers.Wallet, config: FundingConfig) {
         this.poolAddress = config.pool_address;
         this.signer = signer;
         this.providerAddress = config.provider_address;
@@ -31,7 +31,7 @@ export class Funder {
             throw new Error("Funder not initialized");
         }
         const res = await this.erc20Contract.getAllowance(address, this.poolAddress);
-        const num = ethers.BigNumber.from(res._hex);
+        const num = BigInt(res);
         return {
             allowance_balance: num.toString(),
         }
@@ -42,20 +42,20 @@ export class Funder {
             throw new Error("Funder not initialized");
         }
         const res = await this.erc20Contract.getBalance(address);
-        const num = ethers.BigNumber.from(res._hex);
+        const num = BigInt(res);
         return {
             balance: num.toString(),
         }
     }
 
-    public async approve(amount: ethers.BigNumber): Promise<ethers.ContractTransaction> {
+    public async approve(amount: BigNumberish): Promise<ethers.ContractTransaction> {
         if (!this.erc20Contract) {
             throw new Error("Funder not initialized");
         }
         return await this.erc20Contract.approve(this.poolAddress, amount);
     }
 
-    public async deposit(amount: ethers.BigNumber): Promise<ethers.ContractTransaction> {
+    public async deposit(amount: BigNumberish): Promise<ethers.ContractTransaction> {
         if (!this.escrowContract) {
             throw new Error("Funder not initialized");
         }
@@ -67,7 +67,7 @@ export class Funder {
             throw new Error("Funder not initialized");
         }
         const res = await this.escrowContract.getDepositedBalance(address);
-        const num = ethers.BigNumber.from(res._hex);
+        const num = BigInt(res);
         return {
             deposited_balance: num.toString(),
         }
