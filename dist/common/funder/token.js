@@ -22,7 +22,7 @@ class Token {
             if (this.name) {
                 return this.name;
             }
-            const name = yield this.contract.name();
+            const name = yield this.contract['name()']();
             this.name = name;
             return name;
         });
@@ -32,7 +32,7 @@ class Token {
             if (this.symbol) {
                 return this.symbol;
             }
-            const symbol = yield this.contract.symbol();
+            const symbol = yield this.contract['symbol()']();
             this.symbol = symbol;
             return symbol;
         });
@@ -42,7 +42,7 @@ class Token {
             if (this.decimals) {
                 return this.decimals;
             }
-            const decimals = yield this.contract.decimals();
+            const decimals = yield this.contract['decimals()']();
             this.decimals = decimals;
             return decimals;
         });
@@ -52,20 +52,20 @@ class Token {
             if (this.totalSupply) {
                 return this.totalSupply;
             }
-            const totalSupply = yield this.contract.totalSupply();
+            const totalSupply = yield this.contract['totalSupply()']();
             this.totalSupply = totalSupply;
             return totalSupply;
         });
     }
     getBalance(address) {
         return __awaiter(this, void 0, void 0, function* () {
-            const balance = yield this.contract.balanceOf(address);
+            const balance = yield this.contract['balanceOf(address _owner)'](address);
             return balance;
         });
     }
     getAllowance(owner, spender) {
         return __awaiter(this, void 0, void 0, function* () {
-            const allowance = yield this.contract.allowance(owner, spender);
+            const allowance = yield this.contract['allowance(address _owner, address _spender)'](owner, spender);
             return allowance;
         });
     }
@@ -80,7 +80,7 @@ class Token {
             if (!override) {
                 override = this.createOverride('approve', [spender, amount]);
             }
-            return yield this.contract.approve(spender, amount, override);
+            return yield this.contract["approve(address _spender, uint256 _value)"](spender, amount, override);
         });
     }
 }

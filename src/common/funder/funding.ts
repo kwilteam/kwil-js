@@ -1,9 +1,9 @@
-import { BigNumberish, ethers, JsonRpcSigner } from "ethers";
+import { BigNumberish, ethers, Interface, JsonRpcSigner } from "ethers";
 import { FundingConfig } from "../interfaces/configs";
 import { Escrow } from "./escrow";
 import { Token } from "./token";
-import erc20Abi from './abi/erc20.json';
-import kwilAbi from './abi/kwil.json';
+import erc20Abi from './abi/erc20HumanAbi';
+import kwilAbi from './abi/kwilHumanAbi.js';
 import { AllowanceRes, BalanceRes, DepositRes, TokenRes } from "../interfaces/funding";
 
 export class Funder {

@@ -29,7 +29,7 @@ export function StringToUint8LittleEndian(str: string): Uint8Array {
   return view;
 }
 
-import { ethers, toBeHex } from 'ethers';
+import { ethers, hexlify, toBeHex } from 'ethers';
 import Long from 'long';
 import { bytesToBase64 } from './base64';
 
@@ -57,7 +57,7 @@ export function ConcatBytes(...arrays: Uint8Array[]): Uint8Array {
 }
 
 export function Uint8ArrayToHex(uint8Array: Uint8Array): string {
-   return  toBeHex(Buffer.from(uint8Array).toString('hex'));
+   return  hexlify(uint8Array);
 }
 
 export function HexToUint8Array(hex: string): Uint8Array {

@@ -9,7 +9,7 @@ async function test() {
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
 
     const kwil = new kwiljs.NodeKwil({
-        kwilProvider: "https://provider-dev.kwil.com/",
+        kwilProvider: "https://truflation-provider.kwil.com",
         timeout: 10000,
         logging: true,
     })
@@ -19,16 +19,16 @@ async function test() {
     // broadcast(kwil, testDB, wallet)
     // getSchema(kwil, dbid)
     // getAccount(kwil, wallet.address)
-    // listDatabases(kwil, wallet.address)
+    listDatabases(kwil, wallet.address)
     // ping(kwil)
     // getFunder(kwil, wallet)
     // getAllowance(kwil, wallet)
     // getBalance(kwil, wallet)
-    approve(kwil, wallet, BigInt("100005"))
+    // approve(kwil, wallet, BigInt("100005"))
     // deposit(kwil, wallet, BigInt("100005"))
     // getDepositedBalance(kwil, wallet)
     // getTokenAddress(kwil, wallet)
-    // getAction(kwil, dbid, "create_post")
+    // getAction(kwil, dbid, "list_users")
     // newAction(kwil, dbid, "create_user", wallet)
     // select(kwil, dbid, "SELECT * FROM users")
     // bulkAction(kwil, dbid, "create_user", wallet)
@@ -123,11 +123,11 @@ async function getAction(kwil, dbid, action) {
 async function newAction(kwil, dbid, action, w) {
     const newAct = await kwil.getAction(dbid, action)
     let act1 = newAct.newInstance()
-    act1.set("$id", 13)
+    act1.set("$id", 1000)
     act1.set("$username", "Hello World")
     act1.set("$age", 1)
     let act2 = newAct.newInstance()
-    act2.set("$id", 14)
+    act2.set("$id", 1001)
     act2.set("$username", "Hello World 2")
     act2.set("$age", 2)
 
@@ -144,7 +144,7 @@ async function newAction(kwil, dbid, action, w) {
 async function getSelectAction(kwil, dbid, selectAction, wallet) {
     let action = await kwil.getAction(dbid, selectAction)
     let act1 = action.newInstance()
-    act1.set("$address", wallet.address)
+    // act1.set("$address", wallet.address)
     const tx= await action.prepareAction(wallet)
     const res = await kwil.broadcast(tx)
     console.log(res)

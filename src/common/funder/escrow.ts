@@ -17,13 +17,13 @@ export class Escrow {
             return this.tokenAddress;
         }
 
-        const addr = await this.contract.escrowToken();
+        const addr = await this.contract['escrowToken()']();
         this.tokenAddress = addr;
         return addr;
     }
 
     public async getDepositedBalance(address: string): Promise<BigNumberish> {
-        return await this.contract.pools(this.validatorAddress, address);
+        return await this.contract['pools(address, address)'](this.validatorAddress, address);
     }
 
     private async createOverride(method: string, args: any[]): Promise<object> {
@@ -35,6 +35,6 @@ export class Escrow {
             override = this.createOverride('deposit', [this.validatorAddress, amount]);
         }
         
-        return await this.contract.deposit(this.validatorAddress, amount, override);
+        return await this.contract["deposit(address validator, uint256 amt)"](this.validatorAddress, amount, override);
     }
 }

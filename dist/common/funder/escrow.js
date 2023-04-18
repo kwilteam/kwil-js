@@ -23,14 +23,14 @@ class Escrow {
             if (this.tokenAddress) {
                 return this.tokenAddress;
             }
-            const addr = yield this.contract.escrowToken();
+            const addr = yield this.contract['escrowToken()']();
             this.tokenAddress = addr;
             return addr;
         });
     }
     getDepositedBalance(address) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.contract.pools(this.validatorAddress, address);
+            return yield this.contract['pools(address, address)'](this.validatorAddress, address);
         });
     }
     createOverride(method, args) {
@@ -43,7 +43,7 @@ class Escrow {
             if (!override) {
                 override = this.createOverride('deposit', [this.validatorAddress, amount]);
             }
-            return yield this.contract.deposit(this.validatorAddress, amount, override);
+            return yield this.contract["deposit(address validator, uint256 amt)"](this.validatorAddress, amount, override);
         });
     }
 }

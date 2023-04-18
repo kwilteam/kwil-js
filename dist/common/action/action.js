@@ -76,7 +76,6 @@ class Action {
             if (!this.actions && this.inputs) {
                 throw new Error("No action inputs have been set. Please call newAction() or bulkAction() before calling prepareTx().");
             }
-            console.log(this.actions);
             let actions = [];
             if (this.actions) {
                 for (const action of this.actions) {

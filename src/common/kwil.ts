@@ -12,7 +12,6 @@ import { Action } from "./action/action";
 import { base64ToBytes } from "../utils/base64";
 import { DBBuilder } from "./builder/builder";
 
-
 export class Kwil {
     private client: Client;
 

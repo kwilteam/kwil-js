@@ -19,7 +19,7 @@ export class Token{
             return this.name;
         }
 
-        const name = await this.contract.name();
+        const name = await this.contract['name()']();
         this.name = name;
         return name;
     }
@@ -29,7 +29,7 @@ export class Token{
             return this.symbol;
         }
 
-        const symbol = await this.contract.symbol();
+        const symbol = await this.contract['symbol()']();
         this.symbol = symbol;
         return symbol;
     }
@@ -39,7 +39,7 @@ export class Token{
             return this.decimals;
         }
 
-        const decimals = await this.contract.decimals();
+        const decimals = await this.contract['decimals()']()
         this.decimals = decimals;
         return decimals;
     }
@@ -49,18 +49,18 @@ export class Token{
             return this.totalSupply;
         }
 
-        const totalSupply = await this.contract.totalSupply();
+        const totalSupply = await this.contract['totalSupply()']();
         this.totalSupply = totalSupply;
         return totalSupply;
     }
 
     public async getBalance(address: string): Promise<BigNumberish> {
-        const balance = await this.contract.balanceOf(address);
+        const balance = await this.contract['balanceOf(address _owner)'](address);
         return balance;
     }
 
     public async getAllowance(owner: string, spender: string): Promise<BigNumberish> {
-        const allowance = await this.contract.allowance(owner, spender);
+        const allowance = await this.contract['allowance(address _owner, address _spender)'](owner, spender);
         return allowance;
     }
 
@@ -74,6 +74,6 @@ export class Token{
             override = this.createOverride('approve', [spender, amount]);
         }
 
-        return await this.contract.approve(spender, amount, override);
+        return await this.contract["approve(address _spender, uint256 _value)"](spender, amount, override);
     }
 }

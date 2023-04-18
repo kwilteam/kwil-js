@@ -15,8 +15,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Funder = void 0;
 const escrow_1 = require("./escrow");
 const token_1 = require("./token");
-const erc20_json_1 = __importDefault(require("./abi/erc20.json"));
-const kwil_json_1 = __importDefault(require("./abi/kwil.json"));
+const erc20HumanAbi_1 = __importDefault(require("./abi/erc20HumanAbi"));
+const kwilHumanAbi_js_1 = __importDefault(require("./abi/kwilHumanAbi.js"));
 class Funder {
     constructor(signer, config) {
         this.poolAddress = config.pool_address;
@@ -25,9 +25,9 @@ class Funder {
     }
     init() {
         return __awaiter(this, void 0, void 0, function* () {
-            this.escrowContract = new escrow_1.Escrow(this.providerAddress, this.poolAddress, kwil_json_1.default, this.signer);
+            this.escrowContract = new escrow_1.Escrow(this.providerAddress, this.poolAddress, kwilHumanAbi_js_1.default, this.signer);
             let tokenAddress = yield this.escrowContract.getTokenAddress();
-            this.erc20Contract = new token_1.Token(tokenAddress, erc20_json_1.default, this.signer);
+            this.erc20Contract = new token_1.Token(tokenAddress, erc20HumanAbi_1.default, this.signer);
         });
     }
     getAllowance(address) {

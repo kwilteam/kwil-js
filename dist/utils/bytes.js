@@ -60,7 +60,7 @@ function ConcatBytes(...arrays) {
 }
 exports.ConcatBytes = ConcatBytes;
 function Uint8ArrayToHex(uint8Array) {
-    return (0, ethers_1.toBeHex)(Buffer.from(uint8Array).toString('hex'));
+    return (0, ethers_1.hexlify)(uint8Array);
 }
 exports.Uint8ArrayToHex = Uint8ArrayToHex;
 function HexToUint8Array(hex) {
