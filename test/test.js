@@ -32,7 +32,7 @@ async function test() {
     // newAction(kwil, dbid, "create_user", wallet)
     // select(kwil, dbid, "SELECT * FROM users")
     // bulkAction(kwil, dbid, "create_user", wallet)
-    getSelectAction(kwil, dbid, "list_users", wallet)
+    // getSelectAction(kwil, dbid, "list_users", wallet)
 }
 
 test()
