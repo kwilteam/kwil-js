@@ -47,9 +47,17 @@ function sha224StringToString(message) {
     return shaObj.getHash('HEX');
 }
 exports.sha224StringToString = sha224StringToString;
-function sign(message, signer) {
+function sign(message, txType, fee, nonce, signer) {
     return __awaiter(this, void 0, void 0, function* () {
-        const sig = yield signer.signMessage((0, base64_1.base64ToBytes)(message));
+        const signatureMessage = `You are signing a transaction for the Kwil network.
+Transaction details:
+Hash: ${message}
+Type: ${txType}
+Fee: ${fee}
+Nonce: ${nonce}
+    
+Click "Sign" to continue.`;
+        const sig = yield signer.signMessage(signatureMessage);
         const encodedSignature = (0, base64_1.bytesToBase64)((0, bytes_1.HexToUint8Array)(sig));
         return {
             signature_bytes: encodedSignature,

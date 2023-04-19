@@ -3,6 +3,7 @@ import {ethers, JsonRpcSigner} from 'ethers';
 import { Signature, SignatureType } from '../interfaces/signature';
 import {  HexToUint8Array,  StringToUint8LittleEndian,  Uint8ArrayToHex } from '../../utils/bytes';
 import { base64ToBytes, bytesToBase64 } from '../../utils/base64';
+import { PayloadType } from '../interfaces/tx';
 
 export function sha384StringToString(message: string): string {
     const shaObj = new jssha('SHA-384', 'TEXT');
@@ -35,8 +36,17 @@ export function sha224StringToString(message: string): string {
     return shaObj.getHash('HEX');
 }
 
-export async function sign(message: string, signer: JsonRpcSigner | ethers.Wallet): Promise<Signature> {
-    const sig =  await signer.signMessage(base64ToBytes(message));
+export async function sign(message: string, txType: PayloadType, fee: string, nonce: number, signer: JsonRpcSigner | ethers.Wallet): Promise<Signature> {
+    const signatureMessage = `You are signing a transaction for the Kwil network.
+Transaction details:
+Hash: ${message}
+Type: ${txType}
+Fee: ${fee}
+Nonce: ${nonce}
+    
+Click "Sign" to continue.`;
+
+    const sig =  await signer.signMessage(signatureMessage);
     const encodedSignature = bytesToBase64(HexToUint8Array(sig))
 
     return {

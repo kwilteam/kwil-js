@@ -27,8 +27,8 @@ export class Transaction {
         };
     }
 
-    public async sign(signer: JsonRpcSigner | ethers.Wallet): Promise<void> {
-        this.tx.signature = await sign(this.tx.hash, signer);
+    public async sign(signer: JsonRpcSigner | ethers.Wallet): Promise<void> {   
+        this.tx.signature = await sign(this.tx.hash, this.tx.payload_type, this.tx.fee, this.tx.nonce, signer);
         this.tx.sender = await signer.getAddress();
     }
 
