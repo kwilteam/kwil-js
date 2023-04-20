@@ -2,6 +2,7 @@ import NodeKwil from './node/nodeKwil'
 import WebKwil from './web/webKwil'
 import { PayloadType } from './common/interfaces/tx'
 import { DataType, AttributeType, IndexType } from './common/interfaces/enums'
+import { generateDBID } from './utils/dbid'
 
 const Types = {
     PayloadType,
@@ -10,4 +11,8 @@ const Types = {
     IndexType
 }
 
-export { NodeKwil, WebKwil, Types }
+const Utils = {
+    generateDBID
+}
+
+export { NodeKwil, WebKwil, Types, Utils }
