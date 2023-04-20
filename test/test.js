@@ -14,8 +14,8 @@ async function test() {
         logging: true,
     })
 
-    const dbid = kwil.getDBID(wallet.address, "testdb")
-    console.log(dbid)
+    const dbid = kwil.getDBID(wallet.address, "testdb2")
+    // console.log(dbid)
     // broadcast(kwil, testDB, wallet)
     // getSchema(kwil, dbid)
     // getAccount(kwil, wallet.address)

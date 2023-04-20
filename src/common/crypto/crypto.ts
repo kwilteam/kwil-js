@@ -36,17 +36,8 @@ export function sha224StringToString(message: string): string {
     return shaObj.getHash('HEX');
 }
 
-export async function sign(message: string, txType: PayloadType, fee: string, nonce: number, signer: JsonRpcSigner | ethers.Wallet): Promise<Signature> {
-    const signatureMessage = `You are signing a transaction for the Kwil network.
-Transaction details:
-Hash: ${message}
-Type: ${txType}
-Fee: ${fee}
-Nonce: ${nonce}
-    
-Click "Sign" to continue.`;
-
-    const sig =  await signer.signMessage(signatureMessage);
+export async function sign(message: string, signer: JsonRpcSigner | ethers.Wallet): Promise<Signature> {
+    const sig =  await signer.signMessage(base64ToBytes(message));
     const encodedSignature = bytesToBase64(HexToUint8Array(sig))
 
     return {

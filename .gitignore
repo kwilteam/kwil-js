@@ -7,3 +7,5 @@
 .task
 yarn.lock
 .env
+/test
+/testapp

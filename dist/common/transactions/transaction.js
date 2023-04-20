@@ -31,7 +31,7 @@ class Transaction {
     }
     sign(signer) {
         return __awaiter(this, void 0, void 0, function* () {
-            this.tx.signature = yield (0, crypto_1.sign)(this.tx.hash, this.tx.payload_type, this.tx.fee, this.tx.nonce, signer);
+            this.tx.signature = yield (0, crypto_1.sign)(this.tx.hash, signer);
             this.tx.sender = yield signer.getAddress();
         });
     }

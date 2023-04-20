@@ -155,17 +155,19 @@ const res = await kwil.broadcast(tx);
 ```
 ### Funding
 **Approving and deposit funds**
+Currently, you can receive Kwil testnet funds from our [faucet](https://faucet.kwil.com/).
+
 To approve and deposit funds to a Kwil funding pool:
 ``` javascript
 const currentAllowance = await kwil.funder.getAllowance()
 // currentAllowance: BigNumber { _hex: '0x00', _isBigNumber: true }
 
-let res = await kwil.funder.approve(1000000) // $1 USDC
+let res = await kwil.funder.approve(BigInt("1000000000000000000")) // $1 KWIL BETA TOKEN
 /*
     res: { hash: '0x...'}
 */
 
-res = await kwil.funder.deposit(1000000) // $1 USDC
+res = await kwil.funder.deposit(BigInt("1000000000000000000")) // $1 KWIL BETA TOKEN
 /*
     res: { hash: '0x...'}
 */
