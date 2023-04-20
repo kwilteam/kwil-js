@@ -1,5 +1,5 @@
 import { DataType, DataTypeEnumToInteger, DataTypeToString } from './interfaces/enums';
-import { Int32ToBytes, Int64ToBytes, BooleanToBytes, StringToBytes, BytesToInt64, BytesToString } from './serial/serialize';
+import { Int64ToBytes, StringToBytes, BytesToInt64, BytesToString } from './serial/serialize';
 
 // marshal returns a Uint8Array of the value encoded in the specified type.
 // it is prepended with the type byte.
