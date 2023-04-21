@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Action = void 0;
-const __1 = require("../..");
+const tx_1 = require("../interfaces/tx");
 const anyMap_1 = require("../../utils/anyMap");
 const base64_1 = require("../../utils/base64");
 const enums_1 = require("../interfaces/enums");
@@ -98,7 +98,7 @@ class Action {
             //create transaction
             const readyTx = {
                 toObject: () => payload,
-                payloadType: __1.Types.PayloadType.EXECUTE_ACTION
+                payloadType: tx_1.PayloadType.EXECUTE_ACTION
             };
             const tx = new transaction_1.Transaction(readyTx);
             //sign transaction

@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DBBuilder = void 0;
-const __1 = require("../..");
+const tx_1 = require("../interfaces/tx");
 const transaction_1 = require("../transactions/transaction");
 class DBBuilder {
     constructor(json, client) {
@@ -21,7 +21,7 @@ class DBBuilder {
         return __awaiter(this, void 0, void 0, function* () {
             const readyTx = {
                 toObject: () => this.json,
-                payloadType: __1.Types.PayloadType.DEPLOY_DATABASE
+                payloadType: tx_1.PayloadType.DEPLOY_DATABASE
             };
             const tx = new transaction_1.Transaction(readyTx);
             //sign tx

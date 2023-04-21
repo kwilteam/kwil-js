@@ -101,11 +101,10 @@ class Kwil {
             const uint8 = new Uint8Array((0, base64_1.base64ToBytes)(res.data));
             const decoder = new TextDecoder('utf-8');
             const jsonString = decoder.decode(uint8);
-            res = {
+            return {
                 status: res.status,
                 data: JSON.parse(jsonString),
             };
-            return res;
         });
     }
 }

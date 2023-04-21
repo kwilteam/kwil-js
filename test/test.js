@@ -9,12 +9,12 @@ async function test() {
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
 
     const kwil = new kwiljs.NodeKwil({
-        kwilProvider: "https://provider-dev.kwil.com",
+        kwilProvider: "http://localhost:8080",
         timeout: 10000,
         logging: true,
     })
 
-    const dbid = kwil.getDBID(wallet.address, "testdb2")
+    //const dbid = kwil.getDBID(wallet.address, "testdb2")
     // console.log(dbid)
     // broadcast(kwil, testDB, wallet)
     // getSchema(kwil, dbid)
@@ -30,7 +30,7 @@ async function test() {
     // getTokenAddress(kwil, wallet)
     // getAction(kwil, dbid, "list_users")
     // newAction(kwil, dbid, "create_user", wallet)
-    // select(kwil, dbid, "SELECT * FROM users")
+    //select(kwil, dbid, "SELECT * FROM _tables")
     // bulkAction(kwil, dbid, "create_user", wallet)
     // getSelectAction(kwil, dbid, "list_users", wallet)
 }

@@ -1,5 +1,5 @@
 import { ethers, JsonRpcSigner } from "ethers";
-import { Types } from "../..";
+import { PayloadType } from "../interfaces/tx";
 import { AnyMap } from "../../utils/anyMap";
 import { bytesToBase64 } from "../../utils/base64";
 import Client from "../client/client";
@@ -105,7 +105,7 @@ export class Action {
         //create transaction
         const readyTx = {
             toObject: () => payload,
-            payloadType: Types.PayloadType.EXECUTE_ACTION
+            payloadType: PayloadType.EXECUTE_ACTION
         }
         
         const tx = new Transaction(readyTx)

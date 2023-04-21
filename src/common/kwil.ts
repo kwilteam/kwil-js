@@ -83,7 +83,7 @@ export class Kwil {
         return funder;
     }
 
-    public async selectQuery(dbid: string, query: string): Promise<GenericResponse<any>> {
+    public async selectQuery(dbid: string, query: string): Promise<GenericResponse<Object[]>> {
         const q: SelectQuery = {
             dbid: dbid,
             query: query,
@@ -93,10 +93,9 @@ export class Kwil {
         const uint8 = new Uint8Array(base64ToBytes(res.data as string));
         const decoder = new TextDecoder('utf-8');
         const jsonString = decoder.decode(uint8);
-        res = {
+        return {
             status: res.status,
             data: JSON.parse(jsonString),
-        }
-        return res;
+        } as GenericResponse<Map<string, any>[]>;
     }
 }

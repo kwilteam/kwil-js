@@ -21,5 +21,5 @@ export declare class Kwil {
     listDatabases(owner: string): Promise<GenericResponse<DbList>>;
     ping(): Promise<GenericResponse<string>>;
     getFunder(signer: JsonRpcSigner | ethers.Wallet): Promise<Funder>;
-    selectQuery(dbid: string, query: string): Promise<GenericResponse<any>>;
+    selectQuery(dbid: string, query: string): Promise<GenericResponse<Object[]>>;
 }
