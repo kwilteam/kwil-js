@@ -35,7 +35,7 @@ async function test() {
     // getSelectAction(kwil, dbid, "list_users", wallet)
 }
 
-test()
+//test()
 
 async function getSchema(kwil, d) {
     const schema = await kwil.getSchema(d)
