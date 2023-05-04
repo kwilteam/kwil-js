@@ -10,6 +10,7 @@ export declare class Action {
     private readonly name;
     inputs?: string[];
     actions?: AnyMap<any>[];
+    private static clientMap;
     private constructor();
     static retrieve(dbid: string, name: string, client: Client, schema: GenericResponse<Database<string>>): Promise<Action>;
     newInstance(): AnyMap<any>;

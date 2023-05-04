@@ -16,12 +16,11 @@ const base64_1 = require("../../utils/base64");
 const enums_1 = require("../interfaces/enums");
 const marshal_1 = require("../marshal");
 const transaction_1 = require("../transactions/transaction");
-const clientMap = new WeakMap();
 class Action {
     constructor(dbid, name, client) {
         this.dbid = dbid;
         this.name = name;
-        clientMap.set(this, client);
+        Action.clientMap.set(this, client);
     }
     static retrieve(dbid, name, client, schema) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -100,7 +99,7 @@ class Action {
             const tx = new transaction_1.Transaction(readyTx);
             //sign transaction
             tx.tx.sender = (yield signer.getAddress()).toLowerCase();
-            const client = clientMap.get(this);
+            const client = Action.clientMap.get(this);
             if (!client) {
                 throw new Error("Client has not been initialized. Please call .retrieve() before calling prepareTx().");
             }
@@ -120,4 +119,5 @@ class Action {
         });
     }
 }
+Action.clientMap = new WeakMap();
 exports.Action = Action;

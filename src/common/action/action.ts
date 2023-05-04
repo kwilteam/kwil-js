@@ -12,7 +12,6 @@ import { GenericResponse } from "../client/requests";
 
 type NewAction = Record<any, any>
 
-const clientMap = new WeakMap();
 
 export class Action {
     private readonly dbid: string;
@@ -20,10 +19,12 @@ export class Action {
     public inputs?: string[];
     public actions?: AnyMap<any>[]
 
+    private static clientMap = new WeakMap<Action, Client>();
+
     private constructor(dbid: string, name: string, client: Client) {
         this.dbid = dbid;
         this.name = name;
-        clientMap.set(this, client);
+        Action.clientMap.set(this, client);
     }
 
     public static async retrieve(dbid: string, name: string, client: Client, schema: GenericResponse<Database<string>>): Promise<Action> {
@@ -117,7 +118,7 @@ export class Action {
         //sign transaction
         tx.tx.sender = (await signer.getAddress()).toLowerCase();
 
-        const client = clientMap.get(this);
+        const client = Action.clientMap.get(this);
 
         if(!client) {
             throw new Error("Client has not been initialized. Please call .retrieve() before calling prepareTx().")
