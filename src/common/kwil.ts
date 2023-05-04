@@ -46,9 +46,7 @@ export class Kwil {
     }
 
     public async getAction(dbid: string, actionName: string): Promise<Action> {
-        const action = new Action(dbid, actionName, this.client);
-        await action.init();
-        return action;
+        return await Action.retrieve(dbid, actionName, this.client);
     }
 
     public newDatabase(json: object): DBBuilder {
@@ -78,9 +76,7 @@ export class Kwil {
         if (fundingConfig.status != 200 || !fundingConfig.data) {
             throw new Error('Failed to get funding config.');
         }
-        const funder = new Funder(signer, fundingConfig.data);
-        await funder.init();
-        return funder;
+        return await Funder.create(signer, fundingConfig.data);
     }
 
     public async selectQuery(dbid: string, query: string): Promise<GenericResponse<Object[]>> {

@@ -53,9 +53,7 @@ class Kwil {
     }
     getAction(dbid, actionName) {
         return __awaiter(this, void 0, void 0, function* () {
-            const action = new action_1.Action(dbid, actionName, this.client);
-            yield action.init();
-            return action;
+            return yield action_1.Action.retrieve(dbid, actionName, this.client);
         });
     }
     newDatabase(json) {
@@ -86,9 +84,7 @@ class Kwil {
             if (fundingConfig.status != 200 || !fundingConfig.data) {
                 throw new Error('Failed to get funding config.');
             }
-            const funder = new funding_1.Funder(signer, fundingConfig.data);
-            yield funder.init();
-            return funder;
+            return yield funding_1.Funder.create(signer, fundingConfig.data);
         });
     }
     selectQuery(dbid, query) {

@@ -9,8 +9,8 @@ export declare class Action {
     private client;
     inputs?: string[];
     actions?: AnyMap<any>[];
-    constructor(dbid: string, name: string, client: Client);
-    init(): Promise<void>;
+    private constructor();
+    static retrieve(dbid: string, name: string, client: Client): Promise<Action>;
     newInstance(): AnyMap<any>;
     bulk(bulkActions: NewAction[]): void;
     isComplete(): boolean;

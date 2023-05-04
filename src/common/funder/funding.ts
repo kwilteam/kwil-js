@@ -7,16 +7,27 @@ import kwilAbi from './abi/kwilHumanAbi.js';
 import { AllowanceRes, BalanceRes, DepositRes, TokenRes } from "../interfaces/funding";
 
 export class Funder {
-    private signer: JsonRpcSigner | ethers.Wallet;
-    private poolAddress: string;
-    private providerAddress: string;
+    private readonly signer: JsonRpcSigner | ethers.Wallet;
+    private readonly poolAddress: string;
+    private readonly providerAddress: string;
     private erc20Contract?: Token;
     private escrowContract?: Escrow;
 
-    constructor(signer: JsonRpcSigner | ethers.Wallet, config: FundingConfig) {
+    private constructor(signer: JsonRpcSigner | ethers.Wallet, config: FundingConfig) {
         this.poolAddress = config.pool_address;
         this.signer = signer;
         this.providerAddress = config.provider_address;
+    }
+
+    public static async create(signer: JsonRpcSigner | ethers.Wallet, config: FundingConfig): Promise<Funder> {
+        const funder = new Funder(signer, config);
+        funder.escrowContract = new Escrow(funder.providerAddress, funder.poolAddress, kwilAbi, funder.signer);
+        
+        let tokenAddress = await funder.escrowContract.getTokenAddress();
+
+        funder.erc20Contract = new Token(tokenAddress, erc20Abi, funder.signer);
+
+        return funder;
     }
 
     public async init(): Promise<void> {

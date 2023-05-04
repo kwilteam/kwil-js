@@ -23,6 +23,15 @@ class Funder {
         this.signer = signer;
         this.providerAddress = config.provider_address;
     }
+    static create(signer, config) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const funder = new Funder(signer, config);
+            funder.escrowContract = new escrow_1.Escrow(funder.providerAddress, funder.poolAddress, kwilHumanAbi_js_1.default, funder.signer);
+            let tokenAddress = yield funder.escrowContract.getTokenAddress();
+            funder.erc20Contract = new token_1.Token(tokenAddress, erc20HumanAbi_1.default, funder.signer);
+            return funder;
+        });
+    }
     init() {
         return __awaiter(this, void 0, void 0, function* () {
             this.escrowContract = new escrow_1.Escrow(this.providerAddress, this.poolAddress, kwilHumanAbi_js_1.default, this.signer);

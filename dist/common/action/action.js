@@ -22,22 +22,19 @@ class Action {
         this.name = name;
         this.client = client;
     }
-    //init to get the action inputs
-    init() {
+    static retrieve(dbid, name, client) {
         return __awaiter(this, void 0, void 0, function* () {
-            const schema = yield this.client.Accounts.getSchema(this.dbid);
+            const action = new Action(dbid, name, client);
+            const schema = yield action.client.Accounts.getSchema(action.dbid);
             if (!schema.data || !schema.data.actions) {
-                throw new Error(`Could not retrieve actions for database ${this.dbid}. Please double check that you have the correct DBID.`);
+                throw new Error(`Could not retrieve actions for database ${action.dbid}. Please double check that you have the correct DBID.`);
             }
-            for (const action of schema.data.actions) {
-                if (action.name == this.name) {
-                    this.inputs = action.inputs;
-                    return;
-                }
+            const a = schema.data.actions.find((act) => act.name == action.name);
+            if (!a) {
+                throw new Error(`Could not find action ${action.name} in database ${action.dbid}. Please double check that you have the correct DBID and action name.`);
             }
-            if (!this.inputs) {
-                throw new Error(`Could not find action ${this.name} in database ${this.dbid}. Please double check that you have the correct DBID and action name.`);
-            }
+            action.inputs = a.inputs;
+            return action;
         });
     }
     newInstance() {
