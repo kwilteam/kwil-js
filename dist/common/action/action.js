@@ -16,16 +16,16 @@ const base64_1 = require("../../utils/base64");
 const enums_1 = require("../interfaces/enums");
 const marshal_1 = require("../marshal");
 const transaction_1 = require("../transactions/transaction");
+const clientMap = new WeakMap();
 class Action {
     constructor(dbid, name, client) {
         this.dbid = dbid;
         this.name = name;
-        this.client = client;
+        clientMap.set(this, client);
     }
-    static retrieve(dbid, name, client) {
+    static retrieve(dbid, name, client, schema) {
         return __awaiter(this, void 0, void 0, function* () {
             const action = new Action(dbid, name, client);
-            const schema = yield action.client.Accounts.getSchema(action.dbid);
             if (!schema.data || !schema.data.actions) {
                 throw new Error(`Could not retrieve actions for database ${action.dbid}. Please double check that you have the correct DBID.`);
             }
@@ -100,11 +100,15 @@ class Action {
             const tx = new transaction_1.Transaction(readyTx);
             //sign transaction
             tx.tx.sender = (yield signer.getAddress()).toLowerCase();
-            const acct = yield this.client.Accounts.getAccount(tx.tx.sender);
+            const client = clientMap.get(this);
+            if (!client) {
+                throw new Error("Client has not been initialized. Please call .retrieve() before calling prepareTx().");
+            }
+            const acct = yield client.Accounts.getAccount(tx.tx.sender);
             if (acct.status != 200 || !acct.data) {
                 throw new Error(`Could not retrieve account ${tx.tx.sender}. Please double check that you have the correct account address.`);
             }
-            const cost = yield this.client.Tx.estimateCost(tx.tx);
+            const cost = yield client.Tx.estimateCost(tx.tx);
             if (cost.status != 200 || !cost.data) {
                 throw new Error(`Could not retrieve estimated cost for transaction. Please try again later.`);
             }

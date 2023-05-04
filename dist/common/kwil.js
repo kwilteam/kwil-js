@@ -36,7 +36,19 @@ class Kwil {
     }
     getSchema(dbid) {
         return __awaiter(this, void 0, void 0, function* () {
+            //check cache
+            if (this.schemas && this.schemas.has(dbid)) {
+                return this.schemas.get(dbid);
+            }
+            //fetch from server
             const res = yield this.client.Accounts.getSchema(dbid);
+            //cache result
+            if (res.status == 200) {
+                if (!this.schemas) {
+                    this.schemas = new Map();
+                }
+                this.schemas.set(dbid, res);
+            }
             return res;
         });
     }
@@ -53,7 +65,15 @@ class Kwil {
     }
     getAction(dbid, actionName) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield action_1.Action.retrieve(dbid, actionName, this.client);
+            let schema;
+            //check cache
+            if (this.schemas && this.schemas.has(dbid)) {
+                schema = this.schemas.get(dbid);
+            }
+            else {
+                schema = yield this.getSchema(dbid);
+            }
+            return yield action_1.Action.retrieve(dbid, actionName, this.client, schema);
         });
     }
     newDatabase(json) {

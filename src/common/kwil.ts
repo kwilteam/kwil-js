@@ -15,6 +15,9 @@ import { DBBuilder } from "./builder/builder";
 export class Kwil {
     private client: Client;
 
+    //cache schemas
+    private schemas?: Map<string, GenericResponse<Database<string>>>;
+
     constructor(opts: Config) {
         const client = new Client({
             kwilProvider: opts.kwilProvider,
@@ -32,7 +35,22 @@ export class Kwil {
     }
     
     public async getSchema(dbid: string): Promise<GenericResponse<Database<string>>> {
+        //check cache
+        if (this.schemas && this.schemas.has(dbid)) {
+            return this.schemas.get(dbid) as GenericResponse<Database<string>>;
+        }
+        
+        //fetch from server
         const res = await this.client.Accounts.getSchema(dbid);
+
+        //cache result
+        if (res.status == 200) {
+            if (!this.schemas) {
+                this.schemas = new Map<string, GenericResponse<Database<string>>>();
+            }
+            this.schemas.set(dbid, res);
+        }
+
         return res;
     }
 
@@ -46,7 +64,16 @@ export class Kwil {
     }
 
     public async getAction(dbid: string, actionName: string): Promise<Action> {
-        return await Action.retrieve(dbid, actionName, this.client);
+        let schema: GenericResponse<Database<string>>
+
+        //check cache
+        if (this.schemas && this.schemas.has(dbid)) {
+            schema = this.schemas.get(dbid) as GenericResponse<Database<string>>;
+        } else {
+            schema = await this.getSchema(dbid);
+        }
+
+        return await Action.retrieve(dbid, actionName, this.client, schema);
     }
 
     public newDatabase(json: object): DBBuilder {

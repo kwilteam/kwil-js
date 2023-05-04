@@ -7,26 +7,27 @@ import { DataType, inputToDataType } from "../interfaces/enums";
 import { ITx } from "../interfaces/tx";
 import { marshal } from "../marshal";
 import { Transaction } from "../transactions/transaction";
+import { Database } from "../interfaces/database";
+import { GenericResponse } from "../client/requests";
 
 type NewAction = Record<any, any>
+
+const clientMap = new WeakMap();
 
 export class Action {
     private readonly dbid: string;
     private readonly name: string;
-    private client: Client;
     public inputs?: string[];
     public actions?: AnyMap<any>[]
 
     private constructor(dbid: string, name: string, client: Client) {
         this.dbid = dbid;
         this.name = name;
-        this.client = client
+        clientMap.set(this, client);
     }
 
-    public static async retrieve(dbid: string, name: string, client: Client): Promise<Action> {
+    public static async retrieve(dbid: string, name: string, client: Client, schema: GenericResponse<Database<string>>): Promise<Action> {
         const action = new Action(dbid, name, client);
-
-        const schema  = await action.client.Accounts.getSchema(action.dbid);
 
         if(!schema.data || !schema.data.actions) {
             throw new Error(`Could not retrieve actions for database ${action.dbid}. Please double check that you have the correct DBID.`);
@@ -115,12 +116,18 @@ export class Action {
 
         //sign transaction
         tx.tx.sender = (await signer.getAddress()).toLowerCase();
+
+        const client = clientMap.get(this);
+
+        if(!client) {
+            throw new Error("Client has not been initialized. Please call .retrieve() before calling prepareTx().")
+        }
        
-        const acct = await this.client.Accounts.getAccount(tx.tx.sender);
+        const acct = await client.Accounts.getAccount(tx.tx.sender);
         if (acct.status != 200 || !acct.data) {
             throw new Error(`Could not retrieve account ${tx.tx.sender}. Please double check that you have the correct account address.`);
         }
-        const cost = await this.client.Tx.estimateCost(tx.tx as ITx);
+        const cost = await client.Tx.estimateCost(tx.tx as ITx);
         if (cost.status != 200 || !cost.data) {
             throw new Error(`Could not retrieve estimated cost for transaction. Please try again later.`);
         }

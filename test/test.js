@@ -15,23 +15,28 @@ async function test() {
     })
 
     const dbid = kwil.getDBID(wallet.address, "mydb")
+    const dbid2 = kwil.getDBID(wallet.address, "ecclesia")
     // console.log(dbid)
     // broadcast(kwil, testDB, wallet)
-    // getSchema(kwil, dbid)
+    // await getSchema(kwil, dbid)
+    // await getSchema(kwil, dbid)
+    // await getSchema(kwil, dbid2)
     // getAccount(kwil, wallet.address)
     // listDatabases(kwil, wallet.address)
     // ping(kwil)
     // getFunder(kwil, wallet)
     // getAllowance(kwil, wallet)
-    getBalance(kwil, wallet)
+    // getBalance(kwil, wallet)
     // approve(kwil, wallet, BigInt("100005"))
     // deposit(kwil, wallet, BigInt("100005"))
     // getDepositedBalance(kwil, wallet)
     // getTokenAddress(kwil, wallet)
-    // getAction(kwil, dbid, "add_post")
-    // newAction(kwil, dbid, "create_user", wallet)
-    //select(kwil, dbid, "SELECT * FROM _tables")
-    // bulkAction(kwil, dbid, "create_user", wallet)
+    // await getAction(kwil, dbid, "add_post")
+    // await getAction(kwil, dbid, "add_post")
+    // await getAction(kwil, dbid, "delete_post")
+    // await newAction(kwil, dbid, "add_post", wallet)
+    select(kwil, dbid, "SELECT * FROM posts")
+    // bulkAction(kwil, dbid, "add_post", wallet)
     // getSelectAction(kwil, dbid, "list_users", wallet)
 }
 
@@ -39,7 +44,7 @@ test()
 
 async function getSchema(kwil, d) {
     const schema = await kwil.getSchema(d)
-    console.log(schema.data.actions)
+    console.log(schema.data)
 }
 
 async function getAccount(kwil, owner) {
@@ -123,13 +128,15 @@ async function getAction(kwil, dbid, action) {
 async function newAction(kwil, dbid, action, w) {
     const newAct = await kwil.getAction(dbid, action)
     let act1 = newAct.newInstance()
-    act1.set("$id", 1000)
-    act1.set("$username", "Hello World")
-    act1.set("$age", 1)
+    act1.set("$id", 1)
+    act1.set("$user", "Luke")
+    act1.set("$title", "Hello")
+    act1.set("$body", "This is a test post")
     let act2 = newAct.newInstance()
-    act2.set("$id", 1001)
-    act2.set("$username", "Hello World 2")
-    act2.set("$age", 2)
+    act2.set("$id", 2)
+    act2.set("$user", "Luke")
+    act2.set("$title", "Hello")
+    act2.set("$body", "This is a test post")
 
     if(!newAct.isComplete()) {
         throw new Error("Action is not complete")
@@ -157,24 +164,28 @@ async function select(kwil, dbid, query) {
 
 const bulkActions = [
     {
-        "$id": 101,
-        "$username": "Hello World 3",
-        "$age": 1
+        "$id": 105,
+        "$user": "Luke",
+        "$title": "Hello",
+        "$body": "Hello World",
     },
     {
-        "$id": 102,
-        "$username": "Hello World 4",
-        "$age": 2
+        "$id": 106,
+        "$user": "Luke",
+        "$title": "Hello",
+        "$body": "Hello World 2",
     },
     {
-        "$id": 103,
-        "$username": "Hello World 5",
-        "$age": 3
+        "$id": 107,
+        "$user": "Luke",
+        "$title": "Hello",
+        "$body": "Hello World 3",
     },
     {
-        "$id": 104,
-        "$username": "Hello World 6",
-        "$age": 4
+        "$id": 108,
+        "$user": "Luke",
+        "$title": "Hello",
+        "$body": "Hello World 4",
     }
 ]
 

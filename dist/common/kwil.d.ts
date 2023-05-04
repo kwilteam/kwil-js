@@ -10,6 +10,7 @@ import { Action } from "./action/action";
 import { DBBuilder } from "./builder/builder";
 export declare class Kwil {
     private client;
+    private schemas?;
     constructor(opts: Config);
     getDBID(owner: string, name: string): string;
     getSchema(dbid: string): Promise<GenericResponse<Database<string>>>;
