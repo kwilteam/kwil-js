@@ -213,7 +213,7 @@ describe("DBBuilder", () => {
 
     beforeAll(async () => {
         const dbAmount = await kwil.listDatabases(wallet.address);
-        const count = (dbAmount.data as unknown) as [string];
+        const count = dbAmount.data as string[];
         db.name = `test_db_${count.length + 1}`;
         console.log(db)
     });

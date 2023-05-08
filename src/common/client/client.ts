@@ -2,7 +2,7 @@ import { base64ToBytes } from "../../utils/base64";
 import { Uint8ArrayToHex } from "../../utils/bytes";
 import { Account } from "../interfaces/account";
 import { FundingConfig } from "../interfaces/configs";
-import { Database, DbList } from "../interfaces/database";
+import { Database } from "../interfaces/database";
 import { ITx, SelectQuery, TxReceipt } from "../interfaces/tx";
 import { Api } from "./api";
 import Config from "./config";
@@ -52,7 +52,7 @@ export class AccountClient {
         }
     }
 
-    public async listDatabases(owner: string): Promise<GenericResponse<DbList>> {
+    public async listDatabases(owner: string): Promise<GenericResponse<string[]>> {
         const res = await this.api.get<AcctSvc.ListDatabasesResponse>(`/api/v1/${owner}/databases`);
         checkRes(res);
         return {

@@ -1,6 +1,6 @@
 import Config from "./client/config";
 import { GenericResponse } from "./client/requests";
-import { Database, DbList } from "./interfaces/database";
+import { Database } from "./interfaces/database";
 import { ITx, TxReceipt } from "./interfaces/tx";
 import { Account } from "./interfaces/account";
 import { Transaction } from "./transactions/transaction";
@@ -19,7 +19,7 @@ export declare class Kwil {
     getAction(dbid: string, actionName: string): Promise<Action>;
     newDatabase(json: object): DBBuilder;
     broadcast(tx: Transaction): Promise<GenericResponse<TxReceipt>>;
-    listDatabases(owner: string): Promise<GenericResponse<DbList>>;
+    listDatabases(owner: string): Promise<GenericResponse<string[]>>;
     ping(): Promise<GenericResponse<string>>;
     getFunder(signer: JsonRpcSigner | ethers.Wallet): Promise<Funder>;
     selectQuery(dbid: string, query: string): Promise<GenericResponse<Object[]>>;

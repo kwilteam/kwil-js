@@ -30,6 +30,3 @@ export interface Action {
     inputs: string[];
     statements: string[];
 }
-export interface DbList {
-    databases: string[];
-}

@@ -1,6 +1,6 @@
 import { Account } from "../interfaces/account";
 import { FundingConfig } from "../interfaces/configs";
-import { Database, DbList } from "../interfaces/database";
+import { Database } from "../interfaces/database";
 import { ITx, SelectQuery, TxReceipt } from "../interfaces/tx";
 import Config from "./config";
 import { GenericResponse } from "./requests";
@@ -15,7 +15,7 @@ export declare class AccountClient {
     constructor(opts: Config);
     getSchema(dbid: string): Promise<GenericResponse<Database<string>>>;
     getAccount(owner: string): Promise<GenericResponse<Account>>;
-    listDatabases(owner: string): Promise<GenericResponse<DbList>>;
+    listDatabases(owner: string): Promise<GenericResponse<string[]>>;
 }
 export declare class TxClient {
     private api;

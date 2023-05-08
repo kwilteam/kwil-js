@@ -2,7 +2,7 @@ import { generateDBID } from "../utils/dbid";
 import Client from "./client/client";
 import Config from "./client/config";
 import { GenericResponse } from "./client/requests";
-import { Database, DbList } from "./interfaces/database";
+import { Database } from "./interfaces/database";
 import { ITx, SelectQuery, TxReceipt } from "./interfaces/tx";
 import { Account } from "./interfaces/account";
 import { Transaction } from "./transactions/transaction";
@@ -88,7 +88,7 @@ export class Kwil {
         return await this.client.Tx.broadcast(tx.tx);
     }
 
-    public async listDatabases(owner: string): Promise<GenericResponse<DbList>> {
+    public async listDatabases(owner: string): Promise<GenericResponse<string[]>> {
         owner = owner.toLowerCase();
 
         return await this.client.Accounts.listDatabases(owner);

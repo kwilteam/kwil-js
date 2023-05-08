@@ -1,4 +1,4 @@
-import { Database, DbList } from "../interfaces/database";
+import { Database } from "../interfaces/database";
 import { Account } from "../interfaces/account";
 import { ITx } from "../interfaces/tx";
 import { TxReceipt } from "../interfaces/tx";
@@ -14,7 +14,7 @@ export declare namespace AcctSvc {
         account: Account;
     }
     interface ListDatabasesResponse {
-        databases: DbList;
+        databases: string[];
     }
 }
 export declare namespace TxSvc {
