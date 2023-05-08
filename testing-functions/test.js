@@ -14,8 +14,10 @@ async function test() {
         logging: true,
     })
 
+    console.log(wallet.address)
+
     const dbid = kwil.getDBID(wallet.address, "mydb")
-    const dbid2 = kwil.getDBID(wallet.address, "ecclesia")
+    // const dbid2 = kwil.getDBID(wallet.address, "ecclesia")
     // console.log(dbid)
     // broadcast(kwil, testDB, wallet)
     // await getSchema(kwil, dbid)
@@ -28,13 +30,13 @@ async function test() {
     // getAllowance(kwil, wallet)
     // getBalance(kwil, wallet)
     // approve(kwil, wallet, BigInt("100005"))
-    // deposit(kwil, wallet, BigInt("100005"))
+    deposit(kwil, wallet, BigInt("100"))
     // getDepositedBalance(kwil, wallet)
     // getTokenAddress(kwil, wallet)
-    // await getAction(kwil, dbid, "add_post")
+    // await getAction(kwil, dbid, "delete_post")
     // await getAction(kwil, dbid, "add_post")
     // await getAction(kwil, dbid, "delete_post")
-    await newAction(kwil, dbid, "add_post", wallet)
+    // await newAction(kwil, dbid, "add_post", wallet)
     // select(kwil, dbid, "SELECT * FROM posts")
     // bulkAction(kwil, dbid, "add_post", wallet)
     // getSelectAction(kwil, dbid, "list_users", wallet)

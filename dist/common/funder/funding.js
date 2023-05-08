@@ -32,13 +32,6 @@ class Funder {
             return funder;
         });
     }
-    init() {
-        return __awaiter(this, void 0, void 0, function* () {
-            this.escrowContract = new escrow_1.Escrow(this.providerAddress, this.poolAddress, kwilHumanAbi_js_1.default, this.signer);
-            let tokenAddress = yield this.escrowContract.getTokenAddress();
-            this.erc20Contract = new token_1.Token(tokenAddress, erc20HumanAbi_1.default, this.signer);
-        });
-    }
     getAllowance(address) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!this.erc20Contract) {

@@ -9,7 +9,6 @@ export declare class Funder {
     private escrowContract?;
     private constructor();
     static create(signer: JsonRpcSigner | ethers.Wallet, config: FundingConfig): Promise<Funder>;
-    init(): Promise<void>;
     getAllowance(address: string): Promise<AllowanceRes>;
     getBalance(address: string): Promise<BalanceRes>;
     approve(amount: BigNumberish): Promise<ethers.ContractTransaction>;

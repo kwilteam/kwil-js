@@ -30,13 +30,6 @@ export class Funder {
         return funder;
     }
 
-    public async init(): Promise<void> {
-        this.escrowContract = new Escrow(this.providerAddress, this.poolAddress, kwilAbi, this.signer);
-        let tokenAddress = await this.escrowContract.getTokenAddress();
-
-        this.erc20Contract = new Token(tokenAddress, erc20Abi, this.signer);
-    }
-
     public async getAllowance(address: string): Promise<AllowanceRes> {
         if (!this.erc20Contract) {
             throw new Error("Funder not initialized");
