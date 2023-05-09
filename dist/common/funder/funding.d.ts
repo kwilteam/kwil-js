@@ -1,4 +1,4 @@
-import { BigNumberish, ethers, JsonRpcSigner } from "ethers";
+import { BigNumberish, ethers, Signer } from "ethers";
 import { FundingConfig } from "../interfaces/configs";
 import { AllowanceRes, BalanceRes, DepositRes, TokenRes } from "../interfaces/funding";
 export declare class Funder {
@@ -8,11 +8,11 @@ export declare class Funder {
     private erc20Contract?;
     private escrowContract?;
     private constructor();
-    static create(signer: JsonRpcSigner | ethers.Wallet, config: FundingConfig): Promise<Funder>;
+    static create(signer: Signer | ethers.Wallet, config: FundingConfig): Promise<Funder>;
     getAllowance(address: string): Promise<AllowanceRes>;
     getBalance(address: string): Promise<BalanceRes>;
-    approve(amount: BigNumberish): Promise<ethers.ContractTransaction>;
-    deposit(amount: BigNumberish): Promise<ethers.ContractTransaction>;
+    approve(amount: BigNumberish): Promise<ethers.ContractTransactionResponse>;
+    deposit(amount: BigNumberish): Promise<ethers.ContractTransactionResponse>;
     getDepositedBalance(address: string): Promise<DepositRes>;
     getTokenAddress(): Promise<TokenRes>;
 }

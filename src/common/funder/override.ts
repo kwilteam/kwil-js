@@ -1,6 +1,6 @@
-import { ethers, FeeData, JsonRpcProvider, JsonRpcSigner } from "ethers";
+import { ethers, FeeData, JsonRpcProvider, Signer } from "ethers";
 
-export async function createOverride(provider: JsonRpcSigner | ethers.Wallet, contract: ethers.Contract, method: string, args: any[]): Promise<object> {
+export async function createOverride(provider: Signer | ethers.Wallet, contract: ethers.Contract, method: string, args: any[]): Promise<object> {
     // if provider is jsonrpc, then this gas esimates will be made by provider
     if (provider instanceof JsonRpcProvider) {
         return {};

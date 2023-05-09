@@ -80,33 +80,33 @@ describe("Funder", () => {
         console.log(result)
     });
 
-    // test('approve should return a transaction', async () => {
-    //     const result = await funder.approve(100) as ContractTransactionResponse;
-    //     expect(result).toBeDefined();
-    //     expect(result).toMatchObject({
-    //         to: expect.any(String),
-    //         from: expect.any(String),
-    //         value: expect.any(BigInt),
-    //         chainId: expect.any(BigInt),
-    //     });
+    test('approve should return a transaction', async () => {
+        const result = await funder.approve(100) as ContractTransactionResponse;
+        expect(result).toBeDefined();
+        expect(result).toMatchObject({
+            to: expect.any(String),
+            from: expect.any(String),
+            value: expect.any(BigInt),
+            chainId: expect.any(BigInt),
+        });
 
-    //     const hash = result.hash;
+        const hash = result.hash;
 
-    //     console.log("Waiting for confirmations...")
-    //     await waitForConfirmations(hash, 1);
+        console.log("Waiting for confirmations...")
+        await waitForConfirmations(hash, 1);
 
-    // }, 30000);
+    }, 30000);
 
-    // test('deposit should return a transaction', async () => {
-    //     const result = await funder.deposit(100);
-    //     expect(result).toBeDefined();
-    //     expect(result).toMatchObject({
-    //         to: expect.any(String),
-    //         from: expect.any(String),
-    //         value: expect.any(BigInt),
-    //         chainId: expect.any(BigInt),
-    //     });
-    // });
+    test('deposit should return a transaction', async () => {
+        const result = await funder.deposit(100);
+        expect(result).toBeDefined();
+        expect(result).toMatchObject({
+            to: expect.any(String),
+            from: expect.any(String),
+            value: expect.any(BigInt),
+            chainId: expect.any(BigInt),
+        });
+    });
 
     test('getDepositedBalance should return a balance', async () => {
         const result = await funder.getDepositedBalance(wallet.address);

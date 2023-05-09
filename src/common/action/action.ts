@@ -1,4 +1,4 @@
-import { ethers, JsonRpcSigner } from "ethers";
+import { ethers, Signer } from "ethers";
 import { PayloadType } from "../interfaces/tx";
 import { AnyMap } from "../../utils/anyMap";
 import { bytesToBase64 } from "../../utils/base64";
@@ -79,7 +79,7 @@ export class Action {
         return true;
     }
 
-    public async prepareAction(signer: JsonRpcSigner | ethers.Wallet): Promise<Transaction> {
+    public async prepareAction(signer: Signer | ethers.Wallet): Promise<Transaction> {
         //serialize action values
         if(!this.actions && this.inputs) {
             throw new Error("No action inputs have been set. Please call newAction() or bulkAction() before calling prepareTx().")

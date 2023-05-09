@@ -1,9 +1,8 @@
 import jssha from 'jssha';
-import {ethers, JsonRpcSigner} from 'ethers';
+import {ethers, Signer} from 'ethers';
 import { Signature, SignatureType } from '../interfaces/signature';
-import {  HexToUint8Array,  StringToUint8LittleEndian,  Uint8ArrayToHex } from '../../utils/bytes';
+import {  HexToUint8Array } from '../../utils/bytes';
 import { base64ToBytes, bytesToBase64 } from '../../utils/base64';
-import { PayloadType } from '../interfaces/tx';
 
 export function sha384StringToString(message: string): string {
     const shaObj = new jssha('SHA-384', 'TEXT');
@@ -36,7 +35,7 @@ export function sha224StringToString(message: string): string {
     return shaObj.getHash('HEX');
 }
 
-export async function sign(message: string, signer: JsonRpcSigner | ethers.Wallet): Promise<Signature> {
+export async function sign(message: string, signer: Signer | ethers.Wallet): Promise<Signature> {
     const sig =  await signer.signMessage(base64ToBytes(message));
     const encodedSignature = bytesToBase64(HexToUint8Array(sig))
 

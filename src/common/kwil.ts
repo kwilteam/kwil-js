@@ -6,7 +6,7 @@ import { Database } from "./interfaces/database";
 import { ITx, SelectQuery, TxReceipt } from "./interfaces/tx";
 import { Account } from "./interfaces/account";
 import { Transaction } from "./transactions/transaction";
-import { ethers, JsonRpcSigner } from "ethers";
+import { ethers, Signer } from "ethers";
 import { Funder } from "./funder/funding";
 import { Action } from "./action/action";
 import { base64ToBytes } from "../utils/base64";
@@ -98,7 +98,7 @@ export class Kwil {
         return await this.client.Tx.ping();
     }
 
-    public async getFunder(signer: JsonRpcSigner| ethers.Wallet): Promise<Funder> {
+    public async getFunder(signer: Signer| ethers.Wallet): Promise<Funder> {
         const fundingConfig = await this.client.Config.getFundingConfig();
         if (fundingConfig.status != 200 || !fundingConfig.data) {
             throw new Error('Failed to get funding config.');

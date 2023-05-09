@@ -119,5 +119,5 @@ class Action {
         });
     }
 }
-Action.clientMap = new WeakMap();
 exports.Action = Action;
+Action.clientMap = new WeakMap();

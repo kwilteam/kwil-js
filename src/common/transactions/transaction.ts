@@ -1,4 +1,4 @@
-import { ethers, JsonRpcSigner } from "ethers";
+import { ethers, Signer } from "ethers";
 import { base64ToBytes, bytesToBase64 } from "../../utils/base64";
 import { ConcatBytes, MarshalB64, NumberToUint32LittleEndian, NumberToUint64LittleEndian, StringToUint8LittleEndian } from "../../utils/bytes";
 import { sign, sha384BytesToBytes } from "../crypto/crypto";
@@ -27,7 +27,7 @@ export class Transaction {
         };
     }
 
-    public async sign(signer: JsonRpcSigner | ethers.Wallet): Promise<void> {   
+    public async sign(signer: Signer | ethers.Wallet): Promise<void> {   
         this.tx.signature = await sign(this.tx.hash, signer);
         this.tx.sender = await signer.getAddress();
     }

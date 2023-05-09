@@ -4,7 +4,7 @@ import { Database } from "./interfaces/database";
 import { ITx, TxReceipt } from "./interfaces/tx";
 import { Account } from "./interfaces/account";
 import { Transaction } from "./transactions/transaction";
-import { ethers, JsonRpcSigner } from "ethers";
+import { ethers, Signer } from "ethers";
 import { Funder } from "./funder/funding";
 import { Action } from "./action/action";
 import { DBBuilder } from "./builder/builder";
@@ -21,6 +21,6 @@ export declare class Kwil {
     broadcast(tx: Transaction): Promise<GenericResponse<TxReceipt>>;
     listDatabases(owner: string): Promise<GenericResponse<string[]>>;
     ping(): Promise<GenericResponse<string>>;
-    getFunder(signer: JsonRpcSigner | ethers.Wallet): Promise<Funder>;
+    getFunder(signer: Signer | ethers.Wallet): Promise<Funder>;
     selectQuery(dbid: string, query: string): Promise<GenericResponse<Object[]>>;
 }
