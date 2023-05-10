@@ -81,6 +81,7 @@ describe("Funder", () => {
     });
 
     test('approve should return a transaction', async () => {
+        const funder = await kwil.getFunder(wallet);
         const result = await funder.approve(100) as ContractTransactionResponse;
         expect(result).toBeDefined();
         expect(result).toMatchObject({

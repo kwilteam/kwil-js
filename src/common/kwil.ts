@@ -11,12 +11,16 @@ import { Funder } from "./funder/funding";
 import { Action } from "./action/action";
 import { base64ToBytes } from "../utils/base64";
 import { DBBuilder } from "./builder/builder";
+import { FundingConfig } from "./interfaces/configs";
 
 export class Kwil {
     private client: Client;
 
     //cache schemas
     private schemas?: Map<string, GenericResponse<Database<string>>>;
+
+    //cache fundingConfig
+    private fundingConfig?: GenericResponse<FundingConfig>;
 
     constructor(opts: Config) {
         const client = new Client({
@@ -99,11 +103,15 @@ export class Kwil {
     }
 
     public async getFunder(signer: Signer| ethers.Wallet): Promise<Funder> {
-        const fundingConfig = await this.client.Config.getFundingConfig();
-        if (fundingConfig.status != 200 || !fundingConfig.data) {
-            throw new Error('Failed to get funding config.');
+        //check cache
+        if(!this.fundingConfig || !this.fundingConfig.data) {
+            this.fundingConfig = await this.client.Config.getFundingConfig();
+            if (this.fundingConfig.status != 200 || !this.fundingConfig.data) {
+                throw new Error('Failed to get funding config.');
+            }
         }
-        return await Funder.create(signer, fundingConfig.data);
+        
+        return await Funder.create(signer, this.fundingConfig.data);
     }
 
     public async selectQuery(dbid: string, query: string): Promise<GenericResponse<Object[]>> {

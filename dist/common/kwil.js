@@ -100,11 +100,14 @@ class Kwil {
     }
     getFunder(signer) {
         return __awaiter(this, void 0, void 0, function* () {
-            const fundingConfig = yield this.client.Config.getFundingConfig();
-            if (fundingConfig.status != 200 || !fundingConfig.data) {
-                throw new Error('Failed to get funding config.');
+            //check cache
+            if (!this.fundingConfig || !this.fundingConfig.data) {
+                this.fundingConfig = yield this.client.Config.getFundingConfig();
+                if (this.fundingConfig.status != 200 || !this.fundingConfig.data) {
+                    throw new Error('Failed to get funding config.');
+                }
             }
-            return yield funding_1.Funder.create(signer, fundingConfig.data);
+            return yield funding_1.Funder.create(signer, this.fundingConfig.data);
         });
     }
     selectQuery(dbid, query) {
