@@ -27,7 +27,7 @@ const kwiljs = require('kwil');
 // instead of a provider, nodeJS requires a wallet
 const wallet = new ethers.Wallet("my_ethereum_private_key")
 
-// create a new Kwil web client
+// create a new Kwil web api_client
 const kwil = new kwiljs.NodeKwil({
     kwilProvider: "kwil_provider_endpoint",
 });

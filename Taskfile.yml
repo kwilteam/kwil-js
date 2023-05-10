@@ -28,4 +28,4 @@ tasks:
     sources:
       - proto/kwil/
     generates:
-      - src/proto/tx
+      - src/proto/txn

@@ -9,3 +9,4 @@ yarn.lock
 .env
 /test
 /testapp
+/dist

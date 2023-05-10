@@ -1,9 +1,7 @@
-import NodeKwil from './node/nodeKwil'
-import WebKwil from './web/webKwil'
-import { PayloadType } from './common/interfaces/tx'
-import { DataType, AttributeType, IndexType } from './common/interfaces/enums'
+import {NodeKwil} from './client/node/nodeKwil'
+import {WebKwil} from './client/web/webKwil'
 import { generateDBID } from './utils/dbid'
-import { TxReceipt as _TxReceipt } from './common/interfaces/tx'
+import { TxReceipt as _TxReceipt } from './core/tx'
 
 namespace Types {
     export type TxReceipt = _TxReceipt

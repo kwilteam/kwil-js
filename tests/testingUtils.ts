@@ -1,5 +1,5 @@
 import { Contract, JsonRpcProvider, JsonRpcSigner, Wallet } from "ethers";
-import { Kwil } from "../dist/common/kwil";
+import {Kwil} from "../dist/client/kwil";
 require('dotenv').config();
 
 const provider = new JsonRpcProvider(process.env.ETH_PROVIDER)
@@ -50,8 +50,14 @@ export interface schemaObj {
     actions: object[];
 }
 
-export const kwil = new Kwil({
-    kwilProvider: "https://provider.kwil.com",
-    timeout: 10000,
-    logging: true,
-});
+class KwilImpl extends Kwil {
+    constructor() {
+        super({
+            kwilProvider: "https://provider.kwil.com",
+            timeout: 10000,
+            logging: true,
+        });
+    }
+}
+
+export const kwil = new KwilImpl();

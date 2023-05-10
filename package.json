@@ -2,15 +2,17 @@
   "name": "kwil",
   "version": "2.0.9",
   "description": "",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
-    "prepare": "npm run build",
-    "build": "tsc"
+    "clean": "rimraf dist",
+    "tsc": "tsc",
+    "build": "npm run clean && npm run tsc"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "rimraf": "^3.0.2",
     "@types/jest": "^29.5.1",
     "@types/node": "^18.11.17",
     "@typescript-eslint/eslint-plugin": "^5.38.0",
