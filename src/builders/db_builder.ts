@@ -1,15 +1,14 @@
-import {ethers, JsonRpcSigner} from "ethers";
 import {PayloadType, Transaction} from "../core/tx";
-import {Nillable, NonNil} from "../utils/types";
+import {awaitable, Nillable, NonNil} from "../utils/types";
 import {objects} from "../utils/objects";
 import {Kwil} from "../client/kwil";
 import {TxnBuilderImpl} from "./transaction_builder";
-import {DBBuilder} from "../core/builders";
+import {DBBuilder, SignerSupplier} from "../core/builders";
 
 export class DBBuilderImpl implements DBBuilder {
     private readonly client: Kwil;
     private _payload: Nillable<() => NonNil<object>> = null;
-    private _signer: Nillable<JsonRpcSigner | ethers.Wallet> = null;
+    private _signer: Nillable<SignerSupplier> = null;
 
     private constructor(client: Kwil) {
         this.client = client;
@@ -19,7 +18,7 @@ export class DBBuilderImpl implements DBBuilder {
         return new DBBuilderImpl(objects.requireNonNil(client));
     }
 
-    signer(signer: JsonRpcSigner | ethers.Wallet): NonNil<DBBuilder> {
+    signer(signer: SignerSupplier): NonNil<DBBuilder> {
         this._signer = objects.requireNonNil(signer);
         return this;
     }
@@ -33,11 +32,13 @@ export class DBBuilderImpl implements DBBuilder {
     }
 
     async buildTx(): Promise<Transaction> {
+        const signer = await awaitable(objects.requireNonNil(this._signer));
+
         return TxnBuilderImpl
             .of(this.client)
             .payloadType(PayloadType.DEPLOY_DATABASE)
             .payload(objects.requireNonNil(this._payload))
-            .signer(objects.requireNonNil(this._signer))
+            .signer(objects.requireNonNil(signer))
             .build();
     }
 }

@@ -2,10 +2,13 @@ import {NonNil} from "../utils/types";
 import {PayloadType, Transaction} from "./tx";
 import {ethers, JsonRpcSigner} from "ethers";
 
+export type Signer = NonNil<JsonRpcSigner | ethers.Wallet>;
+export type SignerSupplier = Signer | (() => Signer) | (() => Promise<Signer>)
+
 export interface TxnBuilder {
     payloadType(payloadType: NonNil<PayloadType>): NonNil<TxnBuilder>;
 
-    signer(signer: NonNil<JsonRpcSigner | ethers.Wallet>): NonNil<TxnBuilder>;
+    signer(signer: SignerSupplier): NonNil<TxnBuilder>;
 
     payload(payload: (() => NonNil<object>) | NonNil<object>): NonNil<TxnBuilder>;
 
@@ -13,7 +16,7 @@ export interface TxnBuilder {
 }
 
 export interface DBBuilder {
-    signer(signer: JsonRpcSigner | ethers.Wallet): NonNil<DBBuilder>;
+    signer(signer: SignerSupplier): NonNil<DBBuilder>;
 
     payload(payload: (() => NonNil<object>) | NonNil<object>): NonNil<DBBuilder>;
 
@@ -30,6 +33,8 @@ export interface ActionBuilder {
     set(key: string, value: unknown): NonNil<ActionBuilder>;
 
     setMany(actions: Iterable<NewAction>): NonNil<ActionBuilder>;
+
+    signer(signer: SignerSupplier): NonNil<ActionBuilder>;
 
     buildTx(): Promise<Transaction>;
 }

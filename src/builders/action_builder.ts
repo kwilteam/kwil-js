@@ -1,20 +1,19 @@
-import {ethers, JsonRpcSigner} from "ethers";
 import {PayloadType, Transaction} from "../core/tx";
 import {AnyMap} from "../utils/anyMap";
 import {bytesToBase64} from "../utils/base64";
 import {inputToDataType} from "../core/enums";
 import {marshal} from "../core/marshal";
 import {objects} from "../utils/objects";
-import {Nillable, NonNil} from "../utils/types";
+import {awaitable, Nillable, NonNil} from "../utils/types";
 import {Kwil} from "../client/kwil";
-import {ActionBuilder} from "../core/builders";
+import {ActionBuilder, SignerSupplier} from "../core/builders";
 import {TxnBuilderImpl} from "./transaction_builder";
 
 type NewAction = Record<any, any>
 
 export class ActionBuilderImpl implements ActionBuilder {
     private readonly client: Kwil;
-    private _signer: Nillable<JsonRpcSigner | ethers.Wallet> = null;
+    private _signer: Nillable<SignerSupplier> = null;
     private _actions?: AnyMap<any>[]
     private _name: Nillable<string>;
     private _dbid: Nillable<string>;
@@ -37,7 +36,7 @@ export class ActionBuilderImpl implements ActionBuilder {
         return this;
     }
 
-    signer(signer: NonNil<JsonRpcSigner | ethers.Wallet>): NonNil<ActionBuilder> {
+    signer(signer: SignerSupplier): NonNil<ActionBuilder> {
         this._signer = objects.requireNonNil(signer);
         return this;
     }
@@ -86,10 +85,10 @@ export class ActionBuilderImpl implements ActionBuilder {
             throw new Error("No actions have been created. Use addOrUpdate prior to building transaction.")
         }
 
-        const signer = objects.requireNonNil(this._signer);
         const dbid = objects.requireNonNil(this._dbid);
         const name = objects.requireNonNil(this._name);
         const actions = objects.requireNonNil(this._actions);
+        const signer = await awaitable(objects.requireNonNil(this._signer));
 
         const schema = await this.client.getSchema(dbid);
         if(!schema?.data?.actions) {

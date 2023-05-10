@@ -1,4 +1,4 @@
-import {Nillable, NonNil} from "../utils/types";
+import {awaitable, Nillable, NonNil} from "../utils/types";
 import {PayloadType, Transaction} from "../core/tx";
 import {ethers, JsonRpcSigner} from "ethers";
 import {objects} from "../utils/objects";
@@ -14,18 +14,17 @@ import {Txn} from "../core/tx";
 import {sha384BytesToBytes, sign as crypto_sign} from "../utils/crypto";
 import {base64ToBytes, bytesToBase64} from "../utils/base64";
 import {Kwil} from "../client/kwil";
-import {TxnBuilder} from "../core/builders";
+import {SignerSupplier, TxnBuilder} from "../core/builders";
 import {unwrap} from "../client/intern";
 
 export class TxnBuilderImpl implements TxnBuilder {
     private readonly client: Kwil;
     private _payloadType: Nillable<PayloadType> = null;
     private _payload: Nillable<() => NonNil<object>> = null;
-    private _signer: Nillable<JsonRpcSigner | ethers.Wallet> = null;
+    private _signer: Nillable<SignerSupplier> = null;
 
     private constructor(client: Kwil) {
         this.client = objects.requireNonNil(client);
-        // estimateCost(tx: Transaction): Promise<GenericResponse<string>>
     }
 
     payloadType(payloadType: NonNil<PayloadType>): TxnBuilder {
@@ -37,7 +36,7 @@ export class TxnBuilderImpl implements TxnBuilder {
         return new TxnBuilderImpl(client);
     }
 
-    signer(signer: NonNil<JsonRpcSigner | ethers.Wallet>): NonNil<TxnBuilder> {
+    signer(signer: SignerSupplier): NonNil<TxnBuilder> {
         this._signer = objects.requireNonNil(signer);
         return this;
     }
@@ -55,8 +54,7 @@ export class TxnBuilderImpl implements TxnBuilder {
 
         const payloadFn = objects.requireNonNil(this._payload);
         const payloadType = objects.requireNonNil(this._payloadType);
-        const signer = objects.requireNonNil(this._signer);
-
+        const signer = await awaitable(objects.requireNonNil(this._signer));
         const sender = (await signer.getAddress()).toLowerCase();
         const acct = await this.client.getAccount(sender);
         if (acct.status !== 200 || !acct.data) {
