@@ -8,5 +8,6 @@
 yarn.lock
 .env
 /testing-functions
+/test
 /testapp
-/tests
+/dist

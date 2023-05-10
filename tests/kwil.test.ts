@@ -1,18 +1,15 @@
-import { ContractTransactionResponse, Wallet } from "ethers";
-import { Funder } from "../dist/common/funder/funding";
-import { AllowanceRes, BalanceRes, DepositRes, TokenRes } from "../dist/common/interfaces/funding";
-import { Action } from "../dist/common/action/action";
-import { AnyMap } from "../dist/utils/anyMap";
-import { Transaction } from "../dist/common/transactions/transaction";
-import { TxReceipt } from "../dist/common/interfaces/tx";
-import { DBBuilder } from "../dist/common/builder/builder";
+import { Wallet } from "ethers";
 import schema from "../testing-functions/test_schema.json";
-import { wallet, waitForConfirmations, ActionObj, Escrow, Token, FunderObj, AmntObject, schemaObj, kwil } from "./testingUtils";
-
+import {kwil, wallet} from "./testingUtils";
+import {AmntObject, FunderObj, schemaObj} from "./testingUtils";
+import {Funder} from "../dist/funder/funding";
+import {AllowanceRes, BalanceRes, DepositRes, TokenRes} from "../dist/funder/types";
+import {Transaction, TxReceipt} from "../dist/core/tx";
+import {ActionBuilder, DBBuilder} from "../dist/core/builders";
 
 // Kwil methods that do NOT return another class (e.g. funder, action, and DBBuilder)
 describe("Kwil", () => {
-    test('getDBID should reutrn the correct value', () => {
+    test('getDBID should return the correct value', () => {
         const result = kwil.getDBID(wallet.address, "mydb");
         expect(result).toBe("xca20642aa31af7db6b43755cf40be91c51a157e447e6cc36c1d94f0a");
     });
@@ -126,15 +123,18 @@ describe("Funder", () => {
     });
 });
 
-
 // Testing all methods to be called on action and in relation to action (e.g. kwil.getAction & kwil.broadcast)
-describe("Action", () => {
-    let action: Action;
+describe("ActionBuilder", () => {
+    let actionBuilder: ActionBuilder;
     let recordCount: number;
     let actionTx: Transaction;
 
     beforeAll(async () => {
-        action = await kwil.getAction("xca20642aa31af7db6b43755cf40be91c51a157e447e6cc36c1d94f0a", "add_post");
+        actionBuilder = kwil
+            .actionBuilder()
+            .dbid("xca20642aa31af7db6b43755cf40be91c51a157e447e6cc36c1d94f0a")
+            .name("add_post");
+
         const count = await kwil.selectQuery("xca20642aa31af7db6b43755cf40be91c51a157e447e6cc36c1d94f0a", "SELECT COUNT(*) FROM posts");
         if (count.status == 200 && count.data) {
             const amnt = count.data[0] as AmntObject;
@@ -142,57 +142,35 @@ describe("Action", () => {
         }
     });
 
-    test('getAction should return an action', () => {
-        expect(action).toBeDefined();
-        expect(action).toMatchObject<ActionObj>({
-            dbid: expect.any(String),
-            name: expect.any(String),
-            inputs: expect.any(Array),
-        })
+    test('actionBuilder() should return an actionBuilder', () => {
+        expect(actionBuilder).toBeDefined();
+        expect(actionBuilder).toBeInstanceOf<ActionBuilder>(actionBuilder);
     });
 
-
-    let actionInstance: AnyMap<any>;
-    
-    test('newInstance should return type AnyMap', () => {
-        const result = action.newInstance();
-        actionInstance = result;
-        expect(result).toBeDefined();
-        expect(result).toBeInstanceOf(AnyMap);
-    });
-    
-    test('isComplete on newInstance should return true', () => {
-        actionInstance.set("$id", recordCount + 1);
-        actionInstance.set("$user", "Luke");
-        actionInstance.set("$title", "Test Post");
-        actionInstance.set("$body", "This is a test post");
-
-        const result = action.isComplete();
-        expect(result).toBe(true);
-    })
-
-    test('isComplete on bulk should return true', () => {
-        const act = action.bulk([{
+    test('prepareAction should return a transaction', async () => {
+        const values = [{
             "$id": recordCount + 2,
             "$user": "Luke",
             "$title": "Test Post",
             "$body": "This is a test post"
-        },
-        {
+        }, {
             "$id": recordCount + 3,
             "$user": "Luke",
             "$title": "Test Post",
             "$body": "This is a test post"
-        }])
-        const result = action.isComplete();
-        expect(result).toBe(true);
-    });
+        }];
 
-    test('prepareAction should return a transaction', async () => {
-        const result = await action.prepareAction(wallet);
+        const result = await actionBuilder
+            .set("$id", recordCount + 1)
+            .set("$user", "Luke")
+            .set("$title", "Test Post")
+            .set("$body", "This is a test post")
+            .setMany(values)
+            .buildTx();
+
         actionTx = result;
         expect(result).toBeDefined();
-        expect(result).toBeInstanceOf(Transaction);
+        expect(result).toBeInstanceOf<Transaction>(result);
     });
 
     test('the action should be able to be broadcasted and return a txHash and a txReceipt', async () => {
@@ -201,6 +179,7 @@ describe("Action", () => {
         expect(result.data).toMatchObject<TxReceipt>({
             txHash: expect.any(String),
             fee: expect.any(String),
+            body: expect.any(String),
         });
     });
 });
@@ -210,7 +189,6 @@ describe("DBBuilder", () => {
     let db: schemaObj = schema;
     let newDb: DBBuilder;
     let dbTx: Transaction;
-    
 
     beforeAll(async () => {
         const dbAmount = await kwil.listDatabases(wallet.address);
@@ -220,16 +198,19 @@ describe("DBBuilder", () => {
     });
 
     test('newDatabase should return a DBBuilder', () => {
-        newDb= kwil.newDatabase(db);
+        newDb = kwil.dbBuilder();
         expect(newDb).toBeDefined();
-        expect(newDb).toBeInstanceOf(DBBuilder);
+        expect(newDb).toBeInstanceOf<DBBuilder>(newDb);
     });
 
     test('prepareJson should return a signed transaction', async () => {
-        dbTx = await newDb.prepareJson(wallet);
+        dbTx = await newDb
+            .payload(db)
+            .signer(wallet)
+            .buildTx();
         expect(dbTx).toBeDefined();
-        expect(dbTx).toBeInstanceOf(Transaction);
-        expect(dbTx.tx.signature.signature_bytes).toBeDefined();
+        expect(dbTx).toBeInstanceOf<Transaction>(dbTx);
+        expect(dbTx.isSigned()).toBe(true);
     });
 
     test('the database should be able to be broadcasted and return a txHash and a txReceipt', async () => {
@@ -238,6 +219,7 @@ describe("DBBuilder", () => {
         expect(result.data).toMatchObject<TxReceipt>({
             txHash: expect.any(String),
             fee: expect.any(String),
+            body: expect.any(String),
         });
     });
 });

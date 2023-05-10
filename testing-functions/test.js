@@ -16,7 +16,7 @@ async function test() {
 
     console.log(wallet.address)
 
-    const dbid = kwil.getDBID(wallet.address, "mydb")
+    //const dbid = kwil.getDBID(wallet.address, "mydb")
     // const dbid2 = kwil.getDBID(wallet.address, "ecclesia")
     // console.log(dbid)
     // broadcast(kwil, testDB, wallet)
@@ -141,7 +141,7 @@ async function newAction(kwil, dbid, action, w) {
     act2.set("$body", "This is a test post")
 
     if(!newAct.isComplete()) {
-        throw new Error("Action is not complete")
+        throw new Error("Action_builder is not complete")
     }
 
     const res = await newAct.prepareAction(w)
@@ -152,7 +152,7 @@ async function newAction(kwil, dbid, action, w) {
 
 async function getSelectAction(kwil, dbid, selectAction, wallet) {
     let action = await kwil.getAction(dbid, selectAction)
-    let act1 = action.newInstance()
+    //let act1 = action.newInstance()
     // act1.set("$address", wallet.address)
     const tx= await action.prepareAction(wallet)
     const res = await kwil.broadcast(tx)

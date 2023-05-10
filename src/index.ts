@@ -1,10 +1,8 @@
-import NodeKwil from './node/nodeKwil'
-import WebKwil from './web/webKwil'
+import {NodeKwil} from './client/node/nodeKwil'
+import {WebKwil} from './client/web/webKwil'
 import { generateDBID } from './utils/dbid'
-import { TxReceipt as _TxReceipt } from './common/interfaces/tx'
-import { Funder as _Funder } from './common/funder/funding'
-import { Action as _Action } from './common/action/action'
-import { DBBuilder as _DBBuilder } from './common/builder/builder'
+import { TxReceipt as _TxReceipt } from './core/tx'
+import { Funder as _Funder } from './funder/'
 
 namespace Types {
     export type TxReceipt = _TxReceipt
