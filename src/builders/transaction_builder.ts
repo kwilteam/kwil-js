@@ -69,6 +69,7 @@ export class TxnBuilderImpl implements TxnBuilder {
         });
 
         const cost = await unwrap(this.client)(preEstTxn);
+        
         if (cost.status !== 200 || !cost.data) {
             throw new Error(`Could not retrieve cost for transaction. Please double check that you have the correct account address.`);
         }

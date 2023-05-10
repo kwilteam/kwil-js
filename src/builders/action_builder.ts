@@ -129,8 +129,6 @@ export class ActionBuilderImpl implements ActionBuilder {
             "params": allActions
         }
 
-        console.log('working')
-
         return TxnBuilderImpl
             .of(this.client)
             .payloadType(PayloadType.EXECUTE_ACTION)
