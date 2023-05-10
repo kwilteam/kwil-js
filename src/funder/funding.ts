@@ -1,11 +1,11 @@
-import { BigNumberish, ethers, JsonRpcSigner } from "ethers";
+import { BigNumberish, ethers } from "ethers";
 import { FundingConfig } from "../core/configs";
 import { Escrow } from "./escrow";
 import { Token } from "./token";
 import erc20Abi from './abi/erc20HumanAbi';
 import kwilAbi from './abi/kwilHumanAbi';
 import { AllowanceRes, BalanceRes, DepositRes, TokenRes } from "./types";
-import { Signer } from "crypto";
+import { Signer } from "ethers";
 
 export class Funder {
     private readonly signer: Signer| ethers.Wallet;

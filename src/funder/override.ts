@@ -1,4 +1,4 @@
-import { Signer } from "crypto";
+import { Signer } from "ethers";
 import { ethers, FeeData, JsonRpcProvider } from "ethers";
 
 export async function createOverride(provider: Signer | ethers.Wallet, contract: ethers.Contract, method: string, args: any[]): Promise<object> {

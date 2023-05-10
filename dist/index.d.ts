@@ -1,15 +1,13 @@
-import NodeKwil from './node/nodeKwil';
-import WebKwil from './web/webKwil';
+import { NodeKwil } from './client/node/nodeKwil';
+import { WebKwil } from './client/web/webKwil';
 import { generateDBID } from './utils/dbid';
-import { TxReceipt as _TxReceipt } from './common/interfaces/tx';
-import { Funder as _Funder } from './common/funder/funding';
-import { Action as _Action } from './common/action/action';
-import { DBBuilder as _DBBuilder } from './common/builder/builder';
+import { TxReceipt as _TxReceipt } from './core/tx';
+import { Funder as _Funder } from './funder/funding';
+import { ActionBuilder as _ActionBuilder } from './core/builders';
 declare namespace Types {
     type TxReceipt = _TxReceipt;
     type Funder = _Funder;
-    type Action = _Action;
-    type DBBuilder = _DBBuilder;
+    type ActionBuilder = _ActionBuilder;
 }
 declare const Utils: {
     generateDBID: typeof generateDBID;
