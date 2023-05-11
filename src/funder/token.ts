@@ -1,15 +1,15 @@
-import {BigNumberish, ethers, InterfaceAbi, JsonRpcSigner} from "ethers";
+import {BigNumberish, ethers, InterfaceAbi, Signer} from "ethers";
 import {createOverride} from "./override";
 
 export class Token{
     private readonly contract: ethers.Contract;
-    private readonly provider: JsonRpcSigner | ethers.Wallet;
+    private readonly provider: Signer | ethers.Wallet;
     private name?: Promise<string>;
     private symbol?: Promise<string>;
     private decimals?: Promise<number>;
     private totalSupply?: Promise<number>;
 
-    constructor(tokenAddress: string, abi: InterfaceAbi, provider: JsonRpcSigner | ethers.Wallet){
+    constructor(tokenAddress: string, abi: InterfaceAbi, provider: Signer | ethers.Wallet){
         this.contract = new ethers.Contract(tokenAddress, abi, provider)
         this.provider = provider;
     }
@@ -59,7 +59,7 @@ export class Token{
         return createOverride(this.provider, this.contract, method, args);
     }
 
-    public approve(spender: string, amount: BigNumberish, override?: object): Promise<ethers.ContractTransaction> {
+    public approve(spender: string, amount: BigNumberish, override?: object): Promise<ethers.ContractTransactionResponse> {
         if (!override) {
             override = this.createOverride('approve', [spender, amount]);
         }

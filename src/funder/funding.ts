@@ -1,25 +1,26 @@
-import { BigNumberish, ethers, JsonRpcSigner } from "ethers";
+import { BigNumberish, ethers } from "ethers";
 import { FundingConfig } from "../core/configs";
 import { Escrow } from "./escrow";
 import { Token } from "./token";
 import erc20Abi from './abi/erc20HumanAbi';
 import kwilAbi from './abi/kwilHumanAbi';
 import { AllowanceRes, BalanceRes, DepositRes, TokenRes } from "./types";
+import { Signer } from "ethers";
 
 export class Funder {
-    private readonly signer: JsonRpcSigner | ethers.Wallet;
+    private readonly signer: Signer| ethers.Wallet;
     private readonly poolAddress: string;
     private readonly providerAddress: string;
     private erc20Contract?: Token;
     private escrowContract?: Escrow;
 
-    private constructor(signer: JsonRpcSigner | ethers.Wallet, config: FundingConfig) {
+    private constructor(signer: Signer | ethers.Wallet, config: FundingConfig) {
         this.poolAddress = config.pool_address;
         this.signer = signer;
         this.providerAddress = config.provider_address;
     }
 
-    public static async create(signer: JsonRpcSigner | ethers.Wallet, config: FundingConfig): Promise<Funder> {
+    public static async create(signer: Signer | ethers.Wallet, config: FundingConfig): Promise<Funder> {
         const funder = new Funder(signer, config);
         funder.escrowContract = new Escrow(funder.providerAddress, funder.poolAddress, kwilAbi, funder.signer);
         
@@ -52,14 +53,14 @@ export class Funder {
         }
     }
 
-    public async approve(amount: BigNumberish): Promise<ethers.ContractTransaction> {
+    public async approve(amount: BigNumberish): Promise<ethers.ContractTransactionResponse> {
         if (!this.erc20Contract) {
             throw new Error("Funder not initialized");
         }
         return await this.erc20Contract.approve(this.poolAddress, amount);
     }
 
-    public async deposit(amount: BigNumberish): Promise<ethers.ContractTransaction> {
+    public async deposit(amount: BigNumberish): Promise<ethers.ContractTransactionResponse> {
         if (!this.escrowContract) {
             throw new Error("Funder not initialized");
         }

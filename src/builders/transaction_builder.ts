@@ -1,6 +1,6 @@
 import {Nillable, NonNil, Promisy} from "../utils/types";
 import {PayloadType, Transaction} from "../core/tx";
-import {ethers, JsonRpcSigner} from "ethers";
+import {ethers, Signer} from "ethers";
 import {objects} from "../utils/objects";
 import {
     ConcatBytes,
@@ -69,6 +69,7 @@ export class TxnBuilderImpl implements TxnBuilder {
         });
 
         const cost = await unwrap(this.client)(preEstTxn);
+        
         if (cost.status !== 200 || !cost.data) {
             throw new Error(`Could not retrieve cost for transaction. Please double check that you have the correct account address.`);
         }
@@ -81,7 +82,7 @@ export class TxnBuilderImpl implements TxnBuilder {
         return TxnBuilderImpl.sign(postEstTxn, signer);
     }
 
-    private static async sign(tx: Transaction, signer: JsonRpcSigner | ethers.Wallet): Promise<Transaction> {
+    private static async sign(tx: Transaction, signer: Signer | ethers.Wallet): Promise<Transaction> {
         const hash = TxnBuilderImpl.hash_txn(tx);
         const signature = await crypto_sign(hash, signer);
         const sender = await signer.getAddress();

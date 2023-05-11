@@ -1,13 +1,13 @@
-import {BigNumberish, ethers, JsonRpcSigner} from 'ethers';
+import {BigNumberish, ethers, Signer} from 'ethers';
 import {createOverride} from './override';
 
 export class Escrow {
     private readonly contract: ethers.Contract;
-    private readonly provider: JsonRpcSigner | ethers.Wallet;
+    private readonly provider: Signer | ethers.Wallet;
     private tokenAddress?: Promise<string>;
     private readonly validatorAddress: string;
 
-    constructor(validatorAddress: string, poolAddress: string, abi: ethers.InterfaceAbi, provider: JsonRpcSigner | ethers.Wallet) {
+    constructor(validatorAddress: string, poolAddress: string, abi: ethers.InterfaceAbi, provider: Signer | ethers.Wallet) {
         this.contract = new ethers.Contract(poolAddress, abi, provider);
         this.provider = provider;
         this.validatorAddress = validatorAddress;
@@ -29,7 +29,7 @@ export class Escrow {
         return createOverride(this.provider, this.contract, method, args);
     }
 
-    public async deposit(amount: BigNumberish, override?: object): Promise<ethers.ContractTransaction> {
+    public async deposit(amount: BigNumberish, override?: object): Promise<ethers.ContractTransactionResponse> {
         if (!override) {
             override = this.createOverride('deposit', [this.validatorAddress, amount]);
         }

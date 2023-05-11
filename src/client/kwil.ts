@@ -5,7 +5,7 @@ import {GenericResponse} from "../core/resreq";
 import {Database, SelectQuery} from "../core/database";
 import {Transaction, TxReceipt} from "../core/tx";
 import {Account} from "../core/account";
-import {ethers, JsonRpcSigner} from "ethers";
+import {ethers, Signer} from "ethers";
 import {Funder} from "../funder/funding";
 import {ActionBuilderImpl} from "../builders/action_builder";
 import {base64ToBytes} from "../utils/base64";
@@ -13,12 +13,15 @@ import {DBBuilderImpl} from "../builders/db_builder";
 import {NonNil} from "../utils/types";
 import {ActionBuilder, DBBuilder} from "../core/builders";
 import {wrap} from "./intern";
-
+import { FundingConfig } from "../core/configs";
 
 export abstract class Kwil {
     private readonly client: Client;
     //cache schemas
     private schemas?: Map<string, GenericResponse<Database<string>>>;
+
+    // cache fundingConfig
+    private fundingConfig?: GenericResponse<FundingConfig>;
 
     protected constructor(opts: Config) {
         this.client = new Client({
@@ -30,7 +33,7 @@ export abstract class Kwil {
             logger: opts.logger,
         });
 
-        wrap(this, this.client.estimateCost);
+        wrap(this, this.client.estimateCost.bind(this.client));
     }
 
     public getDBID(owner: string, name: string): string {
@@ -84,12 +87,16 @@ export abstract class Kwil {
         return await this.client.ping();
     }
 
-    public async getFunder(signer: JsonRpcSigner| ethers.Wallet): Promise<Funder> {
-        const fundingConfig = await this.client.getFundingConfig();
-        if (fundingConfig.status != 200 || !fundingConfig.data) {
-            throw new Error('Failed to get funding config.');
+    public async getFunder(signer: Signer | ethers.Wallet): Promise<Funder> {
+        //check cache
+        if(!this.fundingConfig || !this.fundingConfig.data) {
+            this.fundingConfig = await this.client.getFundingConfig();
+            if (this.fundingConfig.status != 200 || !this.fundingConfig.data) {
+                throw new Error('Failed to get funding config.');
+            }
         }
-        return await Funder.create(signer, fundingConfig.data);
+        
+        return await Funder.create(signer, this.fundingConfig.data);
     }
 
     public async selectQuery(dbid: string, query: string): Promise<GenericResponse<Object[]>> {

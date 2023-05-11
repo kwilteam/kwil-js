@@ -7,8 +7,7 @@
 .task
 yarn.lock
 .env
+/testing-functions
 /test
 /testapp
 /dist
-*.tgz
-pkg

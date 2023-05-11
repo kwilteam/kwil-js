@@ -14,7 +14,8 @@ type NewAction = Record<any, any>
 export class ActionBuilderImpl implements ActionBuilder {
     private readonly client: Kwil;
     private _signer: Nillable<SignerSupplier> = null;
-    private _actions?: AnyMap<any>[]
+    private _actions?: AnyMap<any>[];
+    private _singleAction?: AnyMap<any>;
     private _name: Nillable<string>;
     private _dbid: Nillable<string>;
 
@@ -42,8 +43,11 @@ export class ActionBuilderImpl implements ActionBuilder {
     }
 
     set(key: string, value: unknown): NonNil<ActionBuilder> {
-        objects.requireNonNil(key);
-        return this.setMany([{[key]: value}]);
+        if (!this._singleAction) {
+            this._singleAction = new AnyMap<any>();
+        }
+        this._singleAction.set(key, value);
+        return this;
     }
 
     setMany(actions: Iterable<NewAction>): NonNil<ActionBuilder> {
@@ -69,18 +73,22 @@ export class ActionBuilderImpl implements ActionBuilder {
 
         for(const action of actions) {
             if(!inputs) {
-                throw new Error("ActionBuilder inputs have not been initialized. Please call init() before calling isComplete().")
+                throw new Error("ActionBuilder inputs have not been initialized. Please call set() or setMany() to initialize a new action execution.")
             }
 
             for (const input of inputs) {
                 if(!action.get(input)) {
-                    throw new Error("ActionBuilder is missing an input. Please call addOrUpdate() before calling build().")
+                    throw new Error("ActionBuilder is missing an input. Please check your inputs before calling build().")
                 }
             }
         }
     }
 
     async buildTx(): Promise<Transaction> {
+        if(this._singleAction) {
+            this._actions = [...(this._actions ?? []), this._singleAction]
+        }
+
         if(!this._actions) {
             throw new Error("No actions have been created. Use addOrUpdate prior to building transaction.")
         }

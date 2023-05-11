@@ -50,6 +50,11 @@ export interface schemaObj {
     actions: object[];
 }
 
+export interface ActionObj {
+    _name: string;
+    _dbid: string;
+}
+
 class KwilImpl extends Kwil {
     constructor() {
         super({
