@@ -26,7 +26,6 @@ export type TxnData = {
 }
 
 export interface Transaction extends Readonly<TxnData> {
-    copy(configure: (tx: TxnData) => void): NonNil<Transaction>;
     isSigned(): boolean;
 }
 
@@ -44,26 +43,23 @@ export namespace Txn {
             },
             isSigned: () => false,
             sender: "",
-            copy: function (configure: (tx: TxnData) => void): NonNil<Transaction> {
-                return copy_txn(this as Transaction, configure);
-            }
         };
 
         configure(tx);
 
         return tx;
     }
-}
 
-function copy_txn(source: NonNil<Transaction>, configure: (tx: TxnData) => void): NonNil<Transaction> {
-    return Txn.create((tx) => {
-        tx.hash = "";
-        tx.payload_type = source.payload_type;
-        tx.payload = source.payload;
-        tx.fee = source.fee;
-        tx.nonce = source.nonce;
-        tx.signature = source.signature;
-        tx.sender = source.sender;
-        configure(tx);
-    });
+    export function copy(source: NonNil<Transaction>, configure: (tx: TxnData) => void): NonNil<Transaction> {
+        return Txn.create((tx) => {
+            tx.hash = "";
+            tx.payload_type = source.payload_type;
+            tx.payload = source.payload;
+            tx.fee = source.fee;
+            tx.nonce = source.nonce;
+            tx.signature = source.signature;
+            tx.sender = source.sender;
+            configure(tx);
+        });
+    }
 }

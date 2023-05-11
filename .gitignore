@@ -10,3 +10,5 @@ yarn.lock
 /test
 /testapp
 /dist
+*.tgz
+pkg

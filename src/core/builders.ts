@@ -1,9 +1,9 @@
-import {NonNil} from "../utils/types";
+import {NonNil, Promisy} from "../utils/types";
 import {PayloadType, Transaction} from "./tx";
 import {ethers, JsonRpcSigner} from "ethers";
 
 export type Signer = NonNil<JsonRpcSigner | ethers.Wallet>;
-export type SignerSupplier = Signer | (() => Signer) | (() => Promise<Signer>)
+export type SignerSupplier = Promisy<Signer>
 
 export interface TxnBuilder {
     payloadType(payloadType: NonNil<PayloadType>): NonNil<TxnBuilder>;

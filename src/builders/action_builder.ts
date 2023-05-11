@@ -4,7 +4,7 @@ import {bytesToBase64} from "../utils/base64";
 import {inputToDataType} from "../core/enums";
 import {marshal} from "../core/marshal";
 import {objects} from "../utils/objects";
-import {awaitable, Nillable, NonNil} from "../utils/types";
+import {Nillable, NonNil, Promisy} from "../utils/types";
 import {Kwil} from "../client/kwil";
 import {ActionBuilder, SignerSupplier} from "../core/builders";
 import {TxnBuilderImpl} from "./transaction_builder";
@@ -88,7 +88,7 @@ export class ActionBuilderImpl implements ActionBuilder {
         const dbid = objects.requireNonNil(this._dbid);
         const name = objects.requireNonNil(this._name);
         const actions = objects.requireNonNil(this._actions);
-        const signer = await awaitable(objects.requireNonNil(this._signer));
+        const signer = await Promisy.resolveOrReject(this._signer);
 
         const schema = await this.client.getSchema(dbid);
         if(!schema?.data?.actions) {
