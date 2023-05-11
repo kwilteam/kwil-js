@@ -1,7 +1,8 @@
 import {NillableError, objects} from "./objects";
 
-export type NonNil<T> = T extends null | undefined ? never : T;
-export type Nillable<T> = T | null | undefined;
+export type Nil = null | undefined;
+export type NonNil<T> = T extends Nil ? never : T;
+export type Nillable<T> = T | Nil;
 export type Supplier<T> = () => T;
 export type Lazy<T> = (() => Promise<T>) | (() => T);
 export type Func<T, U> = (t: T) => U;

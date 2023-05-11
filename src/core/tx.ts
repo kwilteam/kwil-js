@@ -1,5 +1,6 @@
 import {Nillable, NonNil} from "../utils/types";
 import {Signature, SignatureType} from "./signature";
+import {strings} from "../utils/strings";
 
 export enum PayloadType {
     INVALID_PAYLOAD_TYPE = 100,
@@ -25,8 +26,60 @@ export type TxnData = {
     sender: string;
 }
 
-export interface Transaction extends Readonly<TxnData> {
-    isSigned(): boolean;
+export class Transaction implements TxnData {
+    private readonly data: Readonly<TxnData>;
+
+    constructor(data?: NonNil<TxnData>) {
+        this.data = data || {
+            hash: "",
+            payload_type: PayloadType.EXECUTE_ACTION,
+            payload: "",
+            fee: "0",
+            nonce: -1,
+            signature: {
+                signature_bytes: "",
+                signature_type: SignatureType.ACCOUNT_SECP256K1_UNCOMPRESSED
+            },
+            sender: "",
+        };
+    }
+
+    public isSigned(): boolean {
+        return !strings.isNilOrEmpty(this.data.signature.signature_bytes);
+    }
+
+    public get hash(): string {
+        return this.data.hash;
+    }
+
+    public get payload_type(): PayloadType {
+        return this.data.payload_type;
+    }
+
+    public get payload(): string {
+        return this.data.payload;
+    }
+
+    public get fee(): string {
+        return this.data.fee;
+    }
+
+    public get nonce(): number {
+        return this.data.nonce;
+    }
+
+    public get signature(): Readonly<Signature> {
+        return this.data.signature;
+    }
+
+    public get sender(): string {
+        return this.data.sender;
+    }
+
+    // noinspection JSUnusedLocalSymbols
+    private toJSON(): Readonly<TxnData> {
+        return this.data;
+    }
 }
 
 export namespace Txn {
@@ -41,13 +94,12 @@ export namespace Txn {
                 signature_bytes: "",
                 signature_type: SignatureType.ACCOUNT_SECP256K1_UNCOMPRESSED
             },
-            isSigned: () => false,
             sender: "",
         };
 
         configure(tx);
 
-        return tx;
+        return new Transaction(tx);
     }
 
     export function copy(source: NonNil<Transaction>, configure: (tx: TxnData) => void): NonNil<Transaction> {
@@ -57,7 +109,10 @@ export namespace Txn {
             tx.payload = source.payload;
             tx.fee = source.fee;
             tx.nonce = source.nonce;
-            tx.signature = source.signature;
+            tx.signature = {
+                signature_bytes: "",
+                signature_type: SignatureType.ACCOUNT_SECP256K1_UNCOMPRESSED
+            };
             tx.sender = source.sender;
             configure(tx);
         });

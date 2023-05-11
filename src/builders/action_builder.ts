@@ -1,5 +1,4 @@
 import {PayloadType, Transaction} from "../core/tx";
-import {AnyMap} from "../utils/anyMap";
 import {bytesToBase64} from "../utils/base64";
 import {inputToDataType} from "../core/enums";
 import {marshal} from "../core/marshal";
@@ -8,14 +7,15 @@ import {Nillable, NonNil, Promisy} from "../utils/types";
 import {Kwil} from "../client/kwil";
 import {ActionBuilder, SignerSupplier} from "../core/builders";
 import {TxnBuilderImpl} from "./transaction_builder";
+import {Action} from "../core/action";
+import {ActionSchema} from "../core/database";
 
-type NewAction = Record<any, any>
+const TXN_BUILD_IN_PROGRESS: Action[] = [];
 
 export class ActionBuilderImpl implements ActionBuilder {
     private readonly client: Kwil;
     private _signer: Nillable<SignerSupplier> = null;
-    private _actions?: AnyMap<any>[];
-    private _singleAction?: AnyMap<any>;
+    private _actions: Action[] = [];
     private _name: Nillable<string>;
     private _dbid: Nillable<string>;
 
@@ -28,108 +28,76 @@ export class ActionBuilderImpl implements ActionBuilder {
     }
 
     name(actionName: string): NonNil<ActionBuilder> {
+        this.assertNotBuilding();
+
         this._name = objects.requireNonNil(actionName);
         return this;
     }
 
     dbid(dbid: string): NonNil<ActionBuilder> {
+        this.assertNotBuilding();
+
         this._dbid = objects.requireNonNil(dbid);
         return this;
     }
 
     signer(signer: SignerSupplier): NonNil<ActionBuilder> {
+        this.assertNotBuilding();
+
         this._signer = objects.requireNonNil(signer);
         return this;
     }
 
-    set(key: string, value: unknown): NonNil<ActionBuilder> {
-        if (!this._singleAction) {
-            this._singleAction = new AnyMap<any>();
-        }
-        this._singleAction.set(key, value);
-        return this;
-    }
+    concat(... actions: Action[]): NonNil<ActionBuilder> {
+        this.assertNotBuilding();
 
-    setMany(actions: Iterable<NewAction>): NonNil<ActionBuilder> {
         if (!actions) {
             return this;
         }
 
         for (const action of actions) {
-            const newAction = new AnyMap<any>();
-            this._actions = [...(this._actions ?? []), newAction];
-            for (const key in action) {
-                newAction.set(key, action[key]);
-            }
+            this._actions.push(objects.requireNonNil(action));
         }
 
         return this;
     }
 
-    private assertValid(actions: AnyMap<any>[], inputs: ReadonlyArray<string>): void {
-        if(!inputs) {
-            throw new Error("No inputs have been found for schema action.")
+    async buildTx(): Promise<Transaction> {
+        this.assertNotBuilding();
+        if(this._actions.length == 0) {
+            throw new Error("No action data has been added to the ActionBuilder.");
         }
 
-        for(const action of actions) {
-            if(!inputs) {
-                throw new Error("ActionBuilder inputs have not been initialized. Please call set() or setMany() to initialize a new action execution.")
-            }
+        const cached = objects.requireNonNil(this._actions);
+        this._actions = TXN_BUILD_IN_PROGRESS;
 
-            for (const input of inputs) {
-                if(!action.get(input)) {
-                    throw new Error("ActionBuilder is missing an input. Please check your inputs before calling build().")
-                }
-            }
-        }
+        return await this
+            .dobuildTx(cached)
+            .finally(() => this._actions = cached);
     }
 
-    async buildTx(): Promise<Transaction> {
-        if(this._singleAction) {
-            this._actions = [...(this._actions ?? []), this._singleAction]
-        }
-
-        if(!this._actions) {
-            throw new Error("No actions have been created. Use addOrUpdate prior to building transaction.")
-        }
-
+    async dobuildTx(actions: Action[]): Promise<Transaction> {
         const dbid = objects.requireNonNil(this._dbid);
         const name = objects.requireNonNil(this._name);
-        const actions = objects.requireNonNil(this._actions);
         const signer = await Promisy.resolveOrReject(this._signer);
 
         const schema = await this.client.getSchema(dbid);
-        if(!schema?.data?.actions) {
-            throw new Error(`Could not retrieve actions for database ${this.dbid}. Please double check that you have the correct DBID.`);
+        if (!schema?.data?.actions) {
+            throw new Error(`Could not retrieve actions for database ${dbid}. Please double check that you have the correct DBID.`);
         }
 
-        const a = schema.data.actions.find((act) => act.name == name);
-        if(!a) {
+        const actionSchema = schema.data.actions.find((act) => act.name == name);
+        if (!actionSchema) {
             throw new Error(`Could not find action ${name} in database ${dbid}. Please double check that you have the correct DBID and action name.`);
         }
 
-        const inputs = a.inputs;
-        this.assertValid(actions, inputs)
-
-        for (const action of this._actions) {
-            const inputs = action.map
-            for (const val in inputs) {
-                const dataType = inputToDataType(inputs[val]);
-                inputs[val] = bytesToBase64(marshal(inputs[val], dataType));
-            }
-        }
-
-        const allActions = this._actions.map((action) => {
-            return action.map
-        })
+        const preparedActions = this.prepareActions(actions, actionSchema, name);
 
         const payload = {
-            "action": this.name,
-            "dbid": this.dbid,
-            "params": allActions
+            "action": name,
+            "dbid": dbid,
+            "params": preparedActions
         }
-
-        console.log('working')
 
         return TxnBuilderImpl
             .of(this.client)
@@ -137,5 +105,63 @@ export class ActionBuilderImpl implements ActionBuilder {
             .payload(payload)
             .signer(signer)
             .build();
+    }
+
+    private prepareActions(actions: Action[], actionSchema: ActionSchema, actionName: string): Action[] {
+        if(!actionSchema.inputs) {
+            throw new Error(`No inputs found for action schema: ${actionName}.`)
+        }
+
+        const missingActions = new Set<string>();
+        actionSchema.inputs.forEach((i) => {
+            const found = actions.find((a) => a.containsKey(i));
+            if(!found) {
+                missingActions.add(i);
+            }
+        });
+
+        if(missingActions.size > 0) {
+            throw new Error(`Actions do not match action schema inputs: ${missingActions}`)
+        }
+
+        const preparedActions: Action[] = [];
+        const missingInputs = new Set<string>();
+        actions.forEach((a) => {
+            const copy = Action.from(a);
+            actionSchema.inputs.forEach((i) => {
+                if (missingInputs.has(i)) {
+                    return;
+                }
+
+                if(!copy.containsKey(i)) {
+                    missingInputs.add(i);
+                    return;
+                }
+
+                if (missingInputs.size > 0) {
+                    return;
+                }
+
+                const val = copy.get(i);
+                const dataType = inputToDataType(val);
+                copy.put(i, bytesToBase64(marshal(val, dataType)));
+            })
+
+            if (missingInputs.size === 0) {
+                preparedActions.push(copy);
+            }
+        });
+
+        if(missingInputs.size > 0) {
+            throw new Error(`Inputs are missing for actions: ${missingInputs}`)
+        }
+
+        return preparedActions;
+    }
+
+    private assertNotBuilding() : void {
+        if (this._actions === TXN_BUILD_IN_PROGRESS) {
+            throw new Error("Cannot modify the builder while a transaction is being built.");
+        }
     }
 }

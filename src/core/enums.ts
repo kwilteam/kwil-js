@@ -1,3 +1,5 @@
+export type ValueType = string | number | null;
+
 export enum DataType {
     INVALID_TYPE = 100,
     NULL,

@@ -2,13 +2,13 @@ import {objects} from "./objects";
 import {Func, Nillable, NonNil} from "./types";
 
 export const strings = {
-    isString: (value: any): boolean => {
+    is: (value: any): boolean => {
         return typeof value === 'string';
     },
     // If value is null or undefined, then an error is thrown, else
     // value is returned.
     requireNonNil: (value: string | null | undefined, message?: string | (() => Error)): NonNil<string> => {
-        if (strings.isString(value)) {
+        if (strings.is(value)) {
             return value as string;
         }
 
@@ -30,7 +30,7 @@ export const strings = {
             (defaultValue as Func<Nillable<string>, string>)(value);
         }
 
-        if (strings.isString(defaultValue)) {
+        if (strings.is(defaultValue)) {
             return defaultValue as string;
         }
 
@@ -42,7 +42,7 @@ export const strings = {
             return true;
         }
 
-        if (strings.isString(value)) {
+        if (strings.is(value)) {
             return value === '';
         }
 

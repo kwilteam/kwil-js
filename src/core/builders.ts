@@ -1,9 +1,10 @@
-import {NonNil} from "../utils/types";
+import {NonNil, Promisy} from "../utils/types";
 import {PayloadType, Transaction} from "./tx";
 import {ethers, Signer as _Signer} from "ethers";
+import {Action} from "./action";
 
 export type Signer = NonNil<_Signer | ethers.Wallet>;
-export type SignerSupplier = _Signer | (() => Signer) | (() => Promise<Signer>)
+export type SignerSupplier = Promisy<Signer>
 
 export interface TxnBuilder {
     payloadType(payloadType: NonNil<PayloadType>): NonNil<TxnBuilder>;
@@ -23,16 +24,12 @@ export interface DBBuilder {
     buildTx(): Promise<Transaction>;
 }
 
-type NewAction = Record<any, any>
-
 export interface ActionBuilder {
     name(actionName: string): NonNil<ActionBuilder>;
 
     dbid(dbid: string): NonNil<ActionBuilder>;
 
-    set(key: string, value: unknown): NonNil<ActionBuilder>;
-
-    setMany(actions: Iterable<NewAction>): NonNil<ActionBuilder>;
+    concat(... action: Action[]): NonNil<ActionBuilder>;
 
     signer(signer: SignerSupplier): NonNil<ActionBuilder>;
 

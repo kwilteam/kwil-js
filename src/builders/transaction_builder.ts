@@ -88,7 +88,6 @@ export class TxnBuilderImpl implements TxnBuilder {
         const sender = await signer.getAddress();
 
         return Txn.copy(tx, (tx) => {
-            (tx as any).isSigned = () => true
             tx.signature = signature;
             tx.sender = sender;
         });
