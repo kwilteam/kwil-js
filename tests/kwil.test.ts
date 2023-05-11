@@ -1,5 +1,4 @@
-import {kwil, wallet} from "./testingUtils";
-import {AmntObject} from "./testingUtils";
+import {AmntObject, kwil, wallet} from "./testingUtils";
 import {Transaction} from "../dist/core/tx";
 import {ActionBuilder} from "../dist/core/builders";
 import {ActionBuilderImpl} from "../dist/builders/action_builder";
@@ -158,7 +157,7 @@ describe("ActionBuilder", () => {
             "$body": "This is a test post"
         }];
 
-        //const multi = Action.fromObjects(values);
+        const multi = Action.fromObjects(values);
 
         const solo = Action.of()
             .put("$id", recordCount + 1)
@@ -168,7 +167,7 @@ describe("ActionBuilder", () => {
 
         actionTx = await actionBuilder
             .concat(solo)
-            //.concat(... multi)
+            .concat(... multi)
             .signer(wallet)
             .buildTx();
 

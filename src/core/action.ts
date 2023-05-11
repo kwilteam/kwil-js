@@ -23,14 +23,6 @@ export class Action implements Iterable<EntryType> {
         return this;
     }
 
-    // This will add, or replace, a value for all given keys
-    public putAll<T extends ValueType>(entries: Iterable<EntryType>): Action {
-        for (const [key, value] of objects.requireNonNil(entries)) {
-            this.map[assertKey(key)] = value;
-        }
-        return this;
-    }
-
     // This will add if the key is not already present
     public putIfAbsent<T extends ValueType>(key: string, value: T): Action {
         if (!this.containsKey(key)) {
@@ -39,28 +31,9 @@ export class Action implements Iterable<EntryType> {
         return this;
     }
 
-    // This will add for each key that is not already present
-    public putAllIfAbsent(entries: Iterable<EntryType>): Action {
-        for (const [key, value] of objects.requireNonNil(entries)) {
-            if (!this.containsKey(key)) {
-                this.map[key] = value;
-            }
-        }
-        return this;
-    }
-
     public replace<T extends ValueType>(key: string, value: T): Action {
         if (this.containsKey(key)) {
             this.map[key] = value;
-        }
-        return this;
-    }
-
-    public replaceAll<T extends ValueType>(entries: Iterable<EntryType>): Action {
-        for (const [key, value] of objects.requireNonNil(entries)) {
-            if (this.containsKey(key)) {
-                this.map[key] = value;
-            }
         }
         return this;
     }
@@ -101,60 +74,28 @@ export class Action implements Iterable<EntryType> {
     }
 
     public static from(entries: Iterable<EntryType>): Action {
-        return new Action().putAll(entries);
-    }
-
-    public static fromArray(... entries: EntryType[]): Action {
-        return Action.from(entries);
-    }
-
-    // /* Object methods that may be useful in the future */
-    public static fromObject<T extends EntryType>(obj: T): Action {
-        return Action.of().putAllFromObject(obj);
-    }
-
-    public static fromObjects<T extends EntryType>(... objs: T[]): Action[] {
-        return objs.map(obj => Action.fromObject(obj));
-    }
-
-    private putAllFromObject<T extends EntryType>(obj: T): Action {
-        for (const [key, value] of Object.entries(objects.requireNonNil(obj))) {
-            this.map[assertKey(key)] = value;
+        const action = Action.of();
+        for (const [key, value] of objects.requireNonNil(entries)) {
+            action.map[assertKey(key)] = value;
         }
-        return this;
+        return action;
     }
 
-    // public putAllFromObjectIfAbsent<T extends {}>(obj: Extract<T, ValueType>): Action {
-    //     for (const [key, value] of Object.entries(objects.requireNonNil(obj))) {
-    //         if (!this.containsKey(key)) {
-    //             this.map[key] = value;
-    //         }
-    //     }
-    //     return this;
-    // }
-    //
-    // public replaceAllFromObject<T extends {}>(obj: Extract<T, ValueType>): Action {
-    //     for (const [key, value] of Object.entries(objects.requireNonNil(obj))) {
-    //         if (this.containsKey(key)) {
-    //             this.map[key] = value;
-    //         }
-    //     }
-    //     return this;
-    // }
-    //
-    // public toObject(filter?: Predicate): Readonly<Entries> {
-    //     if (!filter) {
-    //         return this.map;
-    //     }
-    //
-    //     const filtered: Entries = {};
-    //     Object
-    //         .entries(this.map)
-    //         .filter(filter)
-    //         .forEach(([key, value]) => filtered[key] = value);
-    //
-    //     return filtered;
-    // }
+    public static fromObject<T extends {}>(obj: T): Action {
+        const action = Action.of();
+        for (const [key, value] of Object.entries(objects.requireNonNil(obj))) {
+            action.map[assertKey(key)] = value as ValueType;
+        }
+        return action;
+    }
+
+    public static fromObjects<T extends {}>(objs: T[]): Action[] {
+        const actions: Action[] = [];
+        for (const obj of objects.requireNonNil(objs)) {
+            actions.push(Action.fromObject(obj));
+        }
+        return actions;
+    }
 }
 
 function assertKey(key: string): string {
