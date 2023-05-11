@@ -1,4 +1,4 @@
-import {awaitable, Nillable, NonNil} from "../utils/types";
+import {Nillable, NonNil, Promisy} from "../utils/types";
 import {PayloadType, Transaction} from "../core/tx";
 import {ethers, Signer} from "ethers";
 import {objects} from "../utils/objects";
@@ -54,7 +54,7 @@ export class TxnBuilderImpl implements TxnBuilder {
 
         const payloadFn = objects.requireNonNil(this._payload);
         const payloadType = objects.requireNonNil(this._payloadType);
-        const signer = await awaitable(objects.requireNonNil(this._signer));
+        const signer = await Promisy.resolveOrReject(this._signer);
         const sender = (await signer.getAddress()).toLowerCase();
         const acct = await this.client.getAccount(sender);
         if (acct.status !== 200 || !acct.data) {
@@ -74,7 +74,7 @@ export class TxnBuilderImpl implements TxnBuilder {
             throw new Error(`Could not retrieve cost for transaction. Please double check that you have the correct account address.`);
         }
 
-        const postEstTxn = preEstTxn.copy(tx => {
+        const postEstTxn = Txn.copy(preEstTxn, tx => {
             tx.fee = strings.requireNonNil(cost.data);
             tx.nonce = Number(objects.requireNonNil(acct.data?.nonce)) + 1;
         })
@@ -87,8 +87,7 @@ export class TxnBuilderImpl implements TxnBuilder {
         const signature = await crypto_sign(hash, signer);
         const sender = await signer.getAddress();
 
-        return tx.copy((tx) => {
-            (tx as any).isSigned = () => true
+        return Txn.copy(tx, (tx) => {
             tx.signature = signature;
             tx.sender = sender;
         });

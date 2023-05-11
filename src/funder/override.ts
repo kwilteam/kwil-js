@@ -1,10 +1,9 @@
-import { Signer } from "ethers";
-import { ethers, FeeData, JsonRpcProvider } from "ethers";
+import {Signer, ethers, FeeData, JsonRpcProvider} from "ethers";
 
 export async function createOverride(provider: Signer | ethers.Wallet, contract: ethers.Contract, method: string, args: any[]): Promise<object> {
     // if provider is jsonrpc, then this gas estimates will be made by provider
-    if (provider instanceof JsonRpcProvider) {
-        //TODO: verify this is the correct type check (e.g., provider.provider vs provider)
+    if ((provider as any) instanceof JsonRpcProvider) {
+        // TODO: should we be checking for the above anymore or in other places?
         return {};
     }
 

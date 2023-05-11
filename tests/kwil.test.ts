@@ -1,12 +1,8 @@
-import { ContractTransactionResponse, Wallet } from "ethers";
-import schema from "../testing-functions/test_schema.json";
-import {kwil, waitForConfirmations, wallet} from "./testingUtils";
-import {AmntObject, FunderObj, schemaObj} from "./testingUtils";
-import {Funder} from "../dist/funder/funding";
-import {AllowanceRes, BalanceRes, DepositRes, TokenRes} from "../dist/funder/types";
-import {Transaction, TxReceipt} from "../dist/core/tx";
-import {ActionBuilder, DBBuilder} from "../dist/core/builders";
+import {AmntObject, kwil, wallet} from "./testingUtils";
+import {Transaction} from "../dist/core/tx";
+import {ActionBuilder} from "../dist/core/builders";
 import {ActionBuilderImpl} from "../dist/builders/action_builder";
+import {Action} from "../dist/core/action";
 
 // Kwil methods that do NOT return another class (e.g. funder, action, and DBBuilder)
 // describe("Kwil", () => {
@@ -143,7 +139,6 @@ describe("ActionBuilder", () => {
         }
     });
 
-
     test('actionBuilder() should return an actionBuilder', () => {
         expect(actionBuilder).toBeDefined();
         expect(actionBuilder).toBeInstanceOf(ActionBuilderImpl);
@@ -162,18 +157,21 @@ describe("ActionBuilder", () => {
             "$body": "This is a test post"
         }];
 
-        const result = await actionBuilder
-            .set("$id", recordCount + 1)
-            .set("$user", "Luke")
-            .set("$title", "Test Post")
-            .set("$body", "This is a test post")
-            // .setMany(values)
+        const multi = Action.fromObjects(values);
+
+        const solo = Action.of()
+            .put("$id", recordCount + 1)
+            .put("$user", "Luke")
+            .put("$title", "Test Post")
+            .put("$body", "This is a test post");
+
+        actionTx = await actionBuilder
+            .concat(solo)
+            .concat(... multi)
             .signer(wallet)
             .buildTx();
-            console.log(result)
-        actionTx = result;
-        expect(result).toBeDefined();
-        expect(result).toBeInstanceOf<Transaction>(result);
+
+        expect(actionTx).toBeInstanceOf(Transaction);
     });
 
     // test('the action should be able to be broadcasted and return a txHash and a txReceipt', async () => {

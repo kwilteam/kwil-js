@@ -5,12 +5,19 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist"
+    "dist/**/*.js",
+    "dist/**/*.ts",
+    "!dist/**/*.map",
+    "!dist/**/*.test.js",
+    "!dist/**/*.test.ts"
   ],
   "scripts": {
-    "clean": "rimraf dist",
-    "tsc": "tsc",
-    "build": "npm run clean && npm run tsc"
+    "clean": "rimraf dist/*",
+    "build": "npm run clean && tsc",
+    "pack_build": "npm run clean && tsc --outDir ./dist --sourceMap false --declarationDir ./dist",
+    "pack_pre": "copyfiles package.json README.md dist && rimraf ./kwil*.tgz",
+    "pack_post": "copyfiles ./kwil*.tgz ./pkg && rimraf ./kwil*.tgz",
+    "pack": "npm run pack_build && npm run pack_pre && npm --prefix ./dist pack && npm run pack_post"
   },
   "author": "",
   "license": "ISC",
@@ -19,6 +26,7 @@
     "@types/node": "^18.11.17",
     "@typescript-eslint/eslint-plugin": "^5.38.0",
     "@typescript-eslint/parser": "^5.38.0",
+    "copyfiles": "^2.4.1",
     "eslint": "^8.23.1",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.2.1",

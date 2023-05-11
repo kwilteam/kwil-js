@@ -1,5 +1,5 @@
 import {PayloadType, Transaction} from "../core/tx";
-import {awaitable, Nillable, NonNil} from "../utils/types";
+import {Nillable, NonNil, Promisy} from "../utils/types";
 import {objects} from "../utils/objects";
 import {Kwil} from "../client/kwil";
 import {TxnBuilderImpl} from "./transaction_builder";
@@ -32,12 +32,12 @@ export class DBBuilderImpl implements DBBuilder {
     }
 
     async buildTx(): Promise<Transaction> {
-        const signer = await awaitable(objects.requireNonNil(this._signer));
-
+        const payload = objects.requireNonNil(this._payload);
+        const signer = await Promisy.resolveOrReject(this._signer);
         return TxnBuilderImpl
             .of(this.client)
             .payloadType(PayloadType.DEPLOY_DATABASE)
-            .payload(objects.requireNonNil(this._payload))
+            .payload(objects.requireNonNil(payload))
             .signer(objects.requireNonNil(signer))
             .build();
     }

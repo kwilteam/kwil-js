@@ -1,11 +1,10 @@
 import { AttributeType, DataType, IndexType } from "./enums";
 
-
 export interface Database<T> {
     get name(): string;
     get owner(): string;
     get tables(): ReadonlyArray<Table<T>>;
-    get actions(): ReadonlyArray<Action>;
+    get actions(): ReadonlyArray<ActionSchema>;
 }
 
 export interface Table<T> {
@@ -31,7 +30,7 @@ export interface Index {
     get type(): IndexType;
 }
 
-export interface Action {
+export interface ActionSchema {
     get name(): string;
     get public(): boolean;
     get inputs(): ReadonlyArray<string>;

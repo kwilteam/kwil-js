@@ -87,7 +87,7 @@ export abstract class Kwil {
         return await this.client.ping();
     }
 
-    public async getFunder(signer: Signer | ethers.Wallet): Promise<Funder> {
+    public async getFunder(signer: Signer| ethers.Wallet): Promise<Funder> {
         //check cache
         if(!this.fundingConfig || !this.fundingConfig.data) {
             this.fundingConfig = await this.client.getFundingConfig();

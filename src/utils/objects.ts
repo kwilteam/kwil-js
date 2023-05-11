@@ -1,6 +1,22 @@
 import {NonNil} from "./types";
 
+const NillablErrorSymbol = Symbol();
+const NILL_ERROR_MESSAGE = 'value cannot be null or undefined';
+
+export class NillableError extends Error {
+    public constructor(message: NonNil<string> = NILL_ERROR_MESSAGE) {
+        super((message as any) || NILL_ERROR_MESSAGE);
+    }
+
+    private get [NillablErrorSymbol]() {
+        return true;
+    }
+}
+
 export const objects = {
+    isNilError: (error: Error): boolean => {
+        return (error as NillableError)[NillablErrorSymbol] === true;
+    },
     // returns true if the value is null or undefined,
     // else will return false.
     isNil: <T>(value: T): boolean => {
@@ -23,7 +39,7 @@ export const objects = {
             throw message(value);
         }
 
-        throw new Error(message || 'value cannot be null or undefined');
+        throw new NillableError(message);
     },
     // If value is null or undefined, then an error is thrown, else
     // value is returned.
@@ -36,7 +52,11 @@ export const objects = {
             throw message(value);
         }
 
-        throw new Error("value is not a number, it is a " + (!value ? 'null or undefined' : typeof value));
+        if (!value) {
+            throw new NillableError(message);
+        }
+
+        throw new Error("value is not a number, it is a " + typeof value);
     },
 };
 
