@@ -7,7 +7,6 @@ export type Lazy<T> = (() => Promise<T>) | (() => T);
 export type Func<T, U> = (t: T) => U;
 export type Unary<T> = Func<T, T>;
 export type Runnable = () => void;
-export type NonFunction<T> = T extends Function ? never : T;
 
 export type Promisy<T> =
     T extends null | undefined ? never :
@@ -33,7 +32,7 @@ export namespace Promisy {
 }
 
 export namespace Lazy {
-    export function of<T>(promisy: Promisy<T>): Lazy<T> {
+    export function of<T>(promisy: Promisy<T>): Lazy<Promise<T>> {
         return (): Promise<T> => {
             const fn = objects.requireNonNil(promisy);
             return typeof fn === "function" ? fn() : fn;

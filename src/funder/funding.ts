@@ -1,11 +1,10 @@
-import { BigNumberish, ethers } from "ethers";
-import { FundingConfig } from "../core/configs";
-import { Escrow } from "./escrow";
-import { Token } from "./token";
+import {BigNumberish, ethers, Signer} from "ethers";
+import {FundingConfig} from "../core/configs";
+import {Escrow} from "./escrow";
+import {Token} from "./token";
 import erc20Abi from './abi/erc20HumanAbi';
 import kwilAbi from './abi/kwilHumanAbi';
-import { AllowanceRes, BalanceRes, DepositRes, TokenRes } from "./types";
-import { Signer } from "ethers";
+import {AllowanceRes, BalanceRes, DepositRes, TokenRes} from "./types";
 
 export class Funder {
     private readonly signer: Signer| ethers.Wallet;
@@ -22,11 +21,11 @@ export class Funder {
 
     public static async create(signer: Signer | ethers.Wallet, config: FundingConfig): Promise<Funder> {
         const funder = new Funder(signer, config);
-        funder.escrowContract = new Escrow(funder.providerAddress, funder.poolAddress, kwilAbi, funder.signer);
+        funder.escrowContract = new Escrow(funder.providerAddress, funder.poolAddress, kwilAbi, signer);
         
         let tokenAddress = await funder.escrowContract.getTokenAddress();
 
-        funder.erc20Contract = new Token(tokenAddress, erc20Abi, funder.signer);
+        funder.erc20Contract = new Token(tokenAddress, erc20Abi, signer);
 
         return funder;
     }
