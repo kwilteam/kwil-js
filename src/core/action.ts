@@ -10,7 +10,7 @@ export type Entries = { [key: string]: ValueType };
 export type Predicate =
     (k: [key: string, v: ValueType]) => boolean;
 
-export class Action implements Iterable<EntryType> {
+export class ActionInput implements Iterable<EntryType> {
     private readonly map: Entries;
 
     constructor() {
@@ -18,20 +18,20 @@ export class Action implements Iterable<EntryType> {
     }
 
     // This will add, or replace, a value for the given key
-    public put<T extends ValueType>(key: string, value: T): Action {
+    public put<T extends ValueType>(key: string, value: T): ActionInput {
         this.map[assertKey(key)] = value;
         return this;
     }
 
     // This will add if the key is not already present
-    public putIfAbsent<T extends ValueType>(key: string, value: T): Action {
+    public putIfAbsent<T extends ValueType>(key: string, value: T): ActionInput {
         if (!this.containsKey(key)) {
             this.map[key] = value;
         }
         return this;
     }
 
-    public replace<T extends ValueType>(key: string, value: T): Action {
+    public replace<T extends ValueType>(key: string, value: T): ActionInput {
         if (this.containsKey(key)) {
             this.map[key] = value;
         }
@@ -69,30 +69,30 @@ export class Action implements Iterable<EntryType> {
         return this.toArray()[Symbol.iterator]();
     }
 
-    public static of(): Action {
-        return new Action();
+    public static of(): ActionInput {
+        return new ActionInput();
     }
 
-    public static from(entries: Iterable<EntryType>): Action {
-        const action = Action.of();
+    public from(entries: Iterable<EntryType>): ActionInput {
+        const action = ActionInput.of();
         for (const [key, value] of objects.requireNonNil(entries)) {
             action.map[assertKey(key)] = value;
         }
         return action;
     }
 
-    public static fromObject<T extends {}>(obj: T): Action {
-        const action = Action.of();
+    public static fromObject<T extends {}>(obj: T): ActionInput {
+        const action = ActionInput.of();
         for (const [key, value] of Object.entries(objects.requireNonNil(obj))) {
             action.map[assertKey(key)] = value as ValueType;
         }
         return action;
     }
 
-    public static fromObjects<T extends {}>(objs: T[]): Action[] {
-        const actions: Action[] = [];
+    public static fromObjects<T extends {}>(objs: T[]): ActionInput[] {
+        const actions: ActionInput[] = [];
         for (const obj of objects.requireNonNil(objs)) {
-            actions.push(Action.fromObject(obj));
+            actions.push(ActionInput.fromObject(obj));
         }
         return actions;
     }
