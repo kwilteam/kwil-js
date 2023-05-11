@@ -51,10 +51,6 @@ export class ActionBuilderImpl implements ActionBuilder {
     concat(... actions: ActionInput[]): NonNil<ActionBuilder> {
         this.assertNotBuilding();
 
-        if (!this._actions) {
-            this._actions = [];
-        }
-
         for (const action of actions) {
             this._actions.push(objects.requireNonNil(action));
         }
@@ -113,7 +109,7 @@ export class ActionBuilderImpl implements ActionBuilder {
             throw new Error(`No inputs found for action schema: ${actionName}.`)
         }
 
-        if(this._actions.length == 0) {
+        if(actions.length == 0) {
             throw new Error("No action data has been added to the ActionBuilder.");
         }
 
@@ -158,7 +154,8 @@ export class ActionBuilderImpl implements ActionBuilder {
         });
 
         if(missingInputs.size > 0) {
-            throw new Error(`Inputs are missing for actions: ${missingInputs}`)
+            console.log(missingInputs)
+            throw new Error(`Inputs are missing for actions: ${Array.from(missingInputs)}`)
         }
 
         return preparedActions;

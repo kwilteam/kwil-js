@@ -73,7 +73,7 @@ export class ActionInput implements Iterable<EntryType> {
         return new ActionInput();
     }
 
-    public from(entries: Iterable<EntryType>): ActionInput {
+    public static from(entries: Iterable<EntryType>): ActionInput {
         const action = ActionInput.of();
         for (const [key, value] of objects.requireNonNil(entries)) {
             action.map[assertKey(key)] = value;
@@ -95,6 +95,39 @@ export class ActionInput implements Iterable<EntryType> {
             actions.push(ActionInput.fromObject(obj));
         }
         return actions;
+    }
+
+    public putFromObject<T extends {}>(obj: T): ActionInput {
+        for (const [key, value] of Object.entries(objects.requireNonNil(obj))) {
+            this.map[assertKey(key)] = value as ValueType;
+        }
+        return this;
+    }
+
+    public putFromObjects<T extends {}>(objs: T[]): ActionInput[] {
+        const actions: ActionInput[] = [];
+        for (const obj of objects.requireNonNil(objs)) {
+            actions.push(ActionInput.fromObject(obj));
+        }
+        return actions;
+    }
+
+    public putFromObjectIfAbsent<T extends {}>(obj: T): ActionInput {
+        for (const [key, value] of Object.entries(objects.requireNonNil(obj))) {
+            if (!this.containsKey(key)) {
+                this.map[assertKey(key)] = value as ValueType;
+            }
+        }
+        return this;
+    }
+
+    public replaceFromObject<T extends {}>(obj: T): ActionInput {
+        for (const [key, value] of Object.entries(objects.requireNonNil(obj))) {
+            if (this.containsKey(key)) {
+                this.map[assertKey(key)] = value as ValueType;
+            }
+        }
+        return this;
     }
 }
 
