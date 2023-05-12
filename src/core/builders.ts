@@ -1,7 +1,7 @@
 import {NonNil, Promisy} from "../utils/types";
 import {PayloadType, Transaction} from "./tx";
 import {ethers, Signer as _Signer} from "ethers";
-import {Action} from "./action";
+import {ActionInput} from "./action";
 
 export type Signer = NonNil<_Signer | ethers.Wallet>;
 export type SignerSupplier = Promisy<Signer>
@@ -29,7 +29,7 @@ export interface ActionBuilder {
 
     dbid(dbid: string): NonNil<ActionBuilder>;
 
-    concat(... action: Action[]): NonNil<ActionBuilder>;
+    concat(... action: ActionInput[]): NonNil<ActionBuilder>;
 
     signer(signer: SignerSupplier): NonNil<ActionBuilder>;
 

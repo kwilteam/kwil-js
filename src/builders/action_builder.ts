@@ -7,15 +7,15 @@ import {Nillable, NonNil, Promisy} from "../utils/types";
 import {Kwil} from "../client/kwil";
 import {ActionBuilder, SignerSupplier} from "../core/builders";
 import {TxnBuilderImpl} from "./transaction_builder";
-import {Action} from "../core/action";
+import {ActionInput} from "../core/action";
 import {ActionSchema} from "../core/database";
 
-const TXN_BUILD_IN_PROGRESS: Action[] = [];
+const TXN_BUILD_IN_PROGRESS: ActionInput[] = [];
 
 export class ActionBuilderImpl implements ActionBuilder {
     private readonly client: Kwil;
     private _signer: Nillable<SignerSupplier> = null;
-    private _actions: Action[] = [];
+    private _actions: ActionInput[] = [];
     private _name: Nillable<string>;
     private _dbid: Nillable<string>;
 
@@ -48,12 +48,8 @@ export class ActionBuilderImpl implements ActionBuilder {
         return this;
     }
 
-    concat(... actions: Action[]): NonNil<ActionBuilder> {
+    concat(... actions: ActionInput[]): NonNil<ActionBuilder> {
         this.assertNotBuilding();
-
-        if (!actions) {
-            return this;
-        }
 
         for (const action of actions) {
             this._actions.push(objects.requireNonNil(action));
@@ -64,9 +60,6 @@ export class ActionBuilderImpl implements ActionBuilder {
 
     async buildTx(): Promise<Transaction> {
         this.assertNotBuilding();
-        if(this._actions.length == 0) {
-            throw new Error("No action data has been added to the ActionBuilder.");
-        }
 
         const cached = objects.requireNonNil(this._actions);
         this._actions = TXN_BUILD_IN_PROGRESS;
@@ -76,7 +69,7 @@ export class ActionBuilderImpl implements ActionBuilder {
             .finally(() => this._actions = cached);
     }
 
-    async dobuildTx(actions: Action[]): Promise<Transaction> {
+    private async dobuildTx(actions: ActionInput[]): Promise<Transaction> {
         const dbid = objects.requireNonNil(this._dbid);
         const name = objects.requireNonNil(this._name);
         const signer = await Promisy.resolveOrReject(this._signer);
@@ -107,9 +100,17 @@ export class ActionBuilderImpl implements ActionBuilder {
             .build();
     }
 
-    private prepareActions(actions: Action[], actionSchema: ActionSchema, actionName: string): Action[] {
+    private prepareActions(actions: ActionInput[], actionSchema: ActionSchema, actionName: string): ActionInput[] {
+        if ((!actionSchema.inputs || actionSchema.inputs.length === 0) && actions.length === 0) {
+            return [];
+        }
+
         if(!actionSchema.inputs) {
             throw new Error(`No inputs found for action schema: ${actionName}.`)
+        }
+
+        if(actions.length == 0) {
+            throw new Error("No action data has been added to the ActionBuilder.");
         }
 
         const missingActions = new Set<string>();
@@ -124,10 +125,10 @@ export class ActionBuilderImpl implements ActionBuilder {
             throw new Error(`Actions do not match action schema inputs: ${missingActions}`)
         }
 
-        const preparedActions: Action[] = [];
+        const preparedActions: ActionInput[] = [];
         const missingInputs = new Set<string>();
         actions.forEach((a) => {
-            const copy = Action.from(a);
+            const copy = ActionInput.from(a);
             actionSchema.inputs.forEach((i) => {
                 if (missingInputs.has(i)) {
                     return;
@@ -153,7 +154,8 @@ export class ActionBuilderImpl implements ActionBuilder {
         });
 
         if(missingInputs.size > 0) {
-            throw new Error(`Inputs are missing for actions: ${missingInputs}`)
+            console.log(missingInputs)
+            throw new Error(`Inputs are missing for actions: ${Array.from(missingInputs)}`)
         }
 
         return preparedActions;

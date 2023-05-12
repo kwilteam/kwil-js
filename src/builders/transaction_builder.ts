@@ -90,6 +90,7 @@ export class TxnBuilderImpl implements TxnBuilder {
         return Txn.copy(tx, (tx) => {
             tx.signature = signature;
             tx.sender = sender;
+            tx.hash = hash;
         });
     }
 

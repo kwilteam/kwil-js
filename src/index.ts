@@ -4,6 +4,7 @@ import { generateDBID } from './utils/dbid'
 import { TxReceipt as _TxReceipt } from './core/tx'
 import { Funder as _Funder } from './funder/funding'
 import { ActionBuilder as _ActionBuilder } from './core/builders'
+import { ActionInput } from './core/action'
 
 namespace Types {
     export type TxReceipt = _TxReceipt
@@ -12,6 +13,7 @@ namespace Types {
 }
 
 const Utils = {
+    ActionInput,
     generateDBID
 }
 
