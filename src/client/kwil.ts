@@ -14,11 +14,12 @@ import {NonNil} from "../utils/types";
 import {ActionBuilder, DBBuilder} from "../core/builders";
 import {wrap} from "./intern";
 import { FundingConfig } from "../core/configs";
+import { Cache } from "../utils/cache";
 
 export abstract class Kwil {
     private readonly client: Client;
     //cache schemas
-    private schemas?: Map<string, GenericResponse<Database<string>>>;
+    private schemas: Cache<GenericResponse<Database<string>>>;
 
     // cache fundingConfig
     private fundingConfig?: GenericResponse<FundingConfig>;
@@ -33,6 +34,7 @@ export abstract class Kwil {
             logger: opts.logger,
         });
 
+        this.schemas = Cache.ttl();
         wrap(this, this.client.estimateCost.bind(this.client));
     }
 
@@ -42,8 +44,9 @@ export abstract class Kwil {
 
     public async getSchema(dbid: string): Promise<GenericResponse<Database<string>>> {
         //check cache
-        if (this.schemas && this.schemas.has(dbid)) {
-            return this.schemas.get(dbid) as GenericResponse<Database<string>>;
+        const schema = this.schemas.get(dbid)
+        if (schema) {
+            return schema;
         }
 
         //fetch from server
@@ -51,9 +54,6 @@ export abstract class Kwil {
 
         //cache result
         if (res.status == 200) {
-            if (!this.schemas) {
-                this.schemas = new Map<string, GenericResponse<Database<string>>>();
-            }
             this.schemas.set(dbid, res);
         }
 
