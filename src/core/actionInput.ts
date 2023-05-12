@@ -69,6 +69,39 @@ export class ActionInput implements Iterable<EntryType> {
         return this.toArray()[Symbol.iterator]();
     }
 
+    public putFromObject<T extends {}>(obj: T): ActionInput {
+        for (const [key, value] of Object.entries(objects.requireNonNil(obj))) {
+            this.map[assertKey(key)] = value as ValueType;
+        }
+        return this;
+    }
+
+    public putFromObjectIfAbsent<T extends {}>(obj: T): ActionInput {
+        for (const [key, value] of Object.entries(objects.requireNonNil(obj))) {
+            if (!this.containsKey(key)) {
+                this.map[assertKey(key)] = value as ValueType;
+            }
+        }
+        return this;
+    }
+
+    public replaceFromObject<T extends {}>(obj: T): ActionInput {
+        for (const [key, value] of Object.entries(objects.requireNonNil(obj))) {
+            if (this.containsKey(key)) {
+                this.map[assertKey(key)] = value as ValueType;
+            }
+        }
+        return this;
+    }
+
+    public putFromObjects<T extends {}>(objs: T[]): ActionInput[] {
+        const actions: ActionInput[] = [];
+        for (const obj of objects.requireNonNil(objs)) {
+            actions.push(ActionInput.fromObject(obj));
+        }
+        return actions;
+    }
+
     public static of(): ActionInput {
         return new ActionInput();
     }
@@ -95,39 +128,6 @@ export class ActionInput implements Iterable<EntryType> {
             actions.push(ActionInput.fromObject(obj));
         }
         return actions;
-    }
-
-    public putFromObject<T extends {}>(obj: T): ActionInput {
-        for (const [key, value] of Object.entries(objects.requireNonNil(obj))) {
-            this.map[assertKey(key)] = value as ValueType;
-        }
-        return this;
-    }
-
-    public putFromObjects<T extends {}>(objs: T[]): ActionInput[] {
-        const actions: ActionInput[] = [];
-        for (const obj of objects.requireNonNil(objs)) {
-            actions.push(ActionInput.fromObject(obj));
-        }
-        return actions;
-    }
-
-    public putFromObjectIfAbsent<T extends {}>(obj: T): ActionInput {
-        for (const [key, value] of Object.entries(objects.requireNonNil(obj))) {
-            if (!this.containsKey(key)) {
-                this.map[assertKey(key)] = value as ValueType;
-            }
-        }
-        return this;
-    }
-
-    public replaceFromObject<T extends {}>(obj: T): ActionInput {
-        for (const [key, value] of Object.entries(objects.requireNonNil(obj))) {
-            if (this.containsKey(key)) {
-                this.map[assertKey(key)] = value as ValueType;
-            }
-        }
-        return this;
     }
 }
 

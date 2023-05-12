@@ -32,10 +32,20 @@ async function test() {
     // getDepositedBalance(kwil, wallet)
     // getTokenAddress(kwil, wallet)
     // await execSingleAction(kwil, dbid, "add_post", wallet)
-    // select(kwil, dbid, "SELECT * FROM posts")
-    bulkAction(kwil, dbid, "add_post", wallet)
+    // select(kwil, dbid, "SELECT * FROM posts WHERE id > 100")
+    // select(kwil, dbid, `WITH RECURSIVE 
+    //                         cnt(x) AS (
+    //                         SELECT 1
+    //                         UNION ALL
+    //                         SELECT x+1 FROM cnt
+    //                         LIMIT (SELECT MAX(id) FROM posts)
+    //                     )
+    //                     SELECT x 
+    //                     FROM cnt
+    //                     WHERE x NOT IN (SELECT id FROM posts) AND x <= 135;
+    //         `)
+    // bulkAction(kwil, dbid, "add_post", wallet)
     // getSelectAction(kwil, dbid2, "get_items", wallet)
-    kwil.actionBuilder().concat()
 }
 
 test()
@@ -165,29 +175,23 @@ async function configObj(kwil, dbid) {
 
     const bulkActions = [
         {
-            "$id": count + 1,
+            "$id": 129,
             "$user": "Luke",
             "$title": "Hello",
             "$body": "Hello World",
         },
         {
-            "$id": count + 2,
+            "$id": 130,
             "$user": "Luke",
             "$title": "Hello",
             "$body": "Hello World 2",
         },
         {
-            "$id": count + 3,
+            "$id": 131,
             "$user": "Luke",
             "$title": "Hello",
             "$body": "Hello World 3",
         },
-        {
-            "$id": count + 4,
-            "$user": "Luke",
-            "$title": "Hello",
-            "$body": "Hello World 4",
-        }
     ]
 
     return bulkActions

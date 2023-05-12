@@ -1,7 +1,7 @@
 import {NonNil, Promisy} from "../utils/types";
 import {PayloadType, Transaction} from "./tx";
 import {ethers, Signer as _Signer} from "ethers";
-import {ActionInput} from "./action";
+import {ActionInput} from "./actionInput";
 
 export type Signer = NonNil<_Signer | ethers.Wallet>;
 export type SignerSupplier = Promisy<Signer>
