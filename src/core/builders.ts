@@ -29,7 +29,7 @@ export interface ActionBuilder {
 
     dbid(dbid: string): NonNil<ActionBuilder>;
 
-    concat(... action: ActionInput[]): NonNil<ActionBuilder>;
+    concat(action: ActionInput | ActionInput[]): NonNil<ActionBuilder>;
 
     signer(signer: SignerSupplier): NonNil<ActionBuilder>;
 
