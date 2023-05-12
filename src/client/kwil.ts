@@ -34,7 +34,7 @@ export abstract class Kwil {
             logger: opts.logger,
         });
 
-        this.schemas = Cache.ttl();
+        this.schemas = Cache.passive();
         wrap(this, this.client.estimateCost.bind(this.client));
     }
 

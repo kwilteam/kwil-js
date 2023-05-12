@@ -1,8 +1,12 @@
 import {Nillable} from "./types";
 
 export namespace Cache {
-    export function ttl<T>(ttlSeconds: number = 10 * 60, cleanupIntervalSeconds: number = 60): Cache<T> {
+    export function active<T>(ttlSeconds: number = 10 * 60, cleanupIntervalSeconds: number = 60): Cache<T> {
         return new TtlCache<T>(ttlSeconds, cleanupIntervalSeconds);
+    }
+
+    export function passive<T>(ttlSeconds: number = 10 * 60): Cache<T> {
+        return new TtlCache<T>(ttlSeconds, -1);
     }
 }
 
@@ -19,17 +23,26 @@ class TtlCache<T> {
     private readonly cleanupQueue: {d: number, k: string}[] = [];
     private cleanupTimerId: any;
 
-    constructor(ttlSeconds: number = 10 * 60, cleanupIntervalSeconds: number = 60) {
+    constructor(ttlSeconds: number, cleanupIntervalSeconds: number) {
         this.cache = new Map<string, any>();
-        this.ttl = ttlSeconds * 1000;
+        this.ttl =  ttlSeconds * 1000;
         this.cleanupIntervalSeconds = cleanupIntervalSeconds;
+
+        console.log(`Cache TTL set to ${this.ttl} milliseconds.`)
+        if (!this.isPassiveMode() ) {
+            console.log(`Cache cleanup interval set to ${cleanupIntervalSeconds} seconds.`)
+        } else {
+            console.log(`Cache cleanup running in passive mode.`)
+        }
     }
 
     public set(k: string, v: T): void {
         this.ensureCleanRunning();
         const d = Date.now() + this.ttl;
         this.cache.set(k, {d, v});
-        this.cleanupQueue.push({d, k});
+        if (!this.isPassiveMode()) {
+            this.cleanupQueue.push({d, k});
+        }
     }
 
     public get(k: string): Nillable<T> {
@@ -46,10 +59,16 @@ class TtlCache<T> {
     }
 
     public shutdown(): void {
-        clearTimeout(this.cleanupTimerId);
+        if (this.cleanupTimerId) {
+            clearInterval(this.cleanupTimerId);
+        }
     }
 
     private ensureCleanRunning(): void {
+        if (this.isPassiveMode()) {
+            return;
+        }
+
         if (!this.cleanupTimerId) {
             this.cleanupTimerId =
                 setInterval(
@@ -58,6 +77,10 @@ class TtlCache<T> {
 
             console.log(`Background cache cleanup started. Interval of ${this.cleanupIntervalSeconds} seconds between cleaup.`)
         }
+    }
+
+    private isPassiveMode(): boolean {
+        return this.cleanupIntervalSeconds <= 0;
     }
 
     private cleanup(): void {
