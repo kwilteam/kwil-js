@@ -70,6 +70,7 @@ describe("Funder", () => {
         expect(result).toMatchObject<AllowanceRes>({
             allowance_balance: expect.any(String),
         })
+        console.log(result)
     });
 
     test('getBalance should return balanceRes', async () => {
@@ -107,7 +108,7 @@ describe("Funder", () => {
             value: expect.any(BigInt),
             chainId: expect.any(BigInt),
         });
-    });
+    }, 10000);
 
     test('getDepositedBalance should return a balance', async () => {
         const result = await funder.getDepositedBalance(wallet.address);
@@ -115,6 +116,7 @@ describe("Funder", () => {
         expect(result).toMatchObject<DepositRes>({
             deposited_balance: expect.any(String),
         })
+        console.log(result)
     });
 
     test('getTokenAddress should return a token address', async () => {
@@ -146,7 +148,7 @@ describe("ActionBuilder + ActionInput + Transaction public methods & broadcastin
             recordCount = amnt['COUNT(*)'];
         } 
         
-        actionInput = Utils.ActionInput.of()
+        actionInput = new Utils.ActionInput();
     });
 
     test('actionBuilder() should return an actionBuilder', () => {

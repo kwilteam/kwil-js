@@ -12,6 +12,7 @@ npm i kwil
 import { ethers } from 'ethers';
 import { WebKwil } from 'kwil';
 
+// to be used for funding and signing transactions
 const provider = new ethers.providers.BrowserProvider(window.ethereum)
 
 const kwil = new WebKwil({
@@ -24,10 +25,10 @@ const kwil = new WebKwil({
 const { ethers } = require('ethers');
 const kwiljs = require('kwil');
 
+// to be used for funding and signing transactions
 // instead of a provider, nodeJS requires a wallet
 const wallet = new ethers.Wallet("my_ethereum_private_key")
 
-// create a new Kwil web api_client
 const kwil = new kwiljs.NodeKwil({
     kwilProvider: "kwil_provider_endpoint",
 });
@@ -48,6 +49,7 @@ You can retrieve database information by calling .getSchema and passing the dbid
 ``` javascript
 const dbid = kwil.getDBID("0xOwner_address", "database_name")
 const schema = await kwil.getSchema(dbid)
+
 /*
     schema.data = {
         owner: "0xowner_address",
@@ -58,35 +60,30 @@ const schema = await kwil.getSchema(dbid)
 */
 ```
 ### Executing Actions
-You can use actions to execute insert/update/delete/read operations on a database.
+You can chain action methods execute insert/update/delete/read operations on a database.
 ``` javascript
+import {Utils} from "kwil"
+
+// begin constructing the values for the action
+const input = new Utils.ActionInput()
+    .put("input_name_1", "input_value_1")
+    .put("input_name_2", "input_value_2")
+    .put("input_name_3", "input_value_3")
+
+// retrieve database ID to locate action
 const dbid = kwil.getDBID("0xOwner_address", "database_name")
 
-//retrieving an action called "create_user"
-const action = await kwil.getAction(dbid, "create_user")
+// construct and sign action transaction
+const tx = await kwil
+    .actionBuilder()
+    .dbid(dbid)
+    .name("your_action_name")
+    .concat(input)
+    .signer(await provider.getSigner()) // can use wallet if NodeJS
+    .buildTx()
 
-//preparing to set inputs for "create_user" action
-let execution = action.newInstance()
-
-//setting $id, $username, and $realname inputs
-execution.set("$id", 1)
-execution.set("$username", "satoshi")
-execution.set("$realname", "Steve Jobs")
-
-//you can check if all inputs have been set
-if(!action.isComplete()) {
-    throw new Error("All inputs must be set!")
-}
-
-// get ethereum signer
-import { BrowserProvider } from "ethers"
-const provider = new BrowserProvider(window.ethereum) //can use new Wallet if using NodeJS
-
-//prepareTx
-const tx = action.prepareAction(provider.getSigner())
-
-//broadcast
-const res = kwil.broadcast(tx)
+// broadcast transaction to kwil network
+const res = await kwil.broadcast(actionTx)
 
 /*
     res.data = {
@@ -101,6 +98,7 @@ In addition to reading data with actions, you can execute nearly any SELECT quer
 ``` javascript
 const dbid = kwil.getDBID("0xOwner_address", "database_name")
 const res = await kwil.selectQuery(dbid, "SELECT * FROM users")
+
 /*
     res.data = [
         ...
@@ -111,6 +109,7 @@ const res = await kwil.selectQuery(dbid, "SELECT * FROM users")
 You can get the remaining balance of an account and the account's nonce by using the getAccount method.
 ``` javascript
 const res = await kwil.getAccount("0xOwner_address")
+
 /*
     res.data = {
         address: "0xOwner_address",
@@ -129,20 +128,19 @@ Once the syntax is ready, click "Compile". Right click your compiled files and c
 Import your JSON to your Javascript project.
 
 ``` javascript
-//import and call database JSON
-import myDB from "./myDB.json"
+// import and call database JSON
+import myDB from "./myDB.json";
 
-const newDb = kwil.newDatabase(myDB)
+// prepare new database tx
+const tx = await kwil
+    .dbBuilder()
+    .payload(myDB)
+    .signer(await provider.getSigner()) // can use Wallet for NodeJS
+    .buildTx();
 
-//prepare JSON
-import { BrowserProvider } from "ethers"; //can use Wallet for NodeJS
-
-const provider = new BrowserProvider(window.ethereum);
-
-const tx = await newDb.prepareJson(provider.getSigner());
-
-//broadcast transaction
+// broadcast transaction
 const res = await kwil.broadcast(tx);
+
 /*
     res = {
         status: 200,
@@ -159,21 +157,27 @@ Currently, you can receive Kwil testnet funds from our [faucet](https://faucet.k
 
 To approve and deposit funds to a Kwil funding pool:
 ``` javascript
-const currentAllowance = await kwil.funder.getAllowance()
-// currentAllowance: BigNumber { _hex: '0x00', _isBigNumber: true }
+// retrieve the allowance for an address
+const currentAllowance = await kwil.funder.getAllowance("wallet_address")
+// currentAllowance: { allowance_balance: 'some_balance'}
 
-let res = await kwil.funder.approve(BigInt("1000000000000000000")) // $1 KWIL BETA TOKEN
+// retrieve the tokal amount of tokens deposited (used and unused)
+const depositAmt = await kwil.funder.getDepositedBalance("wallet_address")
+// depositAmt: { deposited_balance: 'some_balance'}
+
+let res = await kwil.funder.approve(BigInt("1000000000000000000")) 
+// 1 KWIL BETA TOKEN
 /*
     res: { hash: '0x...'}
 */
 
-res = await kwil.funder.deposit(BigInt("1000000000000000000")) // $1 KWIL BETA TOKEN
+res = await kwil.funder.deposit(BigInt("1000000000000000000")) 
+// 1 KWIL BETA TOKEN
 /*
     res: { hash: '0x...'}
 */
 
-const depositAmt = await kwil.funder.getDepositedBalance()
-// depositAmt: BigNumber { _hex: '0x00', _isBigNumber: true }
+
 ```
 Kwil-JS also provides other utility functions for checking your token balance and usage:
 ``` javascript
@@ -181,7 +185,7 @@ Kwil-JS also provides other utility functions for checking your token balance an
 const token = await kwil.funder.getTokenAddress()
 // token: "0xE596928C26A11e9373FC4245d6Ee02aE0De32612"
 
-// get the total (both used and unused) token balance for the pool
+// get the token balance for a wallet's address
 const balance = await kwil.funder.getBalance("0xAfFDC06cF34aFD7D5801A13d48C92AD39609901D")
 // balance: BigNumber { _hex: '0x00', _isBigNumber: true }
 ```
