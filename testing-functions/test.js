@@ -14,8 +14,8 @@ async function test() {
         logging: true,
     })
 
-    // const dbid = kwil.getDBID(wallet.address, "mydb")
-    const dbid2 = kwil.getDBID(wallet.address, "selectaction")
+    const dbid = kwil.getDBID(wallet.address, "mydb")
+    // const dbid2 = kwil.getDBID(wallet.address, "selectaction")
     // console.log(dbid)
     // broadcast(kwil, testDB, wallet)
     // await getSchema(kwil, dbid)
@@ -33,8 +33,9 @@ async function test() {
     // getTokenAddress(kwil, wallet)
     // await execSingleAction(kwil, dbid, "add_post", wallet)
     // select(kwil, dbid, "SELECT * FROM posts")
-    // bulkAction(kwil, dbid, "add_post", wallet)
-    getSelectAction(kwil, dbid2, "get_items", wallet)
+    bulkAction(kwil, dbid, "add_post", wallet)
+    // getSelectAction(kwil, dbid2, "get_items", wallet)
+    kwil.actionBuilder().concat()
 }
 
 test()
@@ -122,7 +123,7 @@ async function execSingleAction(kwil, dbid, action, w) {
 
     const Input = kwiljs.Utils.ActionInput
 
-    const solo = new Input()
+    const solo = Input.of()
         .put("$id", count + 1)
         .put("$user", "Luke")
         .put("$title", "Hello")
@@ -157,45 +158,58 @@ async function select(kwil, dbid, query) {
     console.log(res)
 }
 
-const bulkActions = [
-    {
-        "$id": 105,
-        "$user": "Luke",
-        "$title": "Hello",
-        "$body": "Hello World",
-    },
-    {
-        "$id": 106,
-        "$user": "Luke",
-        "$title": "Hello",
-        "$body": "Hello World 2",
-    },
-    {
-        "$id": 107,
-        "$user": "Luke",
-        "$title": "Hello",
-        "$body": "Hello World 3",
-    },
-    {
-        "$id": 108,
-        "$user": "Luke",
-        "$title": "Hello",
-        "$body": "Hello World 4",
-    }
-]
-
-async function bulkAction(kwil, dbid, action, w) {
-    const query = await kwil.selectQuery("xca20642aa31af7db6b43755cf40be91c51a157e447e6cc36c1d94f0a", "SELECT COUNT(*) FROM posts");
+async function configObj(kwil, dbid) {
+    const query = await kwil.selectQuery(dbid, "SELECT COUNT(*) FROM posts");
 
     const count = query.data[0][`COUNT(*)`]
 
+    const bulkActions = [
+        {
+            "$id": count + 1,
+            "$user": "Luke",
+            "$title": "Hello",
+            "$body": "Hello World",
+        },
+        {
+            "$id": count + 2,
+            "$user": "Luke",
+            "$title": "Hello",
+            "$body": "Hello World 2",
+        },
+        {
+            "$id": count + 3,
+            "$user": "Luke",
+            "$title": "Hello",
+            "$body": "Hello World 3",
+        },
+        {
+            "$id": count + 4,
+            "$user": "Luke",
+            "$title": "Hello",
+            "$body": "Hello World 4",
+        }
+    ]
+
+    return bulkActions
+}
+
+async function bulkAction(kwil, dbid, action, w) {
+    const data = await configObj(kwil, dbid)
+
     const Input = kwiljs.Utils.ActionInput
 
-    const solo = new Input().fromObjects()
+    const inputs = new Input()
+        .putFromObjects(data)
 
-    let newAct = await kwil.getAction(dbid, action)
-    newAct.bulk(bulkActions)
-    const tx = await newAct.prepareAction(w)
+    const tx = await kwil
+        .actionBuilder()
+        .dbid(dbid)
+        .name(action)
+        .concat(inputs)
+        .signer(w)
+        .buildTx()
+
     const res = await kwil.broadcast(tx)
+
     console.log(res)
 }

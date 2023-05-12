@@ -165,11 +165,11 @@ describe("ActionBuilder", () => {
             "$body": "This is a test post"
         }];
 
-        const Action = Utils.ActionInput;
+        const ActionInput = Utils.ActionInput;
 
-        const multi = new Action().putFromObjects(values);
+        const multi = new ActionInput().putFromObjects(values);
 
-        const solo = new Action()
+        const solo = new ActionInput()
             .put("$id", recordCount + 1)
             .put("$user", "Luke")
             .put("$title", "Test Post")
@@ -177,7 +177,7 @@ describe("ActionBuilder", () => {
 
         actionTx = await actionBuilder
             .concat(solo)
-            .concat(... multi)
+            .concat(multi)  
             .signer(wallet)
             .buildTx();
             

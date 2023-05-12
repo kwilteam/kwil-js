@@ -48,8 +48,12 @@ export class ActionBuilderImpl implements ActionBuilder {
         return this;
     }
 
-    concat(... actions: ActionInput[]): NonNil<ActionBuilder> {
+    concat(actions: ActionInput[] | ActionInput): NonNil<ActionBuilder> {
         this.assertNotBuilding();
+        
+        if (!Array.isArray(actions)) {
+            actions = [actions];
+        }
 
         for (const action of actions) {
             this._actions.push(objects.requireNonNil(action));
@@ -122,7 +126,7 @@ export class ActionBuilderImpl implements ActionBuilder {
         });
 
         if(missingActions.size > 0) {
-            throw new Error(`Actions do not match action schema inputs: ${missingActions}`)
+            throw new Error(`Actions do not match action schema inputs: ${Array.from(missingActions)}`)
         }
 
         const preparedActions: ActionInput[] = [];
@@ -154,7 +158,6 @@ export class ActionBuilderImpl implements ActionBuilder {
         });
 
         if(missingInputs.size > 0) {
-            console.log(missingInputs)
             throw new Error(`Inputs are missing for actions: ${Array.from(missingInputs)}`)
         }
 
