@@ -15,19 +15,18 @@ export interface Cache<T> {
 class TtlCache<T> {
     private readonly cache: Map<string, {d: number, v: any}>;
     private readonly ttl: number;
-    private readonly cleanupTimerId: any;
+    private readonly cleanupIntervalSeconds: number
     private readonly cleanupQueue: {d: number, k: string}[] = [];
+    private cleanupTimerId: any;
 
     constructor(ttlSeconds: number = 10 * 60, cleanupIntervalSeconds: number = 60) {
         this.cache = new Map<string, any>();
         this.ttl = ttlSeconds * 1000;
-        this.cleanupTimerId =
-            setInterval(
-                this.cleanup.bind(this),
-                cleanupIntervalSeconds * 1000);
+        this.cleanupIntervalSeconds = cleanupIntervalSeconds;
     }
 
     public set(k: string, v: T): void {
+        this.ensureCleanRunning();
         const d = Date.now() + this.ttl;
         this.cache.set(k, {d, v});
         this.cleanupQueue.push({d, k});
@@ -50,7 +49,19 @@ class TtlCache<T> {
         clearTimeout(this.cleanupTimerId);
     }
 
+    private ensureCleanRunning(): void {
+        if (!this.cleanupTimerId) {
+            this.cleanupTimerId =
+                setInterval(
+                    this.cleanup.bind(this),
+                    this.cleanupIntervalSeconds * 1000);
+
+            console.log(`Background cache cleanup started. Interval of ${this.cleanupIntervalSeconds} seconds between cleaup.`)
+        }
+    }
+
     private cleanup(): void {
+        let removed = 0;
         while (this.cleanupQueue.length > 0) {
             const entry = this.cleanupQueue[0];
             if (entry.d > Date.now()) {
@@ -66,5 +77,7 @@ class TtlCache<T> {
 
             this.cleanupQueue.shift();
         }
+
+        console.log(`Running background cache cleanup. Removed ${removed} entries.`)
     }
 }
