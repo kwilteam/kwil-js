@@ -10,5 +10,5 @@ yarn.lock
 /testing-functions
 /test
 /testapp
-/dist
+/src
 /pkg

@@ -1,3 +1,6 @@
+// this file is mostly for if i want to call a function quickly without having to run the whole test suite
+// this is not a part of the test suite and should not be run by jest
+
 const kwiljs = require("../dist/index")
 const ethers = require("ethers")
 const testDB = require("./test_schema.json")
@@ -14,10 +17,8 @@ async function test() {
         logging: true,
     })
 
-    console.log(wallet.address)
-
     const dbid = kwil.getDBID(wallet.address, "mydb")
-    // const dbid2 = kwil.getDBID(wallet.address, "ecclesia")
+    // const dbid2 = kwil.getDBID(wallet.address, "selectaction")
     // console.log(dbid)
     // broadcast(kwil, testDB, wallet)
     // await getSchema(kwil, dbid)
@@ -29,17 +30,25 @@ async function test() {
     // getFunder(kwil, wallet)
     // getAllowance(kwil, wallet)
     // getBalance(kwil, wallet)
-    // approve(kwil, wallet, BigInt("100"))
-    deposit(kwil, wallet, BigInt("100"))
+    // approve(kwil, wallet, BigInt(10 * 10^18))
+    // deposit(kwil, wallet, BigInt(10 * 10^18))
     // getDepositedBalance(kwil, wallet)
     // getTokenAddress(kwil, wallet)
-    // await getAction(kwil, dbid, "delete_post")
-    // await getAction(kwil, dbid, "add_post")
-    // await getAction(kwil, dbid, "delete_post")
-    // await newAction(kwil, dbid, "add_post", wallet)
-    // select(kwil, dbid, "SELECT * FROM posts")
+    // await execSingleAction(kwil, dbid, "add_post", wallet)
+    // select(kwil, dbid, "SELECT * FROM posts WHERE id > 100")
+    // select(kwil, dbid, `WITH RECURSIVE 
+    //                         cnt(x) AS (
+    //                         SELECT 1
+    //                         UNION ALL
+    //                         SELECT x+1 FROM cnt
+    //                         LIMIT (SELECT MAX(id) FROM posts)
+    //                     )
+    //                     SELECT x 
+    //                     FROM cnt
+    //                     WHERE x NOT IN (SELECT id FROM posts) AND x <= 135;
+    //         `)
     // bulkAction(kwil, dbid, "add_post", wallet)
-    // getSelectAction(kwil, dbid, "list_users", wallet)
+    // getSelectAction(kwil, dbid2, "get_items", wallet)
 }
 
 test()
@@ -54,19 +63,12 @@ async function getAccount(kwil, owner) {
     console.log(account)
 }
 
-async function newTx(kwil, tx) {
-    const txHash = await kwil.newDatabase(tx)
-    return txHash
-}
-
-async function prepareTx(kwil, tx, sig) {
-    const readytx = await newTx(kwil, tx)
-    const txHash = await readytx.prepareJson(sig)
-    return txHash
-}
-
 async function broadcast(kwil, tx, sig) {
-    const readytx = await prepareTx(kwil, tx, sig)
+    const readytx = await kwil
+        .dbBuilder()
+        .payload(tx)
+        .signer(sig)
+        .buildTx()
     const txHash = await kwil.broadcast(readytx)
     console.log(txHash)
 }
@@ -122,39 +124,44 @@ async function getTokenAddress(kwil, w) {
     console.log(tokenAddress)
 }
 
-async function getAction(kwil, dbid, action) {
-    const res = await kwil.getAction(dbid, action)
+async function getAction(kwil) {
+    const res = await kwil.actionBuilder()
     console.log(res)
 }
 
-async function newAction(kwil, dbid, action, w) {
-    const newAct = await kwil.getAction(dbid, action)
-    let act1 = newAct.newInstance()
-    act1.set("$id", 3)
-    act1.set("$user", "Luke")
-    act1.set("$title", "Hello")
-    act1.set("$body", "This is a test post")
-    let act2 = newAct.newInstance()
-    act2.set("$id", 4)
-    act2.set("$user", "Luke")
-    act2.set("$title", "Hello")
-    act2.set("$body", "This is a test post")
+async function execSingleAction(kwil, dbid, action, w) {
+    const query = await kwil.selectQuery("xca20642aa31af7db6b43755cf40be91c51a157e447e6cc36c1d94f0a", "SELECT COUNT(*) FROM posts");
 
-    if(!newAct.isComplete()) {
-        throw new Error("Action is not complete")
-    }
+    const count = query.data[0][`COUNT(*)`]
 
-    const res = await newAct.prepareAction(w)
-    const res2 = await kwil.broadcast(res)
+    const Input = kwiljs.Utils.ActionInput
 
-    console.log(res2)
+    const solo = Input.of()
+        .put("$id", count + 1)
+        .put("$user", "Luke")
+        .put("$title", "Hello")
+        .put("$body", "Hello World")
+
+    let act = await kwil
+        .actionBuilder()
+        .dbid(dbid)
+        .name(action)
+        .concat(solo)
+        .signer(w)
+        .buildTx();
+
+    const res = await kwil.broadcast(act)
+
+    console.log(res)
 }
 
 async function getSelectAction(kwil, dbid, selectAction, wallet) {
-    let action = await kwil.getAction(dbid, selectAction)
-    let act1 = action.newInstance()
-    // act1.set("$address", wallet.address)
-    const tx= await action.prepareAction(wallet)
+    const tx = await kwil
+        .actionBuilder()
+        .dbid(dbid)
+        .name(selectAction)
+        .signer(wallet)
+        .buildTx()
     const res = await kwil.broadcast(tx)
     console.log(res)
 }
@@ -164,37 +171,52 @@ async function select(kwil, dbid, query) {
     console.log(res)
 }
 
-const bulkActions = [
-    {
-        "$id": 105,
-        "$user": "Luke",
-        "$title": "Hello",
-        "$body": "Hello World",
-    },
-    {
-        "$id": 106,
-        "$user": "Luke",
-        "$title": "Hello",
-        "$body": "Hello World 2",
-    },
-    {
-        "$id": 107,
-        "$user": "Luke",
-        "$title": "Hello",
-        "$body": "Hello World 3",
-    },
-    {
-        "$id": 108,
-        "$user": "Luke",
-        "$title": "Hello",
-        "$body": "Hello World 4",
-    }
-]
+async function configObj(kwil, dbid) {
+    const query = await kwil.selectQuery(dbid, "SELECT COUNT(*) FROM posts");
+
+    const count = query.data[0][`COUNT(*)`]
+
+    const bulkActions = [
+        {
+            "$id": 129,
+            "$user": "Luke",
+            "$title": "Hello",
+            "$body": "Hello World",
+        },
+        {
+            "$id": 130,
+            "$user": "Luke",
+            "$title": "Hello",
+            "$body": "Hello World 2",
+        },
+        {
+            "$id": 131,
+            "$user": "Luke",
+            "$title": "Hello",
+            "$body": "Hello World 3",
+        },
+    ]
+
+    return bulkActions
+}
 
 async function bulkAction(kwil, dbid, action, w) {
-    let newAct = await kwil.getAction(dbid, action)
-    newAct.bulk(bulkActions)
-    const tx = await newAct.prepareAction(w)
+    const data = await configObj(kwil, dbid)
+
+    const Input = kwiljs.Utils.ActionInput
+
+    const inputs = new Input()
+        .putFromObjects(data)
+
+    const tx = await kwil
+        .actionBuilder()
+        .dbid(dbid)
+        .name(action)
+        .concat(inputs)
+        .signer(w)
+        .buildTx()
+
     const res = await kwil.broadcast(tx)
+
     console.log(res)
 }

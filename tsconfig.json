@@ -11,6 +11,16 @@
     "outDir": "./dist",
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
+    "sourceMap": true,
+    "declarationDir": "./dist",
+    "declarationMap": false
   },
-  "include": ["src/**/*", "src/common/db_builder"]
+  "include": [
+    "src/index.ts",
+    "src/core/*.ts",
+    "src/funder/abi/*.ts",
+    "src/funder/*.ts",
+    "src/client/kwil.ts",
+    "src/api_client/config.ts"
+  ]
 }
