@@ -12,6 +12,11 @@ import {ActionSchema} from "../core/database";
 
 const TXN_BUILD_IN_PROGRESS: ActionInput[] = [];
 
+/**
+ * `ActionBuilderImpl` class is an implementation of the `ActionBuilder` interface.
+ * It helps in building and transactions to execute database actions on the Kwil network.
+ */
+
 export class ActionBuilderImpl implements ActionBuilder {
     private readonly client: Kwil;
     private _signer: Nillable<SignerSupplier> = null;

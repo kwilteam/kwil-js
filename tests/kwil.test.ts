@@ -294,7 +294,7 @@ describe("ActionBuilder + ActionInput + Transaction public methods & broadcastin
         expect(actionInput.get("$title")).toBe("Test Post will be replaced");
     });
 
-    test("actionInpuit.putFromObjectIfAbsent should add all properties from an object if they do not exist", () => {
+    test("actionInput.putFromObjectIfAbsent should add all properties from an object if they do not exist", () => {
         const obj = {
             "$id": "This should not be entered",
             "$user": "This should not be entered",

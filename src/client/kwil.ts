@@ -15,6 +15,10 @@ import {ActionBuilder, DBBuilder} from "../core/builders";
 import {wrap} from "./intern";
 import { FundingConfig } from "../core/configs";
 
+/**
+ * The main class for interacting with the Kwil network.
+ */
+
 export abstract class Kwil {
     private readonly client: Client;
     //cache schemas
@@ -36,9 +40,24 @@ export abstract class Kwil {
         wrap(this, this.client.estimateCost.bind(this.client));
     }
 
+    /**
+     * Generates a unique database identifier (DBID) from the provided owner's Ethereum wallet address and a database name.
+     *
+     * @param owner - The owner's Ethereum wallet address. This should be a valid Ethereum address.
+     * @param name - The name of the database. This should be a unique name to identify the database.
+     * @returns A string that represents the unique identifier for the database.
+     */
+
     public getDBID(owner: string, name: string): string {
         return generateDBID(name, owner);
     }
+
+    /**
+     * Retrieves the schema of a database given its unique identifier (DBID).
+     *
+     * @param dbid - The unique identifier of the database. The DBID can be generated using the kwil.getDBID method.
+     * @returns A promise that resolves to the schema of the database. 
+     */
 
     public async getSchema(dbid: string): Promise<GenericResponse<Database<string>>> {
         //check cache
@@ -60,22 +79,55 @@ export abstract class Kwil {
         return res;
     }
 
+    /**
+     * Retrieves an account using the owner's Ethereum wallet address.
+     *
+     * @param owner - The owner's Ethereum wallet address. This should be a valid Ethereum address.
+     * @returns A promise that resolves to an Account object. The account object includes the owner's address, balance, and nonce.
+     */
+
     public async getAccount(owner: string): Promise<GenericResponse<Account>> {
         owner = owner.toLowerCase();
         return await this.client.getAccount(owner);
     }
 
+    /**
+     * Returns an instance of ActionBuilder for this client.
+     *
+     * @returns An ActionBuilder instance. ActionBuilder is used to build action transactions to be broadcasted to the Kwil network.
+     */
+
     public actionBuilder(): NonNil<ActionBuilder> {
         return ActionBuilderImpl.of(this);
     }
+
+    /**
+     * Returns an instance of DBBuilder for this client.
+     *
+     * @returns A DBBuilder instance. DBBuilder is used to build new database transactions to be broadcasted to the Kwil network.
+     */
 
     public dbBuilder(): NonNil<DBBuilder> {
         return DBBuilderImpl.of(this);
     }
 
+    /**
+     * Broadcasts a transaction on the network.
+     *
+     * @param tx - The transaction to broadcast. The transaction can be built using the ActionBuilder or DBBuilder.
+     * @returns A promise that resolves to the receipt of the transaction. The transaction receipt includes the transaction hash, fee, and body.
+     */
+
     public async broadcast(tx: Transaction): Promise<GenericResponse<TxReceipt>> {
         return await this.client.broadcast(tx);
     }
+
+    /**
+     * Lists all databases owned by a particular owner.
+     *
+     * @param owner - The owner's Ethereum wallet address. This should be a valid Ethereum address.
+     * @returns A promise that resolves to a list of database names.
+     */
 
     public async listDatabases(owner: string): Promise<GenericResponse<string[]>> {
         owner = owner.toLowerCase();
@@ -83,11 +135,25 @@ export abstract class Kwil {
         return await this.client.listDatabases(owner);
     }
 
+    /**
+     * Pings the server and gets a response.
+     *
+     * @returns A promise that resolves to a string indicating the server's response.
+     */
+
     public async ping(): Promise<GenericResponse<string>> {
         return await this.client.ping();
     }
 
-    public async getFunder(signer: Signer| ethers.Wallet): Promise<Funder> {
+    /**
+     * Gets a funder object associated with a signer, which can be used for adding funds to a user's account.
+     *
+     * @param signer - The signer associated with the user's account.
+     * @returns A promise that resolves to a Funder object.
+     * @throws Will throw an error if it fails to get the funding config.
+     */
+
+    public async getFunder(signer: Signer | ethers.Wallet): Promise<Funder> {
         //check cache
         if(!this.fundingConfig || !this.fundingConfig.data) {
             this.fundingConfig = await this.client.getFundingConfig();
@@ -98,6 +164,14 @@ export abstract class Kwil {
         
         return await Funder.create(signer, this.fundingConfig.data);
     }
+
+    /**
+     * Performs a SELECT query on a database. The query must be a read-only query.
+     *
+     * @param dbid - The unique identifier of the database. The DBID can be generated using the kwil.getDBID method.
+     * @param query - The SELECT query to execute.
+     * @returns A promise that resolves to a list of objects resulting from the query.
+     */
 
     public async selectQuery(dbid: string, query: string): Promise<GenericResponse<Object[]>> {
         const q: SelectQuery = {

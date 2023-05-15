@@ -1,3 +1,6 @@
+// this file is mostly for if i want to call a function quickly without having to run the whole test suite
+// this is not a part of the test suite and should not be run by jest
+
 const kwiljs = require("../dist/index")
 const ethers = require("ethers")
 const testDB = require("./test_schema.json")

@@ -16,7 +16,13 @@ namespace Types {
 const ActionInput = _ActionInput
 
 const Utils = {
+/**
+ * `ActionInput` class is a utility class for creating action inputs.
+ */
     ActionInput,
+/**
+ * Generates a unique database identifier (DBID) from the provided owner's Ethereum wallet address and a database name.
+ */
     generateDBID
 }
 
