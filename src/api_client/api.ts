@@ -25,7 +25,7 @@ export abstract class Api {
 
     private mergeDefaults(opts: Config): Config {
         return {
-            kwilProvider: opts.kwilProvider || 'https://kwil.co', // these aren't actually used here but are required by the interface
+            kwilProvider: opts.kwilProvider || 'https://provider.kwil.com', // these aren't actually used here but are required by the interface
             timeout: opts.timeout || 10000,
             apiKey: opts.apiKey || '',
             logging: opts.logging || false,
