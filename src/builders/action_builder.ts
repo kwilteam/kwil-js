@@ -1,7 +1,4 @@
 import {PayloadType, Transaction} from "../core/tx";
-import {bytesToBase64} from "../utils/base64";
-import {inputToDataType} from "../core/enums";
-import {marshal} from "../core/marshal";
 import {objects} from "../utils/objects";
 import {Nillable, NonNil, Promisy} from "../utils/types";
 import {Kwil} from "../client/kwil";
@@ -11,7 +8,6 @@ import {ActionInput} from "../core/actionInput";
 import {ActionSchema} from "../core/database";
 
 const TXN_BUILD_IN_PROGRESS: ActionInput[] = [];
-
 /**
  * `ActionBuilderImpl` class is an implementation of the `ActionBuilder` interface.
  * It helps in building and transactions to execute database actions on the Kwil network.
@@ -79,7 +75,6 @@ export class ActionBuilderImpl implements ActionBuilder {
     }
 
     private async dobuildTx(actions: ActionInput[]): Promise<Transaction> {
-        console.log(actions)
         const dbid = objects.requireNonNil(this._dbid);
         const name = objects.requireNonNil(this._name);
         const signer = await Promisy.resolveOrReject(this._signer);
@@ -154,8 +149,8 @@ export class ActionBuilderImpl implements ActionBuilder {
                 }
 
                 const val = copy.get(i);
-                const dataType = inputToDataType(val);
-                copy.put(i, bytesToBase64(marshal(val, dataType)));
+
+                copy.put(i, val);
             })
 
             if (missingInputs.size === 0) {
