@@ -6,6 +6,7 @@ import { Funder as _Funder } from './funder/funding'
 import { ActionBuilder as _ActionBuilder, DBBuilder as _DBBuilder } from './core/builders'
 import { ActionInput as _ActionInput} from './core/actionInput'
 import { Transaction as _Transaction } from './core/tx'
+import { Database as _Database, Table as _Table, Column as _Column, Attribute as _Attribute, Index as _Index, ActionSchema as _ActionSchema, SelectQuery as _SelectQuery } from './core/database'
 
 namespace Types {
     export type TxReceipt = _TxReceipt
@@ -14,6 +15,13 @@ namespace Types {
     export type ActionInput = _ActionInput
     export type DBBuilder = _DBBuilder
     export type Transaction = _Transaction
+    export type Database<T> = _Database<T>
+    export type Table<T> = _Table<T>
+    export type Column<T> = _Column<T>
+    export type Attribute<T> = _Attribute<T>
+    export type Index = _Index
+    export type ActionSchema = _ActionSchema
+    export type SelectQuery = _SelectQuery
 }
 
 const ActionInput = _ActionInput

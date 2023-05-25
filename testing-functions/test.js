@@ -21,7 +21,7 @@ async function test() {
     // const dbid2 = kwil.getDBID(wallet.address, "selectaction")
     // console.log(dbid)
     // broadcast(kwil, testDB, wallet)
-    // await getSchema(kwil, dbid)
+    await getSchema(kwil, dbid)
     // await getSchema(kwil, dbid)
     // await getSchema(kwil, dbid2)
     // getAccount(kwil, wallet.address)
@@ -55,7 +55,7 @@ test()
 
 async function getSchema(kwil, d) {
     const schema = await kwil.getSchema(d)
-    console.log(schema.data)
+    console.log(schema)
 }
 
 async function getAccount(kwil, owner) {
