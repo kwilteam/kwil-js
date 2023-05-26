@@ -1,4 +1,4 @@
-import {AmntObject, kwil, wallet} from "./testingUtils";
+import {AmntObject, dbid, kwil, wallet} from "./testingUtils";
 import {Transaction, TxReceipt} from "../dist/core/tx";
 import {ActionBuilder, DBBuilder} from "../dist/core/builders";
 import {ActionBuilderImpl} from "../dist/builders/action_builder";
@@ -8,7 +8,7 @@ import { ContractTransactionResponse, Wallet } from "ethers";
 import { AllowanceRes, BalanceRes, DepositRes, TokenRes } from "../dist/funder/types";
 import { waitForConfirmations } from "./testingUtils";
 import { schemaObj } from "./testingUtils";
-import schema from "./test_schema.json";
+import schema from "./test_schema2.json";
 import {DBBuilderImpl} from "../dist/builders/db_builder";
 import { Types, Utils } from "../dist/index";
 
@@ -16,11 +16,11 @@ import { Types, Utils } from "../dist/index";
 describe("Kwil", () => {
     test('getDBID should return the correct value', () => {
         const result = kwil.getDBID(wallet.address, "mydb");
-        expect(result).toBe("xca20642aa31af7db6b43755cf40be91c51a157e447e6cc36c1d94f0a");
+        expect(result).toBe("xcdd04ff7c5e4a939d5365ec9b54cc4aab8c610c415f5f9b33323ae77");
     });
 
     test('getSchema should return status 200', async () => {
-        const result = await kwil.getSchema("xca20642aa31af7db6b43755cf40be91c51a157e447e6cc36c1d94f0a");
+        const result = await kwil.getSchema(dbid);
         expect(result.status).toBe(200);
     })
 
@@ -40,7 +40,7 @@ describe("Kwil", () => {
     })
 
     test('select should return status 200', async () => {
-        const result = await kwil.selectQuery("xca20642aa31af7db6b43755cf40be91c51a157e447e6cc36c1d94f0a", "SELECT * FROM posts LIMIT 5");
+        const result = await kwil.selectQuery(dbid, "SELECT * FROM posts LIMIT 5");
         expect(result.status).toBe(200);
     });
 });
@@ -139,10 +139,10 @@ describe("ActionBuilder + ActionInput + Transaction public methods & broadcastin
     beforeAll(async () => {
         actionBuilder = kwil
             .actionBuilder()
-            .dbid("xca20642aa31af7db6b43755cf40be91c51a157e447e6cc36c1d94f0a")
+            .dbid(dbid)
             .name("add_post");
 
-        const count = await kwil.selectQuery("xca20642aa31af7db6b43755cf40be91c51a157e447e6cc36c1d94f0a", "SELECT COUNT(*) FROM posts");
+        const count = await kwil.selectQuery(dbid, "SELECT COUNT(*) FROM posts");
         if (count.status == 200 && count.data) {
             const amnt = count.data[0] as AmntObject;
             recordCount = amnt['COUNT(*)'];
@@ -540,7 +540,10 @@ describe("DBBuilder", () => {
     });
 
     test("DBBuilderImpl.payload() should return a DBBuilder", () => {
-        newDb = newDb.payload(db);
+        let readyDb = db;
+        db.owner = wallet.address;
+        
+        newDb = newDb.payload(readyDb);
 
         expect(newDb).toBeDefined();
         expect(newDb).toBeInstanceOf(DBBuilderImpl);
