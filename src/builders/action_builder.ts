@@ -79,7 +79,6 @@ export class ActionBuilderImpl implements ActionBuilder {
     }
 
     private async dobuildTx(actions: ActionInput[]): Promise<Transaction> {
-        console.log(actions)
         const dbid = objects.requireNonNil(this._dbid);
         const name = objects.requireNonNil(this._name);
         const signer = await Promisy.resolveOrReject(this._signer);
