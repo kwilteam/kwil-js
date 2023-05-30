@@ -49,7 +49,7 @@ export abstract class Kwil {
      */
 
     public getDBID(owner: string, name: string): string {
-        return generateDBID(name, owner);
+        return generateDBID(owner, name);
     }
 
     /**
