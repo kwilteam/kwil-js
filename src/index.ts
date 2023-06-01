@@ -7,6 +7,7 @@ import { ActionBuilder as _ActionBuilder, DBBuilder as _DBBuilder } from './core
 import { ActionInput as _ActionInput} from './core/actionInput'
 import { Transaction as _Transaction } from './core/tx'
 import { Database as _Database, Table as _Table, Column as _Column, Attribute as _Attribute, Index as _Index, ActionSchema as _ActionSchema, SelectQuery as _SelectQuery } from './core/database'
+import { GenericResponse } from './core/resreq'
 
 namespace Types {
     export type TxReceipt = _TxReceipt
@@ -22,6 +23,7 @@ namespace Types {
     export type Index = _Index
     export type ActionSchema = _ActionSchema
     export type SelectQuery = _SelectQuery
+    export type NetworkResponse<T> = GenericResponse<T>
 }
 
 const ActionInput = _ActionInput
