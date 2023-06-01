@@ -3,7 +3,7 @@
 
 const kwiljs = require("../dist/index")
 const ethers = require("ethers")
-const testDB = require("./test_schema.json")
+const testDB = require("./test_schema2.json")
 require("dotenv").config()
 
 async function test() {
@@ -12,16 +12,16 @@ async function test() {
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
 
     const kwil = new kwiljs.NodeKwil({
-        kwilProvider: "https://provider.kwil.com",
+        kwilProvider: "http://localhost:56586",
         timeout: 10000,
         logging: true,
     })
 
-    const dbid = kwil.getDBID(wallet.address, "mydb")
+    const dbid = kwil.getDBID(wallet.address, "testdb")
     // const dbid2 = kwil.getDBID(wallet.address, "selectaction")
     // console.log(dbid)
     // broadcast(kwil, testDB, wallet)
-    await getSchema(kwil, dbid)
+    // await getSchema(kwil, dbid)
     // await getSchema(kwil, dbid)
     // await getSchema(kwil, dbid2)
     // getAccount(kwil, wallet.address)
@@ -35,7 +35,7 @@ async function test() {
     // getDepositedBalance(kwil, wallet)
     // getTokenAddress(kwil, wallet)
     // await execSingleAction(kwil, dbid, "add_post", wallet)
-    // select(kwil, dbid, "SELECT * FROM posts WHERE id > 100")
+    select(kwil, dbid, "SELECT * FROM users")
     // select(kwil, dbid, `WITH RECURSIVE 
     //                         cnt(x) AS (
     //                         SELECT 1
@@ -64,9 +64,11 @@ async function getAccount(kwil, owner) {
 }
 
 async function broadcast(kwil, tx, sig) {
+    let ownedTx = tx
+    ownedTx.owner = sig.address
     const readytx = await kwil
         .dbBuilder()
-        .payload(tx)
+        .payload(ownedTx)
         .signer(sig)
         .buildTx()
     const txHash = await kwil.broadcast(readytx)

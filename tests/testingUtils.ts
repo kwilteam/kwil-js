@@ -58,7 +58,9 @@ export interface ActionObj {
 
 
 export const kwil = new NodeKwil({
-    kwilProvider: "https://provider.kwil.com",
+    kwilProvider: "http://localhost:62296",
     timeout: 10000,
     logging: true,
 })
+
+export const dbid = kwil.getDBID(wallet.address, "mydb")
