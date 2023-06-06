@@ -1,7 +1,7 @@
 import {BigNumberish, ethers, InterfaceAbi, Signer} from "ethers";
 import {createOverride} from "./override";
 
-export class Token{
+export class TokenV6{
     private readonly contract: ethers.Contract;
     private readonly provider: Signer | ethers.Wallet;
     private name?: Promise<string>;

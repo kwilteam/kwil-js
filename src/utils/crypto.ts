@@ -5,6 +5,7 @@ import {Signer, ethers} from 'ethers';
 import { Signature, SignatureType } from '../core/signature';
 import {  HexToUint8Array,  } from './bytes';
 import { base64ToBytes, bytesToBase64 } from './base64';
+import { Signer as Signerv5 } from 'ethers5'
 
 export function sha384StringToString(message: string): string {
     // noinspection JSPotentiallyInvalidConstructorUsage
@@ -45,4 +46,9 @@ export async function sign(message: string, signer: Signer | ethers.Wallet): Pro
         signature_bytes: encodedSignature,
         signature_type: SignatureType.ACCOUNT_SECP256K1_UNCOMPRESSED,
     }
+}
+
+export function isV5Signer(obj: any): obj is Signerv5 {
+    return obj
+        && typeof obj.getChainId === 'function'
 }

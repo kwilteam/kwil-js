@@ -58,7 +58,7 @@ export interface ActionObj {
 
 
 export const kwil = new NodeKwil({
-    kwilProvider: "http://localhost:62296",
+    kwilProvider: "https://provider.kwil.com",
     timeout: 10000,
     logging: true,
 })

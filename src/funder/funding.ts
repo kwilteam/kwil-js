@@ -1,35 +1,52 @@
 import {BigNumberish, ethers, Signer} from "ethers";
 import {FundingConfig} from "../core/configs";
-import {Escrow} from "./escrow";
-import {Token} from "./token";
+import { EscrowV6 } from "./escrowV6";
+import {TokenV6} from "./tokenV6";
 import erc20Abi from './abi/erc20HumanAbi';
 import kwilAbi from './abi/kwilHumanAbi';
 import {AllowanceRes, BalanceRes, DepositRes, TokenRes} from "./types";
+import { Signer as Signerv5, Wallet as Walletv5 } from "ethers5"
+import { isV5Signer } from "../utils/crypto";
+import { EscrowV5 } from "./escrowV5";
+import { TokenV5 } from "./TokenV5";
 
 /**
  * `Funder` class helps manage the funding process for a user's account on Kwil.
  */
 
 export class Funder {
-    private readonly signer: Signer| ethers.Wallet;
+    private readonly signer: Signer | ethers.Wallet | Signerv5 | Walletv5;
     private readonly poolAddress: string;
     private readonly providerAddress: string;
-    private erc20Contract?: Token;
-    private escrowContract?: Escrow;
+    private erc20Contract?: TokenV6 | TokenV5;
+    private escrowContract?: EscrowV6 | EscrowV5;
 
-    private constructor(signer: Signer | ethers.Wallet, config: FundingConfig) {
+    private constructor(signer: Signer | ethers.Wallet | Signerv5 | Walletv5, config: FundingConfig) {
         this.poolAddress = config.pool_address;
         this.signer = signer;
         this.providerAddress = config.provider_address;
     }
 
-    public static async create(signer: Signer | ethers.Wallet, config: FundingConfig): Promise<Funder> {
+    public static async create(signer: Signer | ethers.Wallet | Signerv5 | Walletv5, config: FundingConfig): Promise<Funder> {
         const funder = new Funder(signer, config);
-        funder.escrowContract = new Escrow(funder.providerAddress, funder.poolAddress, kwilAbi, signer);
         
-        let tokenAddress = await funder.escrowContract.getTokenAddress();
+        if(!isV5Signer(signer) || signer instanceof ethers.Wallet) {
+            funder.escrowContract = new EscrowV6(funder.providerAddress, funder.poolAddress, kwilAbi, signer);
+        
+            let tokenAddress = await funder.escrowContract.getTokenAddress();
+    
+            funder.erc20Contract = new TokenV6(tokenAddress, erc20Abi, signer);
+        }
 
-        funder.erc20Contract = new Token(tokenAddress, erc20Abi, signer);
+        if(isV5Signer(signer) || signer instanceof Walletv5) {
+            funder.escrowContract = new EscrowV5(funder.providerAddress, funder.poolAddress, kwilAbi, signer);
+            
+            let tokenAddress = await funder.escrowContract.getTokenAddress();
+
+            funder.erc20Contract = new TokenV5(tokenAddress, erc20Abi, signer);
+            console.log(funder)
+        }
+        
 
         return funder;
     }
