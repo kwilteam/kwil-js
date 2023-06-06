@@ -149,7 +149,7 @@ export abstract class Kwil {
     /**
      * Gets a funder object associated with a signer, which can be used for adding funds to a user's account.
      *
-     * @param signer - The signer associated with the user's account.
+     * @param signer - The signer associated with the user's account. This can be a signer from Ethers v5 or Ethers v6.
      * @returns A promise that resolves to a Funder object.
      * @throws Will throw an error if it fails to get the funding config.
      */

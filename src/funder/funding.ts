@@ -44,7 +44,6 @@ export class Funder {
             let tokenAddress = await funder.escrowContract.getTokenAddress();
 
             funder.erc20Contract = new TokenV5(tokenAddress, erc20Abi, signer);
-            console.log(funder)
         }
         
 

@@ -158,7 +158,7 @@ describe("ActionBuilder + ActionInput + Transaction public methods & broadcastin
         expect(actionBuilder).toBeInstanceOf(ActionBuilderImpl);
     });
 
-    test('actionInput.put with incomplete inputs should return the actionInput + inputs', () => {
+    test('actionInput.put with complete inputs should return the actionInput + inputs', () => {
         actionInput.put("$id", recordCount + 1);
         actionInput.put("$user", "Luke");
         actionInput.put("$title", "Test Post");

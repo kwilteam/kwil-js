@@ -16,6 +16,7 @@ import {base64ToBytes, bytesToBase64} from "../utils/base64";
 import {Kwil} from "../client/kwil";
 import {SignerSupplier, TxnBuilder} from "../core/builders";
 import {unwrap} from "../client/intern";
+import {Wallet as Walletv5, Signer as Signerv5} from "ethers5"
 
 export class TxnBuilderImpl implements TxnBuilder {
     private readonly client: Kwil;
@@ -82,7 +83,7 @@ export class TxnBuilderImpl implements TxnBuilder {
         return TxnBuilderImpl.sign(postEstTxn, signer);
     }
 
-    private static async sign(tx: Transaction, signer: Signer | ethers.Wallet): Promise<Transaction> {
+    private static async sign(tx: Transaction, signer: Signer | ethers.Wallet | Walletv5 | Signerv5): Promise<Transaction> {
         const hash = TxnBuilderImpl.hash_txn(tx);
         const signature = await crypto_sign(hash, signer);
         const sender = await signer.getAddress();

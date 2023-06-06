@@ -5,7 +5,8 @@ import {Signer, ethers} from 'ethers';
 import { Signature, SignatureType } from '../core/signature';
 import {  HexToUint8Array,  } from './bytes';
 import { base64ToBytes, bytesToBase64 } from './base64';
-import { Signer as Signerv5 } from 'ethers5'
+import {Wallet as Walletv5, Signer as Signerv5} from "ethers5";
+
 
 export function sha384StringToString(message: string): string {
     // noinspection JSPotentiallyInvalidConstructorUsage
@@ -38,7 +39,7 @@ export function sha224StringToString(message: string): string {
     return shaObj.getHash('HEX');
 }
 
-export async function sign(message: string, signer: Signer | ethers.Wallet): Promise<Signature> {
+export async function sign(message: string, signer: Signer | ethers.Wallet | Walletv5 | Signerv5): Promise<Signature> {
     const sig =  await signer.signMessage(base64ToBytes(message));
     const encodedSignature = bytesToBase64(HexToUint8Array(sig))
 
