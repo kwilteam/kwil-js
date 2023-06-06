@@ -14,6 +14,7 @@ import {NonNil} from "../utils/types";
 import {ActionBuilder, DBBuilder} from "../core/builders";
 import {wrap} from "./intern";
 import { FundingConfig } from "../core/configs";
+import { Signer as Signerv5, Wallet as Walletv5 } from "ethers5"
 
 /**
  * The main class for interacting with the Kwil network.
@@ -148,12 +149,12 @@ export abstract class Kwil {
     /**
      * Gets a funder object associated with a signer, which can be used for adding funds to a user's account.
      *
-     * @param signer - The signer associated with the user's account.
+     * @param signer - The signer associated with the user's account. This can be a signer from Ethers v5 or Ethers v6.
      * @returns A promise that resolves to a Funder object.
      * @throws Will throw an error if it fails to get the funding config.
      */
 
-    public async getFunder(signer: Signer | ethers.Wallet): Promise<Funder> {
+    public async getFunder(signer: Signer | ethers.Wallet | Signerv5 | Walletv5): Promise<Funder> {
         //check cache
         if(!this.fundingConfig || !this.fundingConfig.data) {
             this.fundingConfig = await this.client.getFundingConfig();

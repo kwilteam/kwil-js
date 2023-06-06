@@ -2,8 +2,9 @@ import {NonNil, Promisy} from "../utils/types";
 import {PayloadType, Transaction} from "./tx";
 import {ethers, Signer as _Signer} from "ethers";
 import {ActionInput} from "./actionInput";
+import {Wallet as Walletv5, Signer as Signerv5} from "ethers5";
 
-export type Signer = NonNil<_Signer | ethers.Wallet>;
+export type Signer = NonNil<_Signer | ethers.Wallet | Walletv5 | Signerv5>;
 export type SignerSupplier = Promisy<Signer>
 
 export interface TxnBuilder {
@@ -20,7 +21,7 @@ export interface DBBuilder {
     /**
      * Sets the signer for the database transaction.
      * 
-     * @param signer - The signer for the database transaction. This must be a valid Ethereum signer.
+     * @param signer - The signer for the database transaction. This must be a valid Ethereum signer from Ethers v5 or Ethers v6.
      * @returns The current `DBBuilder` instance for chaining.
      */
 
@@ -78,7 +79,7 @@ export interface ActionBuilder {
     /**
      * Sets the signer for the action transaction.
      * 
-     * @param signer - The signer for the action. This must be a valid Ethereum signer.
+     * @param signer - The signer for the action. This must be a valid Ethereum signer from Ethers v5 or Ethers v6.
      * @returns The current `ActionBuilder` instance for chaining.
      * @throws Will throw an error if the action is being built.
      */

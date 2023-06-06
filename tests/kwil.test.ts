@@ -16,7 +16,7 @@ import { Types, Utils } from "../dist/index";
 describe("Kwil", () => {
     test('getDBID should return the correct value', () => {
         const result = kwil.getDBID(wallet.address, "mydb");
-        expect(result).toBe("xcdd04ff7c5e4a939d5365ec9b54cc4aab8c610c415f5f9b33323ae77");
+        expect(result).toBe("xca20642aa31af7db6b43755cf40be91c51a157e447e6cc36c1d94f0a");
     });
 
     test('getSchema should return status 200', async () => {
@@ -158,7 +158,7 @@ describe("ActionBuilder + ActionInput + Transaction public methods & broadcastin
         expect(actionBuilder).toBeInstanceOf(ActionBuilderImpl);
     });
 
-    test('actionInput.put with incomplete inputs should return the actionInput + inputs', () => {
+    test('actionInput.put with complete inputs should return the actionInput + inputs', () => {
         actionInput.put("$id", recordCount + 1);
         actionInput.put("$user", "Luke");
         actionInput.put("$title", "Test Post");

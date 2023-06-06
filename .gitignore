@@ -8,7 +8,6 @@
 yarn.lock
 .env
 /testing-functions
-/test
-/testapp
 /dist
 /pkg
+testapp/node_modules
