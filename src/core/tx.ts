@@ -26,6 +26,11 @@ export type TxnData = {
     sender: string;
 }
 
+export interface DropDbPayload {
+    owner: string;
+    name: string;
+}
+
 export class Transaction implements TxnData {
     private readonly data: Readonly<TxnData>;
 

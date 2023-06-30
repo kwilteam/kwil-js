@@ -10,6 +10,7 @@ import {Funder} from "../funder/funding";
 import {ActionBuilderImpl} from "../builders/action_builder";
 import {base64ToBytes} from "../utils/base64";
 import {DBBuilderImpl} from "../builders/db_builder";
+import {DropDBBuilderImpl} from "../builders/drop_db_builder";
 import {NonNil} from "../utils/types";
 import {ActionBuilder, DBBuilder} from "../core/builders";
 import {wrap} from "./intern";
@@ -111,6 +112,16 @@ export abstract class Kwil {
     public dbBuilder(): NonNil<DBBuilder> {
         return DBBuilderImpl.of(this);
     }
+
+     /**
+     * Returns an instance of Drop Database Builder for this client.
+     *
+     * @returns A Drop Database Builder instance. Drop Database Builder is used to build drop database transactions to be broadcasted to the Kwil network.
+     */
+
+     public dropDBBuilder(): NonNil<DBBuilder> {
+        return DropDBBuilderImpl.of(this);
+     }
 
     /**
      * Broadcasts a transaction on the network.
