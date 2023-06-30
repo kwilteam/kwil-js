@@ -10,6 +10,7 @@ import { waitForConfirmations } from "./testingUtils";
 import { schemaObj } from "./testingUtils";
 import schema from "./test_schema2.json";
 import {DBBuilderImpl} from "../dist/builders/db_builder";
+import {DropDBBuilderImpl} from "../dist/builders/drop_db_builder";
 import { Types, Utils } from "../dist/index";
 
 // Kwil methods that do NOT return another class (e.g. funder, action, and DBBuilder)
@@ -583,5 +584,86 @@ describe("DBBuilder", () => {
             fee: expect.any(String),
             body: null,
         });
+    });
+});
+
+// Testing all methods on Drop Database
+describe("Drop Database", () => {
+    let payload = {
+        owner: "",
+        name: ""
+    }
+    let dropDb: DBBuilder;
+
+    beforeAll(async () => {
+        // retrieve latest database name
+        const dbAmount = await kwil.listDatabases(wallet.address);
+        const count = dbAmount.data as string[];
+        payload.name = `test_db_${count.length}`;
+    });
+
+    test('kwil.dropDatabase should return a DBBuilder', () => {
+        dropDb = kwil.dropDBBuilder();
+        expect(dropDb).toBeDefined();
+        expect(dropDb).toBeInstanceOf(DropDBBuilderImpl);
+    })
+
+    test("DBBuilderImpl.signer() should return a DBBuilder", () => {
+        dropDb = dropDb.signer(wallet);
+
+        expect(dropDb).toBeDefined();
+        expect(dropDb).toBeInstanceOf(DropDBBuilderImpl);
+    });
+
+    test("DBBuilderImpl.payload() should return a DBBuilder", () => {
+        payload.owner = wallet.address;
+        dropDb = dropDb.payload(payload);
+
+        expect(dropDb).toBeDefined();
+        expect(dropDb).toBeInstanceOf(DropDBBuilderImpl);
+    });
+
+    let dropDbTx: Transaction;
+
+    test('buildTx should return a signed transaction', async () => {
+        dropDbTx = await dropDb
+            .buildTx();
+        expect(dropDbTx).toBeDefined();
+        expect(dropDbTx).toBeInstanceOf(Transaction);
+        expect(dropDbTx.isSigned()).toBe(true);
+    });
+
+    test("All methods and getters on the Transaction class should return the correct values", () => {
+        expect(dropDbTx).toBeDefined();
+        expect(dropDbTx).toBeInstanceOf(Transaction);
+        expect(dropDbTx.isSigned()).toBe(true);
+        expect(dropDbTx.hash).toBeDefined();
+        expect(dropDbTx.payload_type).toBeDefined();
+        expect(dropDbTx.payload).toBeDefined();
+        expect(dropDbTx.fee).toBeDefined();
+        expect(dropDbTx.fee).not.toBe("0");
+        expect(dropDbTx.nonce).toBeGreaterThan(-1);
+        expect(dropDbTx.signature).toBeDefined();
+        expect(dropDbTx.signature.signature_bytes).toBeDefined();
+        expect(dropDbTx.signature.signature_bytes).not.toHaveLength(0);
+        expect(dropDbTx.signature.signature_type).toBeDefined();
+    });
+
+    test('the database should be able to be broadcasted and return a txHash and a txReceipt', async () => {
+        const result = await kwil.broadcast(dropDbTx);
+        expect(result.data).toBeDefined();
+        expect(result.data).toMatchObject<TxReceipt>({
+            txHash: expect.any(String),
+            fee: expect.any(String),
+            body: null,
+        });
+    });
+
+    test('the database should be dropped', async () => {
+        const result = await kwil.listDatabases(wallet.address);
+        console.log(result)
+        console.log(payload.name)
+        expect(result.data).toBeDefined();
+        expect(result.data).not.toContain(payload.name);
     });
 });
