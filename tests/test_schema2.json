@@ -96,7 +96,7 @@
     ],
     "actions": [
         {
-            "name": "create_user",
+            "name": "createUserTest",
             "public": true,
             "inputs": [
                 "$id",

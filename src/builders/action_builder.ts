@@ -31,7 +31,7 @@ export class ActionBuilderImpl implements ActionBuilder {
     name(actionName: string): NonNil<ActionBuilder> {
         this.assertNotBuilding();
 
-        this._name = objects.requireNonNil(actionName);
+        this._name = objects.requireNonNil(actionName.toLowerCase());
         return this;
     }
 
