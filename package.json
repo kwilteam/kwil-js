@@ -1,6 +1,6 @@
 {
   "name": "kwil",
-  "version": "3.2.2",
+  "version": "3.2.3",
   "description": "",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -20,7 +20,7 @@
     "pack": "npm run pack_build && npm run pack_pre && npm --prefix ./dist pack && npm run pack_post"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@types/jest": "^29.5.1",
     "@types/node": "^18.11.17",
