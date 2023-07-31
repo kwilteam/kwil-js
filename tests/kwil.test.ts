@@ -587,6 +587,116 @@ describe("DBBuilder", () => {
     });
 });
 
+describe("Testing case insentivity on test_db", () => {
+    let dbName: string;
+    let dbid: string;
+
+    const actionInputs = Utils.ActionInput.of()
+        .put("$id", 1)
+        .put("$username", "Luke")
+        .put("$age", 25)
+
+    beforeAll(async () => {
+        const dbAmount = await kwil.listDatabases(wallet.address);
+        const count = dbAmount.data as string[];
+        dbName = `test_db_${count.length}`;
+        dbid = kwil.getDBID(wallet.address, dbName);
+    });
+
+    test("createUserTest action should execute", async () => {
+        const tx = await kwil
+            .actionBuilder()
+            .dbid(dbid)
+            .name("createUserTest")
+            .signer(wallet)
+            .concat(actionInputs)
+            .buildTx();
+
+        const result = await kwil.broadcast(tx);
+
+        expect(result.data).toBeDefined();
+        expect(result.data).toMatchObject<TxReceipt>({
+            txHash: expect.any(String),
+            fee: expect.any(String),
+            body: expect.any(Array),
+        });
+    });
+
+    test("delete_user action should execute", async () => {
+        const tx = await kwil
+            .actionBuilder()
+            .dbid(dbid)
+            .name("delete_user")
+            .signer(wallet)
+            .buildTx();
+
+        const result = await kwil.broadcast(tx);
+
+        expect(result.data).toBeDefined();
+        expect(result.data).toMatchObject<TxReceipt>({
+            txHash: expect.any(String),
+            fee: expect.any(String),
+            body: expect.any(Array),
+        });
+    });
+
+    test('CREATEUSERTEST action should execute', async () => {
+        const tx = await kwil
+            .actionBuilder()
+            .dbid(dbid)
+            .name("CREATEUSERTEST")
+            .signer(wallet)
+            .concat(actionInputs)
+            .buildTx();
+
+        const result = await kwil.broadcast(tx);
+
+        expect(result.data).toBeDefined();
+        expect(result.data).toMatchObject<TxReceipt>({
+            txHash: expect.any(String),
+            fee: expect.any(String),
+            body: expect.any(Array),
+        });
+    });
+
+    test('DELETE_USER action should execute', async () => {
+        const tx = await kwil
+            .actionBuilder()
+            .dbid(dbid)
+            .name("DELETE_USER")
+            .signer(wallet)
+            .buildTx();
+
+        const result = await kwil.broadcast(tx);
+
+        expect(result.data).toBeDefined();
+        expect(result.data).toMatchObject<TxReceipt>({
+            txHash: expect.any(String),
+            fee: expect.any(String),
+            body: expect.any(Array),
+        });
+    });
+
+    test('createusertest action should execute', async () => {
+        const tx = await kwil
+            .actionBuilder()
+            .dbid(dbid)
+            .name("createusertest")
+            .signer(wallet)
+            .concat(actionInputs)
+            .buildTx();
+
+        const result = await kwil.broadcast(tx);
+
+        expect(result.data).toBeDefined();
+        expect(result.data).toMatchObject<TxReceipt>({
+            txHash: expect.any(String),
+            fee: expect.any(String),
+            body: expect.any(Array),
+        });
+    });
+})
+
 // Testing all methods on Drop Database
 describe("Drop Database", () => {
     let payload = {
@@ -599,7 +709,7 @@ describe("Drop Database", () => {
         // retrieve latest database name
         const dbAmount = await kwil.listDatabases(wallet.address);
         const count = dbAmount.data as string[];
-        payload.name = `test_db_${count.length}`;
+        payload.name = `test_DB_${count.length}`;
     });
 
     test('kwil.dropDatabase should return a DBBuilder', () => {
