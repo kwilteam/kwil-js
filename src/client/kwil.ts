@@ -11,7 +11,7 @@ import {ActionBuilderImpl} from "../builders/action_builder";
 import {base64ToBytes} from "../utils/base64";
 import {DBBuilderImpl} from "../builders/db_builder";
 import {NonNil} from "../utils/types";
-import {ActionBuilder, DBBuilder} from "../core/builders";
+import {ActionBuilder, DBBuilder, ReadActionBuilder} from "../core/builders";
 import {wrap} from "./intern";
 import { FundingConfig } from "../core/configs";
 import { Signer as Signerv5, Wallet as Walletv5 } from "ethers5"
@@ -123,6 +123,16 @@ export abstract class Kwil {
      public dropDBBuilder(): NonNil<DBBuilder> {
         return DBBuilderImpl.of(this, PayloadType.DROP_DATABASE);
      }
+
+    /**
+     * Returns an instance of ReadActionBuilder for this client.
+     * 
+     * @returns A ReadActionBuilder instance. ReadActionBuilder is used to build and call read-only actions on the Kwil network.
+    */
+
+    public readOnlyAction(): NonNil<ReadActionBuilder> {
+        return ReadActionBuilderImpl.of(this, this.client);
+    }
 
     /**
      * Broadcasts a transaction on the network.
