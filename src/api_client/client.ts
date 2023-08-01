@@ -9,12 +9,14 @@ import {Config} from "./config";
 import {
     BroadcastReq,
     BroadcastRes,
+    CallRes,
     EstimateCostReq,
     EstimateCostRes, FundingConfigRes,
     GenericResponse,
     GetAccountResponse, GetSchemaResponse,
     ListDatabasesResponse, PongRes, SelectRes
 } from "../core/resreq";
+import { ReadActionReq } from "../core/readAction";
 
 export default class Client extends Api {
     constructor(opts: Config) {
@@ -90,6 +92,26 @@ export default class Client extends Api {
     public async selectQuery(query: SelectQuery): Promise<GenericResponse<string>> {
         const res = await super.post<SelectRes>(`/api/v1/query`, query)
         return checkRes(res, r => r.result);
+    }
+
+    public async callRequest(body: ReadActionReq): Promise<GenericResponse<string>> {
+        const res = await super.post<CallRes>(`/api/v1/call`, body)
+        
+        checkRes(res, r => r.result);
+
+        let result: string = '';
+
+        if(res.data.result) {
+            const uint8 = new Uint8Array(base64ToBytes(res.data.result));
+            const decoder = new TextDecoder('utf-8');
+            const jsonString = decoder.decode(uint8);
+            result = JSON.parse(jsonString);
+        }
+
+        return {
+            status: res.status,
+            data: result
+        }
     }
 }
 

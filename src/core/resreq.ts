@@ -35,6 +35,10 @@ export interface BroadcastRes {
     receipt: TxReceipt;
 }
 
+export interface CallRes {
+    result: string;
+}
+
 export interface PongRes {
     message: string;
 }

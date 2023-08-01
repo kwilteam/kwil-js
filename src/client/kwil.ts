@@ -125,6 +125,16 @@ export abstract class Kwil {
     }
 
     /**
+     * Returns an instance of ReadActionBuilder for this client.
+     * 
+     * @returns A ReadActionBuilder instance. ReadActionBuilder is used to build and call read-only actions on the Kwil network.
+    */
+
+    public readOnlyAction(): NonNil<ReadActionBuilder> {
+        return ReadActionBuilderImpl.of(this, this.client);
+    }
+
+    /**
      * Broadcasts a transaction on the network.
      *
      * @param tx - The transaction to broadcast. The transaction can be built using the ActionBuilder or DBBuilder.

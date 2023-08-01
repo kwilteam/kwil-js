@@ -33,6 +33,8 @@ export interface Index {
 export interface ActionSchema {
     get name(): string;
     get public(): boolean;
+    get mutability(): 'view' | 'update';
+    get auxiliaries(): ReadonlyArray<string>;
     get inputs(): ReadonlyArray<string>;
     get statements(): ReadonlyArray<string>;
 }
