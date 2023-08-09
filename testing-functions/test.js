@@ -3,7 +3,7 @@
 
 const kwiljs = require("../dist/index")
 const ethers = require("ethers")
-const testDB = require("./test_schema2.json")
+const testDB = require("./mydb.json")
 require("dotenv").config()
 
 async function test() {
@@ -12,13 +12,12 @@ async function test() {
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
 
     const kwil = new kwiljs.NodeKwil({
-        kwilProvider: "http://localhost:56586",
+        kwilProvider: "http://localhost:55949",
         timeout: 10000,
         logging: true,
     })
 
     const dbid = kwil.getDBID(wallet.address, "mydb")
-    console.log(dbid)
     // const dbid2 = kwil.getDBID(wallet.address, "selectaction")
     // console.log(dbid)
     // broadcast(kwil, testDB, wallet)
@@ -31,12 +30,12 @@ async function test() {
     // getFunder(kwil, wallet)
     // getAllowance(kwil, wallet)
     // getBalance(kwil, wallet)
-    // approve(kwil, wallet, BigInt(10 * 10^18))
-    // deposit(kwil, wallet, BigInt(10 * 10^18))
+    // await approve(kwil, wallet, BigInt(10 * 10^18))
+    // await deposit(kwil, wallet, BigInt(10 * 10^18))
     // getDepositedBalance(kwil, wallet)
     // getTokenAddress(kwil, wallet)
     // await execSingleAction(kwil, dbid, "add_post", wallet)
-    select(kwil, dbid, "SELECT * FROM users")
+    // select(kwil, dbid, "SELECT * FROM users")
     // select(kwil, dbid, `WITH RECURSIVE 
     //                         cnt(x) AS (
     //                         SELECT 1
@@ -50,13 +49,17 @@ async function test() {
     //         `)
     // bulkAction(kwil, dbid, "add_post", wallet)
     // getSelectAction(kwil, dbid2, "get_items", wallet)
+    // await dropDb(kwil, wallet)
+    // await testNonViewAction(kwil, dbid, wallet)
+    // await testViewWithParam(kwil, dbid, wallet)
+    await testViewWithSign(kwil, dbid, wallet)
 }
 
 test()
 
 async function getSchema(kwil, d) {
     const schema = await kwil.getSchema(d)
-    console.log(schema)
+    console.log(schema.data)
 }
 
 async function getAccount(kwil, owner) {
@@ -222,4 +225,62 @@ async function bulkAction(kwil, dbid, action, w) {
     const res = await kwil.broadcast(tx)
 
     console.log(res)
+}
+
+async function dropDb(kwil, wallet) {
+    const tx = await kwil   
+        .dropDBBuilder()
+        .signer(wallet)
+        .payload({
+            owner: wallet.address,
+            name: "mydb"
+        })
+        .buildTx()
+
+    const res = await kwil.broadcast(tx)
+
+    console.log(res)
+}
+
+async function testNonViewAction(kwil, dbid, wallet) {
+    const tx = await kwil
+        .actionBuilder()
+        .dbid(dbid)
+        .name('read_posts')
+        .signer(wallet)
+        .buildTx()
+
+    const res = await kwil.broadcast(tx)
+
+    console.log(res.data)
+}
+
+async function testViewWithParam(kwil, dbid, wallet) {
+    const actionInput = kwiljs.Utils.ActionInput
+        .of()
+        .put("$id", 1)
+
+    const msg = await kwil
+        .actionBuilder()
+        .dbid(dbid)
+        .name('view_with_param')
+        .concat(actionInput)
+        .buildMsg()
+
+    const res = await kwil.call(msg);
+
+    console.log(res.data.result)
+}
+
+async function testViewWithSign(kwil, dbid, wallet) {
+    const msg = await kwil
+        .actionBuilder()
+        .dbid(dbid)
+        .name('view_must_sign')
+        .signer(wallet)
+        .buildMsg()
+
+    const res = await kwil.call(msg);
+
+    console.log(res.data.result)
 }

@@ -17,6 +17,7 @@ import { wrap } from "./intern";
 import { FundingConfig } from "../core/configs";
 import { Signer as Signerv5, Wallet as Walletv5 } from "ethers5"
 import { Cache } from "../utils/cache";
+import { Message, MsgReceipt } from "../core/message";
 
 /**
  * The main class for interacting with the Kwil network.
@@ -98,7 +99,7 @@ export abstract class Kwil {
      * Returns an instance of ActionBuilder for this client.
      *
      * @returns An ActionBuilder instance. ActionBuilder is used to build action transactions to be broadcasted to the Kwil network.
-     */
+     */  
 
     public actionBuilder(): NonNil<ActionBuilder> {
         return ActionBuilderImpl.of(this);
@@ -125,16 +126,6 @@ export abstract class Kwil {
     }
 
     /**
-     * Returns an instance of ReadActionBuilder for this client.
-     * 
-     * @returns A ReadActionBuilder instance. ReadActionBuilder is used to build and call read-only actions on the Kwil network.
-    */
-
-    public readOnlyAction(): NonNil<ReadActionBuilder> {
-        return ReadActionBuilderImpl.of(this, this.client);
-    }
-
-    /**
      * Broadcasts a transaction on the network.
      *
      * @param tx - The transaction to broadcast. The transaction can be built using the ActionBuilder or DBBuilder.
@@ -143,6 +134,17 @@ export abstract class Kwil {
 
     public async broadcast(tx: Transaction): Promise<GenericResponse<TxReceipt>> {
         return await this.client.broadcast(tx);
+    }
+
+    /**
+     * Sends a message to a Kwil node. This can be used to execute read-only actions on Kwil.
+     * 
+     * @param msg - The message to send. The message can be built using the ActionBuilder class.
+     * @returns A promise that resolves to the receipt of the message.
+     */
+
+    public async call(msg: Message): Promise<GenericResponse<MsgReceipt>> {
+        return await this.client.call(msg);
     }
 
     /**

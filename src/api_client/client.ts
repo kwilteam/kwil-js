@@ -2,10 +2,10 @@ import { base64ToBytes } from "../utils/base64";
 import { Uint8ArrayToHex } from "../utils/bytes";
 import { Account } from "../core/account";
 import { FundingConfig } from "../core/configs";
-import {Database, SelectQuery} from "../core/database";
-import {Transaction, TxReceipt} from "../core/tx";
+import { Database, SelectQuery } from "../core/database";
+import { Transaction, TxReceipt } from "../core/tx";
 import { Api } from "./api";
-import {Config} from "./config";
+import { Config } from "./config";
 import {
     BroadcastReq,
     BroadcastRes,
@@ -16,7 +16,7 @@ import {
     GetAccountResponse, GetSchemaResponse,
     ListDatabasesResponse, PongRes, SelectRes
 } from "../core/resreq";
-import { ReadActionReq } from "../core/readAction";
+import { Message, MessageReq, MsgReceipt } from "../core/message";
 
 export default class Client extends Api {
     constructor(opts: Config) {
@@ -45,7 +45,7 @@ export default class Client extends Api {
     }
 
     public async estimateCost(tx: Transaction): Promise<GenericResponse<string>> {
-        let req: EstimateCostReq = {tx}
+        let req: EstimateCostReq = { tx }
         const res = await super.post<EstimateCostRes>(`/api/v1/estimate_price`, req);
         return checkRes(res, r => r.price);
     }
@@ -55,7 +55,7 @@ export default class Client extends Api {
             throw new Error('Tx must be signed before broadcasting.');
         }
 
-        let req: BroadcastReq = {tx}
+        let req: BroadcastReq = { tx }
         const res = await super.post<BroadcastRes>(`/api/v1/broadcast`, req);
         checkRes(res);
 
@@ -94,24 +94,35 @@ export default class Client extends Api {
         return checkRes(res, r => r.result);
     }
 
-    public async callRequest(body: ReadActionReq): Promise<GenericResponse<string>> {
-        const res = await super.post<CallRes>(`/api/v1/call`, body)
-        
-        checkRes(res, r => r.result);
+    public async call(msg: Message): Promise<GenericResponse<MsgReceipt>> {
+        let req: MessageReq = {
+            payload: msg.payload,
+            sender: msg.sender,
+            signature: msg.signature
+        }
 
-        let result: string = '';
+        const res = await super.post<CallRes>(`/api/v1/call`, req);
+        checkRes(res);
 
-        if(res.data.result) {
+        let result: any = null;
+
+        if (res.data.result) {
             const uint8 = new Uint8Array(base64ToBytes(res.data.result));
             const decoder = new TextDecoder('utf-8');
             const jsonString = decoder.decode(uint8);
             result = JSON.parse(jsonString);
         }
 
+        const cleanReceipt: MsgReceipt = !result ? {
+            result: null
+        } : {
+            result: result
+        };
+
         return {
             status: res.status,
-            data: result
-        }
+            data: cleanReceipt
+        };
     }
 }
 
@@ -121,7 +132,7 @@ function checkRes<T, R>(res: GenericResponse<T>, selector?: (r: T) => R | undefi
     }
 
     if (!selector) {
-        return {status: res.status, data: undefined};
+        return { status: res.status, data: undefined };
     }
 
     return {

@@ -2,6 +2,7 @@
 import { getMock, postMock } from './api-utils';
 import Client from "../../../src/api_client/client";
 import { PayloadType, Transaction } from "../../../src/core/tx";
+import { Message } from '../../../src/core/message';
 require('dotenv').config();
 
 describe('Client', () => {
@@ -225,6 +226,49 @@ describe('Client', () => {
 
             await expect(client.selectQuery(query)).rejects.toThrow('Error selecting query');
             expect(postMock).toHaveBeenCalledWith('/api/v1/query', query, undefined);
+        });
+    });
+
+    describe('call', () => {
+        it('should send a message to the call endpoint', async () => {
+            const msg = new Message({
+                payload: "mockPayload",
+                sender: "mockSender",
+                signature: {
+                    signature_bytes: "mockSignatureBytes",
+                    signature_type: 1
+                }
+            })
+            postMock.mockResolvedValue({
+                status: 200,
+                data: { result: 'W10=' }
+            });
+            const result = await client.call(msg);
+            expect(result.status).toBe(200);
+            expect(result.data).toEqual({
+                result: []
+            });
+            expect(postMock).toHaveBeenCalled();
+        });
+
+        it('should throw error if call fails', async () => {
+            const msg = new Message({
+                payload: "mockPayload",
+                sender: "mockSender",
+                signature: {
+                    signature_bytes: "mockSignatureBytes",
+                    signature_type: 1
+                }
+            })
+            const mockRes = {
+                status: 400,
+                data: "Error calling"
+            };
+
+            postMock.mockResolvedValue(mockRes);
+
+            await expect(client.call(msg)).rejects.toThrow('Error calling');
+            expect(postMock).toHaveBeenCalled();
         });
     });
 });

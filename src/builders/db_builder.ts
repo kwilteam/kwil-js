@@ -44,6 +44,6 @@ export class DBBuilderImpl implements DBBuilder {
             .payloadType(PayloadType.DEPLOY_DATABASE)
             .payload(objects.requireNonNil(payload))
             .signer(objects.requireNonNil(signer))
-            .build();
+            .buildTx();
     }
 }

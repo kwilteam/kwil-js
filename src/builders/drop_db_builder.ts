@@ -40,6 +40,6 @@ export class DropDBBuilderImpl implements DBBuilder {
             .payloadType(PayloadType.DROP_DATABASE)
             .payload(objects.requireNonNil(payload))
             .signer(objects.requireNonNil(signer))
-            .build();
+            .buildTx();
     }
 }

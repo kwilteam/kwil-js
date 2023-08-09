@@ -3,7 +3,7 @@ import {PayloadType, Transaction} from "./tx";
 import {ethers, Signer as _Signer} from "ethers";
 import {ActionInput} from "./actionInput";
 import {Wallet as Walletv5, Signer as Signerv5} from "ethers5";
-import { GenericResponse } from "./resreq";
+import { Message } from "./message";
 
 export type Signer = NonNil<_Signer | ethers.Wallet | Walletv5 | Signerv5>;
 export type SignerSupplier = Promisy<Signer>
@@ -17,7 +17,7 @@ export interface TxnBuilder {
 
     buildTx(): Promise<Transaction>;
 
-
+    buildMsg(): Promise<Message>;
 }
 
 export interface DBBuilder {
@@ -97,40 +97,13 @@ export interface ActionBuilder {
      */
 
     buildTx(): Promise<Transaction>;
-}
 
-export interface ReadActionBuilder {
     /**
-     * Sets the name of the read-only actyion to be called. This must be an action that is defined in the database schema for the given DBID.
-     * @param actionName - The name of the read-only action.
-     * @returns The current `ReadActionBuilder` instance for chaining.
+     * Builds a message.
+     * 
+     * @returns A promise that resolves to a Message object. This message can be sent to the Kwil network with the kwil.call() api.
+     * @throws Will throw an error if the action is being built or if there's an issue with the schema retrieval for validating the action.
      */
-    name(actionName: string): NonNil<ReadActionBuilder>;
 
-    /**
-     * Sets the database identifier (DBID) of the database that contains the read-only action to be called.
-     * @param dbid - The database identifier.
-     * @returns The current `ReadActionBuilder` instance for chaining.
-     */
-    dbid(dbid: string): NonNil<ReadActionBuilder>;
-
-    /**
-     * Sets the signer for the read-only action, if a signer is required.
-     * @param signer - The signer for the read-only action. This must be a valid Ethereum signer from Ethers v5 or Ethers v6.
-     * @returns The current `ReadActionBuilder` instance for chaining.
-     */
-    signer(signer: SignerSupplier): NonNil<ReadActionBuilder>;
-
-    /**
-     * Concatenates the provided parameters to the list of parameters to be called in the read-only action.
-     * @param params - The parameters to concatenate. This should be a map of key-value pairs.
-     * @returns The current `ReadActionBuilder` instance for chaining.
-    */
-    concat(params: Map<string, string>): NonNil<ReadActionBuilder>;
-
-    /**
-     * Builds a read-only action and sends the request to the read-only endpoint.
-     * @returns A promise that resolves to the response of the read-only action, if a valid response exists.
-     */
-    buildAndRequest(): Promise<GenericResponse<string>>;
+    buildMsg(): Promise<Message>;
 }

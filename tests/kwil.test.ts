@@ -17,6 +17,7 @@ import schema from "./test_schema2.json";
 import {DBBuilderImpl} from "../dist/builders/db_builder";
 import {DropDBBuilderImpl} from "../dist/builders/drop_db_builder";
 import { Types, Utils } from "../dist/index";
+import { Message, MsgReceipt } from "../dist/core/message";
 
 // Kwil methods that do NOT return another class (e.g. funder, action, and DBBuilder)
 describe("Kwil", () => {
@@ -32,7 +33,7 @@ describe("Kwil", () => {
     test('getDBID should return the correct value', () => {
         console.log(wallet.address)
         const result = kwil.getDBID(wallet.address, "mydb");
-        expect(result).toBe("xca20642aa31af7db6b43755cf40be91c51a157e447e6cc36c1d94f0a");
+        expect(result).toBe("xcdd04ff7c5e4a939d5365ec9b54cc4aab8c610c415f5f9b33323ae77");
         // when on public network, change to: xca20642aa31af7db6b43755cf40be91c51a157e447e6cc36c1d94f0a
         // when on local network, change to: xcdd04ff7c5e4a939d5365ec9b54cc4aab8c610c415f5f9b33323ae77
     });
@@ -740,6 +741,35 @@ describe("Testing case insentivity on test_db", () => {
         });
     });
 })
+
+// Testing ActionBuilder to a Message and the kwil.call() api
+describe("ActionBuilder to Message", () => {
+    let actionBuilder: ActionBuilder;
+
+    beforeAll(() => {
+        actionBuilder = kwil
+            .actionBuilder()
+            .dbid(dbid)
+            .name("read_posts");
+    })
+
+    let message: Message;
+
+    test("The actionBuilder.buildMessage() method should return a message", async () => {
+        message = await actionBuilder.buildMsg();
+        expect(message).toBeDefined();
+        expect(message).toBeInstanceOf(Message);
+    });
+
+    test('kwil.call() should return a MsgReceipt', async () => {
+        const result = await kwil.call(message);
+        console.log(result.data)
+        expect(result.data).toBeDefined();
+        expect(result.data).toMatchObject<MsgReceipt>({
+            result: expect.any(Array),
+        });
+    });
+});
 
 // Testing all methods on Drop Database
 describe("Drop Database", () => {
