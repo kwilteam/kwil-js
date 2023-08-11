@@ -12,7 +12,7 @@ async function test() {
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
 
     const kwil = new kwiljs.NodeKwil({
-        kwilProvider: "http://localhost:55949",
+        kwilProvider: process.env.KWIL_PROVIDER || "SHOULD FAIL",
         timeout: 10000,
         logging: true,
     })
@@ -20,7 +20,7 @@ async function test() {
     const dbid = kwil.getDBID(wallet.address, "mydb")
     // const dbid2 = kwil.getDBID(wallet.address, "selectaction")
     // console.log(dbid)
-    // broadcast(kwil, testDB, wallet)
+    broadcast(kwil, testDB, wallet)
     // await getSchema(kwil, dbid)
     // await getSchema(kwil, dbid)
     // await getSchema(kwil, dbid2)
@@ -52,7 +52,7 @@ async function test() {
     // await dropDb(kwil, wallet)
     // await testNonViewAction(kwil, dbid, wallet)
     // await testViewWithParam(kwil, dbid, wallet)
-    await testViewWithSign(kwil, dbid, wallet)
+    // await testViewWithSign(kwil, dbid, wallet)
 }
 
 test()

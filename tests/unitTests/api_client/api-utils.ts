@@ -1,6 +1,7 @@
 import Axios from 'axios';
 
 const getMock = jest.fn();
+const getMock2 = jest.fn();
 const postMock = jest.fn();
 const requestMock = jest.fn();
 

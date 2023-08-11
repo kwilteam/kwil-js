@@ -16,14 +16,14 @@ describe('DbBuilder', () => {
     const mockKwil = new TestKwil();
 
     beforeEach(() => {
-        dbBuilder = DBBuilderImpl.of(mockKwil);
+        dbBuilder = DBBuilderImpl.of(mockKwil, PayloadType.DEPLOY_DATABASE);
         getMock.mockReset();
         postMock.mockReset();
     });
 
     describe('of', () => {
         it('should return a DBBuilderImpl', () => {
-            const result = DBBuilderImpl.of(mockKwil);
+            const result = DBBuilderImpl.of(mockKwil, PayloadType.DEPLOY_DATABASE);
             expect(result).toBeInstanceOf(DBBuilderImpl);
         });
     })

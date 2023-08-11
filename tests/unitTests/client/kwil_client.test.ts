@@ -3,7 +3,6 @@ import { Kwil } from "../../../src/client/kwil";
 import { ActionBuilderImpl } from "../../../src/builders/action_builder";
 import { DBBuilderImpl } from "../../../src/builders/db_builder";
 import { PayloadType, Transaction } from "../../../src/core/tx";
-import { DropDBBuilderImpl } from "../../../src/builders/drop_db_builder";
 
 class TestKwil extends Kwil {
     constructor() {
@@ -86,7 +85,7 @@ describe('Kwil', () => {
         it('should return a db builder', () => {
             const dbBuilder = kwil.dropDBBuilder();
             expect(dbBuilder).toBeDefined();
-            expect(dbBuilder).toBeInstanceOf(DropDBBuilderImpl)
+            expect(dbBuilder).toBeInstanceOf(DBBuilderImpl)
         })
     })
 

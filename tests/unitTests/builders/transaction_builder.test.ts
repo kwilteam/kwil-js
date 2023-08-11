@@ -3,6 +3,7 @@ import { TxnBuilderImpl } from '../../../src/builders/transaction_builder';
 import { TxnBuilder } from '../../../src/core/builders';
 import { Kwil } from '../../../src/client/kwil';
 import { PayloadType, Transaction } from '../../../src/core/tx';
+import { Message } from '../../../src/core/message';
 import { Wallet } from 'ethers';
 
 class TestKwil extends Kwil {
@@ -53,7 +54,7 @@ describe('Transaction Builder', () => {
         });
     });
 
-    describe('build', () => {
+    describe('buildTx', () => {
         it('should build a transaction', async () => {
             const wallet = Wallet.createRandom()
 
@@ -81,7 +82,7 @@ describe('Transaction Builder', () => {
                 .payload({foo: 'bar'})
                 .payloadType(PayloadType.DEPLOY_DATABASE)
                 .signer(wallet)
-                .build();
+                .buildTx();
 
             const extRes = {
                 hash: 'kWBaCs+MeotmBuOMSKJFxsDaA2r0yIBmv9ljdMIHRnc8vbVfkY4Hg4uTvYfYJitM',
@@ -121,7 +122,7 @@ describe('Transaction Builder', () => {
                     .payload({foo: 'bar'})
                     .payloadType(PayloadType.DEPLOY_DATABASE)
                     .signer(wallet)
-                    .build()
+                    .buildTx()
             ).rejects.toThrow();
         })
 
@@ -153,8 +154,53 @@ describe('Transaction Builder', () => {
                     .payload({foo: 'bar'})
                     .payloadType(PayloadType.DEPLOY_DATABASE)
                     .signer(wallet)
-                    .build()
+                    .buildTx()
             ).rejects.toThrow();
         })
+    });
+
+    describe('buildMessage', () => {
+        it('should build a message with a signature', async () => {
+            const wallet = Wallet.createRandom()
+
+            const msg: Message = await txBuilder
+                .payload({foo: 'bar'})
+                .signer(wallet)
+                .buildMsg();
+
+            expect(msg).toBeInstanceOf(Message);
+            expect(msg.payload).toBe('eyJmb28iOiJiYXIifQ==');
+            expect(msg.sender).toBe(wallet.address);
+            expect(msg.signature.signature_type).toBe(2);
+            expect(typeof msg.signature.signature_bytes).toBe('string');
+        });
+
+        it('should build a message without a signature', async () => {
+            const msg: Message = await txBuilder
+                .payload({foo: 'bar'})
+                .buildMsg();
+
+            expect(msg).toBeInstanceOf(Message);
+            expect(msg.payload).toBe('eyJmb28iOiJiYXIifQ==');
+            expect(msg.sender).toBe('');
+            expect(msg.signature.signature_type).toBe(0);
+            expect(msg.signature.signature_bytes).toBe('');
+        });
+
+        it('should through error without a payload', async () =>    {
+            await expect(
+                txBuilder
+                    .buildMsg()
+            ).rejects.toThrow();
+        })
+
+        it('should throw error with a payloadType', async () => {
+            await expect(
+                txBuilder
+                    .payloadType(PayloadType.DEPLOY_DATABASE)
+                    .payload({foo: 'bar'})
+                    .buildMsg()
+            ).rejects.toThrow();
+        });
     });
 })
