@@ -17,7 +17,7 @@
   "scripts": {
     "clean": "rimraf dist/*",
     "build": "npm run clean && tsc",
-    "commit": "git add . && git-cz",
+    "commit": "git-cz",
     "prepare": "husky install",
     "release": "standard-version",
     "pack_build": "npm run clean && tsc --outDir ./dist --sourceMap false --declarationDir ./dist",
