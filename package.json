@@ -9,7 +9,10 @@
     "dist/**/*.ts",
     "!dist/**/*.map",
     "!dist/**/*.test.js",
-    "!dist/**/*.test.ts"
+    "!dist/**/*.test.ts",
+    "CHANGELOG.md",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "clean": "rimraf dist/*",
