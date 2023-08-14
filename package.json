@@ -1,6 +1,6 @@
 {
   "name": "kwil",
-  "version": "3.2.3",
+  "version": "3.3.0",
   "description": "",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
