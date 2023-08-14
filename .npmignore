@@ -8,7 +8,7 @@
 yarn.lock
 .env
 /testing-functions
-/test
 /testapp
 /src
 /pkg
+/tests
