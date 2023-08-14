@@ -30,7 +30,8 @@ export abstract class Api {
             apiKey: opts.apiKey || '',
             logging: opts.logging || false,
             logger: opts.logger || console.log,
-            network: opts.network
+            network: opts.network,
+            cache: opts.cache || 10 * 60,
         };
     }
 

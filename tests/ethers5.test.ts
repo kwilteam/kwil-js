@@ -9,14 +9,14 @@ import { ActionBuilderImpl } from "../dist/builders/action_builder";
 import { Transaction, TxReceipt } from "../dist/core/tx";
 require('dotenv').config();
 
-const provider = new providers.InfuraProvider("goerli")
+const provider = process.env.ETH_PROVIDER === "https://provider.kwil.com" ? new providers.InfuraProvider("goerli") : process.env.ETH_PROVIDER ? new providers.JsonRpcProvider(process.env.ETH_PROVIDER) : new providers.JsonRpcProvider("http://localhost:8545");
 const wallet = new Wallet(process.env.PRIVATE_KEY as string, provider);
 
 const dbid = kwil.getDBID(wallet.address, "mydb")
 
 describe("All node funder operations should work with Ethersv5 Wallet and Signer", () => {
     const kwil = new NodeKwil({
-        kwilProvider: "https://provider.kwil.com",
+        kwilProvider: process.env.KWIL_PROVIDER || 'should fail',
         timeout: 10000,
         logging: true,
     })
@@ -36,7 +36,7 @@ describe("All node funder operations should work with Ethersv5 Wallet and Signer
         expect(funder).toMatchObject<FunderObj>({
             poolAddress: expect.any(String),
             signer: expect.objectContaining({
-                address: '0xAfFDC06cF34aFD7D5801A13d48C92AD39609901D',
+                address: wallet.address,
                 provider: expect.any(Object),
             }),
             providerAddress: expect.any(String),

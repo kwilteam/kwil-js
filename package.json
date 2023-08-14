@@ -22,7 +22,7 @@
     "pack_post": "copyfiles ./kwil*.tgz ./pkg && rimraf ./kwil*.tgz",
     "pack": "npm run pack_build && npm run pack_pre && npm --prefix ./dist pack && npm run pack_post"
   },
-  "author": "",
+  "author": "Kwil, Inc. <luke@kwil.com>",
   "license": "MIT",
   "devDependencies": {
     "@commitlint/cli": "^17.7.1",
@@ -54,7 +54,6 @@
     "ethers5": "npm:ethers@^5.7.2",
     "jssha": "^3.2.0",
     "long": "^5.2.1",
-    "node-fetch": "^3.3.0",
     "protobufjs": "^7.1.2"
   },
   "engines": {

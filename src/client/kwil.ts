@@ -1,21 +1,22 @@
-import {generateDBID} from "../utils/dbid";
+import { generateDBID } from "../utils/dbid";
 import Client from "../api_client/client";
 import { Config } from "../api_client/config";
-import {GenericResponse} from "../core/resreq";
-import {Database, SelectQuery} from "../core/database";
-import {Transaction, TxReceipt} from "../core/tx";
-import {Account} from "../core/account";
-import {ethers, Signer} from "ethers";
-import {Funder} from "../funder/funding";
-import {ActionBuilderImpl} from "../builders/action_builder";
-import {base64ToBytes} from "../utils/base64";
-import {DBBuilderImpl} from "../builders/db_builder";
-import {DropDBBuilderImpl} from "../builders/drop_db_builder";
-import {NonNil} from "../utils/types";
-import {ActionBuilder, DBBuilder} from "../core/builders";
-import {wrap} from "./intern";
+import { GenericResponse } from "../core/resreq";
+import { Database, SelectQuery } from "../core/database";
+import { Transaction, TxReceipt } from "../core/tx";
+import { Account } from "../core/account";
+import { ethers, Signer } from "ethers";
+import { Funder } from "../funder/funding";
+import { ActionBuilderImpl } from "../builders/action_builder";
+import { base64ToBytes } from "../utils/base64";
+import { DBBuilderImpl } from "../builders/db_builder";
+import { DropDBBuilderImpl } from "../builders/drop_db_builder";
+import { NonNil } from "../utils/types";
+import { ActionBuilder, DBBuilder } from "../core/builders";
+import { wrap } from "./intern";
 import { FundingConfig } from "../core/configs";
 import { Signer as Signerv5, Wallet as Walletv5 } from "ethers5"
+import { Cache } from "../utils/cache";
 
 /**
  * The main class for interacting with the Kwil network.
@@ -24,7 +25,7 @@ import { Signer as Signerv5, Wallet as Walletv5 } from "ethers5"
 export abstract class Kwil {
     private readonly client: Client;
     //cache schemas
-    private schemas?: Map<string, GenericResponse<Database<string>>>;
+    private schemas: Cache<GenericResponse<Database<string>>>;
 
     // cache fundingConfig
     private fundingConfig?: GenericResponse<FundingConfig>;
@@ -37,8 +38,10 @@ export abstract class Kwil {
             timeout: opts.timeout,
             logging: opts.logging,
             logger: opts.logger,
+            cache: opts.cache,
         });
 
+        this.schemas = Cache.passive(opts.cache);
         wrap(this, this.client.estimateCost.bind(this.client));
     }
 
@@ -62,19 +65,17 @@ export abstract class Kwil {
      */
 
     public async getSchema(dbid: string): Promise<GenericResponse<Database<string>>> {
-        //check cache
-        if (this.schemas && this.schemas.has(dbid)) {
-            return this.schemas.get(dbid) as GenericResponse<Database<string>>;
+        // check cache
+        const schema = this.schemas.get(dbid)
+        if (schema) {
+            return schema;
         }
 
         //fetch from server
         const res = await this.client.getSchema(dbid);
 
         //cache result
-        if (res.status == 200) {
-            if (!this.schemas) {
-                this.schemas = new Map<string, GenericResponse<Database<string>>>();
-            }
+        if (res.status === 200) {
             this.schemas.set(dbid, res);
         }
 
@@ -113,15 +114,15 @@ export abstract class Kwil {
         return DBBuilderImpl.of(this);
     }
 
-     /**
-     * Returns an instance of Drop Database Builder for this client.
-     *
-     * @returns A Drop Database Builder instance. Drop Database Builder is used to build drop database transactions to be broadcasted to the Kwil network.
-     */
+    /**
+    * Returns an instance of Drop Database Builder for this client.
+    *
+    * @returns A Drop Database Builder instance. Drop Database Builder is used to build drop database transactions to be broadcasted to the Kwil network.
+    */
 
-     public dropDBBuilder(): NonNil<DBBuilder> {
+    public dropDBBuilder(): NonNil<DBBuilder> {
         return DropDBBuilderImpl.of(this);
-     }
+    }
 
     /**
      * Broadcasts a transaction on the network.
@@ -167,13 +168,13 @@ export abstract class Kwil {
 
     public async getFunder(signer: Signer | ethers.Wallet | Signerv5 | Walletv5): Promise<Funder> {
         //check cache
-        if(!this.fundingConfig || !this.fundingConfig.data) {
+        if (!this.fundingConfig || !this.fundingConfig.data) {
             this.fundingConfig = await this.client.getFundingConfig();
             if (this.fundingConfig.status != 200 || !this.fundingConfig.data) {
                 throw new Error('Failed to get funding config.');
             }
         }
-        
+
         return await Funder.create(signer, this.fundingConfig.data);
     }
 

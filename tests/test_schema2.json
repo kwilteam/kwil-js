@@ -104,7 +104,7 @@
                 "$age"
             ],
             "statements": [
-                "INSERT INTO users( id , username , age , wallet ) VALUES ( $id , $username , $age , @caller )"
+                "INSERT INTO users( id , username , age , wallet ) VALUES ( $id , $username , $age , @caller );"
             ]
         },
         {
@@ -114,7 +114,7 @@
                 "$username"
             ],
             "statements": [
-                "UPDATE users SET username = $username WHERE wallet = @caller"
+                "UPDATE users SET username = $username WHERE wallet = @caller;"
             ]
         },
         {
@@ -122,7 +122,7 @@
             "public": true,
             "inputs": [],
             "statements": [
-                "DELETE FROM users WHERE wallet = @caller"
+                "DELETE FROM users WHERE wallet = @caller;"
             ]
         },
         {
@@ -134,7 +134,7 @@
                 "$content"
             ],
             "statements": [
-                "INSERT INTO posts( id , user_id , title , content ) VALUES ( $id , ( SELECT id FROM users WHERE wallet = @caller ) , $title , $content )"
+                "INSERT INTO posts( id , user_id , title , content ) VALUES ( $id , ( SELECT id FROM users WHERE wallet = @caller ) , $title , $content );"
             ]
         },
         {
@@ -144,7 +144,7 @@
                 "$id"
             ],
             "statements": [
-                "DELETE FROM posts WHERE id = $id AND user_id =( SELECT id FROM users WHERE wallet = @caller )"
+                "DELETE FROM posts WHERE id = $id AND user_id =( SELECT id FROM users WHERE wallet = @caller );"
             ]
         },
         {
@@ -154,7 +154,7 @@
                 "$address"
             ],
             "statements": [
-                "SELECT * FROM users WHERE wallet = $address"
+                "SELECT * FROM users WHERE wallet = $address;"
             ]
         },
         {
@@ -162,7 +162,7 @@
             "public": false,
             "inputs": [],
             "statements": [
-                "SELECT * FROM users"
+                "SELECT * FROM users;"
             ]
         },
         {
@@ -172,7 +172,7 @@
                 "$username"
             ],
             "statements": [
-                "SELECT title , content FROM posts WHERE user_id =( SELECT id FROM users WHERE username = $username )"
+                "SELECT title , content FROM posts WHERE user_id =( SELECT id FROM users WHERE username = $username );"
             ]
         },
         {
@@ -180,8 +180,8 @@
             "public": true,
             "inputs": [],
             "statements": [
-                "SELECT * FROM posts",
-                "SELECT * FROM users"
+                "SELECT * FROM posts;",
+                "SELECT * FROM users;"
             ]
         }
     ]

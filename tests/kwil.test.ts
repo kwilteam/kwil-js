@@ -1,3 +1,8 @@
+const originalLog = console.log;
+const logSpy = jest.spyOn(console, 'log').mockImplementation((...args) => {
+    originalLog(...args);
+});
+jest.resetModules();
 import {AmntObject, dbid, kwil, wallet} from "./testingUtils";
 import {Transaction, TxReceipt} from "../dist/core/tx";
 import {ActionBuilder, DBBuilder} from "../dist/core/builders";
@@ -15,16 +20,55 @@ import { Types, Utils } from "../dist/index";
 
 // Kwil methods that do NOT return another class (e.g. funder, action, and DBBuilder)
 describe("Kwil", () => {
+
+    afterEach(() => {
+        logSpy.mockClear();
+      });
+    
+      afterAll(() => {
+        logSpy.mockRestore();
+      });
+  
     test('getDBID should return the correct value', () => {
+        console.log(wallet.address)
         const result = kwil.getDBID(wallet.address, "mydb");
         expect(result).toBe("xca20642aa31af7db6b43755cf40be91c51a157e447e6cc36c1d94f0a");
+        // when on public network, change to: xca20642aa31af7db6b43755cf40be91c51a157e447e6cc36c1d94f0a
+        // when on local network, change to: xcdd04ff7c5e4a939d5365ec9b54cc4aab8c610c415f5f9b33323ae77
     });
+
+    let schema: any;
 
     test('getSchema should return status 200', async () => {
         const result = await kwil.getSchema(dbid);
+        schema = result.data;
         expect(result.status).toBe(200);
     })
 
+    test('getSchema result should be cached properly', async () => {
+        jest.useFakeTimers();
+
+        const result = await kwil.getSchema(dbid);
+        expect(result.status).toBe(200);
+        expect(result.data).toStrictEqual(schema);
+
+        // Simulate the passage of 11 minutes
+        jest.advanceTimersByTime(11 * 60 * 1000);
+
+        const result2 = await kwil.getSchema(dbid);
+
+        expect(result2.status).toBe(200);
+        expect(result2.data).toBeDefined();
+
+        // each server requests make two console logs. If the cache expired properly, it should make a new request.
+        expect(logSpy).toHaveBeenCalledTimes(2)
+    
+        // Reset the mock to ensure it doesn't affect other tests
+        jest.resetAllMocks();
+        jest.useRealTimers();
+    });
+    
+    
     test('getAccount should return status 200', async () => {
         const result = await kwil.getAccount(wallet.address);
         expect(result.status).toBe(200);
