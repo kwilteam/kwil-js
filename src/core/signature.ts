@@ -4,7 +4,6 @@ export interface Signature {
 }
 
 export enum SignatureType {
-    SIGNATURE_TYPE_INVALID = 0,
-    PK_SECP256K1_UNCOMPRESSED,
-	ACCOUNT_SECP256K1_UNCOMPRESSED
+    SIGNATURE_TYPE_INVALID = 'invalid',
+	SECP256K1_PERSONAL = 'secp256k1_ep'
 }

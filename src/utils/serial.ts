@@ -12,6 +12,41 @@ export function StringToBytes(str: string): Uint8Array {
     return view;
 }
 
+export function StringToHex(str: string): string {
+    let hex = '0x';
+    for (let i = 0; i < str.length; i++) {
+        const code = str.charCodeAt(i);
+        hex += code.toString(16).padStart(2, '0'); // Convert the code into a base-16 number and pad with a leading 0 if necessary
+    }
+    return hex;
+}
+
+export function NumberToHex(num: number): string {
+    return '0x' + num.toString(16);
+}
+
+export function BytesToHex(bytes: Uint8Array): string {
+    return bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');
+}
+
+export function HexToBytes(hex: string): Uint8Array {
+    strings.requireNonNil(hex);
+    if (hex.length % 2 !== 0) {
+        throw new Error(`invalid hex string: ${hex}`);
+    }
+
+    // strip 0x prefix
+    if (hex.startsWith('0x')) {
+        hex = hex.slice(2);
+    }
+
+    const bytes = new Uint8Array(hex.length / 2);
+    for (let i = 0; i < hex.length; i += 2) {
+        bytes[i / 2] = parseInt(hex.slice(i, i + 2), 16);
+    }
+    return bytes;
+}
+
 export function BytesToString(bytes: Uint8Array): string {
     objects.requireNonNil(bytes);
     let string = '';

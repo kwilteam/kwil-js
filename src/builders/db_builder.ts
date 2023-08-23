@@ -1,9 +1,10 @@
-import {PayloadType, Transaction} from "../core/tx";
+import { Transaction } from "../core/tx";
 import {Nillable, NonNil, Promisy} from "../utils/types";
 import {objects} from "../utils/objects";
 import {Kwil} from "../client/kwil";
 import {TxnBuilderImpl} from "./transaction_builder";
 import {DBBuilder, SignerSupplier} from "../core/builders";
+import { PayloadType } from "../core/enums";
 
 /**
  * `DBBuilderImpl` class is an implementation of the `DBBuilder` interface.

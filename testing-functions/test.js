@@ -3,7 +3,7 @@
 
 const kwiljs = require("../dist/index")
 const ethers = require("ethers")
-const testDB = require("./test_schema2.json")
+const testDB = require("./test_schema_ext.json")
 require("dotenv").config()
 
 async function test() {
@@ -12,7 +12,7 @@ async function test() {
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
 
     const kwil = new kwiljs.NodeKwil({
-        kwilProvider: "http://localhost:56586",
+        kwilProvider: "http://localhost:8080",
         timeout: 10000,
         logging: true,
     })
@@ -21,7 +21,7 @@ async function test() {
     console.log(dbid)
     // const dbid2 = kwil.getDBID(wallet.address, "selectaction")
     // console.log(dbid)
-    // broadcast(kwil, testDB, wallet)
+    broadcast(kwil, testDB, wallet)
     // await getSchema(kwil, dbid)
     // await getSchema(kwil, dbid)
     // await getSchema(kwil, dbid2)
@@ -36,7 +36,7 @@ async function test() {
     // getDepositedBalance(kwil, wallet)
     // getTokenAddress(kwil, wallet)
     // await execSingleAction(kwil, dbid, "add_post", wallet)
-    select(kwil, dbid, "SELECT * FROM users")
+    // select(kwil, dbid, "SELECT * FROM users")
     // select(kwil, dbid, `WITH RECURSIVE 
     //                         cnt(x) AS (
     //                         SELECT 1

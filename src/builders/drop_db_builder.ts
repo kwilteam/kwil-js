@@ -3,8 +3,9 @@ import { Nillable, NonNil, Promisy } from "../utils/types";
 import {Kwil} from "../client/kwil";
 import { objects } from "../utils/objects";
 import { DropDbPayload } from "../core/tx";
-import {PayloadType, Transaction} from "../core/tx";
+import { Transaction } from "../core/tx";
 import { TxnBuilderImpl } from "./transaction_builder";
+import { PayloadType } from "../core/enums";
 
 export class DropDBBuilderImpl implements DBBuilder {
     private readonly client: Kwil;

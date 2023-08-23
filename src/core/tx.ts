@@ -1,14 +1,7 @@
-import {Nillable, NonNil} from "../utils/types";
-import {Signature, SignatureType} from "./signature";
-import {strings} from "../utils/strings";
-
-export enum PayloadType {
-    INVALID_PAYLOAD_TYPE = 100,
-    DEPLOY_DATABASE,
-	MODIFY_DATABASE,
-	DROP_DATABASE,
-	EXECUTE_ACTION
-}
+import { Nillable, NonNil } from "../utils/types";
+import { Signature, SignatureType } from "./signature";
+import { strings } from "../utils/strings";
+import { PayloadType } from "./enums";
 
 export interface TxReceipt {
     get txHash(): string;
@@ -16,14 +9,18 @@ export interface TxReceipt {
     get body(): Nillable<string>;
 }
 
-export type TxnData = {
-    hash: string;
-    payload_type: PayloadType;
-    payload: string;
-    fee: string;
-    nonce: number;
+export interface TxnData {
     signature: Signature;
     sender: string;
+    body: TxBody;
+}
+
+interface TxBody {
+    payload: string;
+    payload_type: PayloadType;
+    fee: string;
+    nonce: number | null;
+    salt: string;
 }
 
 export interface DropDbPayload {
@@ -36,41 +33,23 @@ export class Transaction implements TxnData {
 
     constructor(data?: NonNil<TxnData>) {
         this.data = data || {
-            hash: "",
-            payload_type: PayloadType.EXECUTE_ACTION,
-            payload: "",
-            fee: "0",
-            nonce: -1,
             signature: {
                 signature_bytes: "",
-                signature_type: SignatureType.ACCOUNT_SECP256K1_UNCOMPRESSED
+                signature_type: SignatureType.SECP256K1_PERSONAL
             },
             sender: "",
+            body: {
+                payload: "",
+                payload_type: PayloadType.EXECUTE_ACTION,
+                fee: "0",
+                nonce: null,
+                salt: "",
+            },
         };
     }
 
     public isSigned(): boolean {
         return !strings.isNilOrEmpty(this.data.signature.signature_bytes);
-    }
-
-    public get hash(): string {
-        return this.data.hash;
-    }
-
-    public get payload_type(): PayloadType {
-        return this.data.payload_type;
-    }
-
-    public get payload(): string {
-        return this.data.payload;
-    }
-
-    public get fee(): string {
-        return this.data.fee;
-    }
-
-    public get nonce(): number {
-        return this.data.nonce;
     }
 
     public get signature(): Readonly<Signature> {
@@ -79,6 +58,10 @@ export class Transaction implements TxnData {
 
     public get sender(): string {
         return this.data.sender;
+    }
+
+    public get body(): Readonly<TxBody> {
+        return this.data.body;
     }
 
     // noinspection JSUnusedLocalSymbols
@@ -90,16 +73,18 @@ export class Transaction implements TxnData {
 export namespace Txn {
     export function create(configure: (tx: TxnData) => void): NonNil<Transaction> {
         const tx = {
-            hash: "",
-            payload_type: PayloadType.EXECUTE_ACTION,
-            payload: "",
-            fee: "0",
-            nonce: -1,
             signature: {
                 signature_bytes: "",
-                signature_type: SignatureType.ACCOUNT_SECP256K1_UNCOMPRESSED
+                signature_type: SignatureType.SECP256K1_PERSONAL
             },
             sender: "",
+            body: {
+                payload: "",
+                payload_type: PayloadType.EXECUTE_ACTION,
+                fee: "0",
+                nonce: null,
+                salt: "",
+            },
         };
 
         configure(tx);
@@ -109,16 +94,9 @@ export namespace Txn {
 
     export function copy(source: NonNil<Transaction>, configure: (tx: TxnData) => void): NonNil<Transaction> {
         return Txn.create((tx) => {
-            tx.hash = "";
-            tx.payload_type = source.payload_type;
-            tx.payload = source.payload;
-            tx.fee = source.fee;
-            tx.nonce = source.nonce;
-            tx.signature = {
-                signature_bytes: "",
-                signature_type: SignatureType.ACCOUNT_SECP256K1_UNCOMPRESSED
-            };
             tx.sender = source.sender;
+            tx.signature = source.signature;
+            tx.body = source.body;
             configure(tx);
         });
     }

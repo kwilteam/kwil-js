@@ -45,11 +45,29 @@ export async function sign(message: string, signer: Signer | ethers.Wallet | Wal
 
     return {
         signature_bytes: encodedSignature,
-        signature_type: SignatureType.ACCOUNT_SECP256K1_UNCOMPRESSED,
+        signature_type: SignatureType.SECP256K1_PERSONAL,
     }
 }
 
 export function isV5Signer(obj: any): obj is Signerv5 {
     return obj
         && typeof obj.getChainId === 'function'
+}
+
+export function generateSalt(length: number): Uint8Array {
+    if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
+        // Browser environment with Web Crypto API
+        const salt = new Uint8Array(length);
+        return window.crypto.getRandomValues(salt);
+    } else if (typeof require !== 'undefined') {
+        // Assume Node.js environment
+        try {
+            const crypto = require('crypto');
+            return crypto.randomBytes(length);
+        } catch (err) {
+            throw new Error('Unable to generate salt in this environment.');
+        }
+    } else {
+        throw new Error('Unsupported environment.');
+    }
 }

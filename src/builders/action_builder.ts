@@ -1,4 +1,4 @@
-import {PayloadType, Transaction} from "../core/tx";
+import { Transaction} from "../core/tx";
 import {objects} from "../utils/objects";
 import {Nillable, NonNil, Promisy} from "../utils/types";
 import {Kwil} from "../client/kwil";
@@ -6,6 +6,7 @@ import {ActionBuilder, SignerSupplier} from "../core/builders";
 import {TxnBuilderImpl} from "./transaction_builder";
 import {ActionInput} from "../core/actionInput";
 import {ActionSchema} from "../core/database";
+import { PayloadType } from "../core/enums";
 
 const TXN_BUILD_IN_PROGRESS: ActionInput[] = [];
 /**

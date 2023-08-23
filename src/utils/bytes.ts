@@ -5,11 +5,23 @@ const base64Alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123
 // Marshal converts an object to a base64url encoded string.
 // The GRPC gateway "bytes" type requires base64url encoded strings.
 export function Marshal(msg: object): Uint8Array {
-    return StringToUint8LittleEndian(JSON.stringify(msg));
+    return StringToUint8BigEndian(JSON.stringify(msg));
 }
 
 export function MarshalB64(msg: object): string {
     return bytesToBase64(Marshal(msg))
+}
+
+// Convert function to Uint16Array
+export function NumberToUint16BigEndian(num: number): Uint8Array {
+    if (num < 0 || num > 65535 || !Number.isInteger(num)) {
+        throw new Error('Number is out of range for uint16');
+    }
+
+    const buffer = new ArrayBuffer(2);
+    const view = new DataView(buffer);
+    view.setUint16(0, num, false); // big endian
+    return new Uint8Array(buffer);
 }
 
 // converts a number to a Uint8Array in little endian format
@@ -20,13 +32,20 @@ export function NumberToUint32LittleEndian(num: number): Uint8Array {
   return new Uint8Array(buffer);
 }
 
-export function StringToUint8LittleEndian(str: string): Uint8Array {
+export function StringToUint8BigEndian(str: string): Uint8Array {
   const buffer = new ArrayBuffer(str.length);
   const view = new Uint8Array(buffer);
   for (let i = 0; i < str.length; i++) {
       view[i] = str.charCodeAt(i);
   }
   return view;
+}
+
+export function NumberToUint8BigEndian(num: number): Uint8Array {
+  const buffer = new ArrayBuffer(1);
+  const view = new DataView(buffer);
+  view.setUint8(0, num);
+  return new Uint8Array(buffer);
 }
 
 import { ethers, hexlify, toBeHex } from 'ethers';
