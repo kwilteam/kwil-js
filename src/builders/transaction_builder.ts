@@ -83,7 +83,7 @@ export class TxnBuilderImpl implements TxnBuilder {
     }
 
     private static async sign(tx: Transaction, signer: Signer | ethers.Wallet | Walletv5 | Signerv5): Promise<Transaction> {
-        const encodedTx = kwilEncode(tx);
+        const encodedTx = kwilEncode(tx.body);
         const signedMessage = await crypto_sign(encodedTx, signer);
         console.log('SIGNED MESSAGE ====', signedMessage)
         const signature = buildSignaturePayload(signedMessage);
