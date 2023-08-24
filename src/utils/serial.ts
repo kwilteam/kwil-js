@@ -22,7 +22,11 @@ export function StringToHex(str: string): string {
 }
 
 export function NumberToHex(num: number): string {
-    return '0x' + num.toString(16);
+    let hex = num.toString(16);
+    if (hex.length % 2 !== 0) {
+        hex = '0' + hex;
+    }
+    return '0x' + hex;
 }
 
 export function BytesToHex(bytes: Uint8Array): string {

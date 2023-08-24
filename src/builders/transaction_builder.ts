@@ -2,25 +2,17 @@ import { Nillable, NonNil, Promisy } from "../utils/types";
 import { Transaction } from "../core/tx";
 import { ethers, Signer } from "ethers";
 import { objects } from "../utils/objects";
-import {
-    ConcatBytes,
-    Marshal,
-    NumberToUint16BigEndian,
-    NumberToUint32LittleEndian,
-    NumberToUint64LittleEndian,
-} from "../utils/bytes";
 import { strings } from "../utils/strings";
 import { Txn } from "../core/tx";
-import { sha384BytesToBytes, sign as crypto_sign, generateSalt } from "../utils/crypto";
+import { buildSignaturePayload, sign as crypto_sign, ecrRecoverPubKey, generateSalt } from "../utils/crypto";
 import { base64ToBytes, bytesToBase64 } from "../utils/base64";
 import { Kwil } from "../client/kwil";
 import { SignerSupplier, TxnBuilder } from "../core/builders";
 import { unwrap } from "../client/intern";
 import { Wallet as Walletv5, Signer as Signerv5 } from "ethers5"
 import { EncodingType, PayloadType } from "../core/enums";
-import { BytesToHex, HexToBytes } from "../utils/serial";
-import { encodeRlp } from "ethers";
 import { kwilEncode } from "../utils/rlp";
+import { HexToBytes, StringToBytes } from "../utils/serial";
 
 export class TxnBuilderImpl implements TxnBuilder {
     private readonly client: Kwil;
@@ -92,22 +84,17 @@ export class TxnBuilderImpl implements TxnBuilder {
 
     private static async sign(tx: Transaction, signer: Signer | ethers.Wallet | Walletv5 | Signerv5): Promise<Transaction> {
         const encodedTx = kwilEncode(tx);
-        const signature = await crypto_sign(encodedTx, signer);
-        const sender = await signer.getAddress();
+        const signedMessage = await crypto_sign(encodedTx, signer);
+        console.log('SIGNED MESSAGE ====', signedMessage)
+        const signature = buildSignaturePayload(signedMessage);
+        const pubKey = ecrRecoverPubKey(base64ToBytes(encodedTx), signedMessage);
+        console.log('PUBKEY ====', pubKey)
 
+        const hardCodedKey = '0x048767310544592e33b2fb5555527f49c0902cf0f472f4c87e65324abb75e7a5e1c035bc1ef5026f363c79588526c341af341a68fc37299183391699ee1864cc75'
+        console.log('GOT CORRECT PUB KEY', pubKey === hardCodedKey)
         return Txn.copy(tx, (tx) => {
             tx.signature = signature;
-            tx.sender = sender;
+            tx.sender = bytesToBase64(HexToBytes(pubKey));
         });
-    }
-
-    private static kwil_rlp_encode(obj: NonNil<object>): string {
-        const uint8: Uint8Array = Marshal(obj);
-        const hex: string = BytesToHex(uint8);
-        const rlpHex: string = encodeRlp(hex);
-        const rlpBytes: Uint8Array = HexToBytes(rlpHex);
-        const encodingType: Uint8Array = NumberToUint16BigEndian(EncodingType.RLP_ENCODING);
-        const encodedByteArray = ConcatBytes(encodingType, rlpBytes);
-        return bytesToBase64(encodedByteArray);
     }
 }

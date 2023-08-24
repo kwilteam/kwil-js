@@ -3,7 +3,7 @@
 
 const kwiljs = require("../dist/index")
 const ethers = require("ethers")
-const testDB = require("./test_schema_ext.json")
+const testDB = require("./test_schema_simple.json")
 require("dotenv").config()
 
 async function test() {
@@ -72,6 +72,8 @@ async function broadcast(kwil, tx, sig) {
         .payload(ownedTx)
         .signer(sig)
         .buildTx()
+
+    console.log('readytx', readytx)
     const txHash = await kwil.broadcast(readytx)
     console.log(txHash)
 }

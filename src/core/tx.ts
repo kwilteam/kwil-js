@@ -11,8 +11,8 @@ export interface TxReceipt {
 
 export interface TxnData {
     signature: Signature;
-    sender: string;
     body: TxBody;
+    sender: string;
 }
 
 interface TxBody {
@@ -37,7 +37,6 @@ export class Transaction implements TxnData {
                 signature_bytes: "",
                 signature_type: SignatureType.SECP256K1_PERSONAL
             },
-            sender: "",
             body: {
                 payload: "",
                 payload_type: PayloadType.EXECUTE_ACTION,
@@ -45,6 +44,7 @@ export class Transaction implements TxnData {
                 nonce: null,
                 salt: "",
             },
+            sender: "",
         };
     }
 
@@ -77,7 +77,6 @@ export namespace Txn {
                 signature_bytes: "",
                 signature_type: SignatureType.SECP256K1_PERSONAL
             },
-            sender: "",
             body: {
                 payload: "",
                 payload_type: PayloadType.EXECUTE_ACTION,
@@ -85,6 +84,7 @@ export namespace Txn {
                 nonce: null,
                 salt: "",
             },
+            sender: "",
         };
 
         configure(tx);

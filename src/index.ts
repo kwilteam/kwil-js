@@ -16,10 +16,10 @@ namespace Types {
     export type ActionInput = _ActionInput
     export type DBBuilder = _DBBuilder
     export type Transaction = _Transaction
-    export type Database<T> = _Database<T>
-    export type Table<T> = _Table<T>
-    export type Column<T> = _Column<T>
-    export type Attribute<T> = _Attribute<T>
+    export type Database = _Database
+    export type Table = _Table
+    export type Column = _Column
+    export type Attribute = _Attribute
     export type Index = _Index
     export type ActionSchema = _ActionSchema
     export type SelectQuery = _SelectQuery

@@ -25,7 +25,7 @@ import { Cache } from "../utils/cache";
 export abstract class Kwil {
     private readonly client: Client;
     //cache schemas
-    private schemas: Cache<GenericResponse<Database<string>>>;
+    private schemas: Cache<GenericResponse<Database>>;
 
     // cache fundingConfig
     private fundingConfig?: GenericResponse<FundingConfig>;
@@ -64,7 +64,7 @@ export abstract class Kwil {
      * @returns A promise that resolves to the schema of the database. 
      */
 
-    public async getSchema(dbid: string): Promise<GenericResponse<Database<string>>> {
+    public async getSchema(dbid: string): Promise<GenericResponse<Database>> {
         // check cache
         const schema = this.schemas.get(dbid)
         if (schema) {

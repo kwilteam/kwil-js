@@ -1,12 +1,11 @@
 // noinspection JSPotentiallyInvalidConstructorUsage
 
 import jssha from 'jssha';
-import {Signer, ethers} from 'ethers';
+import {Signer, SigningKey, ethers, getBytes, hashMessage, id, recoverAddress} from 'ethers';
 import { Signature, SignatureType } from '../core/signature';
 import {  HexToUint8Array,  } from './bytes';
 import { base64ToBytes, bytesToBase64 } from './base64';
-import {Wallet as Walletv5, Signer as Signerv5} from "ethers5";
-
+import {Wallet as Walletv5, Signer as Signerv5, utils} from "ethers5";
 
 export function sha384StringToString(message: string): string {
     // noinspection JSPotentiallyInvalidConstructorUsage
@@ -39,14 +38,23 @@ export function sha224StringToString(message: string): string {
     return shaObj.getHash('HEX');
 }
 
-export async function sign(message: string, signer: Signer | ethers.Wallet | Walletv5 | Signerv5): Promise<Signature> {
-    const sig =  await signer.signMessage(base64ToBytes(message));
-    const encodedSignature = bytesToBase64(HexToUint8Array(sig))
+function encodeSignature(signature: string): string {
+    return bytesToBase64(HexToUint8Array(signature));
+}
 
+export function buildSignaturePayload(message: string): Signature {
     return {
-        signature_bytes: encodedSignature,
+        signature_bytes: encodeSignature(message),
         signature_type: SignatureType.SECP256K1_PERSONAL,
-    }
+    };
+}
+export async function sign(message: string, signer: Signer | ethers.Wallet | Walletv5 | Signerv5): Promise<string> {
+    return await signer.signMessage(base64ToBytes(message));
+}
+
+export function ecrRecoverPubKey(unsignedMessage: Uint8Array, signature: string): string {
+    const msgHash = hashMessage(unsignedMessage);
+    return SigningKey.recoverPublicKey(msgHash, signature);
 }
 
 export function isV5Signer(obj: any): obj is Signerv5 {

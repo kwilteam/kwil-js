@@ -27,7 +27,7 @@ export default class Client extends Api {
         return checkRes(res, r => r);
     }
 
-    public async getSchema(dbid: string): Promise<GenericResponse<Database<string>>> {
+    public async getSchema(dbid: string): Promise<GenericResponse<Database>> {
         const res = await super.get<GetSchemaResponse>(`/api/v1/databases/${dbid}/schema`);
         return checkRes(res, r => r.dataset);
     }

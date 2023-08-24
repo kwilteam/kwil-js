@@ -8,7 +8,7 @@ export interface GenericResponse<T> {
 }
 
 export interface GetSchemaResponse {
-    dataset: Database<string>;
+    dataset: Database;
 }
 
 export interface GetAccountResponse {
