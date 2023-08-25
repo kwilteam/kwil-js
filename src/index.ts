@@ -1,7 +1,7 @@
 import {NodeKwil} from './client/node/nodeKwil'
 import {WebKwil} from './client/web/webKwil'
 import { generateDBID } from './utils/dbid'
-import { TxReceipt as _TxReceipt } from './core/tx'
+import { TxBody, TxReceipt as _TxReceipt } from './core/tx'
 import { Funder as _Funder } from './funder/funding'
 import { ActionBuilder as _ActionBuilder, DBBuilder as _DBBuilder } from './core/builders'
 import { ActionInput as _ActionInput} from './core/actionInput'
@@ -15,7 +15,7 @@ namespace Types {
     export type ActionBuilder = _ActionBuilder
     export type ActionInput = _ActionInput
     export type DBBuilder = _DBBuilder
-    export type Transaction = _Transaction
+    export type Transaction= _Transaction<TxBody>
     export type Database = _Database
     export type Table = _Table
     export type Column = _Column

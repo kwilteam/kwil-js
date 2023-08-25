@@ -1,6 +1,6 @@
 import {Database} from "./database";
 import {Account} from "./account";
-import {TxnData, TxReceipt} from "./tx";
+import {HexlifiedTxBody, TxBody, TxnData, TxReceipt} from "./tx";
 
 export interface GenericResponse<T> {
     status: number;
@@ -20,7 +20,7 @@ export interface ListDatabasesResponse {
 }
 
 export interface EstimateCostReq {
-    tx: TxnData;
+    tx: TxnData<TxBody>;
 }
 
 export interface EstimateCostRes {
@@ -28,7 +28,7 @@ export interface EstimateCostRes {
 }
 
 export interface BroadcastReq {
-    tx: TxnData;
+    tx: TxnData<TxBody>;
 }
 
 export interface BroadcastRes {

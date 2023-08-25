@@ -3,7 +3,7 @@ import Client from "../api_client/client";
 import { Config } from "../api_client/config";
 import { GenericResponse } from "../core/resreq";
 import { Database, SelectQuery } from "../core/database";
-import { Transaction, TxReceipt } from "../core/tx";
+import { HexlifiedTxBody, Transaction, TxBody, TxReceipt } from "../core/tx";
 import { Account } from "../core/account";
 import { ethers, Signer } from "ethers";
 import { Funder } from "../funder/funding";
@@ -131,7 +131,7 @@ export abstract class Kwil {
      * @returns A promise that resolves to the receipt of the transaction. The transaction receipt includes the transaction hash, fee, and body.
      */
 
-    public async broadcast(tx: Transaction): Promise<GenericResponse<TxReceipt>> {
+    public async broadcast(tx: Transaction<TxBody>): Promise<GenericResponse<TxReceipt>> {
         return await this.client.broadcast(tx);
     }
 

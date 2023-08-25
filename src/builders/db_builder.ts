@@ -1,4 +1,4 @@
-import { Transaction } from "../core/tx";
+import { Transaction, TxBody } from "../core/tx";
 import {Nillable, NonNil, Promisy} from "../utils/types";
 import {objects} from "../utils/objects";
 import {Kwil} from "../client/kwil";
@@ -38,7 +38,7 @@ export class DBBuilderImpl implements DBBuilder {
         return this;
     }
 
-    async buildTx(): Promise<Transaction> {
+    async buildTx(): Promise<Transaction<TxBody>> {
         const payload = objects.requireNonNil(this._payload);
         const signer = await Promisy.resolveOrReject(this._signer);
         return TxnBuilderImpl

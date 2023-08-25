@@ -1,6 +1,7 @@
 import Long from 'long';
 import {strings} from "./strings";
 import {objects} from "./objects";
+import { HexString, NonNil } from './types';
 
 export function StringToBytes(str: string): Uint8Array {
     strings.requireNonNil(str as any);
@@ -12,6 +13,43 @@ export function StringToBytes(str: string): Uint8Array {
     return view;
 }
 
+type AnyObject = {
+    [key: string]: any;
+}
+
+export function recursivelyHexlify(obj: NonNil<AnyObject>): NonNil<AnyObject> | string {
+    if(Array.isArray(obj)) {
+        return obj.map(item => recursivelyHexlify(item));
+    }
+
+    if(typeof obj === 'object' && obj !== null) {
+        const recursiveObj: AnyObject = {};
+        for(const key of Object.keys(obj)) {
+            recursiveObj[key] = recursivelyHexlify(obj[key]);
+        }
+        return recursiveObj;
+    }
+
+    return anyToHex(obj);
+}
+
+export function anyToHex(val: string | number | boolean): string | [] {
+    if (typeof val === 'string') {
+        // Convert only non-hex strings to hex
+        return StringToHex(val);
+    } else if (typeof val === 'number') {
+        return NumberToHex(val);
+    } else if (typeof val === 'boolean') {
+        return val ? "0x01" : "0x00";
+    } else if (val === null || val === undefined) {
+        return [];
+    } else {
+        // Convert any other value to a string first
+        throw new Error(`unknown value: ${val}`);
+    }
+}
+
+
 export function StringToHex(str: string): string {
     let hex = '0x';
     for (let i = 0; i < str.length; i++) {
@@ -21,7 +59,24 @@ export function StringToHex(str: string): string {
     return hex;
 }
 
-export function NumberToHex(num: number): string {
+export function HexToString(hex: HexString): string {
+    strings.requireNonNil(hex);
+    if (hex.length % 2 !== 0) {
+        throw new Error(`invalid hex string: ${hex}`);
+    }
+    // strip 0x prefix
+    if (hex.startsWith('0x')) {
+        hex = hex.slice(2);
+    }
+    let str = '';
+    for (let i = 0; i < hex.length; i += 2) {
+        const code = parseInt(hex.slice(i, i + 2), 16);
+        str += String.fromCharCode(code);
+    }
+    return str;
+}
+
+export function NumberToHex(num: number): HexString {
     let hex = num.toString(16);
     if (hex.length % 2 !== 0) {
         hex = '0' + hex;
@@ -29,8 +84,20 @@ export function NumberToHex(num: number): string {
     return '0x' + hex;
 }
 
-export function BytesToHex(bytes: Uint8Array): string {
-    return bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');
+export function HexToNumber(hex: HexString): number {
+    strings.requireNonNil(hex);
+    if (hex.length % 2 !== 0) {
+        throw new Error(`invalid hex string: ${hex}`);
+    }
+    // strip 0x prefix
+    if (hex.startsWith('0x')) {
+        hex = hex.slice(2);
+    }
+    return parseInt(hex, 16);
+}
+
+export function BytesToHex(bytes: Uint8Array): HexString {
+    return '0x' + bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');
 }
 
 export function HexToBytes(hex: string): Uint8Array {

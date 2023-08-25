@@ -1,18 +1,20 @@
 import { Nillable, NonNil, Promisy } from "../utils/types";
-import { Transaction } from "../core/tx";
+import { HexlifiedTxBody, Transaction, TxBody } from "../core/tx";
 import { ethers, Signer } from "ethers";
 import { objects } from "../utils/objects";
 import { strings } from "../utils/strings";
 import { Txn } from "../core/tx";
-import { buildSignaturePayload, sign as crypto_sign, ecrRecoverPubKey, generateSalt } from "../utils/crypto";
+import { sign as crypto_sign, ecrRecoverPubKey, encodeSignature, generateSalt } from "../utils/crypto";
 import { base64ToBytes, bytesToBase64 } from "../utils/base64";
 import { Kwil } from "../client/kwil";
 import { SignerSupplier, TxnBuilder } from "../core/builders";
 import { unwrap } from "../client/intern";
 import { Wallet as Walletv5, Signer as Signerv5 } from "ethers5"
-import { EncodingType, PayloadType } from "../core/enums";
+import { PayloadType } from "../core/enums";
 import { kwilEncode } from "../utils/rlp";
-import { HexToBytes, StringToBytes } from "../utils/serial";
+import { BytesToHex, BytesToString, HexToBytes, HexToNumber, HexToString, NumberToHex, StringToBytes, StringToHex, recursivelyHexlify } from "../utils/serial";
+import { SignatureType } from "../core/signature";
+import { HexToUint8Array } from "../utils/bytes";
 
 export class TxnBuilderImpl implements TxnBuilder {
     private readonly client: Kwil;
@@ -46,7 +48,7 @@ export class TxnBuilderImpl implements TxnBuilder {
         return this;
     }
 
-    async build(): Promise<Transaction> {
+    async build(): Promise<Transaction<TxBody>> {
         objects.requireNonNil(this.client);
 
         const payloadFn = objects.requireNonNil(this._payload);
@@ -59,11 +61,15 @@ export class TxnBuilderImpl implements TxnBuilder {
         }
 
         const json = objects.requireNonNil(payloadFn());
-        const preEstTxn = Txn.create(tx => {
+
+        // hexlify json to make it rlp encodable
+        const hexJson = recursivelyHexlify(json);
+
+        // have to make the payload base64 so estimate cost can process it over GRPC
+        const preEstTxn = Txn.create<TxBody>(tx => {
             tx.sender = sender;
-            tx.body.payload = kwilEncode(json);
+            tx.body.payload = bytesToBase64(kwilEncode(hexJson as object));
             tx.body.payload_type = payloadType;
-            tx.body.salt = bytesToBase64(generateSalt(32));
         });
 
         console.log('PRE EST TXN', preEstTxn)
@@ -74,26 +80,46 @@ export class TxnBuilderImpl implements TxnBuilder {
             throw new Error(`Could not retrieve cost for transaction. Please double check that you have the correct account address.`);
         }
 
-        const postEstTxn = Txn.copy(preEstTxn, tx => {
+        // convert payload back to hex for rlp encoding before signing 
+        const postEstTxn = Txn.copy<TxBody>(preEstTxn, tx => {
             tx.body.fee = strings.requireNonNil(cost.data);
             tx.body.nonce = Number(objects.requireNonNil(acct.data?.nonce)) + 1;
+            tx.body.payload = BytesToHex(base64ToBytes(tx.body.payload));
         })
 
         return TxnBuilderImpl.sign(postEstTxn, signer);
     }
 
-    private static async sign(tx: Transaction, signer: Signer | ethers.Wallet | Walletv5 | Signerv5): Promise<Transaction> {
-        const encodedTx = kwilEncode(tx.body);
-        const signedMessage = await crypto_sign(encodedTx, signer);
-        console.log('SIGNED MESSAGE ====', signedMessage)
-        const signature = buildSignaturePayload(signedMessage);
-        const pubKey = ecrRecoverPubKey(base64ToBytes(encodedTx), signedMessage);
-        console.log('PUBKEY ====', pubKey)
+    private static async sign(tx: Transaction<TxBody>, signer: Signer | ethers.Wallet | Walletv5 | Signerv5): Promise<Transaction<TxBody>> {
+        const preEncodedBody = Txn.copy<HexlifiedTxBody>(tx, (tx) => {
+            tx.body.payload = tx.body.payload;
+            tx.body.payload_type = StringToHex(tx.body.payload_type) ;
+            tx.body.fee = StringToHex(tx.body.fee);
+            tx.body.nonce = NumberToHex(tx.body.nonce as unknown as number); // TODO: Fix the type checking here
+            tx.body.salt = StringToHex(BytesToString(generateSalt(16)));
+        })
 
+        console.log('PRE ENCODED BODY', preEncodedBody.body)
+        const encodedTx = kwilEncode(preEncodedBody.body);
+        const signedMessage = await crypto_sign(encodedTx, signer);
+        const pubKey = ecrRecoverPubKey(encodedTx, signedMessage);
+
+        // for testing purposes
         const hardCodedKey = '0x048767310544592e33b2fb5555527f49c0902cf0f472f4c87e65324abb75e7a5e1c035bc1ef5026f363c79588526c341af341a68fc37299183391699ee1864cc75'
         console.log('GOT CORRECT PUB KEY', pubKey === hardCodedKey)
-        return Txn.copy(tx, (tx) => {
-            tx.signature = signature;
+        
+        return Txn.copy<TxBody>(preEncodedBody, (tx) => {
+            tx.signature = {
+                signature_bytes: bytesToBase64(HexToUint8Array(signedMessage)),
+                signature_type: SignatureType.SECP256K1_PERSONAL
+            };
+            tx.body = {
+                payload: bytesToBase64(HexToBytes(tx.body.payload)),
+                payload_type: HexToString(tx.body.payload_type) as PayloadType,
+                fee: HexToString(tx.body.fee),
+                nonce: HexToNumber(tx.body.nonce as unknown as string), // TODO: Fix the type checking here
+                salt: bytesToBase64(HexToBytes(tx.body.salt)),
+            };
             tx.sender = bytesToBase64(HexToBytes(pubKey));
         });
     }
