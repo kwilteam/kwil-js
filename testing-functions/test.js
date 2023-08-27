@@ -66,7 +66,7 @@ async function getAccount(kwil, owner) {
 
 async function broadcast(kwil, tx, sig) {
     let ownedTx = tx
-    ownedTx.owner = sig.address
+    ownedTx.owner = "luke"
     const readytx = await kwil
         .dbBuilder()
         .payload(ownedTx)

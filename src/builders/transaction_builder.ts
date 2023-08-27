@@ -63,11 +63,11 @@ export class TxnBuilderImpl implements TxnBuilder {
 
         const json = objects.requireNonNil(payloadFn());
 
-        const hexObj = recursivelyHexlify(json);
+        // const hexObj = recursivelyHexlify(json);
 
         // have to make the payload base64 so estimate cost can process it over GRPC
         const preEstTxn = Txn.create(tx => {
-            tx.body.payload = bytesToBase64(kwilEncode(hexObj as object));
+            tx.body.payload = bytesToBase64(kwilEncode(json as object));
             tx.body.payload_type = payloadType;
             tx.body.fee = tx.body.fee.toString()
         });
@@ -92,11 +92,11 @@ export class TxnBuilderImpl implements TxnBuilder {
     private static async sign(tx: Transaction, signer: Signer | ethers.Wallet | Walletv5 | Signerv5): Promise<Transaction> {
 
         const preEncodedBody = Txn.copy(tx, (tx) => {
-            tx.body.payload = BytesToHex(base64ToBytes(tx.body.payload as string));
-            tx.body.payload_type = StringToHex(tx.body.payload_type) as PayloadType
-            tx.body.fee = tx.body.fee
-            tx.body.nonce = NumberToHex(tx.body.nonce as number) as unknown as number
-            tx.body.salt = bytesToBase64(new Uint8Array());
+            tx.body.payload = base64ToBytes(tx.body.payload as string);
+            tx.body.payload_type = tx.body.payload_type
+            tx.body.fee = BigInt(0)
+            tx.body.nonce = tx.body.nonce
+            tx.body.salt = new Uint8Array();
         })
 
         console.log('PRE ENCODED BODY', preEncodedBody.body)
@@ -115,10 +115,10 @@ export class TxnBuilderImpl implements TxnBuilder {
                 signature_type: SignatureType.SECP256K1_PERSONAL
             };
             tx.body = {
-                payload: tx.body.payload,
-                payload_type: HexToString(tx.body.payload_type) as PayloadType,
+                payload: bytesToBase64(tx.body.payload as Uint8Array),
+                payload_type: tx.body.payload_type as PayloadType,
                 fee: tx.body.fee.toString(),
-                nonce: HexToNumber(tx.body.nonce as unknown as string),
+                nonce: tx.body.nonce,
                 salt: bytesToBase64(tx.body.salt as Uint8Array)
             };
             tx.sender = bytesToBase64(HexToBytes(pubKey));
