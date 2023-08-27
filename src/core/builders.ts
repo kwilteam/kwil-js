@@ -1,5 +1,5 @@
 import {NonNil, Promisy} from "../utils/types";
-import { TxBody, Transaction } from "./tx";
+import { Transaction } from "./tx";
 import {ethers, Signer as _Signer} from "ethers";
 import {ActionInput} from "./actionInput";
 import {Wallet as Walletv5, Signer as Signerv5} from "ethers5";
@@ -15,7 +15,7 @@ export interface TxnBuilder {
 
     payload(payload: (() => NonNil<object>) | NonNil<object>): NonNil<TxnBuilder>;
 
-    build(): Promise<Transaction<TxBody>>;
+    build(): Promise<Transaction>;
 }
 
 export interface DBBuilder {
@@ -43,7 +43,7 @@ export interface DBBuilder {
      * @returns A promise that resolves to a Transaction object. This transaction can be broadcasted to the Kwil network.
      */
 
-    buildTx(): Promise<Transaction<TxBody>>;
+    buildTx(): Promise<Transaction>;
 }
 
 export interface ActionBuilder {
@@ -94,5 +94,5 @@ export interface ActionBuilder {
      * @throws Will throw an error if the action is being built or if there's an issue with the schema retrieval for validating the action.
      */
 
-    buildTx(): Promise<Transaction<TxBody>>;
+    buildTx(): Promise<Transaction>;
 }

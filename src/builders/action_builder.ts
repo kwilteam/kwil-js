@@ -1,4 +1,4 @@
-import { Transaction, TxBody } from "../core/tx";
+import { Transaction } from "../core/tx";
 import {objects} from "../utils/objects";
 import {Nillable, NonNil, Promisy} from "../utils/types";
 import {Kwil} from "../client/kwil";
@@ -64,7 +64,7 @@ export class ActionBuilderImpl implements ActionBuilder {
         return this;
     }
 
-    async buildTx(): Promise<Transaction<TxBody>> {
+    async buildTx(): Promise<Transaction> {
         this.assertNotBuilding();
 
         const cached = objects.requireNonNil(this._actions);
@@ -75,7 +75,7 @@ export class ActionBuilderImpl implements ActionBuilder {
             .finally(() => this._actions = cached);
     }
 
-    private async dobuildTx(actions: ActionInput[]): Promise<Transaction<TxBody>> {
+    private async dobuildTx(actions: ActionInput[]): Promise<Transaction> {
         const dbid = objects.requireNonNil(this._dbid);
         const name = objects.requireNonNil(this._name);
         const signer = await Promisy.resolveOrReject(this._signer);

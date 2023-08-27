@@ -9,37 +9,29 @@ export interface TxReceipt {
     get body(): Nillable<string>;
 }
 
-export interface TxnData<T> {
+export interface TxnData {
     signature: Signature;
-    body: T;
+    body: TxBody;
     sender: string;
 }
 
-export interface TxBody {
-    payload: string;
+interface TxBody {
+    payload: string | Uint8Array;
     payload_type: PayloadType;
-    fee: string;
+    fee: BigInt | string;
     nonce: number | null;
-    salt: string;
-}
-
-export interface HexlifiedTxBody {
-    payload: HexString;
-    payload_type: HexString;
-    fee: HexString;
-    nonce: HexString;
-    salt: HexString;
-}
+    salt: Uint8Array | string;
+} 
 
 export interface DropDbPayload {
     owner: string;
     name: string;
 }
 
-export class Transaction<T extends TxBody | HexlifiedTxBody> implements TxnData<T> {
-    private readonly data: Readonly<TxnData<T>>;
+export class Transaction implements TxnData {
+    private readonly data: Readonly<TxnData>;
 
-    constructor(data?: NonNil<TxnData<T>>) {
+    constructor(data?: NonNil<TxnData>) {
         this.data = data || {
             signature: {
                 signature_bytes: "",
@@ -48,10 +40,10 @@ export class Transaction<T extends TxBody | HexlifiedTxBody> implements TxnData<
             body: {
                 payload: "",
                 payload_type: PayloadType.EXECUTE_ACTION,
-                fee: "0",
+                fee: BigInt("0"),
                 nonce: null,
-                salt: "",
-            } as T,
+                salt: '',
+            },
             sender: "",
         };
     }
@@ -68,26 +60,26 @@ export class Transaction<T extends TxBody | HexlifiedTxBody> implements TxnData<
         return this.data.sender;
     }
 
-    public get body(): Readonly<T> {
+    public get body(): Readonly<TxBody> {
         return this.data.body;
     }
 
     // noinspection JSUnusedLocalSymbols
-    private toJSON(): Readonly<TxnData<T>> {
+    private toJSON(): Readonly<TxnData> {
         return this.data;
     }
 }
 
 export namespace Txn {
-    export function create<T extends TxBody | HexlifiedTxBody>(configure: (tx: TxnData<T>) => void): NonNil<Transaction<T>> {
+    export function create(configure: (tx: TxnData) => void): NonNil<Transaction> {
         const tx = {
             body: {
                 payload: "",
                 payload_type: PayloadType.EXECUTE_ACTION,
-                fee: "0",
+                fee: BigInt("0"),
                 nonce: null,
-                salt: "",
-            } as T,
+                salt: '',
+            },
             signature: {
                 signature_bytes: "",
                 signature_type: SignatureType.SECP256K1_PERSONAL
@@ -100,11 +92,11 @@ export namespace Txn {
         return new Transaction(tx);
     }
 
-    export function copy<T extends TxBody | HexlifiedTxBody>(source: NonNil<Transaction<TxBody | HexlifiedTxBody>>, configure: (tx: TxnData<T>) => void): NonNil<Transaction<T>> {
-        return Txn.create((tx: TxnData<T>) => {
-            tx.body = source.body as T;
+    export function copy(source: NonNil<Transaction>, configure: (tx: TxnData) => void): NonNil<Transaction> {
+        return Txn.create((tx: TxnData) => {
+            tx.body = source.body;
             tx.signature = source.signature;
-            tx.body = source.body as T;
+            tx.body = source.body;
             configure(tx);
         });
     }

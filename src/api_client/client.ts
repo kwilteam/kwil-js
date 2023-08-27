@@ -3,7 +3,7 @@ import { Uint8ArrayToHex } from "../utils/bytes";
 import { Account } from "../core/account";
 import { FundingConfig } from "../core/configs";
 import {Database, SelectQuery} from "../core/database";
-import {Transaction, TxBody, TxReceipt} from "../core/tx";
+import {Transaction, TxReceipt} from "../core/tx";
 import { Api } from "./api";
 import {Config} from "./config";
 import {
@@ -42,13 +42,13 @@ export default class Client extends Api {
         return checkRes(res, r => r.databases);
     }
 
-    public async estimateCost(tx: Transaction<TxBody>): Promise<GenericResponse<string>> {
+    public async estimateCost(tx: Transaction): Promise<GenericResponse<string>> {
         let req: EstimateCostReq = {tx}
         const res = await super.post<EstimateCostRes>(`/api/v1/estimate_price`, req);
         return checkRes(res, r => r.price);
     }
 
-    public async broadcast(tx: Transaction<TxBody>): Promise<GenericResponse<TxReceipt>> {
+    public async broadcast(tx: Transaction): Promise<GenericResponse<TxReceipt>> {
         if (!tx.isSigned()) {
             throw new Error('Tx must be signed before broadcasting.');
         }

@@ -2,7 +2,7 @@ import {DBBuilder, SignerSupplier} from "../core/builders";
 import { Nillable, NonNil, Promisy } from "../utils/types";
 import {Kwil} from "../client/kwil";
 import { objects } from "../utils/objects";
-import { DropDbPayload, TxBody } from "../core/tx";
+import { DropDbPayload } from "../core/tx";
 import { Transaction } from "../core/tx";
 import { TxnBuilderImpl } from "./transaction_builder";
 import { PayloadType } from "../core/enums";
@@ -33,7 +33,7 @@ export class DropDBBuilderImpl implements DBBuilder {
         return this;
     }
 
-    async buildTx(): Promise<Transaction<TxBody>> {
+    async buildTx(): Promise<Transaction> {
         const payload = objects.requireNonNil(this._payload);
         const signer = await Promisy.resolveOrReject(this._signer);
         return TxnBuilderImpl

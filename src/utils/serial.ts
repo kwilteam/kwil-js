@@ -61,6 +61,7 @@ export function StringToHex(str: string): string {
 
 export function HexToString(hex: HexString): string {
     strings.requireNonNil(hex);
+
     if (hex.length % 2 !== 0) {
         throw new Error(`invalid hex string: ${hex}`);
     }
@@ -74,6 +75,14 @@ export function HexToString(hex: HexString): string {
         str += String.fromCharCode(code);
     }
     return str;
+}
+
+export function NumberToBytes(num: number): Uint8Array {
+    objects.requireNonNilNumber(num);
+    const buffer = new ArrayBuffer(1);
+    const view = new DataView(buffer);
+    view.setUint8(0, num);
+    return new Uint8Array(buffer);
 }
 
 export function NumberToHex(num: number): HexString {

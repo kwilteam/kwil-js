@@ -1,10 +1,11 @@
-import { NonNil } from './types'
+import { HexString, NonNil } from './types'
 import { ConcatBytes, NumberToUint16BigEndian } from './bytes'
 import { HexToBytes } from './serial'
 import { RlpStructuredData, encodeRlp } from 'ethers';
 import { EncodingType } from '../core/enums';
+import { encode } from '@ethereumjs/rlp';
 
-function _objToNestedArray(input: NonNil<object>): RlpStructuredData {
+function _objToNestedArray(input: NonNil<object>): any[] {
     if (Array.isArray(input)) {
         return input.map(item => _objToNestedArray(item));
     } else if (typeof input === 'object' && input !== null) {
@@ -21,8 +22,8 @@ function _objToNestedArray(input: NonNil<object>): RlpStructuredData {
 
 export function kwilEncode(obj: NonNil<object>): Uint8Array {
     const rlp: RlpStructuredData = _objToNestedArray(obj);
-    const rlpHex: string = encodeRlp(rlp);
-    const rlpBytes: Uint8Array = HexToBytes(rlpHex);
+    console.log(rlp)
+    const rlpBytes: Uint8Array = encode(rlp);
     const encodingType: Uint8Array = NumberToUint16BigEndian(EncodingType.RLP_ENCODING);
     return ConcatBytes(encodingType, rlpBytes);
 }
