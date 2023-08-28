@@ -2,11 +2,19 @@ import { Transaction } from "../core/tx";
 import {objects} from "../utils/objects";
 import {Nillable, NonNil, Promisy} from "../utils/types";
 import {Kwil} from "../client/kwil";
-import {ActionBuilder, SignerSupplier} from "../core/builders";
+import {ActionBuilder, SignerSupplier, TxnBuilder} from "../core/builders";
 import {TxnBuilderImpl} from "./transaction_builder";
 import {ActionInput} from "../core/actionInput";
 import {ActionSchema} from "../core/database";
 import { PayloadType, ValueType } from "../core/enums";
+import { Message, UnencodedMessagePayload } from "../core/message";
+
+interface CheckSchema {
+    dbid: string;
+    name: string;
+    actionSchema: ActionSchema;
+    preparedActions?: ActionInput[];
+}
 
 const TXN_BUILD_IN_PROGRESS: ActionInput[] = [];
 /**
@@ -62,7 +70,7 @@ export class ActionBuilderImpl implements ActionBuilder {
         }
 
         return this;
-    }
+    } 
 
     async buildTx(): Promise<Transaction> {
         this.assertNotBuilding();
@@ -75,22 +83,21 @@ export class ActionBuilderImpl implements ActionBuilder {
             .finally(() => this._actions = cached);
     }
 
+    async buildMsg(): Promise<Message> {
+        this.assertNotBuilding();
+
+        const cached = this._actions;
+        this._actions = TXN_BUILD_IN_PROGRESS;
+
+        return await this
+            .doBuildMsg(cached.length > 0 ? cached : undefined)
+            .finally(() => this._actions = cached);
+    }
+
     private async dobuildTx(actions: ActionInput[]): Promise<Transaction> {
-        const dbid = objects.requireNonNil(this._dbid);
-        const name = objects.requireNonNil(this._name);
+        const { dbid, name, preparedActions } = await this.checkSchema(actions);
+
         const signer = await Promisy.resolveOrReject(this._signer);
-
-        const schema = await this.client.getSchema(dbid);
-        if (!schema?.data?.actions) {
-            throw new Error(`Could not retrieve actions for database ${dbid}. Please double check that you have the correct DBID.`);
-        }
-
-        const actionSchema = schema.data.actions.find((act) => act.name == name);
-        if (!actionSchema) {
-            throw new Error(`Could not find action ${name} in database ${dbid}. Please double check that you have the correct DBID and action name.`);
-        }
-
-        const preparedActions = this.prepareActions(actions, actionSchema, name);
 
         const payload = {
             "dbid": dbid,
@@ -105,7 +112,77 @@ export class ActionBuilderImpl implements ActionBuilder {
             .payloadType(PayloadType.EXECUTE_ACTION)
             .payload(payload)
             .signer(signer)
-            .build();
+            .buildTx();
+    }
+
+    async doBuildMsg(action?: ActionInput[]): Promise<Message> {
+        const { dbid, name, preparedActions, actionSchema } = await this.checkSchema(action ? action : undefined);
+
+        if(preparedActions && preparedActions.length > 1) {
+            throw new Error("Cannot pass an array of actions inputs to a message. Please pass a single action input object.");
+        }
+
+        if(actionSchema.mutability === "update") {
+            throw new Error(`Action ${name} is not a state-changing action. Please use buildTx() instead.`);
+        }
+
+        if(actionSchema.inputs && actionSchema.inputs.length > 0 && (!preparedActions || preparedActions.length === 0)) {
+            throw new Error(`Action ${name} requires inputs. Please provide inputs. With the ActionInput class and .concat method.`);
+        }
+
+        const signer = this._signer ? this._signer : null;
+
+        const payload: UnencodedMessagePayload = !preparedActions ? {
+            "dbid": dbid,
+            "action": name,
+            "params": {}
+        } : {
+            "dbid": dbid,
+            "action": name,
+            "params": preparedActions[0]
+        }
+
+        let msg: TxnBuilder = TxnBuilderImpl
+            .of(this.client)
+            .payload(payload)
+
+        if(signer) {
+            msg = msg.signer(signer);
+        }
+
+        return await msg.buildMsg();
+    }
+
+    private async checkSchema(actions?: ActionInput[]): Promise<CheckSchema> {
+        const dbid = objects.requireNonNil(this._dbid);
+        const name = objects.requireNonNil(this._name);
+
+        const schema = await this.client.getSchema(dbid);
+        if (!schema?.data?.actions) {
+            throw new Error(`Could not retrieve actions for database ${dbid}. Please double check that you have the correct DBID.`);
+        }
+
+        const actionSchema = schema.data.actions.find((act) => act.name == name);
+        if (!actionSchema) {
+            throw new Error(`Could not find action ${name} in database ${dbid}. Please double check that you have the correct DBID and action name.`);
+        }
+
+        if(actions) {
+            const preparedActions = this.prepareActions(actions, actionSchema, name);
+            return {
+                dbid: dbid,
+                name: name,
+                actionSchema: actionSchema,
+                preparedActions: preparedActions
+            }
+        } else {
+            return {
+                dbid: dbid,
+                name: name,
+                actionSchema: actionSchema
+            }
+        }
+  
     }
 
     private prepareActions(actions: ActionInput[], actionSchema: ActionSchema, actionName: string): ValueType[][] {

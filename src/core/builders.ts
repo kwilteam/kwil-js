@@ -4,6 +4,7 @@ import {ethers, Signer as _Signer} from "ethers";
 import {ActionInput} from "./actionInput";
 import {Wallet as Walletv5, Signer as Signerv5} from "ethers5";
 import { PayloadType } from "./enums";
+import { Message } from "./message";
 
 export type Signer = NonNil<_Signer | ethers.Wallet | Walletv5 | Signerv5>;
 export type SignerSupplier = Promisy<Signer>
@@ -15,7 +16,9 @@ export interface TxnBuilder {
 
     payload(payload: (() => NonNil<object>) | NonNil<object>): NonNil<TxnBuilder>;
 
-    build(): Promise<Transaction>;
+    buildTx(): Promise<Transaction>;
+
+    buildMsg(): Promise<Message>;
 }
 
 export interface DBBuilder {
@@ -95,4 +98,13 @@ export interface ActionBuilder {
      */
 
     buildTx(): Promise<Transaction>;
+
+    /**
+     * Builds a message.
+     * 
+     * @returns A promise that resolves to a Message object. This message can be sent to the Kwil network with the kwil.call() api.
+     * @throws Will throw an error if the action is being built or if there's an issue with the schema retrieval for validating the action.
+     */
+
+    buildMsg(): Promise<Message>;
 }

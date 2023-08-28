@@ -1,5 +1,5 @@
 import './App.css'
-import { testV5Funding } from './tests/v5Funding'
+// import { testV5Funding } from './tests/v5Funding'
 import { testV5Transaction } from './tests/v5Signing';
 
 declare global {
@@ -11,7 +11,7 @@ declare global {
 function App() {
 
   async function test() {
-    await testV5Funding()
+    // await testV5Funding()
     await testV5Transaction()
   }
 

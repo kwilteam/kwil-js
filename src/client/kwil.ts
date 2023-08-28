@@ -1,23 +1,24 @@
 import { generateDBID } from "../utils/dbid";
 import Client from "../api_client/client";
 import { Config } from "../api_client/config";
-import { GenericResponse } from "../core/resreq";
-import { Database, SelectQuery } from "../core/database";
-import { Transaction, TxReceipt } from "../core/tx";
-import { Account } from "../core/account";
-import { ethers, Signer } from "ethers";
-import { Funder } from "../funder/funding";
-import { ActionBuilderImpl } from "../builders/action_builder";
-import { base64ToBytes } from "../utils/base64";
-import { DBBuilderImpl } from "../builders/db_builder";
-import { DropDBBuilderImpl } from "../builders/drop_db_builder";
-import { NonNil } from "../utils/types";
-import { ActionBuilder, DBBuilder } from "../core/builders";
-import { wrap } from "./intern";
+import {GenericResponse} from "../core/resreq";
+import {Database, SelectQuery} from "../core/database";
+import {Transaction, TxReceipt} from "../core/tx";
+import {Account} from "../core/account";
+import {ethers, Signer} from "ethers";
+import {Funder} from "../funder/funding";
+import {ActionBuilderImpl} from "../builders/action_builder";
+import {base64ToBytes} from "../utils/base64";
+import {DBBuilderImpl} from "../builders/db_builder";
+import {NonNil} from "../utils/types";
+import {ActionBuilder, DBBuilder} from "../core/builders";
+import {wrap} from "./intern";
 import { FundingConfig } from "../core/configs";
 import { Signer as Signerv5, Wallet as Walletv5 } from "ethers5"
 import { Cache } from "../utils/cache";
 import { TxInfoReceipt } from "../core/txQuery";
+import { Message, MsgReceipt } from "../core/message";
+import { PayloadType } from "../core/enums";
 
 /**
  * The main class for interacting with the Kwil network.
@@ -99,7 +100,7 @@ export abstract class Kwil {
      * Returns an instance of ActionBuilder for this client.
      *
      * @returns An ActionBuilder instance. ActionBuilder is used to build action transactions to be broadcasted to the Kwil network.
-     */
+     */  
 
     public actionBuilder(): NonNil<ActionBuilder> {
         return ActionBuilderImpl.of(this);
@@ -112,7 +113,7 @@ export abstract class Kwil {
      */
 
     public dbBuilder(): NonNil<DBBuilder> {
-        return DBBuilderImpl.of(this);
+        return DBBuilderImpl.of(this, PayloadType.DEPLOY_DATABASE);
     }
 
     /**
@@ -121,9 +122,9 @@ export abstract class Kwil {
     * @returns A Drop Database Builder instance. Drop Database Builder is used to build drop database transactions to be broadcasted to the Kwil network.
     */
 
-    public dropDBBuilder(): NonNil<DBBuilder> {
-        return DropDBBuilderImpl.of(this);
-    }
+     public dropDBBuilder(): NonNil<DBBuilder> {
+        return DBBuilderImpl.of(this, PayloadType.DROP_DATABASE);
+     }
 
     /**
      * Broadcasts a transaction on the network.
@@ -134,6 +135,17 @@ export abstract class Kwil {
 
     public async broadcast(tx: Transaction): Promise<GenericResponse<TxReceipt>> {
         return await this.client.broadcast(tx);
+    }
+
+    /**
+     * Sends a message to a Kwil node. This can be used to execute read-only actions on Kwil.
+     * 
+     * @param msg - The message to send. The message can be built using the ActionBuilder class.
+     * @returns A promise that resolves to the receipt of the message.
+     */
+
+    public async call(msg: Message): Promise<GenericResponse<MsgReceipt>> {
+        return await this.client.call(msg);
     }
 
     /**

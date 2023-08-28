@@ -36,6 +36,10 @@ export interface BroadcastRes {
     txHash: string;
 }
 
+export interface CallRes {
+    result: string;
+}
+
 export interface PongRes {
     message: string;
 }

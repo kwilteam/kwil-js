@@ -7,7 +7,6 @@
 .task
 yarn.lock
 .env
-
 /dist
 /pkg
 testapp/node_modules

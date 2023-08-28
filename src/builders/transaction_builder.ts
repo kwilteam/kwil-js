@@ -14,6 +14,14 @@ import { PayloadType } from "../core/enums";
 import { kwilEncode } from "../utils/rlp";
 import { hexToBytes } from "../utils/serial";
 import { SignatureType } from "../core/signature";
+import { Message, Msg } from "../core/message";
+import { MarshalB64 } from "../utils/bytes";
+
+interface PreBuild {
+    json: object;
+    sender: string;
+    signer?: SignerSupplier | null;
+};
 
 export class TxnBuilderImpl implements TxnBuilder {
     private readonly client: Kwil;
@@ -47,21 +55,20 @@ export class TxnBuilderImpl implements TxnBuilder {
         return this;
     }
 
-    async build(): Promise<Transaction> {
-        objects.requireNonNil(this.client);
+    async buildTx(): Promise<Transaction> {
+        const { json, sender, signer } = await this.preBuild();
 
-        const payloadFn = objects.requireNonNil(this._payload);
+        if(!signer) {
+            throw new Error("Signer is required to build a transaction.");
+        }
+
         const payloadType = objects.requireNonNil(this._payloadType);
-        const signer = await Promisy.resolveOrReject(this._signer);
-        const sender = (await signer.getAddress()).toLowerCase();
+        
         const acct = await this.client.getAccount(sender);
         if (acct.status !== 200 || !acct.data) {
             throw new Error(`Could not retrieve account ${sender}. Please double check that you have the correct account address.`);
         }
 
-        const json = objects.requireNonNil(payloadFn());
-        console.log(json)
-        // have to make the payload base64 so estimate cost can process it over GRPC
         const preEstTxn = Txn.create(tx => {
             tx.body.payload = bytesToBase64(kwilEncode(json));
             tx.body.payload_type = payloadType;
@@ -82,11 +89,45 @@ export class TxnBuilderImpl implements TxnBuilder {
             tx.body.nonce = Number(objects.requireNonNil(acct.data?.nonce)) + 1;
         })
 
-        return TxnBuilderImpl.sign(postEstTxn, signer);
+        return TxnBuilderImpl.signTx(postEstTxn, signer);
     }
 
-    private static async sign(tx: Transaction, signer: Signer | ethers.Wallet | Walletv5 | Signerv5): Promise<Transaction> {
+    async buildMsg(): Promise<Message> {
+        const { json, sender, signer } = await this.preBuild();
 
+        if(this._payloadType) {
+            throw new Error("Payload type is not required to build a message.");
+        }
+
+        let msg = Msg.create(msg => {
+            msg.sender = sender;
+            msg.payload = MarshalB64(json);
+        });
+
+        if(signer) {
+            return await TxnBuilderImpl.signMsg(msg, signer);
+        }
+
+        return msg;
+    }
+
+    private async preBuild(): Promise<PreBuild> {
+        objects.requireNonNil(this.client);
+
+        const payloadFn = objects.requireNonNil(this._payload);
+        const signer = this._signer;
+        const sender = signer ? (await signer.getAddress()).toLowerCase() : "";
+
+        const json = objects.requireNonNil(payloadFn());
+
+        return {
+            json: json,
+            sender: sender,
+            signer: signer
+        }
+    }
+
+    private static async signTx(tx: Transaction, signer: Signer | ethers.Wallet | Walletv5 | Signerv5): Promise<Transaction> {
         // convert payload back to uint8array for rlp encoding before signing
         const preEncodedBody = Txn.copy(tx, (tx) => {
             tx.body.payload = base64ToBytes(tx.body.payload as string);
@@ -118,5 +159,20 @@ export class TxnBuilderImpl implements TxnBuilder {
             };
             tx.sender = bytesToBase64(hexToBytes(pubKey));
         });
+    }
+    private static async signMsg(msg: Message, signer: Signer | ethers.Wallet | Walletv5 | Signerv5): Promise<Message> {
+        const hash = TxnBuilderImpl.hash_msg(msg);
+        const signature = await crypto_sign(hash, signer);
+        const sender = await signer.getAddress();
+
+        return Msg.copy(msg, (msg) => {
+            msg.signature = signature;
+            msg.sender = sender;
+        })
+    }
+
+    private static hash_msg(msg: NonNil<Message>): string {
+        const payloadHash = sha384BytesToBytes(base64ToBytes(msg.payload));
+        return bytesToBase64(payloadHash);
     }
 }

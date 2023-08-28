@@ -13,7 +13,7 @@ async function test() {
     const txHash = '0x651965102a6f77231d920eddbf3e90010e053c1486601d8a7921fdd4c5b59b9c'
 
     const kwil = new kwiljs.NodeKwil({
-        kwilProvider: "http://localhost:8080",
+        kwilProvider: process.env.KWIL_PROVIDER || "SHOULD FAIL",
         timeout: 10000,
         logging: true,
     })
@@ -21,7 +21,7 @@ async function test() {
     const dbid = kwil.getDBID(wallet.address, "mydb")
     // const dbid2 = kwil.getDBID(wallet.address, "selectaction")
     // console.log(dbid)
-    // broadcast(kwil, testDB, wallet)
+    broadcast(kwil, testDB, wallet)
     // await getSchema(kwil, dbid)
     // await getSchema(kwil, dbid2)
     // getAccount(kwil, wallet.address)
@@ -30,8 +30,8 @@ async function test() {
     // getFunder(kwil, wallet)
     // getAllowance(kwil, wallet)
     // getBalance(kwil, wallet)
-    // approve(kwil, wallet, BigInt(10 * 10^18))
-    // deposit(kwil, wallet, BigInt(10 * 10^18))
+    // await approve(kwil, wallet, BigInt(10 * 10^18))
+    // await deposit(kwil, wallet, BigInt(10 * 10^18))
     // getDepositedBalance(kwil, wallet)
     // getTokenAddress(kwil, wallet)
     // await execSingleAction(kwil, dbid, "add_post", wallet)
@@ -51,13 +51,18 @@ async function test() {
     // getSelectAction(kwil, dbid, "select_posts", wallet)
     await getTxInfo(kwil, txHash)
     // await dropDb(kwil, dbid, wallet)
+    // getSelectAction(kwil, dbid2, "get_items", wallet)
+    // await dropDb(kwil, wallet)
+    // await testNonViewAction(kwil, dbid, wallet)
+    // await testViewWithParam(kwil, dbid, wallet)
+    // await testViewWithSign(kwil, dbid, wallet)
 }
 
 test()
 
 async function getSchema(kwil, d) {
     const schema = await kwil.getSchema(d)
-    console.log(schema)
+    console.log(schema.data)
 }
 
 async function getAccount(kwil, owner) {
@@ -244,4 +249,47 @@ async function dropDb(kwil, dbid, w) {
     const res = await kwil.broadcast(tx)
 
     console.log(res)
+}
+
+async function testNonViewAction(kwil, dbid, wallet) {
+    const tx = await kwil
+        .actionBuilder()
+        .dbid(dbid)
+        .name('read_posts')
+        .signer(wallet)
+        .buildTx()
+
+    const res = await kwil.broadcast(tx)
+
+    console.log(res.data)
+}
+
+async function testViewWithParam(kwil, dbid, wallet) {
+    const actionInput = kwiljs.Utils.ActionInput
+        .of()
+        .put("$id", 1)
+
+    const msg = await kwil
+        .actionBuilder()
+        .dbid(dbid)
+        .name('view_with_param')
+        .concat(actionInput)
+        .buildMsg()
+
+    const res = await kwil.call(msg);
+
+    console.log(res.data.result)
+}
+
+async function testViewWithSign(kwil, dbid, wallet) {
+    const msg = await kwil
+        .actionBuilder()
+        .dbid(dbid)
+        .name('view_must_sign')
+        .signer(wallet)
+        .buildMsg()
+
+    const res = await kwil.call(msg);
+
+    console.log(res.data.result)
 }
