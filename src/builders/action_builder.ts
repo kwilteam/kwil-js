@@ -6,7 +6,7 @@ import {ActionBuilder, SignerSupplier} from "../core/builders";
 import {TxnBuilderImpl} from "./transaction_builder";
 import {ActionInput} from "../core/actionInput";
 import {ActionSchema} from "../core/database";
-import { PayloadType } from "../core/enums";
+import { PayloadType, ValueType } from "../core/enums";
 
 const TXN_BUILD_IN_PROGRESS: ActionInput[] = [];
 /**
@@ -93,10 +93,12 @@ export class ActionBuilderImpl implements ActionBuilder {
         const preparedActions = this.prepareActions(actions, actionSchema, name);
 
         const payload = {
-            "action": name,
             "dbid": dbid,
+            "action": name,
             "params": preparedActions
         }
+
+        console.log('PAYLOAD', payload)
 
         return TxnBuilderImpl
             .of(this.client)
@@ -106,7 +108,7 @@ export class ActionBuilderImpl implements ActionBuilder {
             .build();
     }
 
-    private prepareActions(actions: ActionInput[], actionSchema: ActionSchema, actionName: string): ActionInput[] {
+    private prepareActions(actions: ActionInput[], actionSchema: ActionSchema, actionName: string): ValueType[][] {
         if ((!actionSchema.inputs || actionSchema.inputs.length === 0) && actions.length === 0) {
             return [];
         }
@@ -131,7 +133,7 @@ export class ActionBuilderImpl implements ActionBuilder {
             throw new Error(`Actions do not match action schema inputs: ${Array.from(missingActions)}`)
         }
 
-        const preparedActions: ActionInput[] = [];
+        const preparedActions: ValueType[][] = [];
         const missingInputs = new Set<string>();
         actions.forEach((a) => {
             const copy = ActionInput.from(a);
@@ -155,7 +157,13 @@ export class ActionBuilderImpl implements ActionBuilder {
             })
 
             if (missingInputs.size === 0) {
-                preparedActions.push(copy);
+                preparedActions.push(actionSchema.inputs.map((i) => {
+                    const val = copy.get(i)
+                    if(val) {
+                        return val.toString();
+                    }
+                    return val;
+                }));
             }
         });
 

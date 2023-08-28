@@ -17,6 +17,7 @@ import { wrap } from "./intern";
 import { FundingConfig } from "../core/configs";
 import { Signer as Signerv5, Wallet as Walletv5 } from "ethers5"
 import { Cache } from "../utils/cache";
+import { TxInfoReceipt } from "../core/txQuery";
 
 /**
  * The main class for interacting with the Kwil network.
@@ -200,5 +201,15 @@ export abstract class Kwil {
             status: res.status,
             data: JSON.parse(jsonString),
         } as GenericResponse<Map<string, any>[]>;
+    }
+
+    /** 
+     * Retrieves information about a transaction given its hash.
+     * 
+     * @param hash - The hash of the transaction.
+     * @returns A promise that resolves to the transaction info receipt.
+    */
+    public async txInfo(hash: string): Promise<GenericResponse<TxInfoReceipt>> {
+        return await this.client.txInfo(hash);
     }
 }

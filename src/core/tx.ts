@@ -1,12 +1,10 @@
-import { HexString, Nillable, NonNil } from "../utils/types";
+import { NonNil } from "../utils/types";
 import { Signature, SignatureType } from "./signature";
 import { strings } from "../utils/strings";
 import { PayloadType } from "./enums";
 
 export interface TxReceipt {
     get txHash(): string;
-    get fee(): string;
-    get body(): Nillable<string>;
 }
 
 export interface TxnData {
@@ -21,11 +19,10 @@ interface TxBody {
     fee: BigInt | string;
     nonce: number | null;
     salt: Uint8Array | string;
-} 
+}
 
 export interface DropDbPayload {
-    owner: string;
-    name: string;
+    dbid: string
 }
 
 export class Transaction implements TxnData {
@@ -73,16 +70,16 @@ export class Transaction implements TxnData {
 export namespace Txn {
     export function create(configure: (tx: TxnData) => void): NonNil<Transaction> {
         const tx = {
-            signature: {
-                signature_bytes: "",
-                signature_type: SignatureType.SECP256K1_PERSONAL
-            },
             body: {
                 payload: "",
                 payload_type: PayloadType.EXECUTE_ACTION,
                 fee: BigInt("0"),
                 nonce: null,
                 salt: '',
+            },
+            signature: {
+                signature_bytes: "",
+                signature_type: SignatureType.SECP256K1_PERSONAL
             },
             sender: "",
         };

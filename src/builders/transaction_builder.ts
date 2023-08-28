@@ -4,7 +4,7 @@ import { ethers, Signer } from "ethers";
 import { objects } from "../utils/objects";
 import { strings } from "../utils/strings";
 import { Txn } from "../core/tx";
-import { sign as crypto_sign, ecrRecoverPubKey, encodeSignature, generateSalt } from "../utils/crypto";
+import { sign as crypto_sign, ecrRecoverPubKey, generateSalt } from "../utils/crypto";
 import { base64ToBytes, bytesToBase64 } from "../utils/base64";
 import { Kwil } from "../client/kwil";
 import { SignerSupplier, TxnBuilder } from "../core/builders";
@@ -12,10 +12,8 @@ import { unwrap } from "../client/intern";
 import { Wallet as Walletv5, Signer as Signerv5 } from "ethers5"
 import { PayloadType } from "../core/enums";
 import { kwilEncode } from "../utils/rlp";
-import { BytesToHex, BytesToString, HexToBytes, HexToNumber, HexToString, NumberToHex, StringToBytes, StringToHex, recursivelyHexlify } from "../utils/serial";
+import { hexToBytes } from "../utils/serial";
 import { SignatureType } from "../core/signature";
-import { HexToUint8Array } from "../utils/bytes";
-import util from 'util'
 
 export class TxnBuilderImpl implements TxnBuilder {
     private readonly client: Kwil;
@@ -62,12 +60,10 @@ export class TxnBuilderImpl implements TxnBuilder {
         }
 
         const json = objects.requireNonNil(payloadFn());
-
-        // const hexObj = recursivelyHexlify(json);
-
+        console.log(json)
         // have to make the payload base64 so estimate cost can process it over GRPC
         const preEstTxn = Txn.create(tx => {
-            tx.body.payload = bytesToBase64(kwilEncode(json as object));
+            tx.body.payload = bytesToBase64(kwilEncode(json));
             tx.body.payload_type = payloadType;
             tx.body.fee = tx.body.fee.toString()
         });
@@ -91,6 +87,7 @@ export class TxnBuilderImpl implements TxnBuilder {
 
     private static async sign(tx: Transaction, signer: Signer | ethers.Wallet | Walletv5 | Signerv5): Promise<Transaction> {
 
+        // convert payload back to uint8array for rlp encoding before signing
         const preEncodedBody = Txn.copy(tx, (tx) => {
             tx.body.payload = base64ToBytes(tx.body.payload as string);
             tx.body.payload_type = tx.body.payload_type
@@ -109,8 +106,8 @@ export class TxnBuilderImpl implements TxnBuilder {
         
         return Txn.copy(preEncodedBody, (tx) => {
             tx.signature = {
-                signature_bytes: bytesToBase64(HexToBytes(signedMessage)),
-                signature_type: SignatureType.SECP256K1_PERSONAL
+                signature_bytes: bytesToBase64(hexToBytes(signedMessage)),
+                signature_type: SignatureType.SECP256K1_PERSONAL.toString() as SignatureType
             };
             tx.body = {
                 payload: bytesToBase64(tx.body.payload as Uint8Array),
@@ -119,7 +116,7 @@ export class TxnBuilderImpl implements TxnBuilder {
                 nonce: tx.body.nonce,
                 salt: bytesToBase64(tx.body.salt as Uint8Array)
             };
-            tx.sender = bytesToBase64(HexToBytes(pubKey));
+            tx.sender = bytesToBase64(hexToBytes(pubKey));
         });
     }
 }

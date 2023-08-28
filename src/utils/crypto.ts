@@ -7,7 +7,7 @@ import {  HexToUint8Array,  } from './bytes';
 import { base64ToBytes, bytesToBase64 } from './base64';
 import {Wallet as Walletv5, Signer as Signerv5, utils} from "ethers5";
 import { HexString } from './types';
-import { BytesToString } from './serial';
+import { bytesToString } from './serial';
 
 export function sha384StringToString(message: string): string {
     // noinspection JSPotentiallyInvalidConstructorUsage

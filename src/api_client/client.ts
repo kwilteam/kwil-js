@@ -1,4 +1,4 @@
-import { base64ToBytes } from "../utils/base64";
+import { base64ToBytes, bytesToBase64 } from "../utils/base64";
 import { Uint8ArrayToHex } from "../utils/bytes";
 import { Account } from "../core/account";
 import { FundingConfig } from "../core/configs";
@@ -13,8 +13,10 @@ import {
     EstimateCostRes, FundingConfigRes,
     GenericResponse,
     GetAccountResponse, GetSchemaResponse,
-    ListDatabasesResponse, PongRes, SelectRes
+    ListDatabasesResponse, PongRes, SelectRes, TxQueryReq, TxQueryRes
 } from "../core/resreq";
+import { bytesToHex, bytesToString, hexToBytes, stringToBytes } from "../utils/serial";
+import { TxInfoReceipt } from "../core/txQuery";
 
 export default class Client extends Api {
     constructor(opts: Config) {
@@ -23,13 +25,14 @@ export default class Client extends Api {
 
     public async getFundingConfig(): Promise<GenericResponse<FundingConfig>> {
         const res = await super.get<FundingConfigRes>(`/api/v1/config`);
+        console.log(res)
 
         return checkRes(res, r => r);
     }
 
     public async getSchema(dbid: string): Promise<GenericResponse<Database>> {
         const res = await super.get<GetSchemaResponse>(`/api/v1/databases/${dbid}/schema`);
-        return checkRes(res, r => r.dataset);
+        return checkRes(res, r => r.schema);
     }
 
     public async getAccount(owner: string): Promise<GenericResponse<Account>> {
@@ -57,28 +60,18 @@ export default class Client extends Api {
         const res = await super.post<BroadcastRes>(`/api/v1/broadcast`, req);
         checkRes(res);
 
-        let body: any = null;
-
-        if (res.data.receipt.body) {
-            const uint8 = new Uint8Array(base64ToBytes(res.data.receipt.body));
-            const decoder = new TextDecoder('utf-8');
-            const jsonString = decoder.decode(uint8);
-            body = JSON.parse(jsonString);
-        }
-
-        const cleanReceipt: TxReceipt = !body ? {
-            txHash: Uint8ArrayToHex(base64ToBytes(res.data.receipt.txHash)),
-            fee: res.data.receipt.fee,
-            body: null
-        } : {
-            txHash: Uint8ArrayToHex(base64ToBytes(res.data.receipt.txHash)),
-            fee: res.data.receipt.fee,
-            body: body
+        let body = {
+            txHash: '0x'
         };
+
+        if (res.data.txHash) {
+            const bytes = res.data.txHash;
+            body.txHash = bytesToHex(base64ToBytes(bytes))
+        }
 
         return {
             status: res.status,
-            data: cleanReceipt
+            data: body
         }
     }
 
@@ -90,6 +83,34 @@ export default class Client extends Api {
     public async selectQuery(query: SelectQuery): Promise<GenericResponse<string>> {
         const res = await super.post<SelectRes>(`/api/v1/query`, query)
         return checkRes(res, r => r.result);
+    }
+
+    public async txInfo(txHash: string): Promise<GenericResponse<TxInfoReceipt>> {
+        txHash = bytesToBase64(hexToBytes(txHash));
+        const req: TxQueryReq = { txHash }
+
+        const res = await super.post<TxQueryRes>(`/api/v1/tx_query`, req)
+        checkRes(res)
+
+        let body;
+        
+        if(res.data.hash && res.data.height && res.data.tx && res.data.txResult) {
+            body = {
+                hash: bytesToHex(base64ToBytes(res.data.hash)),
+                height: res.data.height,
+                tx: {
+                    body: res.data.tx.body,
+                    signature: res.data.tx.signature,
+                    sender: bytesToHex(base64ToBytes(res.data.tx.sender)),
+                },
+                txResult: res.data.txResult
+            };
+        }
+        
+        return {
+            status: res.status,
+            data: body
+        }
     }
 }
 

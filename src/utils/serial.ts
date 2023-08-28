@@ -3,7 +3,7 @@ import {strings} from "./strings";
 import {objects} from "./objects";
 import { HexString, NonNil } from './types';
 
-export function StringToBytes(str: string): Uint8Array {
+export function stringToBytes(str: string): Uint8Array {
     strings.requireNonNil(str as any);
     const buffer = new ArrayBuffer(str.length);
     const view = new Uint8Array(buffer);
@@ -13,32 +13,12 @@ export function StringToBytes(str: string): Uint8Array {
     return view;
 }
 
-type AnyObject = {
-    [key: string]: any;
-}
-
-export function recursivelyHexlify(obj: NonNil<AnyObject>): NonNil<AnyObject> | string {
-    if(Array.isArray(obj)) {
-        return obj.map(item => recursivelyHexlify(item));
-    }
-
-    if(typeof obj === 'object' && obj !== null) {
-        const recursiveObj: AnyObject = {};
-        for(const key of Object.keys(obj)) {
-            recursiveObj[key] = recursivelyHexlify(obj[key]);
-        }
-        return recursiveObj;
-    }
-
-    return anyToHex(obj);
-}
-
 export function anyToHex(val: string | number | boolean): string | [] {
     if (typeof val === 'string') {
         // Convert only non-hex strings to hex
-        return StringToHex(val);
+        return stringToHex(val);
     } else if (typeof val === 'number') {
-        return NumberToHex(val);
+        return numberToHex(val);
     } else if (typeof val === 'boolean') {
         return val ? "0x01" : "0x00";
     } else if (val === null || val === undefined) {
@@ -50,7 +30,7 @@ export function anyToHex(val: string | number | boolean): string | [] {
 }
 
 
-export function StringToHex(str: string): string {
+export function stringToHex(str: string): string {
     let hex = '0x';
     for (let i = 0; i < str.length; i++) {
         const code = str.charCodeAt(i);
@@ -59,7 +39,7 @@ export function StringToHex(str: string): string {
     return hex;
 }
 
-export function HexToString(hex: HexString): string {
+export function hexToString(hex: HexString): string {
     strings.requireNonNil(hex);
 
     if (hex.length % 2 !== 0) {
@@ -77,7 +57,7 @@ export function HexToString(hex: HexString): string {
     return str;
 }
 
-export function NumberToBytes(num: number): Uint8Array {
+export function numberToBytes(num: number): Uint8Array {
     objects.requireNonNilNumber(num);
     const buffer = new ArrayBuffer(1);
     const view = new DataView(buffer);
@@ -85,7 +65,7 @@ export function NumberToBytes(num: number): Uint8Array {
     return new Uint8Array(buffer);
 }
 
-export function NumberToHex(num: number): HexString {
+export function numberToHex(num: number): HexString {
     let hex = num.toString(16);
     if (hex.length % 2 !== 0) {
         hex = '0' + hex;
@@ -93,7 +73,7 @@ export function NumberToHex(num: number): HexString {
     return '0x' + hex;
 }
 
-export function HexToNumber(hex: HexString): number {
+export function hexToNumber(hex: HexString): number {
     strings.requireNonNil(hex);
     if (hex.length % 2 !== 0) {
         throw new Error(`invalid hex string: ${hex}`);
@@ -105,11 +85,11 @@ export function HexToNumber(hex: HexString): number {
     return parseInt(hex, 16);
 }
 
-export function BytesToHex(bytes: Uint8Array): HexString {
+export function bytesToHex(bytes: Uint8Array): HexString {
     return '0x' + bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');
 }
 
-export function HexToBytes(hex: string): Uint8Array {
+export function hexToBytes(hex: string): Uint8Array {
     strings.requireNonNil(hex);
     if (hex.length % 2 !== 0) {
         throw new Error(`invalid hex string: ${hex}`);
@@ -127,7 +107,7 @@ export function HexToBytes(hex: string): Uint8Array {
     return bytes;
 }
 
-export function BytesToString(bytes: Uint8Array): string {
+export function bytesToString(bytes: Uint8Array): string {
     objects.requireNonNil(bytes);
     let string = '';
     for (let i = 0; i < bytes.length; i++) {
@@ -136,7 +116,7 @@ export function BytesToString(bytes: Uint8Array): string {
     return string;
 }
 
-export function Int32ToBytes(num: number): Uint8Array {
+export function int32ToBytes(num: number): Uint8Array {
     objects.requireNonNilNumber(num);
     const buffer = new ArrayBuffer(4);
     const view = new DataView(buffer);
@@ -144,7 +124,7 @@ export function Int32ToBytes(num: number): Uint8Array {
     return new Uint8Array(buffer);
 }
 
-export function BytesToInt32(bytes: Uint8Array): number {
+export function bytesToInt32(bytes: Uint8Array): number {
     objects.requireNonNil(bytes);
     const buffer = new ArrayBuffer(4);
     const view = new DataView(buffer);
@@ -154,7 +134,7 @@ export function BytesToInt32(bytes: Uint8Array): number {
     return view.getInt32(0, true);
 }
 
-export function Int64ToBytes(num: number): Uint8Array {
+export function int64ToBytes(num: number): Uint8Array {
     objects.requireNonNilNumber(num);
     const longNum = Long.fromNumber(num, true);
     const buffer = new ArrayBuffer(8);
@@ -164,7 +144,7 @@ export function Int64ToBytes(num: number): Uint8Array {
     return new Uint8Array(buffer);
 }
 
-export function BytesToInt64(bytes: Uint8Array): number {
+export function bytesToInt64(bytes: Uint8Array): number {
     objects.requireNonNil(bytes);
     const buffer = new ArrayBuffer(8);
     const view = new DataView(buffer);
@@ -174,7 +154,7 @@ export function BytesToInt64(bytes: Uint8Array): number {
     return view.getInt32(0, true);
 }
 
-export function BooleanToBytes(bool: boolean): Uint8Array {
+export function booleanToBytes(bool: boolean): Uint8Array {
     objects.requireNonNil(bool);
     const buffer = new ArrayBuffer(1);
     const view = new DataView(buffer);
@@ -182,7 +162,7 @@ export function BooleanToBytes(bool: boolean): Uint8Array {
     return new Uint8Array(buffer);
 }
 
-export function BytesToBoolean(bytes: Uint8Array): boolean {
+export function bytesToBoolean(bytes: Uint8Array): boolean {
     objects.requireNonNil(bytes);
     const buffer = new ArrayBuffer(1);
     const view = new DataView(buffer);

@@ -3,13 +3,14 @@
 
 const kwiljs = require("../dist/index")
 const ethers = require("ethers")
-const testDB = require("./test_schema_simple.json")
+const testDB = require("./test_schema.json")
 require("dotenv").config()
 
 async function test() {
     //update to goerli when live
     const provider = new ethers.JsonRpcProvider(process.env.ETH_PROVIDER)
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
+    const txHash = '0x651965102a6f77231d920eddbf3e90010e053c1486601d8a7921fdd4c5b59b9c'
 
     const kwil = new kwiljs.NodeKwil({
         kwilProvider: "http://localhost:8080",
@@ -18,11 +19,9 @@ async function test() {
     })
 
     const dbid = kwil.getDBID(wallet.address, "mydb")
-    console.log(dbid)
     // const dbid2 = kwil.getDBID(wallet.address, "selectaction")
     // console.log(dbid)
-    broadcast(kwil, testDB, wallet)
-    // await getSchema(kwil, dbid)
+    // broadcast(kwil, testDB, wallet)
     // await getSchema(kwil, dbid)
     // await getSchema(kwil, dbid2)
     // getAccount(kwil, wallet.address)
@@ -36,7 +35,7 @@ async function test() {
     // getDepositedBalance(kwil, wallet)
     // getTokenAddress(kwil, wallet)
     // await execSingleAction(kwil, dbid, "add_post", wallet)
-    // select(kwil, dbid, "SELECT * FROM users")
+    // select(kwil, dbid, "SELECT * FROM posts")
     // select(kwil, dbid, `WITH RECURSIVE 
     //                         cnt(x) AS (
     //                         SELECT 1
@@ -49,7 +48,9 @@ async function test() {
     //                     WHERE x NOT IN (SELECT id FROM posts) AND x <= 135;
     //         `)
     // bulkAction(kwil, dbid, "add_post", wallet)
-    // getSelectAction(kwil, dbid2, "get_items", wallet)
+    // getSelectAction(kwil, dbid, "select_posts", wallet)
+    await getTxInfo(kwil, txHash)
+    // await dropDb(kwil, dbid, wallet)
 }
 
 test()
@@ -66,7 +67,7 @@ async function getAccount(kwil, owner) {
 
 async function broadcast(kwil, tx, sig) {
     let ownedTx = tx
-    ownedTx.owner = "luke"
+    ownedTx.owner = sig.address
     const readytx = await kwil
         .dbBuilder()
         .payload(ownedTx)
@@ -135,7 +136,7 @@ async function getAction(kwil) {
 }
 
 async function execSingleAction(kwil, dbid, action, w) {
-    const query = await kwil.selectQuery("xca20642aa31af7db6b43755cf40be91c51a157e447e6cc36c1d94f0a", "SELECT COUNT(*) FROM posts");
+    const query = await kwil.selectQuery(dbid, "SELECT COUNT(*) FROM posts");
 
     const count = query.data[0][`COUNT(*)`]
 
@@ -219,6 +220,25 @@ async function bulkAction(kwil, dbid, action, w) {
         .name(action)
         .concat(inputs)
         .signer(w)
+        .buildTx()
+
+    const res = await kwil.broadcast(tx)
+
+    console.log(res)
+}
+
+async function getTxInfo(kwil, hash) {
+    const res = await kwil.txInfo(hash);
+    console.log(res)
+}
+
+async function dropDb(kwil, dbid, w) {
+    const tx = await kwil
+        .dropDBBuilder()
+        .signer(w)
+        .payload({
+            dbid
+        })
         .buildTx()
 
     const res = await kwil.broadcast(tx)
