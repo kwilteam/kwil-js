@@ -1,4 +1,67 @@
 {
   "owner": "",
-  "name": "simpletest"
+  "name": "simpletest",
+  "tables": [
+    {
+      "name": "users",
+      "columns": [
+        {
+          "name": "id",
+          "type": "int",
+          "attributes": [
+            {
+              "type": "primary_key"
+            },
+            {
+              "type": "not_null"
+            }
+          ]
+        },
+        {
+          "name": "username",
+          "type": "text",
+          "attributes": [
+            {
+              "type": "min_length",
+              "value": "5"
+            }
+          ]
+        },
+        {
+          "name": "age",
+          "type": "int"
+        },
+        {
+          "name": "wallet",
+          "type": "text"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "wallet_index",
+          "columns": [
+            "wallet",
+            "age"
+          ],
+          "type": "btree"
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "name": "create_user",
+      "inputs": [
+        "$id",
+        "$username",
+        "$age"
+      ],
+      "public": true,
+      "mutability": "update",
+      "auxiliaries": null,
+      "statements": [
+        "INSERT INTO users( id , username , age , wallet ) VALUES ( $id , $username , $age , @caller );"
+      ]
+    }
+  ]
 }

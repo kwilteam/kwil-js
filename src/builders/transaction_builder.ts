@@ -94,17 +94,15 @@ export class TxnBuilderImpl implements TxnBuilder {
         const preEncodedBody = Txn.copy(tx, (tx) => {
             tx.body.payload = base64ToBytes(tx.body.payload as string);
             tx.body.payload_type = tx.body.payload_type
-            tx.body.fee = BigInt(0)
+            tx.body.fee = tx.body.fee
             tx.body.nonce = tx.body.nonce
-            tx.body.salt = new Uint8Array();
+            tx.body.salt = generateSalt(16);
         })
 
-        console.log('PRE ENCODED BODY', preEncodedBody.body)
         const encodedTx = kwilEncode(preEncodedBody.body);
         const signedMessage = await crypto_sign(encodedTx, signer);
         const pubKey = ecrRecoverPubKey(encodedTx, signedMessage);
 
-        console.log(util.inspect(encodedTx, { depth: null }))
         // for testing purposes
         const hardCodedKey = '0x048767310544592e33b2fb5555527f49c0902cf0f472f4c87e65324abb75e7a5e1c035bc1ef5026f363c79588526c341af341a68fc37299183391699ee1864cc75'
         console.log('GOT CORRECT PUB KEY', pubKey === hardCodedKey)

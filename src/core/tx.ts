@@ -73,16 +73,16 @@ export class Transaction implements TxnData {
 export namespace Txn {
     export function create(configure: (tx: TxnData) => void): NonNil<Transaction> {
         const tx = {
+            signature: {
+                signature_bytes: "",
+                signature_type: SignatureType.SECP256K1_PERSONAL
+            },
             body: {
                 payload: "",
                 payload_type: PayloadType.EXECUTE_ACTION,
                 fee: BigInt("0"),
                 nonce: null,
                 salt: '',
-            },
-            signature: {
-                signature_bytes: "",
-                signature_type: SignatureType.SECP256K1_PERSONAL
             },
             sender: "",
         };
