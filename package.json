@@ -56,8 +56,7 @@
     "ethers": "^6.3.0",
     "ethers5": "npm:ethers@^5.7.2",
     "jssha": "^3.2.0",
-    "long": "^5.2.1",
-    "protobufjs": "^7.1.2"
+    "long": "^5.2.1"
   },
   "engines": {
     "node": ">=18.0.0"
