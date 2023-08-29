@@ -7,11 +7,6 @@ import {AmntObject, dbid, kwil, wallet} from "./testingUtils";
 import {Transaction, TxReceipt} from "../dist/core/tx";
 import {ActionBuilder, DBBuilder} from "../dist/core/builders";
 import {ActionBuilderImpl} from "../dist/builders/action_builder";
-import { Funder } from "../dist/funder/funding";
-import { FunderObj } from "./testingUtils";
-import { ContractTransactionResponse, Wallet } from "ethers";
-import { AllowanceRes, BalanceRes, DepositRes, TokenRes } from "../dist/funder/types";
-import { waitForConfirmations } from "./testingUtils";
 import { schemaObj } from "./testingUtils";
 import schema from "./test_schema2.json";
 import {DBBuilderImpl} from "../dist/builders/db_builder";
@@ -33,7 +28,7 @@ describe("Kwil", () => {
     test('getDBID should return the correct value', () => {
         console.log(wallet.address)
         const result = kwil.getDBID(wallet.address, "mydb");
-        expect(result).toBe("xcdd04ff7c5e4a939d5365ec9b54cc4aab8c610c415f5f9b33323ae77");
+        expect(result).toBe("xca20642aa31af7db6b43755cf40be91c51a157e447e6cc36c1d94f0a");
         // when on public network, change to: xca20642aa31af7db6b43755cf40be91c51a157e447e6cc36c1d94f0a
         // when on local network, change to: xcdd04ff7c5e4a939d5365ec9b54cc4aab8c610c415f5f9b33323ae77
     });
@@ -88,89 +83,6 @@ describe("Kwil", () => {
     test('select should return status 200', async () => {
         const result = await kwil.selectQuery(dbid, "SELECT * FROM posts LIMIT 5");
         expect(result.status).toBe(200);
-    });
-});
-
-// Funder methods that should be used
-describe("Funder", () => {
-    let funder: Funder;
-
-    beforeAll(async () => {
-        funder = await kwil.getFunder(wallet);
-    });
-
-    test('kwil.getFunder should return a funder', () => {
-        expect(funder).toBeDefined();
-        expect(funder).toMatchObject<FunderObj>({
-            poolAddress: expect.any(String),
-            signer: expect.any(Wallet),
-            providerAddress: expect.any(String),
-            escrowContract: expect.any(Object),
-            erc20Contract: expect.any(Object),
-        })
-    });
-
-    test('getAllowance should return allowanceRes', async () => {
-        const result = await funder.getAllowance(wallet.address);
-        expect(result).toBeDefined();
-        expect(result).toMatchObject<AllowanceRes>({
-            allowance_balance: expect.any(String),
-        })
-        console.log(result)
-    });
-
-    test('getBalance should return balanceRes', async () => {
-        const result = await funder.getBalance(wallet.address);
-        expect(result).toBeDefined();
-        expect(result).toMatchObject<BalanceRes>({
-            balance: expect.any(String),
-        })
-    });
-
-    test('approve should return a transaction', async () => {
-        const funder = await kwil.getFunder(wallet);
-        const result = await funder.approve(100) as ContractTransactionResponse;
-        expect(result).toBeDefined();
-        expect(result).toMatchObject({
-            to: expect.any(String),
-            from: expect.any(String),
-            value: expect.any(BigInt),
-            chainId: expect.any(BigInt),
-        });
-
-        const hash = result.hash;
-
-        console.log("Waiting for confirmations...")
-        await waitForConfirmations(hash, 1);
-
-    }, 40000);
-
-    test('deposit should return a transaction', async () => {
-        const result = await funder.deposit(100);
-        expect(result).toBeDefined();
-        expect(result).toMatchObject({
-            to: expect.any(String),
-            from: expect.any(String),
-            value: expect.any(BigInt),
-            chainId: expect.any(BigInt),
-        });
-    }, 10000);
-
-    test('getDepositedBalance should return a balance', async () => {
-        const result = await funder.getDepositedBalance(wallet.address);
-        expect(result).toBeDefined();
-        expect(result).toMatchObject<DepositRes>({
-            deposited_balance: expect.any(String),
-        })
-        console.log(result)
-    });
-
-    test('getTokenAddress should return a token address', async () => {
-        const result = await funder.getTokenAddress();
-        expect(result).toBeDefined();
-        expect(result).toMatchObject<TokenRes>({
-            token_address: expect.any(String),
-        })
     });
 });
 
@@ -538,16 +450,18 @@ describe("ActionBuilder + ActionInput + Transaction public methods & broadcastin
         expect(actionTx).toBeDefined();
         expect(actionTx).toBeInstanceOf(Transaction);
         expect(actionTx.isSigned()).toBe(true);
-        expect(actionTx.hash).toBeDefined();
-        expect(actionTx.payload_type).toBeDefined();
-        expect(actionTx.payload).toBeDefined();
-        expect(actionTx.fee).toBeDefined();
-        expect(actionTx.fee).not.toBe("0");
-        expect(actionTx.nonce).toBeGreaterThan(-1);
         expect(actionTx.signature).toBeDefined();
         expect(actionTx.signature.signature_bytes).toBeDefined();
         expect(actionTx.signature.signature_bytes).not.toHaveLength(0);
         expect(actionTx.signature.signature_type).toBeDefined();
+        expect(actionTx.body).toBeDefined();
+        expect(actionTx.body.fee).toBeDefined();
+        expect(actionTx.body.payload).toBeDefined();
+        expect(actionTx.body.payload_type).toBeDefined();
+        expect(actionTx.body.nonce).toBeGreaterThan(0);
+        expect(actionTx.body.salt).toBeDefined();
+        expect(actionTx.body.salt.length).toBeGreaterThan(0);
+        expect(actionTx.sender).toBeDefined();
     });
 
     test("The kwil.broadcast() method should accept a transaction and return a txHash and a txReceipt", async () => {
@@ -555,8 +469,6 @@ describe("ActionBuilder + ActionInput + Transaction public methods & broadcastin
         expect(result.data).toBeDefined();
         expect(result.data).toMatchObject<TxReceipt>({
             txHash: expect.any(String),
-            fee: expect.any(String),
-            body: expect.any(Array),
         });
     });
 });
@@ -609,16 +521,18 @@ describe("DBBuilder", () => {
         expect(dbTx).toBeDefined();
         expect(dbTx).toBeInstanceOf(Transaction);
         expect(dbTx.isSigned()).toBe(true);
-        expect(dbTx.hash).toBeDefined();
-        expect(dbTx.payload_type).toBeDefined();
-        expect(dbTx.payload).toBeDefined();
-        expect(dbTx.fee).toBeDefined();
-        expect(dbTx.fee).not.toBe("0");
-        expect(dbTx.nonce).toBeGreaterThan(-1);
         expect(dbTx.signature).toBeDefined();
         expect(dbTx.signature.signature_bytes).toBeDefined();
         expect(dbTx.signature.signature_bytes).not.toHaveLength(0);
         expect(dbTx.signature.signature_type).toBeDefined();
+        expect(dbTx.body).toBeDefined();
+        expect(dbTx.body.fee).toBeDefined();
+        expect(dbTx.body.payload).toBeDefined();
+        expect(dbTx.body.payload_type).toBeDefined();
+        expect(dbTx.body.nonce).toBeGreaterThan(0);
+        expect(dbTx.body.salt).toBeDefined();
+        expect(dbTx.body.salt.length).toBeGreaterThan(0);
+        expect(dbTx.sender).toBeDefined();
     });
 
     test('the database should be able to be broadcasted and return a txHash and a txReceipt', async () => {
@@ -626,8 +540,6 @@ describe("DBBuilder", () => {
         expect(result.data).toBeDefined();
         expect(result.data).toMatchObject<TxReceipt>({
             txHash: expect.any(String),
-            fee: expect.any(String),
-            body: null,
         });
     });
 });
@@ -662,8 +574,6 @@ describe("Testing case insentivity on test_db", () => {
         expect(result.data).toBeDefined();
         expect(result.data).toMatchObject<TxReceipt>({
             txHash: expect.any(String),
-            fee: expect.any(String),
-            body: expect.any(Array),
         });
     });
 
@@ -680,8 +590,6 @@ describe("Testing case insentivity on test_db", () => {
         expect(result.data).toBeDefined();
         expect(result.data).toMatchObject<TxReceipt>({
             txHash: expect.any(String),
-            fee: expect.any(String),
-            body: expect.any(Array),
         });
     });
 
@@ -699,8 +607,6 @@ describe("Testing case insentivity on test_db", () => {
         expect(result.data).toBeDefined();
         expect(result.data).toMatchObject<TxReceipt>({
             txHash: expect.any(String),
-            fee: expect.any(String),
-            body: expect.any(Array),
         });
     });
 
@@ -717,8 +623,6 @@ describe("Testing case insentivity on test_db", () => {
         expect(result.data).toBeDefined();
         expect(result.data).toMatchObject<TxReceipt>({
             txHash: expect.any(String),
-            fee: expect.any(String),
-            body: expect.any(Array),
         });
     });
 
@@ -736,8 +640,6 @@ describe("Testing case insentivity on test_db", () => {
         expect(result.data).toBeDefined();
         expect(result.data).toMatchObject<TxReceipt>({
             txHash: expect.any(String),
-            fee: expect.any(String),
-            body: expect.any(Array),
         });
     });
 })
@@ -787,7 +689,7 @@ describe("Drop Database", () => {
     });
 
     test('kwil.dropDatabase should return a DBBuilder', () => {
-        dropDb = kwil.dropDBBuilder();
+        dropDb = kwil.dropDbBuilder();
         expect(dropDb).toBeDefined();
         expect(dropDb).toBeInstanceOf(DropDBBuilderImpl);
     })
@@ -821,16 +723,18 @@ describe("Drop Database", () => {
         expect(dropDbTx).toBeDefined();
         expect(dropDbTx).toBeInstanceOf(Transaction);
         expect(dropDbTx.isSigned()).toBe(true);
-        expect(dropDbTx.hash).toBeDefined();
-        expect(dropDbTx.payload_type).toBeDefined();
-        expect(dropDbTx.payload).toBeDefined();
-        expect(dropDbTx.fee).toBeDefined();
-        expect(dropDbTx.fee).not.toBe("0");
-        expect(dropDbTx.nonce).toBeGreaterThan(-1);
         expect(dropDbTx.signature).toBeDefined();
         expect(dropDbTx.signature.signature_bytes).toBeDefined();
         expect(dropDbTx.signature.signature_bytes).not.toHaveLength(0);
         expect(dropDbTx.signature.signature_type).toBeDefined();
+        expect(dropDbTx.body).toBeDefined();
+        expect(dropDbTx.body.fee).toBeDefined();
+        expect(dropDbTx.body.payload).toBeDefined();
+        expect(dropDbTx.body.payload_type).toBeDefined();
+        expect(dropDbTx.body.nonce).toBeGreaterThan(0);
+        expect(dropDbTx.body.salt).toBeDefined();
+        expect(dropDbTx.body.salt.length).toBeGreaterThan(0);
+        expect(dropDbTx.sender).toBeDefined();
     });
 
     test('the database should be able to be broadcasted and return a txHash and a txReceipt', async () => {
@@ -838,8 +742,6 @@ describe("Drop Database", () => {
         expect(result.data).toBeDefined();
         expect(result.data).toMatchObject<TxReceipt>({
             txHash: expect.any(String),
-            fee: expect.any(String),
-            body: null,
         });
     });
 

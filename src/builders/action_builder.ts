@@ -13,7 +13,7 @@ interface CheckSchema {
     dbid: string;
     name: string;
     actionSchema: ActionSchema;
-    preparedActions?: ActionInput[];
+    preparedActions?: ValueType[][]
 }
 
 const TXN_BUILD_IN_PROGRESS: ActionInput[] = [];
@@ -135,11 +135,11 @@ export class ActionBuilderImpl implements ActionBuilder {
         const payload: UnencodedMessagePayload = !preparedActions ? {
             "dbid": dbid,
             "action": name,
-            "params": {}
+            "arguments": []
         } : {
             "dbid": dbid,
             "action": name,
-            "params": preparedActions[0]
+            "arguments": preparedActions[0]
         }
 
         let msg: TxnBuilder = TxnBuilderImpl

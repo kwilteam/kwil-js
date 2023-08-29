@@ -47,11 +47,6 @@ export interface PongRes {
 export interface SelectRes {
     result: string
 }
-export interface FundingConfigRes {
-    chain_code: number;
-    provider_address: string;
-    pool_address: string;
-}
 
 export interface TxQueryReq {
     txHash: string;

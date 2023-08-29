@@ -1,4 +1,4 @@
-import { Nillable, NonNil, Promisy } from "../utils/types";
+import { Nillable, NonNil } from "../utils/types";
 import { Transaction } from "../core/tx";
 import { ethers, Signer } from "ethers";
 import { objects } from "../utils/objects";
@@ -15,11 +15,10 @@ import { kwilEncode } from "../utils/rlp";
 import { hexToBytes } from "../utils/serial";
 import { SignatureType } from "../core/signature";
 import { Message, Msg } from "../core/message";
-import { MarshalB64 } from "../utils/bytes";
 
 interface PreBuild {
     json: object;
-    sender: string;
+    address: string;
     signer?: SignerSupplier | null;
 };
 
@@ -56,7 +55,7 @@ export class TxnBuilderImpl implements TxnBuilder {
     }
 
     async buildTx(): Promise<Transaction> {
-        const { json, sender, signer } = await this.preBuild();
+        const { json, address, signer } = await this.preBuild();
 
         if(!signer) {
             throw new Error("Signer is required to build a transaction.");
@@ -64,9 +63,9 @@ export class TxnBuilderImpl implements TxnBuilder {
 
         const payloadType = objects.requireNonNil(this._payloadType);
         
-        const acct = await this.client.getAccount(sender);
+        const acct = await this.client.getAccount(address);
         if (acct.status !== 200 || !acct.data) {
-            throw new Error(`Could not retrieve account ${sender}. Please double check that you have the correct account address.`);
+            throw new Error(`Could not retrieve account ${address}. Please double check that you have the correct account address.`);
         }
 
         const preEstTxn = Txn.create(tx => {
@@ -93,18 +92,21 @@ export class TxnBuilderImpl implements TxnBuilder {
     }
 
     async buildMsg(): Promise<Message> {
-        const { json, sender, signer } = await this.preBuild();
+        const { json, signer } = await this.preBuild();
 
         if(this._payloadType) {
             throw new Error("Payload type is not required to build a message.");
         }
 
         let msg = Msg.create(msg => {
-            msg.sender = sender;
-            msg.payload = MarshalB64(json);
+            msg.sender = '';
+            msg.payload = bytesToBase64(kwilEncode(json));
         });
 
         if(signer) {
+            msg = Msg.copy(msg, msg => {
+                msg.payload = base64ToBytes(msg.payload as string);
+            });
             return await TxnBuilderImpl.signMsg(msg, signer);
         }
 
@@ -116,13 +118,13 @@ export class TxnBuilderImpl implements TxnBuilder {
 
         const payloadFn = objects.requireNonNil(this._payload);
         const signer = this._signer;
-        const sender = signer ? (await signer.getAddress()).toLowerCase() : "";
+        const address = signer ? (await signer.getAddress()).toLowerCase() : "";
 
         const json = objects.requireNonNil(payloadFn());
 
         return {
             json: json,
-            sender: sender,
+            address: address,
             signer: signer
         }
     }
@@ -160,19 +162,24 @@ export class TxnBuilderImpl implements TxnBuilder {
             tx.sender = bytesToBase64(hexToBytes(pubKey));
         });
     }
+
+    // TODO: Fix signMsg
     private static async signMsg(msg: Message, signer: Signer | ethers.Wallet | Walletv5 | Signerv5): Promise<Message> {
-        const hash = TxnBuilderImpl.hash_msg(msg);
-        const signature = await crypto_sign(hash, signer);
-        const sender = await signer.getAddress();
+        if(typeof msg.payload === "string") {
+            throw new Error("Payload must be an object to sign a message.");
+        }
+
+        const encodeMsg: Uint8Array = msg.payload;
+        const signedMessage = await crypto_sign(encodeMsg, signer);
+        const pubKey = ecrRecoverPubKey(encodeMsg, signedMessage);
 
         return Msg.copy(msg, (msg) => {
-            msg.signature = signature;
-            msg.sender = sender;
+            msg.payload = bytesToBase64(encodeMsg);
+            msg.signature = {
+                signature_bytes: bytesToBase64(hexToBytes(signedMessage)),
+                signature_type: SignatureType.SECP256K1_PERSONAL.toString() as SignatureType
+            };
+            msg.sender = bytesToBase64(hexToBytes(pubKey));
         })
-    }
-
-    private static hash_msg(msg: NonNil<Message>): string {
-        const payloadHash = sha384BytesToBytes(base64ToBytes(msg.payload));
-        return bytesToBase64(payloadHash);
     }
 }

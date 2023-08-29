@@ -1,7 +1,5 @@
 import { base64ToBytes, bytesToBase64 } from "../utils/base64";
-import { Uint8ArrayToHex } from "../utils/bytes";
 import { Account } from "../core/account";
-import { FundingConfig } from "../core/configs";
 import { Database, SelectQuery } from "../core/database";
 import { Transaction, TxReceipt } from "../core/tx";
 import { Api } from "./api";
@@ -11,25 +9,19 @@ import {
     BroadcastRes,
     CallRes,
     EstimateCostReq,
-    EstimateCostRes, FundingConfigRes,
+    EstimateCostRes,
     GenericResponse,
     GetAccountResponse, GetSchemaResponse,
     ListDatabasesResponse, PongRes, SelectRes, TxQueryReq, TxQueryRes
 } from "../core/resreq";
-import { bytesToHex, bytesToString, hexToBytes, stringToBytes } from "../utils/serial";
+import { bytesToHex, hexToBytes } from "../utils/serial";
 import { TxInfoReceipt } from "../core/txQuery";
-import { Message, MessageReq, MsgReceipt } from "../core/message";
+import { Message, MsgData, MsgReceipt } from "../core/message";
+import { kwilDecode } from "../utils/rlp";
 
 export default class Client extends Api {
     constructor(opts: Config) {
         super(opts.kwilProvider, opts);
-    }
-
-    public async getFundingConfig(): Promise<GenericResponse<FundingConfig>> {
-        const res = await super.get<FundingConfigRes>(`/api/v1/config`);
-        console.log(res)
-
-        return checkRes(res, r => r);
     }
 
     public async getSchema(dbid: string): Promise<GenericResponse<Database>> {
@@ -101,8 +93,17 @@ export default class Client extends Api {
                 hash: bytesToHex(base64ToBytes(res.data.hash)),
                 height: res.data.height,
                 tx: {
-                    body: res.data.tx.body,
-                    signature: res.data.tx.signature,
+                    body: {
+                        payload: kwilDecode(base64ToBytes(res.data.tx.body.payload as string)),
+                        payload_type: res.data.tx.body.payload_type,
+                        fee: res.data.tx.body.fee,
+                        nonce: res.data.tx.body.nonce,
+                        salt: base64ToBytes(res.data.tx.body.salt as string),
+                    },
+                    signature: {
+                        signature_bytes: base64ToBytes(res.data.tx.signature.signature_bytes as string),
+                        signature_type: res.data.tx.signature.signature_type,
+                    },
                     sender: bytesToHex(base64ToBytes(res.data.tx.sender)),
                 },
                 txResult: res.data.txResult
@@ -116,7 +117,7 @@ export default class Client extends Api {
     }
     
     public async call(msg: Message): Promise<GenericResponse<MsgReceipt>> {
-        let req: MessageReq = {
+        let req: MsgData = {
             payload: msg.payload,
             sender: msg.sender,
             signature: msg.signature

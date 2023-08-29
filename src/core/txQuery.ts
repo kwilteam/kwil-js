@@ -1,6 +1,5 @@
 import { TxnData } from "./tx";
 
-
 export interface TxResult {
     code: number;
     log: string;

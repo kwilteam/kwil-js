@@ -5,16 +5,12 @@ import {GenericResponse} from "../core/resreq";
 import {Database, SelectQuery} from "../core/database";
 import {Transaction, TxReceipt} from "../core/tx";
 import {Account} from "../core/account";
-import {ethers, Signer} from "ethers";
-import {Funder} from "../funder/funding";
 import {ActionBuilderImpl} from "../builders/action_builder";
 import {base64ToBytes} from "../utils/base64";
 import {DBBuilderImpl} from "../builders/db_builder";
 import {NonNil} from "../utils/types";
 import {ActionBuilder, DBBuilder} from "../core/builders";
 import {wrap} from "./intern";
-import { FundingConfig } from "../core/configs";
-import { Signer as Signerv5, Wallet as Walletv5 } from "ethers5"
 import { Cache } from "../utils/cache";
 import { TxInfoReceipt } from "../core/txQuery";
 import { Message, MsgReceipt } from "../core/message";
@@ -28,9 +24,6 @@ export abstract class Kwil {
     private readonly client: Client;
     //cache schemas
     private schemas: Cache<GenericResponse<Database>>;
-
-    // cache fundingConfig
-    private fundingConfig?: GenericResponse<FundingConfig>;
 
     protected constructor(opts: Config) {
         this.client = new Client({
@@ -122,7 +115,7 @@ export abstract class Kwil {
     * @returns A Drop Database Builder instance. Drop Database Builder is used to build drop database transactions to be broadcasted to the Kwil network.
     */
 
-     public dropDBBuilder(): NonNil<DBBuilder> {
+     public dropDbBuilder(): NonNil<DBBuilder> {
         return DBBuilderImpl.of(this, PayloadType.DROP_DATABASE);
      }
 
@@ -169,26 +162,6 @@ export abstract class Kwil {
 
     public async ping(): Promise<GenericResponse<string>> {
         return await this.client.ping();
-    }
-
-    /**
-     * Gets a funder object associated with a signer, which can be used for adding funds to a user's account.
-     *
-     * @param signer - The signer associated with the user's account. This can be a signer from Ethers v5 or Ethers v6.
-     * @returns A promise that resolves to a Funder object.
-     * @throws Will throw an error if it fails to get the funding config.
-     */
-
-    public async getFunder(signer: Signer | ethers.Wallet | Signerv5 | Walletv5): Promise<Funder> {
-        //check cache
-        if (!this.fundingConfig || !this.fundingConfig.data) {
-            this.fundingConfig = await this.client.getFundingConfig();
-            if (this.fundingConfig.status != 200 || !this.fundingConfig.data) {
-                throw new Error('Failed to get funding config.');
-            }
-        }
-
-        return await Funder.create(signer, this.fundingConfig.data);
     }
 
     /**

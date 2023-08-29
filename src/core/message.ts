@@ -1,16 +1,16 @@
 import { Nillable, NonNil } from "../utils/types";
-import { ActionInput } from "./actionInput";
+import { ValueType } from "./enums";
 import { Signature, SignatureType } from "./signature";
 
 export type UnencodedMessagePayload = {
     dbid: string;
     action: string;
-    params?: ActionInput |{};
+    arguments: ValueType[];
 }
 
-export type MessageReq = {
-    payload: string;
-    signature: Signature;
+export interface MsgData {
+    signature: Signature | null;
+    payload: string | Uint8Array;
     sender: string;
 }
 
@@ -18,28 +18,25 @@ export interface MsgReceipt {
     get result(): Nillable<string>;
 }
 
-export class Message implements MessageReq {
-    private data: Readonly<MessageReq>;
+export class Message implements MsgData {
+    private data: Readonly<MsgData>;
 
-    constructor(data?: NonNil<MessageReq>) {
+    constructor(data?: NonNil<MsgData>) {
         this.data = data || {
+            signature: null,
             payload: "",
-            sender: "",
-            signature: {
-                signature_bytes: "",
-                signature_type: SignatureType.SIGNATURE_TYPE_INVALID
-            }
+            sender: ""
         };
     }
 
     
-    public get payload(): Readonly<string> {
+    public get payload(): Readonly<string | Uint8Array> {
         return this.data.payload;
     }
 
-    public get signature(): Readonly<Signature> {
+    public get signature(): Readonly<Signature | null> {
         if(!this.data.signature) {
-            throw new Error("Signature is not set");
+            return null
         }
 
         return this.data.signature;
@@ -51,14 +48,11 @@ export class Message implements MessageReq {
 }
 
 export namespace Msg {
-    export function create(configure: (msg: MessageReq) => void): NonNil<Message> {
+    export function create(configure: (msg: MsgData) => void): NonNil<Message> {
         const msg = {
+            signature: null,
             payload: "",
-            sender: "",
-            signature: {
-                signature_bytes: "",
-                signature_type: SignatureType.SIGNATURE_TYPE_INVALID
-            }
+            sender: ""
         }
 
         configure(msg);
@@ -66,16 +60,13 @@ export namespace Msg {
         return new Message(msg);
     }
 
-    export function copy(source: NonNil<Message>, configure: (msg: MessageReq) => void): NonNil<Message> {
-        const clonedMsg: MessageReq = {
-            payload: source.payload,
-            sender: source.sender,
-           
-            signature: source['data'].signature
-        };
+    export function copy(source: NonNil<Message>, configure: (msg: MsgData) => void): NonNil<Message> {
+        return Msg.create((msg: MsgData) => {
+            msg.payload = source.payload;
+            msg.sender = source.sender;
+            msg.signature = source.signature;
 
-        configure(clonedMsg);
-
-        return new Message(clonedMsg);
+            configure(msg);
+        })
     }
 }

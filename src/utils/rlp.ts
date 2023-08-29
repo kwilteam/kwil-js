@@ -1,9 +1,8 @@
 import { HexString, NonNil } from './types'
-import { ConcatBytes, NumberToUint16BigEndian } from './bytes'
-import { bytesToHex, hexToBytes, numberToHex, stringToHex, anyToHex } from './serial'
-import { RlpStructuredData, encodeRlp } from 'ethers';
+import { concatBytes, numberToUint16BigEndian, uint16BigEndianToNumber } from './bytes'
+import { bytesToHex, hexToBytes, numberToHex, stringToHex, hexToString } from './serial'
+import { RlpStructuredData, decodeRlp, encodeRlp } from 'ethers';
 import { EncodingType } from '../core/enums';
-import { encode } from '@ethereumjs/rlp';
 
 function _objToNestedArray(input: NonNil<object>): any[] | HexString {
     if (Array.isArray(input) && !(input instanceof Uint8Array)) {
@@ -39,13 +38,56 @@ function inputToHex(val: string | number | BigInt | Uint8Array | Boolean | null 
         return bytesToHex(new Uint8Array(0));
     } else {
         // Convert any other value to a string first
-        throw new Error(`unknown value: ${val}`);
+        throw new Error(`unknown type for value: ${val}`);
     }
 }
 
 export function kwilEncode(obj: NonNil<object>): Uint8Array {
     const rlp: RlpStructuredData = _objToNestedArray(obj);
     const rlpBytes: HexString = encodeRlp(rlp); // returned as hex string
-    const encodingType: Uint8Array = NumberToUint16BigEndian(EncodingType.RLP_ENCODING);
-    return ConcatBytes(encodingType, hexToBytes(rlpBytes));
+    const encodingType: Uint8Array = numberToUint16BigEndian(EncodingType.RLP_ENCODING);
+    return concatBytes(encodingType, hexToBytes(rlpBytes));
+}
+
+export function kwilDecode(encoding: Uint8Array): any {
+    const encodingBytes: Uint8Array = encoding.slice(0, 2);
+    const encodingType = uint16BigEndianToNumber(encodingBytes);
+
+    // check if encoding type exists in the enum
+    if (!Object.values(EncodingType).includes(encodingType)) {
+        throw new Error(`unknown encoding type: ${encodingType}`);
+    }
+
+    const rlpBytes: Uint8Array = encoding.slice(2);
+    const rlpHex: HexString = bytesToHex(rlpBytes);
+    const rlp: RlpStructuredData = decodeRlp(rlpHex);
+
+    return _recursivelyDeHexlify(rlp);
+}
+
+type KwilRlpDecoded = string | number | boolean ;
+
+function _recursivelyDeHexlify(obj: RlpStructuredData): KwilRlpDecoded | any[] {
+    if(Array.isArray(obj)) {
+        return obj.map((item) => {
+            return _recursivelyDeHexlify(item);
+        });
+    }
+    return _convertDecodedType(hexToString(obj));
+}
+
+function _convertDecodedType(val: string): KwilRlpDecoded {
+    if (!isNaN(Number(val))){
+        return Number(val);
+    }
+
+    if (val === 'true') {
+        return true;
+    }
+
+    if (val === 'false') {
+        return false;
+    }
+
+    return val;
 }

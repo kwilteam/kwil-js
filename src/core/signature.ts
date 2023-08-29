@@ -1,5 +1,5 @@
 export interface Signature {
-    signature_bytes: string;
+    signature_bytes: string | Uint8Array;
     signature_type: SignatureType;
 }
 

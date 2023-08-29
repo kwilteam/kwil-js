@@ -1,19 +1,7 @@
-const base64Alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-
-// since node and browser have different functions for converting to base64
-
-// Marshal converts an object to a base64url encoded string.
 // The GRPC gateway "bytes" type requires base64url encoded strings.
-export function Marshal(msg: object): Uint8Array {
-    return StringToUint8BigEndian(JSON.stringify(msg));
-}
-
-export function MarshalB64(msg: object): string {
-    return bytesToBase64(Marshal(msg))
-}
 
 // Convert function to Uint16Array
-export function NumberToUint16BigEndian(num: number): Uint8Array {
+export function numberToUint16BigEndian(num: number): Uint8Array {
     if (num < 0 || num > 65535 || !Number.isInteger(num)) {
         throw new Error('Number is out of range for uint16');
     }
@@ -24,35 +12,18 @@ export function NumberToUint16BigEndian(num: number): Uint8Array {
     return new Uint8Array(buffer);
 }
 
-// converts a number to a Uint8Array in little endian format
-export function NumberToUint32LittleEndian(num: number): Uint8Array {
-  const buffer = new ArrayBuffer(4);
-  const view = new DataView(buffer);
-  view.setUint32(0, num, true);
-  return new Uint8Array(buffer);
+// Converts a uint8array in uint16 format to a number
+export function uint16BigEndianToNumber(uint16: Uint8Array): number {
+    if (uint16.length !== 2) {
+        throw new Error('uint16 must be 2 bytes');
+    }
+    const view = new DataView(uint16.buffer);
+    return view.getUint16(0, false); // big endian
 }
 
-export function StringToUint8BigEndian(str: string): Uint8Array {
-  const buffer = new ArrayBuffer(str.length);
-  const view = new Uint8Array(buffer);
-  for (let i = 0; i < str.length; i++) {
-      view[i] = str.charCodeAt(i);
-  }
-  return view;
-}
-
-export function NumberToUint8BigEndian(num: number): Uint8Array {
-  const buffer = new ArrayBuffer(1);
-  const view = new DataView(buffer);
-  view.setUint8(0, num);
-  return new Uint8Array(buffer);
-}
-
-import { ethers, hexlify, toBeHex } from 'ethers';
 import Long from 'long';
-import { bytesToBase64 } from './base64';
 
-export function NumberToUint64LittleEndian(num: number): Uint8Array {
+export function numberToUint64LittleEndian(num: number): Uint8Array {
     const longNum = Long.fromNumber(num, true);
     const buffer = new ArrayBuffer(8);
     const view = new DataView(buffer);
@@ -61,7 +32,7 @@ export function NumberToUint64LittleEndian(num: number): Uint8Array {
     return new Uint8Array(buffer);
 }
 
-export function ConcatBytes(...arrays: Uint8Array[]): Uint8Array {
+export function concatBytes(...arrays: Uint8Array[]): Uint8Array {
     let totalLength = 0;
     for (const arr of arrays) {
         totalLength += arr.length;
@@ -73,12 +44,4 @@ export function ConcatBytes(...arrays: Uint8Array[]): Uint8Array {
         offset += arr.length;
     }
     return result;
-}
-
-export function Uint8ArrayToHex(uint8Array: Uint8Array): string {
-   return  hexlify(uint8Array);
-}
-
-export function HexToUint8Array(hex: string): Uint8Array {
-  return  ethers.getBytes(hex);
 }

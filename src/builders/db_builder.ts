@@ -1,4 +1,4 @@
-import {DropDbPayload,  Transaction } from "../core/tx";
+import {DropDbPayload, Transaction} from "../core/tx";
 import {Nillable, NonNil, Promisy} from "../utils/types";
 import {objects} from "../utils/objects";
 import {Kwil} from "../client/kwil";
@@ -34,20 +34,34 @@ export class DBBuilderImpl implements DBBuilder {
     }
 
     payload(payload: (() => NonNil<object | DropDbPayload>) | NonNil<object | DropDbPayload>): NonNil<DBBuilder> {
-        const encodablePayload = this.makePayloadEncodable(payload);
-        const orderedPayload = enforceDatabaseOrder(encodablePayload);
-        this._payload = () => orderedPayload;
+        this._payload = typeof objects.requireNonNil(payload) !== "function" ?
+            () => payload :
+            payload as () => NonNil<object>;
+        // const encodablePayload = this.makePayloadEncodable(payload);
+        // const orderedPayload = enforceDatabaseOrder(encodablePayload);
+        // this._payload = () => orderedPayload;
         return this;
     }
 
     async buildTx(): Promise<Transaction> {
+        let cleanedPayload: () => NonNil<object> = () => ({});
         const payload = objects.requireNonNil(this._payload);
+
+        if (this._payloadType === PayloadType.DEPLOY_DATABASE) {
+            const encodablePayload = this.makePayloadEncodable(payload);
+            cleanedPayload = () => enforceDatabaseOrder(encodablePayload);
+        }
+
+        if(this._payloadType === PayloadType.DROP_DATABASE) {
+            cleanedPayload = () => payload();
+        }
+
         const payloadType = objects.requireNonNil(this._payloadType);
         const signer = await Promisy.resolveOrReject(this._signer);
         return TxnBuilderImpl
             .of(this.client)
             .payloadType(objects.requireNonNil(payloadType))
-            .payload(objects.requireNonNil(payload))
+            .payload(objects.requireNonNil(cleanedPayload))
             .signer(objects.requireNonNil(signer))
             .buildTx();
     }
