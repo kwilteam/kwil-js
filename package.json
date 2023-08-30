@@ -58,6 +58,7 @@
     "ethers5": "npm:ethers@^5.7.2",
     "jssha": "^3.2.0",
     "long": "^5.2.1",
+    "near-api-js": "^2.1.4",
     "protobufjs": "^7.1.2"
   },
   "engines": {

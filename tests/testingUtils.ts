@@ -64,3 +64,24 @@ export const kwil = new NodeKwil({
 })
 
 export const dbid = kwil.getDBID(wallet.address, "mydb")
+
+export function waitForDeployment(hash: string): Promise<boolean> {
+    return new Promise(async (resolve) => {
+        setTimeout(async () => {
+            try {
+                const txQuery = await kwil.txInfo(hash);
+
+                if (txQuery.status === 200 && txQuery.data?.txResult.log === 'success') {
+                    resolve(true);
+                } else {
+                    // Retry after 500ms if it's not a success
+                    resolve(await waitForDeployment(hash));
+                }
+            } catch (err) {
+                console.error("SDK Error:", err); // optionally log the error
+                // Instead of rejecting, retry
+                resolve(await waitForDeployment(hash));
+            }
+        }, 1000);
+    });
+}

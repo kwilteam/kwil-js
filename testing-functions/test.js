@@ -15,7 +15,7 @@ async function test() {
     //update to goerli when live
     const provider = new ethers.JsonRpcProvider(process.env.ETH_PROVIDER)
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
-    const txHash = '0x4fc1add50cc3ef445c1b08b94e1189df862cacb7897da2ba7d6997b3201d91d8'
+    const txHash = '0x55e1aa5846a378e6fe9404c90ef8d0defe23adffdb90d7d740b37b41aad27aad'
 
     const kwil = new kwiljs.NodeKwil({
         kwilProvider: process.env.KWIL_PROVIDER || "SHOULD FAIL",
@@ -24,13 +24,11 @@ async function test() {
     })
 
     const dbid = kwil.getDBID(wallet.address, "mydb")
-    // const dbid2 = kwil.getDBID(wallet.address, "selectaction")
     // logger(dbid)
     // broadcast(kwil, testDB, wallet)
     // await getSchema(kwil, dbid)
-    // await getSchema(kwil, dbid2)
-    // getAccount(kwil, wallet.address)
-    listDatabases(kwil, wallet.address)
+    getAccount(kwil, wallet.address)
+    // listDatabases(kwil, wallet.address)
     // ping(kwil)
     // getFunder(kwil, wallet)
     // getAllowance(kwil, wallet)

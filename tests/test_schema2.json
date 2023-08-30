@@ -19,13 +19,7 @@
           },
           {
             "name": "username",
-            "type": "text",
-            "attributes": [
-              {
-                "type": "default",
-                "value": "'sds'"
-              }
-            ]
+            "type": "text"
           },
           {
             "name": "age",

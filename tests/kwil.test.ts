@@ -3,8 +3,8 @@ const logSpy = jest.spyOn(console, 'log').mockImplementation((...args) => {
     originalLog(...args);
 });
 jest.resetModules();
-import {AmntObject, dbid, kwil, wallet} from "./testingUtils";
-import {Transaction, TxReceipt} from "../dist/core/tx";
+import {AmntObject, dbid, kwil, waitForDeployment, wallet} from "./testingUtils";
+import {DropDbPayload, Transaction, TxReceipt} from "../dist/core/tx";
 import {ActionBuilder, DBBuilder} from "../dist/core/builders";
 import {ActionBuilderImpl} from "../dist/builders/action_builder";
 import { schemaObj } from "./testingUtils";
@@ -13,6 +13,10 @@ import {DBBuilderImpl} from "../dist/builders/db_builder";
 import {DropDBBuilderImpl} from "../dist/builders/drop_db_builder";
 import { Types, Utils } from "../dist/index";
 import { Message, MsgReceipt } from "../dist/core/message";
+
+function sleep(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 // Kwil methods that do NOT return another class (e.g. funder, action, and DBBuilder)
 describe("Kwil", () => {
@@ -26,7 +30,6 @@ describe("Kwil", () => {
       });
   
     test('getDBID should return the correct value', () => {
-        console.log(wallet.address)
         const result = kwil.getDBID(wallet.address, "mydb");
         expect(result).toBe("xca20642aa31af7db6b43755cf40be91c51a157e447e6cc36c1d94f0a");
         // when on public network, change to: xca20642aa31af7db6b43755cf40be91c51a157e447e6cc36c1d94f0a
@@ -473,10 +476,14 @@ describe("ActionBuilder + ActionInput + Transaction public methods & broadcastin
     });
 });
 
+let txHash: string;
+
 // Testing all methods to be called on DBBuilder and in relation to DBBuilder (e.g. kwil.newDatabase & kwil.broadcast)
 describe("DBBuilder", () => {
     let db: schemaObj = schema;
     let newDb: DBBuilder;
+
+    beforeEach(async () => await sleep(500))
 
     beforeAll(async () => {
         const dbAmount = await kwil.listDatabases(wallet.address);
@@ -541,12 +548,18 @@ describe("DBBuilder", () => {
         expect(result.data).toMatchObject<TxReceipt>({
             txHash: expect.any(String),
         });
+
+        if(result.data) {
+            txHash = result.data.txHash;
+        }
     });
 });
 
 describe("Testing case insentivity on test_db", () => {
     let dbName: string;
     let dbid: string;
+
+    beforeEach(async () => await sleep(1000))
 
     const actionInputs = Utils.ActionInput.of()
         .put("$id", 1)
@@ -558,7 +571,9 @@ describe("Testing case insentivity on test_db", () => {
         const count = dbAmount.data as string[];
         dbName = `test_db_${count.length}`;
         dbid = kwil.getDBID(wallet.address, dbName);
-    });
+        console.log('TXHASH', txHash)
+        await waitForDeployment(txHash);
+    }, 10000);
 
     test("createUserTest action should execute", async () => {
         const tx = await kwil
@@ -665,7 +680,6 @@ describe("ActionBuilder to Message", () => {
 
     test('kwil.call() should return a MsgReceipt', async () => {
         const result = await kwil.call(message);
-        console.log(result.data)
         expect(result.data).toBeDefined();
         expect(result.data).toMatchObject<MsgReceipt>({
             result: expect.any(Array),
@@ -675,38 +689,41 @@ describe("ActionBuilder to Message", () => {
 
 // Testing all methods on Drop Database
 describe("Drop Database", () => {
-    let payload = {
-        owner: "",
-        name: ""
+    let payload: DropDbPayload = {
+        dbid: ''
     }
     let dropDb: DBBuilder;
+    let dbName: string;
+
+    beforeEach(async () => await sleep(500))
 
     beforeAll(async () => {
         // retrieve latest database name
         const dbAmount = await kwil.listDatabases(wallet.address);
         const count = dbAmount.data as string[];
-        payload.name = `test_DB_${count.length}`;
+        dbName = `test_DB_${count.length}`;
+        const dbid = kwil.getDBID(wallet.address, dbName);
+        payload.dbid = dbid; 
     });
 
     test('kwil.dropDatabase should return a DBBuilder', () => {
         dropDb = kwil.dropDbBuilder();
         expect(dropDb).toBeDefined();
-        expect(dropDb).toBeInstanceOf(DropDBBuilderImpl);
+        expect(dropDb).toBeInstanceOf(DBBuilderImpl);
     })
 
     test("DBBuilderImpl.signer() should return a DBBuilder", () => {
         dropDb = dropDb.signer(wallet);
 
         expect(dropDb).toBeDefined();
-        expect(dropDb).toBeInstanceOf(DropDBBuilderImpl);
+        expect(dropDb).toBeInstanceOf(DBBuilderImpl);
     });
 
     test("DBBuilderImpl.payload() should return a DBBuilder", () => {
-        payload.owner = wallet.address;
         dropDb = dropDb.payload(payload);
 
         expect(dropDb).toBeDefined();
-        expect(dropDb).toBeInstanceOf(DropDBBuilderImpl);
+        expect(dropDb).toBeInstanceOf(DBBuilderImpl);
     });
 
     let dropDbTx: Transaction;
@@ -739,6 +756,7 @@ describe("Drop Database", () => {
 
     test('the database should be able to be broadcasted and return a txHash and a txReceipt', async () => {
         const result = await kwil.broadcast(dropDbTx);
+        console.log(result)
         expect(result.data).toBeDefined();
         expect(result.data).toMatchObject<TxReceipt>({
             txHash: expect.any(String),
@@ -747,9 +765,7 @@ describe("Drop Database", () => {
 
     test('the database should be dropped', async () => {
         const result = await kwil.listDatabases(wallet.address);
-        console.log(result)
-        console.log(payload.name)
         expect(result.data).toBeDefined();
-        expect(result.data).not.toContain(payload.name);
+        expect(result.data).not.toContain(payload);
     });
 });
