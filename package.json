@@ -1,6 +1,6 @@
 {
   "name": "kwil",
-  "version": "3.3.0",
+  "version": "3.3.1",
   "description": "",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -58,8 +58,7 @@
     "ethers5": "npm:ethers@^5.7.2",
     "jssha": "^3.2.0",
     "long": "^5.2.1",
-    "near-api-js": "^2.1.4",
-    "protobufjs": "^7.1.2"
+    "near-api-js": "^2.1.4"
   },
   "engines": {
     "node": ">=18.0.0"
