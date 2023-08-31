@@ -1,18 +1,22 @@
-import {NonNil, Promisy} from "../utils/types";
+import {Nillable, NonNil, Promisy} from "../utils/types";
 import { Transaction } from "./tx";
-import {ethers, Signer as _Signer} from "ethers";
+import {ethers, Signer as _Signer, JsonRpcSigner} from "ethers";
 import {ActionInput} from "./actionInput";
 import {Wallet as Walletv5, Signer as Signerv5} from "ethers5";
 import { PayloadType } from "./enums";
 import { Message } from "./message";
+import { Wallet } from '@near-wallet-selector/core';
 
-export type Signer = NonNil<_Signer | ethers.Wallet | Walletv5 | Signerv5>;
-export type SignerSupplier = Promisy<Signer>
+export type EthSigner = NonNil<_Signer | ethers.Wallet | Walletv5 | Signerv5 >;
+export type NearSigner = NonNil<Wallet>;
+export type SignerSupplier = Promisy<EthSigner | NearSigner>
 
 export interface TxnBuilder {
     payloadType(payloadType: NonNil<PayloadType>): NonNil<TxnBuilder>;
 
     signer(signer: SignerSupplier): NonNil<TxnBuilder>;
+
+    publicKey(publicKey: Nillable<string>): NonNil<TxnBuilder> 
 
     payload(payload: (() => NonNil<object>) | NonNil<object>): NonNil<TxnBuilder>;
 
@@ -39,6 +43,8 @@ export interface DBBuilder {
      */
 
     payload(payload: (() => NonNil<object>) | NonNil<object>): NonNil<DBBuilder>;
+
+    publicKey(publicKey: string): NonNil<DBBuilder>;
 
     /**
      * Builds a database transaction.
@@ -89,6 +95,8 @@ export interface ActionBuilder {
      */
 
     signer(signer: SignerSupplier): NonNil<ActionBuilder>;
+
+    publicKey(publicKey: string): NonNil<ActionBuilder>;
 
     /**
      * Builds a transaction.

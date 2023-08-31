@@ -25,6 +25,7 @@ const TXN_BUILD_IN_PROGRESS: ActionInput[] = [];
 export class ActionBuilderImpl implements ActionBuilder {
     private readonly client: Kwil;
     private _signer: Nillable<SignerSupplier> = null;
+    private _publicKey: Nillable<string> = null;
     private _actions: ActionInput[] = [];
     private _name: Nillable<string>;
     private _dbid: Nillable<string>;
@@ -55,6 +56,12 @@ export class ActionBuilderImpl implements ActionBuilder {
         this.assertNotBuilding();
 
         this._signer = objects.requireNonNil(signer);
+        return this;
+    }
+
+    publicKey(publicKey: string): NonNil<ActionBuilder> {
+        this.assertNotBuilding();
+        this._publicKey = objects.requireNonNil(publicKey);
         return this;
     }
 
@@ -112,6 +119,7 @@ export class ActionBuilderImpl implements ActionBuilder {
             .payloadType(PayloadType.EXECUTE_ACTION)
             .payload(payload)
             .signer(signer)
+            .publicKey(this._publicKey)
             .buildTx();
     }
 
@@ -147,7 +155,9 @@ export class ActionBuilderImpl implements ActionBuilder {
             .payload(payload)
 
         if(signer) {
-            msg = msg.signer(signer);
+            msg = msg
+                .signer(signer)
+                .publicKey(this._publicKey);
         }
 
         return await msg.buildMsg();

@@ -5,6 +5,9 @@ const kwiljs = require("../dist/index")
 const ethers = require("ethers")
 const testDB = require("./mydb.json")
 const util = require("util")
+const near = require('near-api-js')
+
+near.Signer
 require("dotenv").config()
 
 function logger(msg) {
@@ -15,7 +18,7 @@ async function test() {
     //update to goerli when live
     const provider = new ethers.JsonRpcProvider(process.env.ETH_PROVIDER)
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
-    const txHash = '0x55e1aa5846a378e6fe9404c90ef8d0defe23adffdb90d7d740b37b41aad27aad'
+    const txHash = '0x7efa3ea8ea43c8e0276b28be7d2936f942483a6e99b4a1b9d7ec3763cd6afea7'
 
     const kwil = new kwiljs.NodeKwil({
         kwilProvider: process.env.KWIL_PROVIDER || "SHOULD FAIL",
@@ -23,11 +26,13 @@ async function test() {
         logging: true,
     })
 
+    const pubKey = await recoverPubKey(wallet)
+
     const dbid = kwil.getDBID(wallet.address, "mydb")
     // logger(dbid)
-    // broadcast(kwil, testDB, wallet)
+    broadcast(kwil, testDB, wallet, pubKey)
     // await getSchema(kwil, dbid)
-    getAccount(kwil, wallet.address)
+    // getAccount(kwil, wallet.address)
     // listDatabases(kwil, wallet.address)
     // ping(kwil)
     // getFunder(kwil, wallet)
@@ -72,13 +77,14 @@ async function getAccount(kwil, owner) {
     logger(account)
 }
 
-async function broadcast(kwil, tx, sig) {
+async function broadcast(kwil, tx, sig, pK) {
     let ownedTx = tx
     ownedTx.owner = sig.address
     const readytx = await kwil
         .dbBuilder()
         .payload(ownedTx)
         .signer(sig)
+        .secp256k1PubKey(pK)
         .buildTx()
 
     logger('readytx', readytx)
@@ -297,4 +303,8 @@ async function testViewWithSign(kwil, dbid, wallet) {
     const res = await kwil.call(msg);
 
     logger(res.data.result)
+}
+
+async function recoverPubKey(signer) {
+    return await kwiljs.Utils.recoverSecp256k1PubKey(signer)
 }

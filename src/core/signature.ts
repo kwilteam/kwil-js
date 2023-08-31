@@ -5,5 +5,6 @@ export interface Signature {
 
 export enum SignatureType {
     SIGNATURE_TYPE_INVALID = 'invalid',
-	SECP256K1_PERSONAL = 'secp256k1_ep'
+	SECP256K1_PERSONAL = 'secp256k1_ep',
+    ED25519_NEAR = 'ed25519_nr',
 }

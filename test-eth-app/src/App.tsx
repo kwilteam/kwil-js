@@ -1,4 +1,5 @@
 import './App.css'
+import { deployDb } from './tests/testDeploy';
 // import { testV5Funding } from './tests/v5Funding'
 import { testV5Transaction } from './tests/v5Signing';
 
@@ -12,7 +13,8 @@ function App() {
 
   async function test() {
     // await testV5Funding()
-    await testV5Transaction()
+    // await testV5Transaction()
+    await deployDb()
   }
 
   return (
