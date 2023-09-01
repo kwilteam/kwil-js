@@ -45,7 +45,7 @@ export default function App({ isSignedIn, contractId, wallet }) {
       })
       .buildTx()
 
-      console.log(await kwil.broadcast(tx))
+      console.log(await kwil.getAccount('93807a788636cbe4280b7ee929a7c67d3f765b929a9034cea51fd856232d0588'))
 
     // console.log(await kwil.listDatabases('65fac67262d84e4db4321552522b9463ed1cb503b874fd0e94594062da3451d0'))
   }

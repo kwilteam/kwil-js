@@ -33,7 +33,7 @@ export interface BroadcastReq {
 }
 
 export interface BroadcastRes {
-    txHash: string;
+    tx_hash: string;
 }
 
 export interface CallRes {
@@ -49,12 +49,12 @@ export interface SelectRes {
 }
 
 export interface TxQueryReq {
-    txHash: string;
+    tx_hash: string;
 }
 
 export interface TxQueryRes {
     hash: string;
     height: number;
     tx: Transaction;
-    txResult: TxResult;
+    tx_result: TxResult;
 }

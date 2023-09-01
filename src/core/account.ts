@@ -1,5 +1,5 @@
 export interface Account {
-    get address(): string;
+    get public_key(): string;
     get balance(): string;
     get nonce(): string;
 }

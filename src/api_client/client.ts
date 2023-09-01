@@ -55,12 +55,12 @@ export default class Client extends Api {
         checkRes(res);
 
         let body = {
-            txHash: '0x'
+            tx_hash: '0x'
         };
 
-        if (res.data.txHash) {
-            const bytes = res.data.txHash;
-            body.txHash = bytesToHex(base64ToBytes(bytes))
+        if (res.data.tx_hash) {
+            const bytes = res.data.tx_hash;
+            body.tx_hash = bytesToHex(base64ToBytes(bytes))
         }
 
         return {
@@ -79,16 +79,16 @@ export default class Client extends Api {
         return checkRes(res, r => r.result);
     }
 
-    public async txInfo(txHash: string): Promise<GenericResponse<TxInfoReceipt>> {
-        txHash = bytesToBase64(hexToBytes(txHash));
-        const req: TxQueryReq = { txHash }
+    public async txInfo(tx_hash: string): Promise<GenericResponse<TxInfoReceipt>> {
+        tx_hash = bytesToBase64(hexToBytes(tx_hash));
+        const req: TxQueryReq = { tx_hash }
 
         const res = await super.post<TxQueryRes>(`/api/v1/tx_query`, req)
         checkRes(res)
 
         let body;
         
-        if(res.data.hash && res.data.height && res.data.tx && res.data.txResult) {
+        if(res.data.hash && res.data.height && res.data.tx && res.data.tx_result) {
             body = {
                 hash: bytesToHex(base64ToBytes(res.data.hash)),
                 height: res.data.height,
@@ -106,7 +106,7 @@ export default class Client extends Api {
                     },
                     sender: bytesToHex(base64ToBytes(res.data.tx.sender)),
                 },
-                txResult: res.data.txResult
+                tx_result: res.data.tx_result
             };
         }
         

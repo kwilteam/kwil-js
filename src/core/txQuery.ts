@@ -13,5 +13,5 @@ export interface TxInfoReceipt {
     get hash(): string;
     get height(): number;
     get tx(): TxnData;
-    get txResult(): TxResult;
+    get tx_result(): TxResult;
 }

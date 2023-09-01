@@ -179,7 +179,7 @@ export class TxnBuilderImpl implements TxnBuilder {
             tx.body.payload_type = tx.body.payload_type
             tx.body.fee = tx.body.fee
             tx.body.nonce = tx.body.nonce
-            tx.body.salt = new Uint8Array();
+            tx.body.salt = generateSalt(16)
         })
 
         const encodedTx = kwilEncode(preEncodedBody.body);

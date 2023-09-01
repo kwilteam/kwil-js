@@ -4,7 +4,7 @@ import { strings } from "../utils/strings";
 import { PayloadType } from "./enums";
 
 export interface TxReceipt {
-    get txHash(): string;
+    get tx_hash(): string;
 }
 
 export interface TxnData {
