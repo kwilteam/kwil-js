@@ -23,7 +23,7 @@ export default function App({ isSignedIn, contractId, wallet }) {
   async function getSigner() {
     const keyStore = new keyStores.BrowserLocalStorageKeyStore(window.localStorage);
     const signer = new InMemorySigner(keyStore)
-    signer.createKey(wallet.accountId, 'testnet');
+    // signer.createKey(wallet.accountId, 'testnet');
     
     console.log(wallet.accountId)
     const pubKey = (await signer.getPublicKey(wallet.accountId, 'testnet')).toString();
@@ -38,7 +38,7 @@ export default function App({ isSignedIn, contractId, wallet }) {
       .dbBuilder()
       .payload(mydb)
       .signer(signer)
-      .publicKey('65fac67262d84e4db4321552522b9463ed1cb503b874fd0e94594062da3451d0')
+      .publicKey('93807a788636cbe4280b7ee929a7c67d3f765b929a9034cea51fd856232d0588')
       .nearConfig({
         accountId: wallet.accountId,
         networkId: 'testnet',
