@@ -4,10 +4,11 @@ import mydb from './mydb.json';
 import { WebKwil } from '../../dist';
 import './assets/global.css';
 import { EducationalText, SignInPrompt, SignOutButton } from './ui-components';
+import { keyStores, InMemorySigner } from 'near-api-js';
+
 
 export default function App({ isSignedIn, contractId, wallet }) {
   const [valueFromBlockchain, setValueFromBlockchain] = React.useState();
-
 
   const [uiPleaseWait, setUiPleaseWait] = React.useState(true);
 
@@ -19,21 +20,34 @@ export default function App({ isSignedIn, contractId, wallet }) {
   });
 
 
-  async function deployDatabase() {
-    // const signer = await getKeyPair();
+  async function getSigner() {
+    const keyStore = new keyStores.BrowserLocalStorageKeyStore(window.localStorage);
+    const signer = new InMemorySigner(keyStore)
+    signer.createKey(wallet.accountId, 'testnet');
+    
     console.log(wallet.accountId)
+    const pubKey = (await signer.getPublicKey(wallet.accountId, 'testnet')).toString();
+    console.log(pubKey)
 
+    return { signer, pubKey }
+  }
+
+  async function deployDatabase() {
+    const { signer, pubKey } = await getSigner();
     const tx = await kwil
       .dbBuilder()
       .payload(mydb)
-      .publicKey(wallet.accountId)
-      .signer(wallet.wallet)
+      .signer(signer)
+      .publicKey('65fac67262d84e4db4321552522b9463ed1cb503b874fd0e94594062da3451d0')
+      .nearConfig({
+        accountId: wallet.accountId,
+        networkId: 'testnet',
+      })
       .buildTx()
 
-      console.log('TX', tx)
+      console.log(await kwil.broadcast(tx))
 
-      const res = await kwil.broadcast(tx)
-      console.log(res)
+    // console.log(await kwil.listDatabases('65fac67262d84e4db4321552522b9463ed1cb503b874fd0e94594062da3451d0'))
   }
 
 

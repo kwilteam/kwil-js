@@ -34,7 +34,7 @@ export class Wallet {
   async startUp() {
     this.walletSelector = await setupWalletSelector({
       network: this.network,
-      modules: [ setupMyNearWallet(), setupNearWallet(), setupSender(), setupNightly(), setupMeteorWallet()],
+      modules: [ setupMyNearWallet(), setupNearWallet(), setupSender(), setupNightly()],
     });
 
     const isSignedIn = this.walletSelector.isSignedIn();

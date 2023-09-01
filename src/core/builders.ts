@@ -5,18 +5,25 @@ import {ActionInput} from "./actionInput";
 import {Wallet as Walletv5, Signer as Signerv5} from "ethers5";
 import { PayloadType } from "./enums";
 import { Message } from "./message";
-import { Wallet } from '@near-wallet-selector/core';
+import { Signer as _NearSigner } from 'near-api-js'
 
 export type EthSigner = NonNil<_Signer | ethers.Wallet | Walletv5 | Signerv5 >;
-export type NearSigner = NonNil<Wallet>;
+export type NearSigner = NonNil<_NearSigner>;
 export type SignerSupplier = Promisy<EthSigner | NearSigner>
+
+export interface NearConfig {
+    accountId: string;
+    networkId: string;
+}
 
 export interface TxnBuilder {
     payloadType(payloadType: NonNil<PayloadType>): NonNil<TxnBuilder>;
 
     signer(signer: SignerSupplier): NonNil<TxnBuilder>;
 
-    publicKey(publicKey: Nillable<string>): NonNil<TxnBuilder> 
+    publicKey(publicKey: Nillable<string>): NonNil<TxnBuilder>;
+
+    nearConfig(nearConfig: NearConfig): NonNil<TxnBuilder>;
 
     payload(payload: (() => NonNil<object>) | NonNil<object>): NonNil<TxnBuilder>;
 
@@ -43,6 +50,8 @@ export interface DBBuilder {
      */
 
     payload(payload: (() => NonNil<object>) | NonNil<object>): NonNil<DBBuilder>;
+
+    nearConfig(nearConfig: NearConfig): NonNil<DBBuilder>;
 
     publicKey(publicKey: string): NonNil<DBBuilder>;
 

@@ -7,7 +7,7 @@ import { Txn } from "../core/tx";
 import { ethSign, ecrRecoverPubKey, generateSalt, isV6Signer, nearSign, isEthersSigner } from "../utils/crypto";
 import { base64ToBytes, bytesToBase64 } from "../utils/base64";
 import { Kwil } from "../client/kwil";
-import { EthSigner, SignerSupplier, TxnBuilder } from "../core/builders";
+import { EthSigner, NearConfig, NearSigner, SignerSupplier, TxnBuilder } from "../core/builders";
 import { unwrap } from "../client/intern";
 import { Wallet as Walletv5, Signer as Signerv5 } from "ethers5"
 import { PayloadType } from "../core/enums";
@@ -29,6 +29,7 @@ export class TxnBuilderImpl implements TxnBuilder {
     private _signer: Nillable<SignerSupplier> = null;
     private _publicKey: Nillable<string> = null;
     private _signatureType: Nillable<SignatureType> = null;
+    private _nearConfig: Nillable<NearConfig> = null;
 
     private constructor(client: Kwil) {
         this.client = objects.requireNonNil(client);
@@ -62,6 +63,11 @@ export class TxnBuilderImpl implements TxnBuilder {
         return this;
     }
 
+    nearConfig(nearConfig: NearConfig): NonNil<TxnBuilder> {
+        this._nearConfig = nearConfig;
+        return this;
+    }
+
     async buildTx(): Promise<Transaction> {
         const { json, signer } = await this.preBuild();
 
@@ -82,13 +88,12 @@ export class TxnBuilderImpl implements TxnBuilder {
             throw new Error(`Could not retrieve account ${this._publicKey}. Please double check that you have the correct account address.`);
         }
 
+
         const preEstTxn = Txn.create(tx => {
             tx.body.payload = bytesToBase64(kwilEncode(json));
             tx.body.payload_type = payloadType;
             tx.body.fee = tx.body.fee.toString()
         });
-
-        console.log('PRE EST TXN', preEstTxn)
 
         const cost = await unwrap(this.client)(preEstTxn);
 
@@ -110,7 +115,7 @@ export class TxnBuilderImpl implements TxnBuilder {
             throw new Error("Signature type is invalid.");
         }
 
-        return TxnBuilderImpl.signTx(postEstTxn, signer, this._publicKey, this._signatureType);
+        return TxnBuilderImpl.signTx(postEstTxn, signer, this._publicKey, this._signatureType, this._nearConfig ? this._nearConfig : undefined);
     }
 
     async buildMsg(): Promise<Message> {
@@ -142,7 +147,7 @@ export class TxnBuilderImpl implements TxnBuilder {
                 throw new Error("Signature type is invalid.");
             }
 
-            return await TxnBuilderImpl.signMsg(msg, signer, this._publicKey, this._signatureType);
+            return await TxnBuilderImpl.signMsg(msg, signer, this._publicKey, this._signatureType, this._nearConfig ? this._nearConfig : undefined);
         }
 
         return msg;
@@ -156,9 +161,7 @@ export class TxnBuilderImpl implements TxnBuilder {
         const signer = this._signer;
 
         if(signer) {
-            this._signatureType = this.getSigType(signer);
-            console.log('SIGNATURE TYPE', this._signatureType)
-            
+            this._signatureType = this.getSigType(signer); 
         }
 
         const json = objects.requireNonNil(payloadFn());
@@ -169,14 +172,14 @@ export class TxnBuilderImpl implements TxnBuilder {
         }
     }
 
-    private static async signTx(tx: Transaction, signer: SignerSupplier, pubKey: string, signatureType: SignatureType): Promise<Transaction> {
+    private static async signTx(tx: Transaction, signer: SignerSupplier, pubKey: string, signatureType: SignatureType, nearConfig?: NearConfig): Promise<Transaction> {
         // convert payload back to uint8array for rlp encoding before signing
         const preEncodedBody = Txn.copy(tx, (tx) => {
             tx.body.payload = base64ToBytes(tx.body.payload as string);
             tx.body.payload_type = tx.body.payload_type
             tx.body.fee = tx.body.fee
             tx.body.nonce = tx.body.nonce
-            tx.body.salt = generateSalt(16);
+            tx.body.salt = new Uint8Array();
         })
 
         const encodedTx = kwilEncode(preEncodedBody.body);
@@ -195,15 +198,11 @@ export class TxnBuilderImpl implements TxnBuilder {
                 throw new Error("Signer must be a Wallet for ed25519 signatures.");
             }
 
-            const signature = (await nearSign(encodedTx, signer as NearWallet)).signature;
-            signedMessage = bytesToHex(base64ToBytes(signature));
+            console.log('preencoded body', preEncodedBody.body)
+            const signature = await nearSign(encodedTx, signer as NearSigner, objects.requireNonNil(nearConfig));
+            signedMessage = bytesToHex(signature.signature);
         }
 
-
-        // for testing purposes
-        const hardCodedKey = '0x048767310544592e33b2fb5555527f49c0902cf0f472f4c87e65324abb75e7a5e1c035bc1ef5026f363c79588526c341af341a68fc37299183391699ee1864cc75'
-        console.log('GOT CORRECT PUB KEY', pubKey === hardCodedKey)
-        
         return Txn.copy(preEncodedBody, (tx) => {
             tx.signature = {
                 signature_bytes: bytesToBase64(hexToBytes(signedMessage)),
@@ -221,7 +220,7 @@ export class TxnBuilderImpl implements TxnBuilder {
     }
 
     // TODO: Fix signMsg
-    private static async signMsg(msg: Message, signer: SignerSupplier, pubKey: string, signatureType: SignatureType): Promise<Message> {
+    private static async signMsg(msg: Message, signer: SignerSupplier, pubKey: string, signatureType: SignatureType, nearConfig?: NearConfig): Promise<Message> {
         if(typeof msg.payload === "string") {
             throw new Error("Payload must be an object to sign a message.");
         }
@@ -240,7 +239,8 @@ export class TxnBuilderImpl implements TxnBuilder {
             if(isEthersSigner(signer)) {
                 throw new Error("Signer must be a Wallet for ed25519 signatures.");
             }
-            signedMessage = (await nearSign(encodeMsg, signer as NearWallet)).signature;
+            const signature = await nearSign(encodeMsg, signer as NearSigner, objects.requireNonNil(nearConfig));
+            signedMessage = bytesToHex(signature.signature);
         }
 
 

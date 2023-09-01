@@ -2,12 +2,13 @@
 
 import jssha from 'jssha';
 import {Signer, SigningKey, ethers, hashMessage, Wallet as Walletv6} from 'ethers';
-import {Wallet as Walletv5, Signer as Signerv5, utils} from "ethers5";
-import { EthSigner, NearSigner, SignerSupplier } from '../core/builders';
+import {Wallet as Walletv5, Signer as Signerv5} from "ethers5";
+import { EthSigner, NearConfig, NearSigner, SignerSupplier } from '../core/builders';
 import { bytesToHex, bytesToString, stringToBytes } from './serial';
 import { HexString } from './types';
 import { bytesToBase64 } from './base64';
 import { VerifiedOwner } from '@near-wallet-selector/core'
+import { utils } from 'near-api-js'
 
 export function sha384StringToString(message: string): string {
     // noinspection JSPotentiallyInvalidConstructorUsage
@@ -44,16 +45,15 @@ export async function ethSign(message: Uint8Array, signer: EthSigner): Promise<H
     return await signer.signMessage(message);
 }
 
+interface NearSignature {
+    signature: Uint8Array;
+    publicKey: utils.PublicKey
+}
 
-export async function nearSign(message: Uint8Array, signer: NearSigner): Promise<VerifiedOwner> {
+export async function nearSign(message: Uint8Array, signer: NearSigner, config: NearConfig): Promise<NearSignature> {
     console.log('SIGNER', signer)
-    const sig = (await signer.verifyOwner({
-        message: bytesToHex(message),
-    }))
-
-    if(!sig) {
-        throw new Error('Unable to sign message with near wallet.')
-    }
+    
+    const sig = await signer.signMessage(message, config.accountId, config.networkId);
 
     return sig
 }
@@ -68,7 +68,6 @@ export async function recoverSecp256k1PubKey(signer: EthSigner): Promise<string>
         const unsignedMessage = 'Sign this message to recover your public key.';
         const signature = await signer.signMessage(unsignedMessage);
         return ecrRecoverPubKey(stringToBytes(unsignedMessage), signature);
-        
     }
     
     throw new Error('Signer must be an ethereum signer from Ethers v5 or Ethers v6.');

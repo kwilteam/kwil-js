@@ -3,7 +3,7 @@ import {Nillable, NonNil, Promisy} from "../utils/types";
 import {objects} from "../utils/objects";
 import {Kwil} from "../client/kwil";
 import {TxnBuilderImpl} from "./transaction_builder";
-import {DBBuilder, SignerSupplier} from "../core/builders";
+import {DBBuilder, NearConfig, SignerSupplier} from "../core/builders";
 import { AttributeType, DataType, IndexType, PayloadType } from "../core/enums";
 import { Database } from "../core/database";
 import { enforceDatabaseOrder } from "../core/order";
@@ -19,6 +19,7 @@ export class DBBuilderImpl implements DBBuilder {
     private _signer: Nillable<SignerSupplier> = null;
     private _payloadType: Nillable<PayloadType> = null;
     private _publicKey: Nillable<string> = null;
+    private _nearConfig: Nillable<NearConfig> = null;
 
     private constructor(client: Kwil, payloadType: PayloadType) {
         this.client = client;
@@ -49,6 +50,11 @@ export class DBBuilderImpl implements DBBuilder {
         return this;
     }
 
+    nearConfig(nearConfig: NearConfig): NonNil<DBBuilder> {
+        this._nearConfig = objects.requireNonNil(nearConfig);
+        return this;
+    }
+
     async buildTx(): Promise<Transaction> {
         let cleanedPayload: () => NonNil<object> = () => ({});
         const payload = objects.requireNonNil(this._payload);
@@ -70,6 +76,7 @@ export class DBBuilderImpl implements DBBuilder {
             .payload(objects.requireNonNil(cleanedPayload))
             .signer(objects.requireNonNil(signer))
             .publicKey(this._publicKey)
+            .nearConfig(objects.requireNonNil(this._nearConfig))
             .buildTx();
     }
 
