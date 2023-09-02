@@ -3,10 +3,11 @@ import {Nillable, NonNil, Promisy} from "../utils/types";
 import {objects} from "../utils/objects";
 import {Kwil} from "../client/kwil";
 import {TxnBuilderImpl} from "./transaction_builder";
-import {DBBuilder, NearConfig, SignerSupplier} from "../core/builders";
+import {DBBuilder, NearConfig, SignerSupplier, isNearPubKey} from "../core/builders";
 import { AttributeType, DataType, IndexType, PayloadType } from "../core/enums";
 import { Database } from "../core/database";
 import { enforceDatabaseOrder } from "../core/order";
+import { nearB58ToHex } from "../utils/base58";
 
 /**
  * `DBBuilderImpl` class is an implementation of the `DBBuilder` interface.
@@ -50,8 +51,11 @@ export class DBBuilderImpl implements DBBuilder {
         return this;
     }
 
-    nearConfig(nearConfig: NearConfig): NonNil<DBBuilder> {
-        this._nearConfig = objects.requireNonNil(nearConfig);
+    nearConfig(accountId: string, networkId: string): NonNil<DBBuilder> {
+        this._nearConfig = objects.requireNonNil({
+            accountId,
+            networkId
+        });
         return this;
     }
 
@@ -70,14 +74,18 @@ export class DBBuilderImpl implements DBBuilder {
 
         const payloadType = objects.requireNonNil(this._payloadType);
         const signer = await Promisy.resolveOrReject(this._signer);
-        return TxnBuilderImpl
+        let tx = TxnBuilderImpl
             .of(this.client)
             .payloadType(objects.requireNonNil(payloadType))
             .payload(objects.requireNonNil(cleanedPayload))
             .signer(objects.requireNonNil(signer))
             .publicKey(this._publicKey)
-            .nearConfig(objects.requireNonNil(this._nearConfig))
-            .buildTx();
+
+            if(this._nearConfig) {
+                tx.nearConfig(objects.requireNonNil(this._nearConfig))
+            }
+
+        return tx.buildTx();
     }
 
     private makePayloadEncodable(payload: (() => NonNil<object>) | NonNil<object>): NonNil<Database> {

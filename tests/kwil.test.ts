@@ -3,20 +3,22 @@ const logSpy = jest.spyOn(console, 'log').mockImplementation((...args) => {
     originalLog(...args);
 });
 jest.resetModules();
-import {AmntObject, dbid, kwil, waitForDeployment, wallet} from "./testingUtils";
+import {AmntObject, kwil, waitForDeployment, wallet} from "./testingUtils";
 import {DropDbPayload, Transaction, TxReceipt} from "../dist/core/tx";
 import {ActionBuilder, DBBuilder} from "../dist/core/builders";
 import {ActionBuilderImpl} from "../dist/builders/action_builder";
 import { schemaObj } from "./testingUtils";
 import schema from "./test_schema2.json";
 import {DBBuilderImpl} from "../dist/builders/db_builder";
-import {DropDBBuilderImpl} from "../dist/builders/drop_db_builder";
 import { Types, Utils } from "../dist/index";
 import { Message, MsgReceipt } from "../dist/core/message";
 
 function sleep(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+let pubKey: string = '0x048767310544592e33b2fb5555527f49c0902cf0f472f4c87e65324abb75e7a5e1c035bc1ef5026f363c79588526c341af341a68fc37299183391699ee1864cc75';
+let dbid: string = 'xd924382720df474c6bb62d26da9aeb10add2ad2835c0b7e4a6336ad8';
 
 // Kwil methods that do NOT return another class (e.g. funder, action, and DBBuilder)
 describe("Kwil", () => {
@@ -28,10 +30,18 @@ describe("Kwil", () => {
       afterAll(() => {
         logSpy.mockRestore();
       });
+
+
+    test('recoverPublicKey should recover and assign the public key', async () => {
+        const publicKey = await Utils.recoverSecp256k1PubKey(wallet);
+        pubKey = publicKey;
+        expect(publicKey).toBeDefined();
+        expect(publicKey.length).toBeGreaterThan(10);
+    })
   
     test('getDBID should return the correct value', () => {
-        const result = kwil.getDBID(wallet.address, "mydb");
-        expect(result).toBe("xca20642aa31af7db6b43755cf40be91c51a157e447e6cc36c1d94f0a");
+        const result = kwil.getDBID(pubKey, "mydb");
+        expect(result).toBe("xd924382720df474c6bb62d26da9aeb10add2ad2835c0b7e4a6336ad8");
         // when on public network, change to: xca20642aa31af7db6b43755cf40be91c51a157e447e6cc36c1d94f0a
         // when on local network, change to: xcdd04ff7c5e4a939d5365ec9b54cc4aab8c610c415f5f9b33323ae77
     });
@@ -69,12 +79,12 @@ describe("Kwil", () => {
     
     
     test('getAccount should return status 200', async () => {
-        const result = await kwil.getAccount(wallet.address);
+        const result = await kwil.getAccount(pubKey);
         expect(result.status).toBe(200);
     })
 
     test('listDatabases should return status 200', async () => {
-        const result = await kwil.listDatabases(wallet.address);
+        const result = await kwil.listDatabases(pubKey);
         expect(result.status).toBe(200);
     })    
 
@@ -439,6 +449,14 @@ describe("ActionBuilder + ActionInput + Transaction public methods & broadcastin
         expect(result).toBe(actionBuilder);
     })
 
+    test("The actionbuilder.publicKey() method shoud return an actionBuilder with a public key", () => {
+        const result = actionBuilder.publicKey(pubKey);
+
+        expect(result).toBeDefined();
+        expect(result).toBeInstanceOf(ActionBuilderImpl);
+        expect(result).toBe(actionBuilder);
+    })
+
     let actionTx: Transaction;
 
     test("The actionBuilder.buildTx() method should return a signed transaction", async () => {
@@ -471,7 +489,7 @@ describe("ActionBuilder + ActionInput + Transaction public methods & broadcastin
         const result = await kwil.broadcast(actionTx);
         expect(result.data).toBeDefined();
         expect(result.data).toMatchObject<TxReceipt>({
-            txHash: expect.any(String),
+            tx_hash: expect.any(String),
         });
     });
 });
@@ -486,7 +504,7 @@ describe("DBBuilder", () => {
     beforeEach(async () => await sleep(500))
 
     beforeAll(async () => {
-        const dbAmount = await kwil.listDatabases(wallet.address);
+        const dbAmount = await kwil.listDatabases(pubKey);
         const count = dbAmount.data as string[];
         db.name = `test_db_${count.length + 1}`;
     });
@@ -503,6 +521,13 @@ describe("DBBuilder", () => {
         expect(newDb).toBeDefined();
         expect(newDb).toBeInstanceOf(DBBuilderImpl);
     });
+
+    test("DBBuilderImpl.publicKey() should return a DBBuilder", () => {
+        newDb = newDb.publicKey(pubKey);
+
+        expect(newDb).toBeDefined();
+        expect(newDb).toBeInstanceOf(DBBuilderImpl);
+    })
 
     test("DBBuilderImpl.payload() should return a DBBuilder", () => {
         let readyDb = db;
@@ -546,11 +571,11 @@ describe("DBBuilder", () => {
         const result = await kwil.broadcast(dbTx);
         expect(result.data).toBeDefined();
         expect(result.data).toMatchObject<TxReceipt>({
-            txHash: expect.any(String),
+            tx_hash: expect.any(String),
         });
 
         if(result.data) {
-            txHash = result.data.txHash;
+            txHash = result.data.tx_hash;
         }
     });
 });
@@ -567,10 +592,10 @@ describe("Testing case insentivity on test_db", () => {
         .put("$age", 25)
 
     beforeAll(async () => {
-        const dbAmount = await kwil.listDatabases(wallet.address);
+        const dbAmount = await kwil.listDatabases(pubKey);
         const count = dbAmount.data as string[];
         dbName = `test_db_${count.length}`;
-        dbid = kwil.getDBID(wallet.address, dbName);
+        dbid = kwil.getDBID(pubKey, dbName);
         console.log('TXHASH', txHash)
         await waitForDeployment(txHash);
     }, 10000);
@@ -581,6 +606,7 @@ describe("Testing case insentivity on test_db", () => {
             .dbid(dbid)
             .name("createUserTest")
             .signer(wallet)
+            .publicKey(pubKey)
             .concat(actionInputs)
             .buildTx();
 
@@ -588,7 +614,7 @@ describe("Testing case insentivity on test_db", () => {
 
         expect(result.data).toBeDefined();
         expect(result.data).toMatchObject<TxReceipt>({
-            txHash: expect.any(String),
+            tx_hash: expect.any(String),
         });
     });
 
@@ -598,13 +624,14 @@ describe("Testing case insentivity on test_db", () => {
             .dbid(dbid)
             .name("delete_user")
             .signer(wallet)
+            .publicKey(pubKey)
             .buildTx();
 
         const result = await kwil.broadcast(tx);
 
         expect(result.data).toBeDefined();
         expect(result.data).toMatchObject<TxReceipt>({
-            txHash: expect.any(String),
+            tx_hash: expect.any(String),
         });
     });
 
@@ -615,13 +642,14 @@ describe("Testing case insentivity on test_db", () => {
             .name("CREATEUSERTEST")
             .signer(wallet)
             .concat(actionInputs)
+            .publicKey(pubKey)
             .buildTx();
 
         const result = await kwil.broadcast(tx);
 
         expect(result.data).toBeDefined();
         expect(result.data).toMatchObject<TxReceipt>({
-            txHash: expect.any(String),
+            tx_hash: expect.any(String),
         });
     });
 
@@ -631,13 +659,14 @@ describe("Testing case insentivity on test_db", () => {
             .dbid(dbid)
             .name("DELETE_USER")
             .signer(wallet)
+            .publicKey(pubKey)
             .buildTx();
 
         const result = await kwil.broadcast(tx);
 
         expect(result.data).toBeDefined();
         expect(result.data).toMatchObject<TxReceipt>({
-            txHash: expect.any(String),
+            tx_hash: expect.any(String),
         });
     });
 
@@ -648,13 +677,14 @@ describe("Testing case insentivity on test_db", () => {
             .name("createusertest")
             .signer(wallet)
             .concat(actionInputs)
+            .publicKey(pubKey)
             .buildTx();
 
         const result = await kwil.broadcast(tx);
 
         expect(result.data).toBeDefined();
         expect(result.data).toMatchObject<TxReceipt>({
-            txHash: expect.any(String),
+            tx_hash: expect.any(String),
         });
     });
 })
@@ -699,10 +729,10 @@ describe("Drop Database", () => {
 
     beforeAll(async () => {
         // retrieve latest database name
-        const dbAmount = await kwil.listDatabases(wallet.address);
+        const dbAmount = await kwil.listDatabases(pubKey);
         const count = dbAmount.data as string[];
         dbName = `test_DB_${count.length}`;
-        const dbid = kwil.getDBID(wallet.address, dbName);
+        const dbid = kwil.getDBID(pubKey, dbName);
         payload.dbid = dbid; 
     });
 
@@ -725,6 +755,13 @@ describe("Drop Database", () => {
         expect(dropDb).toBeDefined();
         expect(dropDb).toBeInstanceOf(DBBuilderImpl);
     });
+
+    test('DBBuilderImpl.publicKey() should return a DBBuilder', () => {
+        dropDb = dropDb.publicKey(pubKey);
+
+        expect(dropDb).toBeDefined();
+        expect(dropDb).toBeInstanceOf(DBBuilderImpl);
+    })
 
     let dropDbTx: Transaction;
 
@@ -759,12 +796,12 @@ describe("Drop Database", () => {
         console.log(result)
         expect(result.data).toBeDefined();
         expect(result.data).toMatchObject<TxReceipt>({
-            txHash: expect.any(String),
+            tx_hash: expect.any(String),
         });
     });
 
     test('the database should be dropped', async () => {
-        const result = await kwil.listDatabases(wallet.address);
+        const result = await kwil.listDatabases(pubKey);
         expect(result.data).toBeDefined();
         expect(result.data).not.toContain(payload);
     });

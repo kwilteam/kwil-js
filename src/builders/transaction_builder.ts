@@ -7,7 +7,7 @@ import { Txn } from "../core/tx";
 import { ethSign, ecrRecoverPubKey, generateSalt, isV6Signer, nearSign, isEthersSigner } from "../utils/crypto";
 import { base64ToBytes, bytesToBase64 } from "../utils/base64";
 import { Kwil } from "../client/kwil";
-import { EthSigner, NearConfig, NearSigner, SignerSupplier, TxnBuilder } from "../core/builders";
+import { EthSigner, NearConfig, NearSigner, SignerSupplier, TxnBuilder, isNearPubKey } from "../core/builders";
 import { unwrap } from "../client/intern";
 import { Wallet as Walletv5, Signer as Signerv5 } from "ethers5"
 import { PayloadType } from "../core/enums";
@@ -16,6 +16,7 @@ import { bytesToHex, bytesToString, hexToBytes } from "../utils/serial";
 import { SignatureType } from "../core/signature";
 import { Message, Msg } from "../core/message";
 import { Wallet as NearWallet } from '@near-wallet-selector/core'
+import { nearB58ToHex } from "../utils/base58";
 
 interface PreBuild {
     json: object;
@@ -59,7 +60,14 @@ export class TxnBuilderImpl implements TxnBuilder {
     }
 
     publicKey(publicKey: Nillable<string>): NonNil<TxnBuilder> {
-        this._publicKey = publicKey;
+        let key = objects.requireNonNil(publicKey);
+
+        if(isNearPubKey(key)) {
+            key = nearB58ToHex(key);
+        }
+
+        this._publicKey = key;
+
         return this;
     }
 
@@ -198,7 +206,6 @@ export class TxnBuilderImpl implements TxnBuilder {
                 throw new Error("Signer must be a Wallet for ed25519 signatures.");
             }
 
-            console.log('preencoded body', preEncodedBody.body)
             const signature = await nearSign(encodedTx, signer as NearSigner, objects.requireNonNil(nearConfig));
             signedMessage = bytesToHex(signature.signature);
         }
@@ -260,28 +267,11 @@ export class TxnBuilderImpl implements TxnBuilder {
         }
         
    
+        // TODO: Refactor to actually check if its a near signer, rather than just checking if its not an ethers signer...
         if(!isEthersSigner(signer)) {
             return SignatureType.ED25519_NEAR;
         }
 
         return SignatureType.SIGNATURE_TYPE_INVALID;
     }
-
-    // private async resolvePublicKey(signer: SignerSupplier): Promise<void> {
-    //     if(this._signatureType === SignatureType.SECP256K1_PERSONAL && !this._publicKey) {
-    //         throw new Error("Public key is required for secp256k1 personal signatures. Please pass an uncompressed Secp256k1 public key to the .secp256k1PubKey() method.");
-    //     }
-
-    //     //@ts-ignore
-    //     if(this._signatureType === SignatureType.ED25519_NEAR && signer.verifyOwner) {
-    //         //@ts-ignore
-    //         this._publicKey = signer.getPublicKey().toString().slice(8);
-    //         //@ts-ignore
-    //         console.log('NEAR PUB KEY', signer.getPublicKey().toString())
-    //     }
-
-    //     if(!this._publicKey) {
-    //         throw new Error('Could not resolve public key.')
-    //     }
-    // }
 }

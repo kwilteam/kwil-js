@@ -6,6 +6,8 @@ const ethers = require("ethers")
 const testDB = require("./mydb.json")
 const util = require("util")
 const near = require('near-api-js')
+const { from_b58 } = require('../dist/utils/base58')
+const { bytesToHex } = require('../dist/utils/serial')
 
 near.Signer
 require("dotenv").config()
@@ -18,7 +20,7 @@ async function test() {
     //update to goerli when live
     const provider = new ethers.JsonRpcProvider(process.env.ETH_PROVIDER)
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
-    const txHash = '0x7efa3ea8ea43c8e0276b28be7d2936f942483a6e99b4a1b9d7ec3763cd6afea7'
+    const txHash = '0xf2a1a842522df00bde3fdd417d42cd6818a8bb803312a28552d99db445443bdc'
 
     const kwil = new kwiljs.NodeKwil({
         kwilProvider: process.env.KWIL_PROVIDER || "SHOULD FAIL",
@@ -28,12 +30,13 @@ async function test() {
 
     const pubKey = await recoverPubKey(wallet)
 
-    const dbid = kwil.getDBID(wallet.address, "mydb")
-    // logger(dbid)
-    broadcast(kwil, testDB, wallet, pubKey)
-    // await getSchema(kwil, dbid)
-    // getAccount(kwil, wallet.address)
-    // listDatabases(kwil, wallet.address)
+    const dbid = kwil.getDBID(pubKey, "mydb")
+    logger(dbid)
+    // broadcast(kwil, testDB, wallet, pubKey)
+    // await getTxInfo(kwil, txHash)
+    await getSchema(kwil, dbid)
+    // getAccount(kwil, pubKey)
+    // listDatabases(kwil, pubKey)
     // ping(kwil)
     // getFunder(kwil, wallet)
     // getAllowance(kwil, wallet)
@@ -42,7 +45,7 @@ async function test() {
     // await deposit(kwil, wallet, BigInt(10 * 10^18))
     // getDepositedBalance(kwil, wallet)
     // getTokenAddress(kwil, wallet)
-    // await execSingleAction(kwil, dbid, "add_post", wallet)
+    // await execSingleAction(kwil, dbid, "add_post", wallet, pubKey)
     // select(kwil, dbid, "SELECT * FROM posts")
     // select(kwil, dbid, `WITH RECURSIVE 
     //                          cnt(x) AS (
@@ -55,14 +58,14 @@ async function test() {
     //                      FROM cnt
     //                      WHERE x NOT IN (SELECT id FROM posts) AND x <= 135;
     //          `)
-    // bulkAction(kwil, dbid, "add_post", wallet)
+    // bulkAction(kwil, dbid, "add_post", wallet, pubKey)
     // getSelectAction(kwil, dbid, "select_posts", wallet)
-    // await getTxInfo(kwil, txHash)
-    // await dropDb(kwil, dbid, wallet)
+    // await dropDb(kwil, dbid, wallet, pubKey)
     // getSelectAction(kwil, dbid2, "get_items", wallet)
     // await testNonViewAction(kwil, dbid, wallet)
     // await testViewWithParam(kwil, dbid, wallet)
-    // await testViewWithSign(kwil, dbid, wallet)
+    // await testViewWithSign(kwil, dbid, wallet, pubKey)
+    // decodebase58('AvnZPs4WBHx6RTfzAe62iWWhb6SZTFNJ9obCm2KbUe39')
 }
 
 test()
@@ -84,7 +87,7 @@ async function broadcast(kwil, tx, sig, pK) {
         .dbBuilder()
         .payload(ownedTx)
         .signer(sig)
-        .secp256k1PubKey(pK)
+        .publicKey(pK)
         .buildTx()
 
     logger('readytx', readytx)
@@ -148,7 +151,7 @@ async function getAction(kwil) {
     logger(res)
 }
 
-async function execSingleAction(kwil, dbid, action, w) {
+async function execSingleAction(kwil, dbid, action, w, pubKey) {
     const query = await kwil.selectQuery(dbid, "SELECT COUNT(*) FROM posts");
 
     const count = query.data[0][`COUNT(*)`]
@@ -166,6 +169,7 @@ async function execSingleAction(kwil, dbid, action, w) {
         .dbid(dbid)
         .name(action)
         .concat(solo)
+        .publicKey(pubKey)
         .signer(w)
         .buildTx();
 
@@ -219,7 +223,7 @@ async function configObj(kwil, dbid) {
     return bulkActions
 }
 
-async function bulkAction(kwil, dbid, action, w) {
+async function bulkAction(kwil, dbid, action, w, pubKey) {
     const data = await configObj(kwil, dbid)
 
     const Input = kwiljs.Utils.ActionInput
@@ -232,6 +236,7 @@ async function bulkAction(kwil, dbid, action, w) {
         .dbid(dbid)
         .name(action)
         .concat(inputs)
+        .publicKey(pubKey)
         .signer(w)
         .buildTx()
 
@@ -245,10 +250,11 @@ async function getTxInfo(kwil, hash) {
     logger(res)
 }
 
-async function dropDb(kwil, dbid, w) {
+async function dropDb(kwil, dbid, w, pubKey) {
     const tx = await kwil
         .dropDbBuilder()
         .signer(w)
+        .publicKey(pubKey)
         .payload({
             dbid
         })
@@ -291,11 +297,12 @@ async function testViewWithParam(kwil, dbid, wallet) {
     logger(res.data.result)
 }
 
-async function testViewWithSign(kwil, dbid, wallet) {
+async function testViewWithSign(kwil, dbid, wallet, pubKey) {
     const msg = await kwil
         .actionBuilder()
         .dbid(dbid)
         .name('view_must_sign')
+        .publicKey(pubKey)
         .signer(wallet)
         .buildMsg()
 
@@ -307,4 +314,8 @@ async function testViewWithSign(kwil, dbid, wallet) {
 
 async function recoverPubKey(signer) {
     return await kwiljs.Utils.recoverSecp256k1PubKey(signer)
+}
+
+function decodebase58(string) {
+    console.log(bytesToHex(from_b58(string)))
 }

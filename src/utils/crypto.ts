@@ -41,6 +41,12 @@ export function sha224StringToString(message: string): string {
     return shaObj.getHash('HEX');
 }
 
+export function sha224BytesToString(message: Uint8Array): string {
+    const shaObj = new jssha('SHA-224', 'UINT8ARRAY');
+    shaObj.update(message);
+    return shaObj.getHash('HEX');
+}
+
 export async function ethSign(message: Uint8Array, signer: EthSigner): Promise<HexString> {
     return await signer.signMessage(message);
 }
@@ -51,8 +57,6 @@ interface NearSignature {
 }
 
 export async function nearSign(message: Uint8Array, signer: NearSigner, config: NearConfig): Promise<NearSignature> {
-    console.log('SIGNER', signer)
-    
     const sig = await signer.signMessage(message, config.accountId, config.networkId);
 
     return sig

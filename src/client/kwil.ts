@@ -9,12 +9,13 @@ import {ActionBuilderImpl} from "../builders/action_builder";
 import {base64ToBytes} from "../utils/base64";
 import {DBBuilderImpl} from "../builders/db_builder";
 import {NonNil} from "../utils/types";
-import {ActionBuilder, DBBuilder} from "../core/builders";
+import {ActionBuilder, DBBuilder, isNearPubKey} from "../core/builders";
 import {wrap} from "./intern";
 import { Cache } from "../utils/cache";
 import { TxInfoReceipt } from "../core/txQuery";
 import { Message, MsgReceipt } from "../core/message";
 import { PayloadType } from "../core/enums";
+import { nearB58ToHex } from "../utils/base58";
 
 /**
  * The main class for interacting with the Kwil network.
@@ -85,6 +86,10 @@ export abstract class Kwil {
      */
 
     public async getAccount(owner: string): Promise<GenericResponse<Account>> {
+        if(isNearPubKey(owner)) {
+            owner = nearB58ToHex(owner);
+        }
+
         owner = owner.toLowerCase();
         return await this.client.getAccount(owner);
     }
@@ -131,7 +136,7 @@ export abstract class Kwil {
     }
 
     /**
-     * Sends a message to a Kwil node. This can be used to execute read-only actions on Kwil.
+     * Sends a message to a Kwil node. This can be used to execute read-only ('view') actions on Kwil.
      * 
      * @param msg - The message to send. The message can be built using the ActionBuilder class.
      * @returns A promise that resolves to the receipt of the message.

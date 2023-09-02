@@ -51,7 +51,7 @@ export interface DBBuilder {
 
     payload(payload: (() => NonNil<object>) | NonNil<object>): NonNil<DBBuilder>;
 
-    nearConfig(nearConfig: NearConfig): NonNil<DBBuilder>;
+    nearConfig(accountId: string, networkId: string): NonNil<DBBuilder>;
 
     publicKey(publicKey: string): NonNil<DBBuilder>;
 
@@ -107,6 +107,8 @@ export interface ActionBuilder {
 
     publicKey(publicKey: string): NonNil<ActionBuilder>;
 
+    nearConfig(accountId: string, networkId: string): NonNil<ActionBuilder>;
+
     /**
      * Builds a transaction.
      * 
@@ -124,4 +126,8 @@ export interface ActionBuilder {
      */
 
     buildMsg(): Promise<Message>;
+}
+
+export function isNearPubKey(pubKey: string): boolean {
+    return pubKey.startsWith('ed25519:');
 }

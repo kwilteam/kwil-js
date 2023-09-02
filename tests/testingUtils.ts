@@ -1,6 +1,6 @@
 import { Contract, JsonRpcProvider, JsonRpcSigner, Wallet } from "ethers";
 import {Kwil} from "../dist/client/kwil";
-import { NodeKwil } from "../dist";
+import { NodeKwil, Utils } from "../dist";
 require('dotenv').config();
 
 const provider = new JsonRpcProvider(process.env.ETH_PROVIDER)
@@ -63,7 +63,6 @@ export const kwil = new NodeKwil({
     logging: true
 })
 
-export const dbid = kwil.getDBID(wallet.address, "mydb")
 
 export function waitForDeployment(hash: string): Promise<boolean> {
     return new Promise(async (resolve) => {
@@ -71,7 +70,7 @@ export function waitForDeployment(hash: string): Promise<boolean> {
             try {
                 const txQuery = await kwil.txInfo(hash);
 
-                if (txQuery.status === 200 && txQuery.data?.txResult.log === 'success') {
+                if (txQuery.status === 200 && txQuery.data?.tx_result.log === 'success') {
                     resolve(true);
                 } else {
                     // Retry after 500ms if it's not a success

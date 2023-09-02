@@ -14,10 +14,11 @@ import {
     GetAccountResponse, GetSchemaResponse,
     ListDatabasesResponse, PongRes, SelectRes, TxQueryReq, TxQueryRes
 } from "../core/resreq";
-import { bytesToHex, hexToBytes } from "../utils/serial";
+import { base64UrlEncode, bytesToHex, hexToBytes } from "../utils/serial";
 import { TxInfoReceipt } from "../core/txQuery";
 import { Message, MsgData, MsgReceipt } from "../core/message";
 import { kwilDecode } from "../utils/rlp";
+import { cleanPublicKey } from "../utils/strings";
 
 export default class Client extends Api {
     constructor(opts: Config) {
@@ -26,15 +27,58 @@ export default class Client extends Api {
 
     public async getSchema(dbid: string): Promise<GenericResponse<Database>> {
         const res = await super.get<GetSchemaResponse>(`/api/v1/databases/${dbid}/schema`);
-        return checkRes(res, r => r.schema);
+        checkRes(res);
+
+        let schema: Database = {
+            name: '',
+            owner: '',
+            tables: [],
+            actions: [],
+            extensions: []
+        }
+
+        if (res.data) {
+            schema = {
+                name: res.data.schema.name,
+                owner: cleanPublicKey(bytesToHex(base64ToBytes(res.data.schema.owner))),
+                tables: res.data.schema.tables,
+                actions: res.data.schema.actions,
+                extensions: res.data.schema.extensions
+            }
+        }
+
+        return {
+            status: res.status,
+            data: schema
+        }
     }
 
     public async getAccount(owner: string): Promise<GenericResponse<Account>> {
+        owner = base64UrlEncode(bytesToBase64(hexToBytes(owner)));
         const res = await super.get<GetAccountResponse>(`/api/v1/accounts/${owner}`);
-        return checkRes(res, r => r.account);
+        checkRes(res);
+
+        let acct: Account = {
+            balance: '',
+            public_key: new Uint8Array(),
+            nonce: '',
+
+        };
+
+        if (res.data) {
+            acct.balance = res.data.account.balance;
+            acct.public_key = base64ToBytes(res.data.account.public_key as string);
+            acct.nonce = res.data.account.nonce;
+        }
+
+        return {
+            status: res.status,
+            data: acct
+        }
     }
 
     public async listDatabases(owner: string): Promise<GenericResponse<string[]>> {
+        owner = base64UrlEncode(bytesToBase64(hexToBytes(owner)));
         const res = await super.get<ListDatabasesResponse>(`/api/v1/${owner}/databases`);
         return checkRes(res, r => r.databases);
     }
@@ -87,6 +131,8 @@ export default class Client extends Api {
         checkRes(res)
 
         let body;
+
+       
         
         if(res.data.hash && res.data.height && res.data.tx && res.data.tx_result) {
             body = {
@@ -104,7 +150,7 @@ export default class Client extends Api {
                         signature_bytes: base64ToBytes(res.data.tx.signature.signature_bytes as string),
                         signature_type: res.data.tx.signature.signature_type,
                     },
-                    sender: bytesToHex(base64ToBytes(res.data.tx.sender)),
+                    sender: (base64ToBytes(res.data.tx.sender as string)),
                 },
                 tx_result: res.data.tx_result
             };

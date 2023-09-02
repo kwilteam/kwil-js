@@ -8,6 +8,7 @@ import {ActionInput} from "../core/actionInput";
 import {ActionSchema} from "../core/database";
 import { PayloadType, ValueType } from "../core/enums";
 import { Message, UnencodedMessagePayload } from "../core/message";
+import { NearConfig } from "../core/builders";
 
 interface CheckSchema {
     dbid: string;
@@ -29,6 +30,7 @@ export class ActionBuilderImpl implements ActionBuilder {
     private _actions: ActionInput[] = [];
     private _name: Nillable<string>;
     private _dbid: Nillable<string>;
+    private _nearConfig: Nillable<NearConfig> = null;
 
     private constructor(client: Kwil) {
         this.client = objects.requireNonNil(client);
@@ -62,6 +64,15 @@ export class ActionBuilderImpl implements ActionBuilder {
     publicKey(publicKey: string): NonNil<ActionBuilder> {
         this.assertNotBuilding();
         this._publicKey = objects.requireNonNil(publicKey);
+        return this;
+    }
+
+    nearConfig(accountId: string, networkId: string): NonNil<ActionBuilder> {
+        this.assertNotBuilding();
+        this._nearConfig = objects.requireNonNil({
+            accountId,
+            networkId
+        });
         return this;
     }
 
@@ -112,18 +123,20 @@ export class ActionBuilderImpl implements ActionBuilder {
             "params": preparedActions
         }
 
-        console.log('PAYLOAD', payload)
-
-        return TxnBuilderImpl
+        const tx = TxnBuilderImpl
             .of(this.client)
             .payloadType(PayloadType.EXECUTE_ACTION)
             .payload(payload)
             .signer(signer)
             .publicKey(this._publicKey)
-            .buildTx();
+        
+        if(this._nearConfig) {
+            tx.nearConfig(this._nearConfig)
+        }
+        return tx.buildTx();
     }
 
-    async doBuildMsg(action?: ActionInput[]): Promise<Message> {
+    private async doBuildMsg(action?: ActionInput[]): Promise<Message> {
         const { dbid, name, preparedActions, actionSchema } = await this.checkSchema(action ? action : undefined);
 
         if(preparedActions && preparedActions.length > 1) {
@@ -158,6 +171,10 @@ export class ActionBuilderImpl implements ActionBuilder {
             msg = msg
                 .signer(signer)
                 .publicKey(this._publicKey);
+        }
+
+        if(this._nearConfig) {
+            msg = msg.nearConfig(this._nearConfig);
         }
 
         return await msg.buildMsg();

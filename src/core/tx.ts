@@ -10,7 +10,7 @@ export interface TxReceipt {
 export interface TxnData {
     signature: Signature;
     body: TxBody;
-    sender: string;
+    sender: string | Uint8Array;
 }
 
 interface TxBody {
@@ -53,7 +53,7 @@ export class Transaction implements TxnData {
         return this.data.signature;
     }
 
-    public get sender(): string {
+    public get sender(): string | Uint8Array{
         return this.data.sender;
     }
 

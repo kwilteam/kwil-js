@@ -5,13 +5,15 @@ import { WebKwil } from '../../dist';
 import './assets/global.css';
 import { EducationalText, SignInPrompt, SignOutButton } from './ui-components';
 import { keyStores, InMemorySigner } from 'near-api-js';
-
+import { dropDatabase } from './tests/dropDatabase';
+import { deployDatabase } from './tests/deployDatabase';
+import { executeAction } from './tests/executeAction';
+import { testviewWithParam } from './tests/testViewWithParam';
+import { testViewWithSign } from './tests/testViewWithSign';
 
 export default function App({ isSignedIn, contractId, wallet }) {
   const [valueFromBlockchain, setValueFromBlockchain] = React.useState();
-
   const [uiPleaseWait, setUiPleaseWait] = React.useState(true);
-
 
   const kwil = new WebKwil({
     kwilProvider: "http://localhost:8080",
@@ -19,35 +21,31 @@ export default function App({ isSignedIn, contractId, wallet }) {
     logging: true,
   });
 
-
   async function getSigner() {
     const keyStore = new keyStores.BrowserLocalStorageKeyStore(window.localStorage);
     const signer = new InMemorySigner(keyStore)
     // signer.createKey(wallet.accountId, 'testnet');
-    
-    console.log(wallet.accountId)
+
     const pubKey = (await signer.getPublicKey(wallet.accountId, 'testnet')).toString();
-    console.log(pubKey)
 
     return { signer, pubKey }
   }
 
-  async function deployDatabase() {
+  async function executeTest() {
     const { signer, pubKey } = await getSigner();
-    const tx = await kwil
-      .dbBuilder()
-      .payload(mydb)
-      .signer(signer)
-      .publicKey('93807a788636cbe4280b7ee929a7c67d3f765b929a9034cea51fd856232d0588')
-      .nearConfig({
-        accountId: wallet.accountId,
-        networkId: 'testnet',
-      })
-      .buildTx()
-
-      console.log(await kwil.getAccount('93807a788636cbe4280b7ee929a7c67d3f765b929a9034cea51fd856232d0588'))
-
-    // console.log(await kwil.listDatabases('65fac67262d84e4db4321552522b9463ed1cb503b874fd0e94594062da3451d0'))
+    const dbid = kwil.getDBID(pubKey, "mydb")
+    // await deployDatabase(kwil, signer, pubKey, wallet)
+    // await executeAction(kwil, dbid, "add_post", signer, wallet, pubKey)
+    // await testviewWithParam(kwil, dbid)
+    // await testViewWithSign(kwil, dbid, signer, wallet, pubKey)
+    // console.log(await kwil.listDatabases('93807a788636cbe4280b7ee929a7c67d3f765b929a9034cea51fd856232d0588'))
+    // console.log(await kwil.getSchema('x09f41f044925688ee749ad3b8da6f354f65ec3082ed1a598cd2fb76f'))
+    // console.log(await kwil.getAccount(pubKey))
+    // console.log(await kwil.txInfo("0xa37a6d2499c2d91766113e15363b673e87f8d79aaf3814682ce6f97d215057c3"))
+    // console.log(await kwil.selectQuery(dbid, "SELECT * FROM posts"))
+    // console.log(await kwil.ping())
+    // await dropDatabase(kwil, "mydb", pubKey, signer, wallet)
+    // console.log(await kwil.listDatabases('93807a788636cbe4280b7ee929a7c67d3f765b929a9034cea51fd856232d0588'))
   }
 
 
@@ -85,7 +83,7 @@ export default function App({ isSignedIn, contractId, wallet }) {
         </h1>
           <label>Click to Sign</label>
           <div>
-            <button onClick={() => deployDatabase()}>
+            <button onClick={() => executeTest()}>
               <span>Sign</span>
               <div className="loader"></div>
             </button>

@@ -5,12 +5,16 @@ import { TxReceipt as _TxReceipt } from './core/tx'
 import { ActionBuilder as _ActionBuilder, DBBuilder as _DBBuilder } from './core/builders'
 import { ActionInput as _ActionInput} from './core/actionInput'
 import { Transaction as _Transaction } from './core/tx'
-import { Database as _Database, Table as _Table, Column as _Column, Attribute as _Attribute, Index as _Index, ActionSchema as _ActionSchema, SelectQuery as _SelectQuery } from './core/database'
+import { Database as _Database, Table as _Table, Column as _Column, Attribute as _Attribute, Index as _Index, ActionSchema as _ActionSchema, SelectQuery as _SelectQuery, ForeignKey as _ForeignKey, ForeignKeyAction as _ForeignKeyAction, Extension as _Extension, ExtensionConfig as _ExtensionConfig } from './core/database'
 import { GenericResponse as _GenericResponse } from './core/resreq'
 import { recoverSecp256k1PubKey } from './utils/crypto'
+import { TxResult as _TxResult, TxInfoReceipt as _TxInfoReceipt } from './core/txQuery'
+import { Account as _Account } from './core/account'
+import { MsgReceipt as _MsgReceipt } from './core/message'
 
 namespace Types {
     export type TxReceipt = _TxReceipt
+    export type MsgReceipt = _MsgReceipt
     export type ActionBuilder = _ActionBuilder
     export type ActionInput = _ActionInput
     export type DBBuilder = _DBBuilder
@@ -20,9 +24,16 @@ namespace Types {
     export type Column = _Column
     export type Attribute = _Attribute
     export type Index = _Index
+    export type ForeignKey = _ForeignKey
+    export type ForeignKeyAction = _ForeignKeyAction
     export type ActionSchema = _ActionSchema
+    export type Extension = _Extension
+    export type ExtensionConfig = _ExtensionConfig
     export type SelectQuery = _SelectQuery
     export type GenericResponse<T> = _GenericResponse<T>
+    export type TxResult = _TxResult
+    export type TxInfoReceipt = _TxInfoReceipt
+    export type Account = _Account
 }
 
 const ActionInput = _ActionInput

@@ -171,3 +171,7 @@ export function bytesToBoolean(bytes: Uint8Array): boolean {
     }
     return view.getUint8(0) === 1;
 }
+
+export function base64UrlEncode(base64: string): string {
+    return base64.replace('+', '-').replace('/', '_');
+}
