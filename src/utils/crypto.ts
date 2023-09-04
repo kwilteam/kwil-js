@@ -1,13 +1,11 @@
 // noinspection JSPotentiallyInvalidConstructorUsage
 
 import jssha from 'jssha';
-import {Signer, SigningKey, ethers, hashMessage, Wallet as Walletv6} from 'ethers';
+import {SigningKey, ethers, hashMessage, Wallet as Walletv6} from 'ethers';
 import {Wallet as Walletv5, Signer as Signerv5} from "ethers5";
 import { EthSigner, NearConfig, NearSigner, SignerSupplier } from '../core/builders';
-import { bytesToHex, bytesToString, stringToBytes } from './serial';
+import { stringToBytes } from './serial';
 import { HexString } from './types';
-import { bytesToBase64 } from './base64';
-import { VerifiedOwner } from '@near-wallet-selector/core'
 import { utils } from 'near-api-js'
 
 export function sha384StringToString(message: string): string {

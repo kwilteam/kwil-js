@@ -4,18 +4,16 @@ import { ethers, Signer } from "ethers";
 import { objects } from "../utils/objects";
 import { strings } from "../utils/strings";
 import { Txn } from "../core/tx";
-import { ethSign, ecrRecoverPubKey, generateSalt, isV6Signer, nearSign, isEthersSigner } from "../utils/crypto";
+import { ethSign, generateSalt, isV6Signer, nearSign, isEthersSigner } from "../utils/crypto";
 import { base64ToBytes, bytesToBase64 } from "../utils/base64";
 import { Kwil } from "../client/kwil";
 import { EthSigner, NearConfig, NearSigner, SignerSupplier, TxnBuilder, isNearPubKey } from "../core/builders";
 import { unwrap } from "../client/intern";
-import { Wallet as Walletv5, Signer as Signerv5 } from "ethers5"
 import { PayloadType } from "../core/enums";
 import { kwilEncode } from "../utils/rlp";
-import { bytesToHex, bytesToString, hexToBytes } from "../utils/serial";
+import { bytesToHex, hexToBytes } from "../utils/serial";
 import { SignatureType } from "../core/signature";
 import { Message, Msg } from "../core/message";
-import { Wallet as NearWallet } from '@near-wallet-selector/core'
 import { nearB58ToHex } from "../utils/base58";
 
 interface PreBuild {
@@ -28,7 +26,7 @@ export class TxnBuilderImpl implements TxnBuilder {
     private _payloadType: Nillable<PayloadType> = null;
     private _payload: Nillable<() => NonNil<object>> = null;
     private _signer: Nillable<SignerSupplier> = null;
-    private _publicKey: Nillable<string> = null;
+    private _publicKey: Nillable<Uint8Array> = null;
     private _signatureType: Nillable<SignatureType> = null;
     private _nearConfig: Nillable<NearConfig> = null;
 
@@ -59,11 +57,15 @@ export class TxnBuilderImpl implements TxnBuilder {
         return this;
     }
 
-    publicKey(publicKey: Nillable<string>): NonNil<TxnBuilder> {
+    publicKey(publicKey: Nillable<string | Uint8Array>): NonNil<TxnBuilder> {
         let key = objects.requireNonNil(publicKey);
 
-        if(isNearPubKey(key)) {
-            key = nearB58ToHex(key);
+        if(typeof key === "string") {
+            if(isNearPubKey(key)) {
+                key = nearB58ToHex(key);
+            }
+
+            key = hexToBytes(key);
         }
 
         this._publicKey = key;
@@ -180,7 +182,7 @@ export class TxnBuilderImpl implements TxnBuilder {
         }
     }
 
-    private static async signTx(tx: Transaction, signer: SignerSupplier, pubKey: string, signatureType: SignatureType, nearConfig?: NearConfig): Promise<Transaction> {
+    private static async signTx(tx: Transaction, signer: SignerSupplier, pubKey: Uint8Array, signatureType: SignatureType, nearConfig?: NearConfig): Promise<Transaction> {
         // convert payload back to uint8array for rlp encoding before signing
         const preEncodedBody = Txn.copy(tx, (tx) => {
             tx.body.payload = base64ToBytes(tx.body.payload as string);
@@ -222,12 +224,12 @@ export class TxnBuilderImpl implements TxnBuilder {
                 nonce: tx.body.nonce,
                 salt: bytesToBase64(tx.body.salt as Uint8Array)
             };
-            tx.sender = bytesToBase64(hexToBytes(pubKey));
+            tx.sender = bytesToBase64(pubKey);
         });
     }
 
     // TODO: Fix signMsg
-    private static async signMsg(msg: Message, signer: SignerSupplier, pubKey: string, signatureType: SignatureType, nearConfig?: NearConfig): Promise<Message> {
+    private static async signMsg(msg: Message, signer: SignerSupplier, pubKey: Uint8Array, signatureType: SignatureType, nearConfig?: NearConfig): Promise<Message> {
         if(typeof msg.payload === "string") {
             throw new Error("Payload must be an object to sign a message.");
         }
@@ -257,7 +259,7 @@ export class TxnBuilderImpl implements TxnBuilder {
                 signature_bytes: bytesToBase64(hexToBytes(signedMessage)),
                 signature_type: signatureType.toString() as SignatureType
             };
-            msg.sender = bytesToBase64(hexToBytes(pubKey));
+            msg.sender = bytesToBase64(pubKey);
         })
     }
 

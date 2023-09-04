@@ -3,13 +3,17 @@ import {Account} from "./account";
 import {Transaction, TxnData } from "./tx";
 import { TxResult } from "./txQuery";
 
+type SchemaRes = Database & {
+    owner: string;
+}
+
 export interface GenericResponse<T> {
     status: number;
     data?: T;
 }
 
 export interface GetSchemaResponse {
-    schema: Database;
+    schema: SchemaRes;
 }
 
 export interface GetAccountResponse {

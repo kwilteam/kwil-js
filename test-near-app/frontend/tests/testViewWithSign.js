@@ -3,10 +3,7 @@ export async function testViewWithSign(kwil, dbid, signer, wallet, pubkey) {
         .actionBuilder()
         .dbid(dbid)
         .name('view_must_sign')
-        .nearConfig({
-            accountId: wallet.accountId,
-            networkId: 'testnet',
-        })
+        .nearConfig(wallet.accountId, 'testnet')
         .signer(signer)
         .publicKey(pubkey)
         .buildMsg()

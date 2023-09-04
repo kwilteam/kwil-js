@@ -4,10 +4,14 @@ import { concatBytes } from "./bytes";
 import { sha224BytesToString } from "./crypto";
 import { hexToBytes, stringToBytes } from "./serial";
 
-export function generateDBID(pubKey:string, name: string): string {
-    if(isNearPubKey(pubKey)) {
-        pubKey = nearB58ToHex(pubKey);
-    }
+export function generateDBID(pubKey: string | Uint8Array, name: string): string {
+    if(typeof pubKey === "string") {
+        if(isNearPubKey(pubKey)) {
+            pubKey = nearB58ToHex(pubKey);
+        }
 
-    return "x"+sha224BytesToString(concatBytes(stringToBytes(name.toLowerCase()), hexToBytes(pubKey)))
+        pubKey = hexToBytes(pubKey);
+    }
+    
+    return "x"+sha224BytesToString(concatBytes(stringToBytes(name.toLowerCase()), pubKey))
 }

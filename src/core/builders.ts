@@ -21,7 +21,7 @@ export interface TxnBuilder {
 
     signer(signer: SignerSupplier): NonNil<TxnBuilder>;
 
-    publicKey(publicKey: Nillable<string>): NonNil<TxnBuilder>;
+    publicKey(publicKey: string | Uint8Array): NonNil<TxnBuilder>;
 
     nearConfig(nearConfig: NearConfig): NonNil<TxnBuilder>;
 
@@ -53,7 +53,7 @@ export interface DBBuilder {
 
     nearConfig(accountId: string, networkId: string): NonNil<DBBuilder>;
 
-    publicKey(publicKey: string): NonNil<DBBuilder>;
+    publicKey(publicKey: string | Uint8Array): NonNil<DBBuilder>;
 
     /**
      * Builds a database transaction.
@@ -105,7 +105,7 @@ export interface ActionBuilder {
 
     signer(signer: SignerSupplier): NonNil<ActionBuilder>;
 
-    publicKey(publicKey: string): NonNil<ActionBuilder>;
+    publicKey(publicKey: string | Uint8Array): NonNil<ActionBuilder>;
 
     nearConfig(accountId: string, networkId: string): NonNil<ActionBuilder>;
 

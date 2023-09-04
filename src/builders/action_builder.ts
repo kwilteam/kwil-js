@@ -26,7 +26,7 @@ const TXN_BUILD_IN_PROGRESS: ActionInput[] = [];
 export class ActionBuilderImpl implements ActionBuilder {
     private readonly client: Kwil;
     private _signer: Nillable<SignerSupplier> = null;
-    private _publicKey: Nillable<string> = null;
+    private _publicKey: Nillable<string | Uint8Array> = null;
     private _actions: ActionInput[] = [];
     private _name: Nillable<string>;
     private _dbid: Nillable<string>;
@@ -61,7 +61,7 @@ export class ActionBuilderImpl implements ActionBuilder {
         return this;
     }
 
-    publicKey(publicKey: string): NonNil<ActionBuilder> {
+    publicKey(publicKey: string | Uint8Array): NonNil<ActionBuilder> {
         this.assertNotBuilding();
         this._publicKey = objects.requireNonNil(publicKey);
         return this;
@@ -116,6 +116,7 @@ export class ActionBuilderImpl implements ActionBuilder {
         const { dbid, name, preparedActions } = await this.checkSchema(actions);
 
         const signer = await Promisy.resolveOrReject(this._signer);
+        const publicKey = await Promisy.resolveOrReject(this._publicKey);
 
         const payload = {
             "dbid": dbid,
@@ -128,7 +129,7 @@ export class ActionBuilderImpl implements ActionBuilder {
             .payloadType(PayloadType.EXECUTE_ACTION)
             .payload(payload)
             .signer(signer)
-            .publicKey(this._publicKey)
+            .publicKey(publicKey)
         
         if(this._nearConfig) {
             tx.nearConfig(this._nearConfig)
@@ -168,9 +169,10 @@ export class ActionBuilderImpl implements ActionBuilder {
             .payload(payload)
 
         if(signer) {
+            const publicKey = await Promisy.resolveOrReject(this._publicKey);
             msg = msg
                 .signer(signer)
-                .publicKey(this._publicKey);
+                .publicKey(publicKey);
         }
 
         if(this._nearConfig) {

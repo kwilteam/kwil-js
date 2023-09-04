@@ -54,11 +54,3 @@ export const strings = {
         return strings.isNilOrEmpty(value) || value.trim().length === 0;
     },
 };
-
-export function cleanPublicKey(pubKey: HexString): string {
-    if(pubKey.length === 66) {
-        return pubKey.slice(2);
-    }
-
-    return pubKey;
-}

@@ -19,7 +19,7 @@ export class DBBuilderImpl implements DBBuilder {
     private _payload: Nillable<() => NonNil<object>> = null;
     private _signer: Nillable<SignerSupplier> = null;
     private _payloadType: Nillable<PayloadType> = null;
-    private _publicKey: Nillable<string> = null;
+    private _publicKey: Nillable<string | Uint8Array> = null;
     private _nearConfig: Nillable<NearConfig> = null;
 
     private constructor(client: Kwil, payloadType: PayloadType) {
@@ -79,7 +79,7 @@ export class DBBuilderImpl implements DBBuilder {
             .payloadType(objects.requireNonNil(payloadType))
             .payload(objects.requireNonNil(cleanedPayload))
             .signer(objects.requireNonNil(signer))
-            .publicKey(this._publicKey)
+            .publicKey(objects.requireNonNil(this._publicKey))
 
             if(this._nearConfig) {
                 tx.nearConfig(objects.requireNonNil(this._nearConfig))
@@ -96,7 +96,7 @@ export class DBBuilderImpl implements DBBuilder {
         let db: Database = resolvedPayload as Database;
 
         if (!db.owner) {
-            db.owner = "";
+            db.owner = new Uint8Array();
         };
 
         if (!db.name) {

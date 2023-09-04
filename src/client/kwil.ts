@@ -16,6 +16,7 @@ import { TxInfoReceipt } from "../core/txQuery";
 import { Message, MsgReceipt } from "../core/message";
 import { PayloadType } from "../core/enums";
 import { nearB58ToHex } from "../utils/base58";
+import { hexToBytes } from "../utils/serial";
 
 /**
  * The main class for interacting with the Kwil network.
@@ -49,7 +50,7 @@ export abstract class Kwil {
      * @returns A string that represents the unique identifier for the database.
      */
 
-    public getDBID(owner: string, name: string): string {
+    public getDBID(owner: string | Uint8Array, name: string): string {
         return generateDBID(owner, name);
     }
 
@@ -85,12 +86,16 @@ export abstract class Kwil {
      * @returns A promise that resolves to an Account object. The account object includes the owner's address, balance, and nonce.
      */
 
-    public async getAccount(owner: string): Promise<GenericResponse<Account>> {
-        if(isNearPubKey(owner)) {
-            owner = nearB58ToHex(owner);
-        }
+    public async getAccount(owner: string | Uint8Array): Promise<GenericResponse<Account>> {
+        if(typeof owner === 'string') {
+            if(isNearPubKey(owner)) {
+                owner = nearB58ToHex(owner);
+            }
 
-        owner = owner.toLowerCase();
+            owner = owner.toLowerCase();
+            owner = hexToBytes(owner);
+        }
+        
         return await this.client.getAccount(owner);
     }
 
@@ -153,8 +158,15 @@ export abstract class Kwil {
      * @returns A promise that resolves to a list of database names.
      */
 
-    public async listDatabases(owner: string): Promise<GenericResponse<string[]>> {
-        owner = owner.toLowerCase();
+    public async listDatabases(owner: string | Uint8Array): Promise<GenericResponse<string[]>> {
+        if(typeof owner === 'string') {
+            if(isNearPubKey(owner)) {
+                owner = nearB58ToHex(owner);
+            }
+            
+            owner = owner.toLowerCase();
+            owner = hexToBytes(owner);
+        }
 
         return await this.client.listDatabases(owner);
     }

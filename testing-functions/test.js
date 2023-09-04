@@ -7,7 +7,7 @@ const testDB = require("./mydb.json")
 const util = require("util")
 const near = require('near-api-js')
 const { from_b58 } = require('../dist/utils/base58')
-const { bytesToHex } = require('../dist/utils/serial')
+const { bytesToHex, hexToBytes } = require('../dist/utils/serial')
 
 near.Signer
 require("dotenv").config()
@@ -20,7 +20,7 @@ async function test() {
     //update to goerli when live
     const provider = new ethers.JsonRpcProvider(process.env.ETH_PROVIDER)
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
-    const txHash = '0xf2a1a842522df00bde3fdd417d42cd6818a8bb803312a28552d99db445443bdc'
+    const txHash = '0xed466e3f964fcf6455b00d43c3f0a101570a53a15304f60a9c963ee4ea3850e6'
 
     const kwil = new kwiljs.NodeKwil({
         kwilProvider: process.env.KWIL_PROVIDER || "SHOULD FAIL",
@@ -30,13 +30,14 @@ async function test() {
 
     const pubKey = await recoverPubKey(wallet)
 
-    const dbid = kwil.getDBID(pubKey, "mydb")
+    const pubByte = hexToBytes(pubKey)
+    const dbid = kwil.getDBID(pubByte, "mydb")
     logger(dbid)
-    // broadcast(kwil, testDB, wallet, pubKey)
+    // broadcast(kwil, testDB, wallet, pubByte)
     // await getTxInfo(kwil, txHash)
-    await getSchema(kwil, dbid)
+    // await getSchema(kwil, dbid)
     // getAccount(kwil, pubKey)
-    // listDatabases(kwil, pubKey)
+    // listDatabases(kwil, pubByte)
     // ping(kwil)
     // getFunder(kwil, wallet)
     // getAllowance(kwil, wallet)
@@ -45,7 +46,7 @@ async function test() {
     // await deposit(kwil, wallet, BigInt(10 * 10^18))
     // getDepositedBalance(kwil, wallet)
     // getTokenAddress(kwil, wallet)
-    // await execSingleAction(kwil, dbid, "add_post", wallet, pubKey)
+    // await execSingleAction(kwil, dbid, "add_post", wallet, pubByte)
     // select(kwil, dbid, "SELECT * FROM posts")
     // select(kwil, dbid, `WITH RECURSIVE 
     //                          cnt(x) AS (
@@ -60,11 +61,11 @@ async function test() {
     //          `)
     // bulkAction(kwil, dbid, "add_post", wallet, pubKey)
     // getSelectAction(kwil, dbid, "select_posts", wallet)
-    // await dropDb(kwil, dbid, wallet, pubKey)
+    // await dropDb(kwil, dbid, wallet, pubByte)
     // getSelectAction(kwil, dbid2, "get_items", wallet)
     // await testNonViewAction(kwil, dbid, wallet)
     // await testViewWithParam(kwil, dbid, wallet)
-    // await testViewWithSign(kwil, dbid, wallet, pubKey)
+    // await testViewWithSign(kwil, dbid, wallet, pubByte)
     // decodebase58('AvnZPs4WBHx6RTfzAe62iWWhb6SZTFNJ9obCm2KbUe39')
 }
 

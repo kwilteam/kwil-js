@@ -1,7 +1,7 @@
 import { AttributeType, DataType, IndexType } from "./enums";
 
 export interface Database {
-    owner: string;
+    owner: Uint8Array;
     name: string;
     tables: ReadonlyArray<Table>;
     actions: ReadonlyArray<ActionSchema>;

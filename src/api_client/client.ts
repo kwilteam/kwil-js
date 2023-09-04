@@ -18,7 +18,6 @@ import { base64UrlEncode, bytesToHex, hexToBytes } from "../utils/serial";
 import { TxInfoReceipt } from "../core/txQuery";
 import { Message, MsgData, MsgReceipt } from "../core/message";
 import { kwilDecode } from "../utils/rlp";
-import { cleanPublicKey } from "../utils/strings";
 
 export default class Client extends Api {
     constructor(opts: Config) {
@@ -31,7 +30,7 @@ export default class Client extends Api {
 
         let schema: Database = {
             name: '',
-            owner: '',
+            owner: new Uint8Array(),
             tables: [],
             actions: [],
             extensions: []
@@ -40,7 +39,7 @@ export default class Client extends Api {
         if (res.data) {
             schema = {
                 name: res.data.schema.name,
-                owner: cleanPublicKey(bytesToHex(base64ToBytes(res.data.schema.owner))),
+                owner: base64ToBytes(res.data.schema.owner),
                 tables: res.data.schema.tables,
                 actions: res.data.schema.actions,
                 extensions: res.data.schema.extensions
@@ -53,9 +52,9 @@ export default class Client extends Api {
         }
     }
 
-    public async getAccount(owner: string): Promise<GenericResponse<Account>> {
-        owner = base64UrlEncode(bytesToBase64(hexToBytes(owner)));
-        const res = await super.get<GetAccountResponse>(`/api/v1/accounts/${owner}`);
+    public async getAccount(owner: Uint8Array): Promise<GenericResponse<Account>> {
+        const urlSafeB64 = base64UrlEncode(bytesToBase64(owner));
+        const res = await super.get<GetAccountResponse>(`/api/v1/accounts/${urlSafeB64}`);
         checkRes(res);
 
         let acct: Account = {
@@ -77,9 +76,9 @@ export default class Client extends Api {
         }
     }
 
-    public async listDatabases(owner: string): Promise<GenericResponse<string[]>> {
-        owner = base64UrlEncode(bytesToBase64(hexToBytes(owner)));
-        const res = await super.get<ListDatabasesResponse>(`/api/v1/${owner}/databases`);
+    public async listDatabases(owner: Uint8Array): Promise<GenericResponse<string[]>> {
+        const urlSafeB64 = base64UrlEncode(bytesToBase64(owner));
+        const res = await super.get<ListDatabasesResponse>(`/api/v1/${urlSafeB64}/databases`);
         return checkRes(res, r => r.databases);
     }
 

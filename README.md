@@ -58,6 +58,8 @@ const publicKey = await Utils.recoverSecp256k1PubKey(signer);
 
 In Kwil, databases are identified by a 'database identifier', which is a hex encoded SHA224 Hash of the database name and public key, prepended with an `x`.
 
+The public key can be passed as a hex-encoded string, or as Bytes (Uint8Array).
+
 To get the DBID for a public key and database name, you can use the following helper method:
 
 ```javascript
@@ -79,7 +81,7 @@ const res = await kwil.listDatabases("public_key")
 
 ### Get Schema
 
-You can retrieve database information by calling `.getSchema()` and passing the dbid.
+You can retrieve database information by calling `.getSchema()` and passing the dbid. Note that the database owner is returned as a Uint8Array.
 
 ``` javascript
 const dbid = kwil.getDBID("public_key", "database_name")
@@ -87,7 +89,7 @@ const schema = await kwil.getSchema(dbid)
 
 /*
     schema.data = {
-        owner: "public_key",
+        owner: Uint8Array,
         name: "database_name",
         tables: [ tableObject1, tableObject2, tableObject3 ],
         actions: [ action1, action2, action3 ],
@@ -98,7 +100,7 @@ const schema = await kwil.getSchema(dbid)
 
 ### Get Account
 
-You can get the remaining balance of an account and the account's nonce by using the `.getAccount()` method.
+You can get the remaining balance of an account and the account's nonce by using the `.getAccount()` method. `.getAccount()` takes a public key, either in hex format or bytes (Uint8Array).
 
 ``` javascript
 const res = await kwil.getAccount("public_key")
@@ -118,6 +120,8 @@ const res = await kwil.getAccount("public_key")
 
 Any action that executes a CUD operation must be signed and broadcasted to the network as a transaction.
 
+Note that the public key can be passed as a hex string or as bytes.
+
 ``` javascript
 import { Utils } from '@kwilteam/kwil-js'
 
@@ -136,7 +140,7 @@ const tx = await kwil
     .dbid(dbid)
     .name("your_action_name")
     .concat(input)
-    .publicKey('public_key')
+    .publicKey('public_key') // Can be a hex-encoded public key, or bytes.
     .signer(await provider.getSigner()) // can use wallet if NodeJS
     .buildTx()
 
@@ -152,7 +156,7 @@ const res = await kwil.broadcast(tx)
 
 #### A note for NEAR (ED25519) Public Keys
 
-When building a transaction with an ED25519 key, you must also chain a .nearConfig() method, passing your accountId and networkId.
+When building a transaction with an ED25519 key, you must also chain a .nearConfig() method, passing your accountId and networkId. The Near Public key may be passed as the [Base58 encoded public key](https://docs.near.org/integrator/implicit-accounts#converting-a-public-key-to-an-account-id) with the "ed25519:" prefix, a hex string, or bytes.
 
 Note that the key store must have a Near Access Key.
 
@@ -167,7 +171,7 @@ const tx = await kwil
     .dbid(dbid)
     .name("your_action_name")
     .concat(input)
-    .publicKey('public_key')
+    .publicKey('public_key') // Can be a hex-encoded public key, or bytes.
     .nearConfig('account_id', 'network_id')
     .signer(signer) // using Near Signer
     .buildTx()
@@ -255,7 +259,7 @@ import myDB from "./myDB.json";
 const tx = await kwil
     .dbBuilder()
     .payload(myDB)
-    .publicKey('public_key')
+    .publicKey('public_key') // Can be a hex-encoded public key, or bytes.
     .signer(await provider.getSigner()) // can use Wallet for NodeJS
     .buildTx();
 

@@ -22,7 +22,7 @@ const dbid = kwil.generateDBID('0x_walletaddress', 'dbName')
 const dbid = kwil.generateDBID('public_key', 'dbName')
 ```
 
-Note that an Ethereum wallet address is not a a Secp256k1 Public Key. To recover a Secp256k1 from an Ethereum signer, you can use the following helper method:
+Note that an Ethereum wallet address is not a a Secp256k1 Public Key. To recover a Secp256k1 public key from an Ethereum signer, you can use the following helper method:
 
 ```javascript
 import { Utils } from '@kwilteam/kwil-js'
@@ -34,11 +34,11 @@ const signer = await provider.getSigner();
 const publicKey = await Utils.recoverSecp256k1PubKey(signer);
 ```
 
-### Get Account Identified by Public Key, Returned as Bytes
+### Get Account Identified by Public Key, Public Keys Returned as Bytes
 
-In the old version, accounts were identified by Ethereum Wallets. Now, they are identified by public keys (Secp256k1 or ED25519).
+In the old version, accounts were identified by Ethereum Wallets. Now, they are identified by public keys (Secp256k1 or ED25519). Public keys can be represented by a Hex string or bytes (Uint8Array). If using a NEAR public key, you may also pass the Base58 encoded public key with the "ed25519:" prefix.
 
-Also, the public key returned from getAccount is now in bytes.
+When returned from the server, public keys will always be represented as a Uint8Array.
 
 #### Old Version
 
@@ -71,7 +71,7 @@ const res = await kwil.getAccount('public_key');
 
 ### ActionBuilder and DBBuilder
 
-The ActionBuilder and DBBuilder classes now require you to chain a .`publicKey()` method to the builder.
+The ActionBuilder and DBBuilder classes now require you to chain a `.publicKey()` method to the builder. The `.publicKey()` can receive a hex string or Uint8Array. If using a NEAR public key, you may also pass the Base58 encoded public key with the "ed25519:" prefix.
 
 #### Old Version
 
@@ -146,7 +146,7 @@ The signer should receive the NEAR [`InMemorySigner`](https://github.com/near/ne
 
 When signing, you must also pass an additional `.nearConfig()` method, indicating the Near Account ID and Netowrk ID. This allows the Kwil SDK to retrieve the signer from the passed `InMemorySigner`.
 
-The NEAR public key passed to the `.publicKey()` method should be the Base58 encoded public key (with the "ed25519:" prefix.) The Kwil SDK will then convert the public key to the hex implicit address, which will be the transaction sender.
+The NEAR public key passed to the `.publicKey()` method should be the Base58 encoded public key (with the "ed25519:" prefix.) The Kwil SDK will then convert the public key to a Uint8Array, which will be the transaction sender.
 
 ```javascript
 import { keyStores, InMemorySigner } from 'near-api-js';
