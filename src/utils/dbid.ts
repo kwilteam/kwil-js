@@ -1,7 +1,6 @@
-import { isNearPubKey } from "../core/builders";
-import { nearB58ToHex } from "./base58";
 import { concatBytes } from "./bytes";
 import { sha224BytesToString } from "./crypto";
+import { isNearPubKey, nearB58ToHex } from "./keys";
 import { hexToBytes, stringToBytes } from "./serial";
 
 export function generateDBID(pubKey: string | Uint8Array, name: string): string {

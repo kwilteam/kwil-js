@@ -4,17 +4,17 @@ import { ethers, Signer } from "ethers";
 import { objects } from "../utils/objects";
 import { strings } from "../utils/strings";
 import { Txn } from "../core/tx";
-import { ethSign, generateSalt, isV6Signer, nearSign, isEthersSigner } from "../utils/crypto";
+import { generateSalt } from "../utils/crypto";
 import { base64ToBytes, bytesToBase64 } from "../utils/base64";
 import { Kwil } from "../client/kwil";
-import { EthSigner, NearConfig, NearSigner, SignerSupplier, TxnBuilder, isNearPubKey } from "../core/builders";
+import { EthSigner, NearSigner, SignerSupplier, TxnBuilder } from "../core/builders";
 import { unwrap } from "../client/intern";
 import { PayloadType } from "../core/enums";
 import { kwilEncode } from "../utils/rlp";
 import { bytesToHex, hexToBytes } from "../utils/serial";
 import { SignatureType } from "../core/signature";
 import { Message, Msg } from "../core/message";
-import { nearB58ToHex } from "../utils/base58";
+import { isNearPubKey, nearB58ToHex, ethSign, NearConfig, nearSign, isEthersSigner } from "../utils/keys";
 
 interface PreBuild {
     json: object;

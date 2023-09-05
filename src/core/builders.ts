@@ -1,20 +1,16 @@
-import {Nillable, NonNil, Promisy} from "../utils/types";
+import { NonNil, Promisy } from "../utils/types";
 import { Transaction } from "./tx";
-import {ethers, Signer as _Signer, JsonRpcSigner} from "ethers";
+import {ethers, Signer as _Signer } from "ethers";
 import {ActionInput} from "./actionInput";
 import {Wallet as Walletv5, Signer as Signerv5} from "ethers5";
 import { PayloadType } from "./enums";
 import { Message } from "./message";
 import { Signer as _NearSigner } from 'near-api-js'
+import { NearConfig } from "../utils/keys";
 
 export type EthSigner = NonNil<_Signer | ethers.Wallet | Walletv5 | Signerv5 >;
 export type NearSigner = NonNil<_NearSigner>;
 export type SignerSupplier = Promisy<EthSigner | NearSigner>
-
-export interface NearConfig {
-    accountId: string;
-    networkId: string;
-}
 
 export interface TxnBuilder {
     payloadType(payloadType: NonNil<PayloadType>): NonNil<TxnBuilder>;
@@ -51,7 +47,24 @@ export interface DBBuilder {
 
     payload(payload: (() => NonNil<object>) | NonNil<object>): NonNil<DBBuilder>;
 
+    /**
+     * Set the NEAR protocol accountID and networkID for the Near Signer. This method is required if you are passing a NEAR protcol signer and public key.
+     * Do NOT use this method if using an Ethereum Signer and Public Key.
+     * 
+     * @param accountId - The account ID for the signer (E.g. kwil.near).
+     * @param networkId - The network ID for the signer (E.g. 'mainnet', 'testnet').
+     * @returns The current `DBBuilder` instance for chaining.
+     */
+
     nearConfig(accountId: string, networkId: string): NonNil<DBBuilder>;
+
+    /**
+     * Set the public key for the transaction. This identifies the transaction sender.
+     * This should be the public key of the signer.
+     * 
+     * @param publicKey - The public key for the transaction sender. Ethereum keys can be passed as a hex string (0x123...) or as bytes (Uint8Array). NEAR protocol public keys can be passed as the base58 encoded public key (with "ed25519:" prefix), a hex string, or bytes (Uint8Array).
+     * @returns The current `DBBuilder` instance for chaining.
+     */
 
     publicKey(publicKey: string | Uint8Array): NonNil<DBBuilder>;
 
@@ -105,14 +118,31 @@ export interface ActionBuilder {
 
     signer(signer: SignerSupplier): NonNil<ActionBuilder>;
 
+    /**
+     * Set the public key for the transaction. This identifies the transaction sender.
+     * This should be the public key of the signer.
+     * 
+     * @param publicKey - The public key for the transaction sender. Ethereum keys can be passed as a hex string (0x123...) or as bytes (Uint8Array). NEAR protocol public keys can be passed as the base58 encoded public key (with "ed25519:" prefix), a hex string, or bytes (Uint8Array).
+     * @returns The current `DBBuilder` instance for chaining.
+     */
+
     publicKey(publicKey: string | Uint8Array): NonNil<ActionBuilder>;
+
+    /**
+     * Set the NEAR protocol accountID and networkID for the Near Signer. This method is required if you are passing a NEAR protcol signer and public key.
+     * Do NOT use this method if using an Ethereum Signer and Public Key.
+     * 
+     * @param accountId - The account ID for the signer (E.g. kwil.near).
+     * @param networkId - The network ID for the signer (E.g. 'mainnet', 'testnet').
+     * @returns The current `DBBuilder` instance for chaining.
+     */
 
     nearConfig(accountId: string, networkId: string): NonNil<ActionBuilder>;
 
     /**
      * Builds a transaction.
      * 
-     * @returns A promise that resolves to a Transaction object. This transaction can be broadcasted to the Kwil network.
+     * @returns A promise that resolves to a Transaction object. This transaction can be broadcasted to the Kwil network with the `kwil.broadcast()` api.
      * @throws Will throw an error if the action is being built or if there's an issue with the schema retrieval for validating the action.
      */
 
@@ -121,13 +151,9 @@ export interface ActionBuilder {
     /**
      * Builds a message.
      * 
-     * @returns A promise that resolves to a Message object. This message can be sent to the Kwil network with the kwil.call() api.
+     * @returns A promise that resolves to a Message object. This message can be sent to the Kwil network with the `kwil.call()` api.
      * @throws Will throw an error if the action is being built or if there's an issue with the schema retrieval for validating the action.
      */
 
     buildMsg(): Promise<Message>;
-}
-
-export function isNearPubKey(pubKey: string): boolean {
-    return pubKey.startsWith('ed25519:');
 }

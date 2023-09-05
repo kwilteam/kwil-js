@@ -9,7 +9,6 @@ const near = require('near-api-js')
 const { from_b58 } = require('../dist/utils/base58')
 const { bytesToHex, hexToBytes } = require('../dist/utils/serial')
 
-near.Signer
 require("dotenv").config()
 
 function logger(msg) {
