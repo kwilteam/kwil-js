@@ -13,8 +13,8 @@ function App() {
 
   async function test() {
     // await testV5Funding()
-    await testV5Transaction()
-    // await deployDb()
+    // await testV5Transaction()
+    await deployDb()
   }
 
   return (
