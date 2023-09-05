@@ -3,11 +3,11 @@ import {Nillable, NonNil, Promisy} from "../utils/types";
 import {objects} from "../utils/objects";
 import {Kwil} from "../client/kwil";
 import {TxnBuilderImpl} from "./transaction_builder";
-import {DBBuilder, NearConfig, SignerSupplier, isNearPubKey} from "../core/builders";
+import {DBBuilder, SignerSupplier } from "../core/builders";
 import { AttributeType, DataType, IndexType, PayloadType } from "../core/enums";
 import { Database } from "../core/database";
 import { enforceDatabaseOrder } from "../core/order";
-import { nearB58ToHex } from "../utils/base58";
+import { NearConfig } from "../utils/keys";
 
 /**
  * `DBBuilderImpl` class is an implementation of the `DBBuilder` interface.

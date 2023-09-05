@@ -8,7 +8,7 @@ import {ActionInput} from "../core/actionInput";
 import {ActionSchema} from "../core/database";
 import { PayloadType, ValueType } from "../core/enums";
 import { Message, UnencodedMessagePayload } from "../core/message";
-import { NearConfig } from "../core/builders";
+import { NearConfig } from "../utils/keys";
 
 interface CheckSchema {
     dbid: string;

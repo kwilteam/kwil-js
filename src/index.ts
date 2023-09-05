@@ -7,10 +7,10 @@ import { ActionInput as _ActionInput} from './core/actionInput'
 import { Transaction as _Transaction } from './core/tx'
 import { Database as _Database, Table as _Table, Column as _Column, Attribute as _Attribute, Index as _Index, ActionSchema as _ActionSchema, SelectQuery as _SelectQuery, ForeignKey as _ForeignKey, ForeignKeyAction as _ForeignKeyAction, Extension as _Extension, ExtensionConfig as _ExtensionConfig } from './core/database'
 import { GenericResponse as _GenericResponse } from './core/resreq'
-import { recoverSecp256k1PubKey } from './utils/crypto'
 import { TxResult as _TxResult, TxInfoReceipt as _TxInfoReceipt } from './core/txQuery'
 import { Account as _Account } from './core/account'
 import { MsgReceipt as _MsgReceipt } from './core/message'
+import { recoverSecp256k1PubKey } from './utils/keys'
 
 namespace Types {
     export type TxReceipt = _TxReceipt

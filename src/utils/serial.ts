@@ -13,23 +13,6 @@ export function stringToBytes(str: string): Uint8Array {
     return view;
 }
 
-export function anyToHex(val: string | number | boolean): string | [] {
-    if (typeof val === 'string') {
-        // Convert only non-hex strings to hex
-        return stringToHex(val);
-    } else if (typeof val === 'number') {
-        return numberToHex(val);
-    } else if (typeof val === 'boolean') {
-        return val ? "0x01" : "0x00";
-    } else if (val === null || val === undefined) {
-        return [];
-    } else {
-        // Convert any other value to a string first
-        throw new Error(`unknown value: ${val}`);
-    }
-}
-
-
 export function stringToHex(str: string): string {
     let hex = '0x';
     for (let i = 0; i < str.length; i++) {

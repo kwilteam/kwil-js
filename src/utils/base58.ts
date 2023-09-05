@@ -1,5 +1,3 @@
-import { bytesToHex } from "./serial";
-
 const base58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 
 export function to_b58(
@@ -64,17 +62,4 @@ export function from_b58(
         //@ts-ignore    
         b.push( d[j] );      //append each byte to the result
     return new Uint8Array(b) //return the final byte array in Uint8Array format
-}
-
-function trimNearPrefix(str: string): string {
-    return str.replace('ed25519:', '')
-}
-
-export function nearB58ToHex(b58: string): string {
-    b58 = trimNearPrefix(b58);
-    const b58Bytes = from_b58(b58);
-    if(!b58Bytes) {
-        throw new Error(`invalid base58 string: ${b58}`);
-    }
-    return bytesToHex(b58Bytes).slice(2);
 }

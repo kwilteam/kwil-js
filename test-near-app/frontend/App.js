@@ -45,7 +45,7 @@ export default function App({ isSignedIn, contractId, wallet }) {
     // console.log(await kwil.selectQuery(dbid, "SELECT * FROM posts"))
     // console.log(await kwil.ping())
     // await dropDatabase(kwil, "mydb", pubKey, signer, wallet)
-    // console.log(await kwil.listDatabases('93807a788636cbe4280b7ee929a7c67d3f765b929a9034cea51fd856232d0588'))
+    console.log(await kwil.listDatabases('93807a788636cbe4280b7ee929a7c67d3f765b929a9034cea51fd856232d0588'))
   }
 
 

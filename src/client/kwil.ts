@@ -9,14 +9,14 @@ import {ActionBuilderImpl} from "../builders/action_builder";
 import {base64ToBytes} from "../utils/base64";
 import {DBBuilderImpl} from "../builders/db_builder";
 import {NonNil} from "../utils/types";
-import {ActionBuilder, DBBuilder, isNearPubKey} from "../core/builders";
+import {ActionBuilder, DBBuilder} from "../core/builders";
 import {wrap} from "./intern";
 import { Cache } from "../utils/cache";
 import { TxInfoReceipt } from "../core/txQuery";
 import { Message, MsgReceipt } from "../core/message";
 import { PayloadType } from "../core/enums";
-import { nearB58ToHex } from "../utils/base58";
 import { hexToBytes } from "../utils/serial";
+import { isNearPubKey, nearB58ToHex } from "../utils/keys";
 
 /**
  * The main class for interacting with the Kwil network.
@@ -43,9 +43,9 @@ export abstract class Kwil {
     }
 
     /**
-     * Generates a unique database identifier (DBID) from the provided owner's Ethereum wallet address and a database name.
+     * Generates a unique database identifier (DBID) from the provided owner's public key and a database name.
      *
-     * @param owner - The owner's Ethereum wallet address. This should be a valid Ethereum address.
+     * @param owner - The owner's public key (Ethereum or NEAR Protocol). Ethereum keys can be passed as a hex string (0x123...) or as bytes (Uint8Array). NEAR protocol public keys can be passed as the base58 encoded public key (with "ed25519:" prefix), a hex string, or bytes (Uint8Array).
      * @param name - The name of the database. This should be a unique name to identify the database.
      * @returns A string that represents the unique identifier for the database.
      */
@@ -82,8 +82,8 @@ export abstract class Kwil {
     /**
      * Retrieves an account using the owner's Ethereum wallet address.
      *
-     * @param owner - The owner's Ethereum wallet address. This should be a valid Ethereum address.
-     * @returns A promise that resolves to an Account object. The account object includes the owner's address, balance, and nonce.
+     * @param owner - The owner's public key (Ethereum or NEAR Protocol). Ethereum keys can be passed as a hex string (0x123...) or as bytes (Uint8Array). NEAR protocol public keys can be passed as the base58 encoded public key (with "ed25519:" prefix), a hex string, or bytes (Uint8Array).
+     * @returns A promise that resolves to an Account object. The account object includes the owner's public key, balance, and nonce.
      */
 
     public async getAccount(owner: string | Uint8Array): Promise<GenericResponse<Account>> {
@@ -154,7 +154,7 @@ export abstract class Kwil {
     /**
      * Lists all databases owned by a particular owner.
      *
-     * @param owner - The owner's Ethereum wallet address. This should be a valid Ethereum address.
+     * @param owner - The owner's public key (Ethereum or NEAR Protocol). Ethereum keys can be passed as a hex string (0x123...) or as bytes (Uint8Array). NEAR protocol public keys can be passed as the base58 encoded public key (with "ed25519:" prefix), a hex string, or bytes (Uint8Array).
      * @returns A promise that resolves to a list of database names.
      */
 
@@ -163,7 +163,7 @@ export abstract class Kwil {
             if(isNearPubKey(owner)) {
                 owner = nearB58ToHex(owner);
             }
-            
+
             owner = owner.toLowerCase();
             owner = hexToBytes(owner);
         }
@@ -208,7 +208,7 @@ export abstract class Kwil {
     /** 
      * Retrieves information about a transaction given its hash.
      * 
-     * @param hash - The hash of the transaction.
+     * @param hash - The `tx_hash` of the transaction.
      * @returns A promise that resolves to the transaction info receipt.
     */
     public async txInfo(hash: string): Promise<GenericResponse<TxInfoReceipt>> {
