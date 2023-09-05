@@ -1,4 +1,4 @@
-import { SigningKey, Wallet as Walletv6, hashMessage } from "ethers";
+import { AbstractSigner, SigningKey, Wallet as Walletv6, hashMessage } from "ethers";
 import { EthSigner, NearSigner, SignerSupplier } from "../core/builders";
 import { from_b58 } from "./base58";
 import { bytesToHex, stringToBytes } from "./serial";
@@ -25,7 +25,7 @@ export function nearB58ToHex(b58: string): string {
 }
 
 export async function recoverSecp256k1PubKey(signer: EthSigner): Promise<string> {
-    if(signer instanceof Walletv6 || signer instanceof Walletv5 || isV5Signer(signer) || isV6Signer(signer)) {
+    if(isEthersSigner(signer)) {
         const unsignedMessage = 'Sign this message to recover your public key.';
         const signature = await signer.signMessage(unsignedMessage);
         return ecrRecoverPubKey(stringToBytes(unsignedMessage), signature);
@@ -67,9 +67,7 @@ export function isV5Signer(obj: any): obj is Signerv5 {
 
 export function isV6Signer(obj: any): boolean {
     return obj
-        && typeof obj.getChainId === 'function'
-        && typeof obj.connect === 'function'
-        && typeof obj.signMessage === 'function'
+        && typeof obj.address === 'string'
 }
 
 export function isEthersSigner(signer: SignerSupplier): boolean {

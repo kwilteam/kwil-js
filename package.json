@@ -1,6 +1,6 @@
 {
-  "name": "@kwilteam/kwil-js",
-  "version": "0.0.1",
+  "name": "luke-dev",
+  "version": "3.2.7",
   "description": "",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -52,7 +52,7 @@
   "dependencies": {
     "axios": "^0.27.2",
     "dotenv": "^16.0.3",
-    "ethers": "^6.3.0",
+    "ethers": "^6.7.1",
     "ethers5": "npm:ethers@^5.7.2",
     "jssha": "^3.2.0",
     "long": "^5.2.1",

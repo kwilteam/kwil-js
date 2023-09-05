@@ -1,6 +1,6 @@
 import { NonNil, Promisy } from "../utils/types";
 import { Transaction } from "./tx";
-import {ethers, Signer as _Signer } from "ethers";
+import {ethers, Signer as _Signer, JsonRpcSigner } from "ethers";
 import {ActionInput} from "./actionInput";
 import {Wallet as Walletv5, Signer as Signerv5} from "ethers5";
 import { PayloadType } from "./enums";
@@ -8,7 +8,7 @@ import { Message } from "./message";
 import { Signer as _NearSigner } from 'near-api-js'
 import { NearConfig } from "../utils/keys";
 
-export type EthSigner = NonNil<_Signer | ethers.Wallet | Walletv5 | Signerv5 >;
+export type EthSigner = NonNil<_Signer | JsonRpcSigner | ethers.Wallet | Walletv5 | Signerv5 >;
 export type NearSigner = NonNil<_NearSigner>;
 export type SignerSupplier = Promisy<EthSigner | NearSigner>
 

@@ -13,6 +13,8 @@ export async function testV5Transaction() {
     const signer = provider.getSigner()
     const address = await signer.getAddress()
 
+    const pubkey = await Utils.recoverSecp256k1PubKey(signer)
+
     const dbid = kwil.getDBID(address, "mydb")
 
     let actionBuilder: Types.ActionBuilder = kwil
@@ -39,10 +41,10 @@ export async function testV5Transaction() {
     const actionTx: Types.Transaction = await actionBuilder
         .concat(actionInput)
         .signer(signer)
+        .publicKey(pubkey)
         .buildTx()
 
     const res: Types.GenericResponse<Types.TxReceipt> = await kwil.broadcast(actionTx)
 
     console.log("res", res)
-    console.log("res works:", typeof res.data?.txHash === "string" && typeof res.data?.fee === "string")
 }
