@@ -584,7 +584,7 @@ describe("Testing case insentivity on test_db", () => {
     let dbName: string;
     let dbid: string;
 
-    beforeEach(async () => await sleep(1000))
+    beforeEach(async () => await sleep(2000))
 
     const actionInputs = Utils.ActionInput.of()
         .put("$id", 1)
@@ -596,9 +596,10 @@ describe("Testing case insentivity on test_db", () => {
         const count = dbAmount.data as string[];
         dbName = `test_db_${count.length}`;
         dbid = kwil.getDBID(pubKey, dbName);
+        console.log('DBID', dbid)
         console.log('TXHASH', txHash)
         await waitForDeployment(txHash);
-    }, 10000);
+    }, 20000);
 
     test("createUserTest action should execute", async () => {
         const tx = await kwil
@@ -689,7 +690,7 @@ describe("Testing case insentivity on test_db", () => {
     });
 })
 
-// Testing ActionBuilder to a Message and the kwil.call() api
+// // Testing ActionBuilder to a Message and the kwil.call() api
 describe("ActionBuilder to Message", () => {
     let actionBuilder: ActionBuilder;
 
@@ -717,7 +718,7 @@ describe("ActionBuilder to Message", () => {
     });
 });
 
-// Testing all methods on Drop Database
+// // Testing all methods on Drop Database
 describe("Drop Database", () => {
     let payload: DropDbPayload = {
         dbid: ''
@@ -793,7 +794,6 @@ describe("Drop Database", () => {
 
     test('the database should be able to be broadcasted and return a txHash and a txReceipt', async () => {
         const result = await kwil.broadcast(dropDbTx);
-        console.log(result)
         expect(result.data).toBeDefined();
         expect(result.data).toMatchObject<TxReceipt>({
             tx_hash: expect.any(String),

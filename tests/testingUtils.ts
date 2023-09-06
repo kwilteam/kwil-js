@@ -81,6 +81,6 @@ export function waitForDeployment(hash: string): Promise<boolean> {
                 // Instead of rejecting, retry
                 resolve(await waitForDeployment(hash));
             }
-        }, 1000);
+        }, 500);
     });
 }

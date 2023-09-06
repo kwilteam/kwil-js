@@ -1,0 +1,101 @@
+{
+  "owner": "",
+  "name": "fractal_db",
+  "tables": [
+    {
+      "name": "human_attributes",
+      "columns": [
+        {
+          "name": "id",
+          "type": "int",
+          "attributes": [
+            {
+              "type": "primary_key"
+            },
+            {
+              "type": "not_null"
+            }
+          ]
+        },
+        {
+          "name": "human_id",
+          "type": "int"
+        },
+        {
+          "name": "attribute_key",
+          "type": "int"
+        },
+        {
+          "name": "value",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "name": "wallets",
+      "columns": [
+        {
+          "name": "id",
+          "type": "int",
+          "attributes": [
+            {
+              "type": "primary_key"
+            },
+            {
+              "type": "not_null"
+            }
+          ]
+        },
+        {
+          "name": "human_id",
+          "type": "int",
+          "attributes": [
+            {
+              "type": "not_null"
+            }
+          ]
+        },
+        {
+          "name": "address",
+          "type": "text",
+          "attributes": [
+            {
+              "type": "not_null"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "name": "add_attribute",
+      "inputs": [
+        "$id",
+        "$attribute_key",
+        "$value"
+      ],
+      "public": true,
+      "mutability": "update",
+      "auxiliaries": [
+        "mustsign"
+      ],
+      "statements": [
+        "INSERT INTO human_attributes (id, human_id, attribute_key, value)\n    VALUES ($id, (SELECT human_id from wallets WHERE address=address(@caller) COLLATE NOCASE), $attribute_key, $value);"
+      ]
+    },
+    {
+      "name": "add_wallet",
+      "inputs": [
+        "$id",
+        "$human_id"
+      ],
+      "public": true,
+      "mutability": "update",
+      "auxiliaries": null,
+      "statements": [
+        "INSERT INTO wallets VALUES ($id, $human_id, address(@caller));"
+      ]
+    }
+  ]
+}

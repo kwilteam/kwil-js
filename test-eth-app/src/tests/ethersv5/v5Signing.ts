@@ -1,6 +1,6 @@
 import { providers } from "ethers5";
-import { Types, Utils } from "luke-dev"
-import { kwil } from "./testUtils";
+import { Types, Utils } from "@lukelamey/kwil-js"
+import { kwil } from "../testUtils";
 
 interface AmntObject {
     "COUNT(*)": number;
@@ -11,11 +11,10 @@ export async function testV5Transaction() {
 
     const provider = new providers.Web3Provider(window.ethereum)
     const signer = provider.getSigner()
-    const address = await signer.getAddress()
 
     const pubkey = await Utils.recoverSecp256k1PubKey(signer)
 
-    const dbid = kwil.getDBID(address, "mydb")
+    const dbid = kwil.getDBID(pubkey, "mydb")
 
     let actionBuilder: Types.ActionBuilder = kwil
         .actionBuilder()

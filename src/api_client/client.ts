@@ -53,6 +53,7 @@ export default class Client extends Api {
     }
 
     public async getAccount(owner: Uint8Array): Promise<GenericResponse<Account>> {
+        console.log('base64 string', bytesToBase64(owner))
         const urlSafeB64 = base64UrlEncode(bytesToBase64(owner));
         const res = await super.get<GetAccountResponse>(`/api/v1/accounts/${urlSafeB64}`);
         checkRes(res);
@@ -131,8 +132,6 @@ export default class Client extends Api {
 
         let body;
 
-       
-        
         if(res.data.hash && res.data.height && res.data.tx && res.data.tx_result) {
             body = {
                 hash: bytesToHex(base64ToBytes(res.data.hash)),

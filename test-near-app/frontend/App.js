@@ -41,11 +41,11 @@ export default function App({ isSignedIn, contractId, wallet }) {
     // console.log(await kwil.listDatabases('93807a788636cbe4280b7ee929a7c67d3f765b929a9034cea51fd856232d0588'))
     // console.log(await kwil.getSchema('x09f41f044925688ee749ad3b8da6f354f65ec3082ed1a598cd2fb76f'))
     // console.log(await kwil.getAccount(pubKey))
-    // console.log(await kwil.txInfo("0x981ec0d102a0f20e38c517a68bd13a378f778d0bf85ff482df266591cc90f278"));
+    // console.log(await kwil.txInfo("0x1127c5d9cefbf218885b302e61158cd64acb2002b22ccc3f148cd553e1ee3a95"));
     // console.log(await kwil.selectQuery(dbid, "SELECT * FROM posts"))
     // console.log(await kwil.ping())
-    await dropDatabase(kwil, "mydb", pubKey, signer, wallet)
-    console.log(await kwil.listDatabases('93807a788636cbe4280b7ee929a7c67d3f765b929a9034cea51fd856232d0588'))
+    // await dropDatabase(kwil, "mydb", pubKey, signer, wallet)
+    // console.log(await kwil.listDatabases('93807a788636cbe4280b7ee929a7c67d3f765b929a9034cea51fd856232d0588'))
   }
 
 

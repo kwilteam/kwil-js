@@ -22,7 +22,7 @@ const dbid = kwil.generateDBID('0x_walletaddress', 'dbName')
 const dbid = kwil.generateDBID('public_key', 'dbName')
 ```
 
-Note that an Ethereum wallet address is not a a Secp256k1 Public Key. To recover a Secp256k1 public key from an Ethereum signer, you can use the following helper method:
+Note that an Ethereum wallet address is not a a Secp256k1 Public Key. To recover a Secp256k1 public key from an Ethereum signer, you can use the following helper method. You can optionally customize the message that the user signs when recovering the public key:
 
 ```javascript
 import { Utils } from '@kwilteam/kwil-js'
@@ -31,7 +31,7 @@ import { BrowserProvider } from 'ethers'
 const provider = new BrowserProvider(window.ethereum);
 const signer = await provider.getSigner();
 
-const publicKey = await Utils.recoverSecp256k1PubKey(signer);
+const publicKey = await Utils.recoverSecp256k1PubKey(signer, 'Welcome to our app! Sign this message to reveal your public key.');
 ```
 
 ### Get Account Identified by Public Key, Public Keys Returned as Bytes

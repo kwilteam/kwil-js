@@ -4,6 +4,7 @@
 const kwiljs = require("../dist/index")
 const ethers = require("ethers")
 const testDB = require("./mydb.json")
+const fractalDb = require("./fractal_db.json")
 const util = require("util")
 const near = require('near-api-js')
 const { from_b58 } = require('../dist/utils/base58')
@@ -19,7 +20,7 @@ async function test() {
     //update to goerli when live
     const provider = new ethers.JsonRpcProvider(process.env.ETH_PROVIDER)
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
-    const txHash = '0xed466e3f964fcf6455b00d43c3f0a101570a53a15304f60a9c963ee4ea3850e6'
+    const txHash = '0x8f09cbdfebf7b44c25b246d490e64491de8cacd30877f692aa0a53dadafc2e40'
 
     const kwil = new kwiljs.NodeKwil({
         kwilProvider: process.env.KWIL_PROVIDER || "SHOULD FAIL",
@@ -30,12 +31,15 @@ async function test() {
     const pubKey = await recoverPubKey(wallet)
 
     const pubByte = hexToBytes(pubKey)
-    const dbid = kwil.getDBID(pubByte, "mydb")
-    logger(dbid)
-    // broadcast(kwil, testDB, wallet, pubByte)
+    const dbid = kwil.getDBID(pubByte, "fractal_db")
+    console.log(pubKey)
+    // logger(dbid)
+    // await addWallet(kwil, dbid, pubByte, wallet)
+    // await testFractal(kwil, dbid, pubKey, wallet)
+    // broadcast(kwil, fractalDb, wallet, pubKey)
     // await getTxInfo(kwil, txHash)
     // await getSchema(kwil, dbid)
-    // getAccount(kwil, pubKey)
+    getAccount(kwil, '0x0428179ef59832060b57cfbbbf56c6c19af471427660f490f99178d6d5cf060880c740d7ffdbd10b5de7c96794a0134e55039c1788e8c9ecbc0af97153396d1fa6')
     // listDatabases(kwil, pubByte)
     // ping(kwil)
     // getFunder(kwil, wallet)
@@ -318,4 +322,41 @@ async function recoverPubKey(signer) {
 
 function decodebase58(string) {
     console.log(bytesToHex(from_b58(string)))
+}
+
+async function addWallet(kwil, dbid, pk, signer) {
+    const input = new kwiljs.Utils.ActionInput()
+        .put('$id', 1)
+        .put('$human_id', 1)
+
+    const tx = await kwil
+        .actionBuilder()
+        .dbid(dbid)
+        .name('add_wallet')
+        .concat(input)
+        .publicKey(pk)
+        .signer(signer)
+        .buildTx()
+
+    const res = await kwil.broadcast(tx)
+    console.log(res)
+}
+
+async function testFractal(kwil, dbid, pk, signer) {
+    const input = new kwiljs.Utils.ActionInput()
+        .put("$id", 2)
+        .put("$attribute_key", 1)
+        .put('$value', 'Hello world')
+
+    const tx = await kwil
+        .actionBuilder()
+        .dbid(dbid)
+        .name('add_attribute')
+        .concat(input)
+        .publicKey(pk)
+        .signer(signer)
+        .buildTx()
+
+    const res = await kwil.broadcast(tx)
+    console.log(res)
 }

@@ -1,4 +1,4 @@
-import { kwil } from "./testUtils";
+import { kwil } from "../testUtils";
 import { providers } from 'ethers5'
 import { ContractTransactionResponse } from 'ethers';
 

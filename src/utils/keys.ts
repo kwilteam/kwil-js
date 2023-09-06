@@ -24,11 +24,18 @@ export function nearB58ToHex(b58: string): string {
     return bytesToHex(b58Bytes).slice(2);
 }
 
-export async function recoverSecp256k1PubKey(signer: EthSigner): Promise<string> {
+/**
+ * Recover a secp256k1 public key from a signer. This will force the user to sign a message.
+ * 
+ * @param signer - An ethereum signer from Ethers v5 or Ethers v6.
+ * @param message - The message to sign. Defaults to 'Sign this message to recover your public key.'.
+ * @returns A promise that resolves to the recovered public key.
+ */
+
+export async function recoverSecp256k1PubKey(signer: EthSigner, message: string = 'Sign this message to recover your public key.'): Promise<string> {
     if(isEthersSigner(signer)) {
-        const unsignedMessage = 'Sign this message to recover your public key.';
-        const signature = await signer.signMessage(unsignedMessage);
-        return ecrRecoverPubKey(stringToBytes(unsignedMessage), signature);
+        const signature = await signer.signMessage(message);
+        return ecrRecoverPubKey(stringToBytes(message), signature);
     }
     
     throw new Error('Signer must be an ethereum signer from Ethers v5 or Ethers v6.');

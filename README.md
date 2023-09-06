@@ -45,13 +45,13 @@ const kwil = new kwiljs.NodeKwil({
 
 In Kwil, accounts are identified by a public key. Kwil supports Secp256k1 Public Keys (e.g. EVM networks such as Ethereum) and ED25519 Public Keys (e.g Near Protocol).
 
-Note that a Secp256k1 public key is different than an Ethereum address. You can use a utility function to recover the public key for an Ethereum Signer.
+Note that a Secp256k1 public key is different than an Ethereum address. You can use a utility function to recover the public key for an Ethereum Signer. You can optionally customize the signing message for the public key recovery.
 
 ```javascript
 import { Utils } from '@kwilteam/kwil-js'
 
 const signer = await provider.getSigner(); // can use wallet if NodeJS
-const publicKey = await Utils.recoverSecp256k1PubKey(signer); 
+const publicKey = await Utils.recoverSecp256k1PubKey(signer, 'Welcome to our app! Sign this message to reveal your public key.'); 
 ```
 
 ### Database Identifiers (DBID)

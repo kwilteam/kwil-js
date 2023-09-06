@@ -1,7 +1,14 @@
 import './App.css'
-import { deployDb } from './tests/testDeploy';
+import { deployDb } from './tests/ethersv6/testDeploy';
 // import { testV5Funding } from './tests/v5Funding'
-import { testV5Transaction } from './tests/v5Signing';
+import { testV5Transaction } from './tests/ethersv5/v5Signing';
+import { kwil } from './tests/testUtils';
+import { BrowserProvider } from 'ethers';
+import { Utils } from '@lukelamey/kwil-js'
+import { executeAction } from './tests/ethersv6/executeAction';
+import { testViewWithParam } from './tests/testViewWithParam';
+import { testViewWithSign } from './tests/ethersv6/testViewWithSign';
+import { dropDatabase } from './tests/ethersv6/dropDatabase';
 
 declare global {
   interface Window {
@@ -12,9 +19,21 @@ declare global {
 function App() {
 
   async function test() {
-    // await testV5Funding()
-    // await testV5Transaction()
-    await deployDb()
+    const provider = new BrowserProvider(window.ethereum)
+    const signer = await provider.getSigner()
+    const pubkey = await Utils.recoverSecp256k1PubKey(signer)
+    const dbid = kwil.getDBID(pubkey, 'mydb5')
+    // await deployDb(signer, pubkey)
+    // await executeAction(kwil, dbid, 'add_post', signer, pubkey)
+    // await testViewWithParam(kwil, dbid)
+    // await testViewWithSign(kwil, dbid, signer, pubkey)
+    // console.log(await kwil.txInfo("0xd294f8af3f3ad0a5c5a0aefdd4cdafa25d1362e74071f7a1ea1ab4646ddf859a"))
+    console.log(await kwil.listDatabases(pubkey))
+    // console.log(await kwil.getSchema(dbid))
+    // console.log(await kwil.selectQuery(dbid, "SELECT * FROM posts"))
+    // console.log(await kwil.ping())
+    // console.log(await kwil.getAccount(pubkey))
+    // await dropDatabase(kwil, dbid, pubkey, signer)
   }
 
   return (
