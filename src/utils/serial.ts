@@ -156,5 +156,5 @@ export function bytesToBoolean(bytes: Uint8Array): boolean {
 }
 
 export function base64UrlEncode(base64: string): string {
-    return base64.replace('+', '-').replace('/', '_');
+    return base64.replace(/\+/g, '-').replace(/\//g, '_');
 }

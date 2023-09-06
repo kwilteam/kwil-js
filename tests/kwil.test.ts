@@ -495,6 +495,7 @@ describe("ActionBuilder + ActionInput + Transaction public methods & broadcastin
 });
 
 let txHash: string;
+let newDbName: string;
 
 // Testing all methods to be called on DBBuilder and in relation to DBBuilder (e.g. kwil.newDatabase & kwil.broadcast)
 describe("DBBuilder", () => {
@@ -507,6 +508,7 @@ describe("DBBuilder", () => {
         const dbAmount = await kwil.listDatabases(pubKey);
         const count = dbAmount.data as string[];
         db.name = `test_db_${count.length + 1}`;
+        newDbName = db.name;
     });
 
     test('newDatabase should return a DBBuilder', () => {
@@ -594,8 +596,7 @@ describe("Testing case insentivity on test_db", () => {
     beforeAll(async () => {
         const dbAmount = await kwil.listDatabases(pubKey);
         const count = dbAmount.data as string[];
-        dbName = `test_db_${count.length}`;
-        dbid = kwil.getDBID(pubKey, dbName);
+        dbid = kwil.getDBID(pubKey, newDbName);
         console.log('DBID', dbid)
         console.log('TXHASH', txHash)
         await waitForDeployment(txHash);
