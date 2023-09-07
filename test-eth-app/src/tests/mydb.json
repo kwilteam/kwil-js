@@ -1,6 +1,6 @@
 {
   "owner": "",
-  "name": "mydb5",
+  "name": "mydb",
   "tables": [
     {
       "name": "posts",

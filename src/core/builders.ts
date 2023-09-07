@@ -1,4 +1,4 @@
-import { NonNil, Promisy } from "../utils/types";
+import { Nillable, NonNil, Promisy } from "../utils/types";
 import { Transaction } from "./tx";
 import {ethers, Signer as _Signer, JsonRpcSigner } from "ethers";
 import {ActionInput} from "./actionInput";
@@ -20,6 +20,8 @@ export interface TxnBuilder {
     publicKey(publicKey: string | Uint8Array): NonNil<TxnBuilder>;
 
     nearConfig(nearConfig: NearConfig): NonNil<TxnBuilder>;
+
+    description(description: Nillable<string>): NonNil<TxnBuilder>;
 
     payload(payload: (() => NonNil<object>) | NonNil<object>): NonNil<TxnBuilder>;
 
@@ -67,6 +69,8 @@ export interface DBBuilder {
      */
 
     publicKey(publicKey: string | Uint8Array): NonNil<DBBuilder>;
+
+    description(description: string): NonNil<DBBuilder>;
 
     /**
      * Builds a database transaction.
@@ -138,6 +142,8 @@ export interface ActionBuilder {
      */
 
     nearConfig(accountId: string, networkId: string): NonNil<ActionBuilder>;
+
+    description(description: string): NonNil<ActionBuilder>;
 
     /**
      * Builds a transaction.

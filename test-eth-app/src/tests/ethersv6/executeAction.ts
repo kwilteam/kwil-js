@@ -21,6 +21,7 @@ export async function executeAction(kwil: WebKwil, dbid: string, action: string,
         .concat(actionInput)
         .publicKey(pubKey)
         .signer(signer)
+        .description('This is a custom message!')
         .buildTx();
 
         const res = await kwil.broadcast(tx)

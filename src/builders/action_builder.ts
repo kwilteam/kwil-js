@@ -31,6 +31,7 @@ export class ActionBuilderImpl implements ActionBuilder {
     private _name: Nillable<string>;
     private _dbid: Nillable<string>;
     private _nearConfig: Nillable<NearConfig> = null;
+    private _description: Nillable<string> = null;
 
     private constructor(client: Kwil) {
         this.client = objects.requireNonNil(client);
@@ -73,6 +74,12 @@ export class ActionBuilderImpl implements ActionBuilder {
             accountId,
             networkId
         });
+        return this;
+    }
+
+    description(description: string): ActionBuilder {
+        this.assertNotBuilding();
+        this._description = objects.requireNonNil(description);
         return this;
     }
 
@@ -129,6 +136,7 @@ export class ActionBuilderImpl implements ActionBuilder {
             .payloadType(PayloadType.EXECUTE_ACTION)
             .payload(payload)
             .signer(signer)
+            .description(this._description)
             .publicKey(publicKey)
         
         if(this._nearConfig) {
@@ -172,7 +180,8 @@ export class ActionBuilderImpl implements ActionBuilder {
             const publicKey = await Promisy.resolveOrReject(this._publicKey);
             msg = msg
                 .signer(signer)
-                .publicKey(publicKey);
+                .publicKey(publicKey)
+                .description(this._description)
         }
 
         if(this._nearConfig) {

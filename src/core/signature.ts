@@ -1,3 +1,6 @@
+import { HexString } from "../utils/types";
+import { PayloadType } from "./enums";
+
 export interface Signature {
     signature_bytes: string | Uint8Array;
     signature_type: SignatureType;

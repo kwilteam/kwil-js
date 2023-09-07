@@ -47,13 +47,17 @@ export function ecrRecoverPubKey(unsignedMessage: Uint8Array, signature: string)
 }
 
 // Signers
-export async function nearSign(message: Uint8Array, signer: NearSigner, config: NearConfig): Promise<NearSignature> {
+export async function nearSign(message: Uint8Array | string, signer: NearSigner, config: NearConfig): Promise<NearSignature> {
+    if(typeof message === 'string') {
+        message = stringToBytes(message);
+    }
+
     const sig = await signer.signMessage(message, config.accountId, config.networkId);
 
     return sig
 }
 
-export async function ethSign(message: Uint8Array, signer: EthSigner): Promise<HexString> {
+export async function ethSign(message: Uint8Array | string, signer: EthSigner): Promise<HexString> {
     return await signer.signMessage(message);
 }
 
