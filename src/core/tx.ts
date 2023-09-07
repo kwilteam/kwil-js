@@ -1,7 +1,7 @@
 import { NonNil } from "../utils/types";
 import { Signature, SignatureType } from "./signature";
 import { strings } from "../utils/strings";
-import { PayloadType } from "./enums";
+import { PayloadType, SerializationType } from "./enums";
 
 export interface TxReceipt {
     get tx_hash(): string;
@@ -11,9 +11,11 @@ export interface TxnData {
     signature: Signature;
     body: TxBody;
     sender: string | Uint8Array;
+    serialization: SerializationType;
 }
 
 interface TxBody {
+    description: string;
     payload: string | Uint8Array;
     payload_type: PayloadType;
     fee: BigInt | string;
@@ -40,8 +42,10 @@ export class Transaction implements TxnData {
                 fee: BigInt("0"),
                 nonce: null,
                 salt: '',
+                description: ''
             },
             sender: "",
+            serialization: SerializationType.SIGNED_MSG_CONCAT
         };
     }
 
@@ -61,6 +65,10 @@ export class Transaction implements TxnData {
         return this.data.body;
     }
 
+    public get serialization(): SerializationType {
+        return this.data.serialization;
+    }
+
     // noinspection JSUnusedLocalSymbols
     private toJSON(): Readonly<TxnData> {
         return this.data;
@@ -75,13 +83,16 @@ export namespace Txn {
                 signature_type: SignatureType.SECP256K1_PERSONAL
             },
             body: {
+                description: '',
                 payload: "",
                 payload_type: PayloadType.EXECUTE_ACTION,
                 fee: BigInt("0"),
                 nonce: null,
                 salt: '',
+                
             },
             sender: "",
+            serialization: SerializationType.SIGNED_MSG_CONCAT
         };
 
         configure(tx);

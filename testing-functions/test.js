@@ -4,6 +4,7 @@
 const kwiljs = require("../dist/index")
 const ethers = require("ethers")
 const testDB = require("./mydb.json")
+const simpleDb = require("./test_schema_simple.json")
 const fractalDb = require("./fractal_db.json")
 const util = require("util")
 const near = require('near-api-js')
@@ -37,12 +38,13 @@ async function test() {
     const pubByte = hexToBytes(pubKey)
     const dbid = kwil.getDBID(pubByte, "mydb")
     console.log(pubKey)
+    // await debugFriendlySign(kwil, wallet, pubKey)
     // logger(dbid)
     // await addWallet(kwil, dbid, pubByte, wallet)
     // await testFractal(kwil, dbid, pubKey, wallet)
     // broadcast(kwil, testDB, wallet, pubKey)
     // await getTxInfo(kwil, txHash)
-    await getSchema(kwil, dbid)
+    // await getSchema(kwil, dbid)
     // getAccount(kwil, '0x0428179ef59832060b57cfbbbf56c6c19af471427660f490f99178d6d5cf060880c740d7ffdbd10b5de7c96794a0134e55039c1788e8c9ecbc0af97153396d1fa6')
     // listDatabases(kwil, pubByte)
     //  getSchema(kwil, dbid)
@@ -98,7 +100,7 @@ async function getAccount(kwil, owner) {
 
 async function broadcast(kwil, tx, sig, pK) {
     let ownedTx = tx
-    ownedTx.owner = sig.address
+    ownedTx.owner = pK
     const readytx = await kwil
         .dbBuilder()
         .payload(ownedTx)
@@ -106,7 +108,8 @@ async function broadcast(kwil, tx, sig, pK) {
         .publicKey(pK)
         .buildTx()
 
-    logger('readytx', readytx)
+    logger('readytx')
+    logger(readytx)
     const txHash = await kwil.broadcast(readytx)
     logger(txHash)
 }
@@ -466,4 +469,21 @@ async function customEd25519(kwil, dbid) {
     const res = await kwil.broadcast(tx);
 
     logger(res)
+}
+
+async function debugFriendlySign(kwil, signer, pk) {
+    const inputs = new kwiljs.Utils.ActionInput()
+        .put('foo', '32')
+
+    const tx = await kwil
+        .actionBuilder()
+        .dbid('xf617af1ca774ebbd6d23e8fe12c56d41d25a22d81e88f67c6c6ee0d4')
+        .name('create_user')
+        .concat(inputs)
+        .publicKey(pk)
+        .signer(signer)
+        .buildTx()
+
+    const res = await kwil.broadcast(tx)
+    console.log(res)
 }

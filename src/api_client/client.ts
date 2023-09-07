@@ -142,12 +142,14 @@ export default class Client extends Api {
                         fee: res.data.tx.body.fee,
                         nonce: res.data.tx.body.nonce,
                         salt: base64ToBytes(res.data.tx.body.salt as string),
+                        description: res.data.tx.body.description
                     },
                     signature: {
                         signature_bytes: base64ToBytes(res.data.tx.signature.signature_bytes as string),
                         signature_type: res.data.tx.signature.signature_type,
                     },
                     sender: (base64ToBytes(res.data.tx.sender as string)),
+                    serialization: res.data.tx.serialization
                 },
                 tx_result: res.data.tx_result
             };

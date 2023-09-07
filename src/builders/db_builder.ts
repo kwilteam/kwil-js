@@ -21,6 +21,7 @@ export class DBBuilderImpl implements DBBuilder {
     private _signatureType: Nillable<SignatureType>;
     private _payloadType: Nillable<PayloadType> = null;
     private _publicKey: Nillable<string | Uint8Array> = null;
+    private _description: Nillable<string> = null;
 
     private constructor(client: Kwil, payloadType: PayloadType) {
         this.client = client;
@@ -63,6 +64,11 @@ export class DBBuilderImpl implements DBBuilder {
         return this;
     }
 
+    description(description: string): NonNil<DBBuilder> {
+        this._description = objects.requireNonNil(description);
+        return this;
+    }
+
     async buildTx(): Promise<Transaction> {
         let cleanedPayload: () => NonNil<object> = () => ({});
         const payload = objects.requireNonNil(this._payload);
@@ -85,6 +91,7 @@ export class DBBuilderImpl implements DBBuilder {
             .payload(objects.requireNonNil(cleanedPayload))
             .signer(signer, signatureType)
             .publicKey(objects.requireNonNil(this._publicKey))
+            .description(this._description)
 
 
         return tx.buildTx();

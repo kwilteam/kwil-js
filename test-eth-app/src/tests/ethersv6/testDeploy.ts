@@ -25,6 +25,7 @@ export async function deployDb(signer: Signer, pubkey: string) : Promise<void> {
         .payload(db)
         .publicKey(pubkey)
         .signer(signer)
+        .description('This is a custom message!')
         .buildTx()
 
     const rec = await kwil.broadcast(tx)

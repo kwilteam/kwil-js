@@ -3,17 +3,18 @@ import { Transaction } from "../core/tx";
 import { objects } from "../utils/objects";
 import { strings } from "../utils/strings";
 import { Txn } from "../core/tx";
-import { generateSalt } from "../utils/crypto";
+import { generateSalt, sha256BytesToBytes, sha384BytesToBytes } from "../utils/crypto";
 import { base64ToBytes, bytesToBase64 } from "../utils/base64";
 import { Kwil } from "../client/kwil";
 import { SignerSupplier, TxnBuilder } from "../core/builders";
 import { unwrap } from "../client/intern";
-import { PayloadType } from "../core/enums";
+import { PayloadType, SerializationType } from "../core/enums";
 import { kwilEncode } from "../utils/rlp";
-import { hexToBytes } from "../utils/serial";
-import { SignatureType, executeSign } from "../core/signature";
+import { base64ToHex, bytesToHex, bytesToString, hexToBase64, hexToBytes, stringToBytes, stringToHex } from "../utils/serial";
+import { SignatureType } from "../core/signature";
 import { Message, Msg } from "../core/message";
 import { isNearPubKey, nearB58ToHex } from "../utils/keys";
+import util from 'util';
 
 interface PreBuild {
     json: object;
@@ -27,6 +28,7 @@ export class TxnBuilderImpl implements TxnBuilder {
     private _signer: Nillable<SignerSupplier> = null;
     private _publicKey: Nillable<Uint8Array> = null;
     private _signatureType: Nillable<SignatureType> = null;
+    private _description: NonNil<string> = "";
 
     private constructor(client: Kwil) {
         this.client = objects.requireNonNil(client);
@@ -71,6 +73,13 @@ export class TxnBuilderImpl implements TxnBuilder {
         return this;
     }
 
+    description(description: Nillable<string>): NonNil<TxnBuilder> {
+        if(description) {
+            this._description = description;
+        }
+        return this;
+    }
+
     async buildTx(): Promise<Transaction> {
         const { json, signer } = await this.preBuild();
 
@@ -90,6 +99,8 @@ export class TxnBuilderImpl implements TxnBuilder {
             throw new Error(`Could not retrieve account ${this._publicKey}. Please double check that you have the correct account address.`);
         }
 
+        console.log('RAW PAYLOAD ===')
+        console.log(util.inspect(json, false, null, true /* enable colors */))
 
         const preEstTxn = Txn.create(tx => {
             tx.body.payload = bytesToBase64(kwilEncode(json));
@@ -117,7 +128,7 @@ export class TxnBuilderImpl implements TxnBuilder {
             throw new Error("Signature type is invalid.");
         }
 
-        return TxnBuilderImpl.signTx(postEstTxn, signer, this._publicKey, this._signatureType);
+        return TxnBuilderImpl.signTx(postEstTxn, signer, this._publicKey, this._signatureType, this._description);
     }
 
     async buildMsg(): Promise<Message> {
@@ -169,15 +180,32 @@ export class TxnBuilderImpl implements TxnBuilder {
         }
     }
 
-    private static async signTx(tx: Transaction, signer: SignerSupplier, pubKey: Uint8Array, signatureType: SignatureType): Promise<Transaction> {
+    private static async signTx(tx: Transaction, signer: SignerSupplier, pubKey: Uint8Array, signatureType: SignatureType, description: string): Promise<Transaction> {
         // convert payload back to uint8array for rlp encoding before signing
-        const preEncodedBody = Txn.copy(tx, (tx) => {
-            tx.body.payload = base64ToBytes(tx.body.payload as string);
-            tx.body.payload_type = tx.body.payload_type
-            tx.body.fee = tx.body.fee
-            tx.body.nonce = tx.body.nonce
-            tx.body.salt = generateSalt(16)
-        })
+        // const preEncodedBody = Txn.copy(tx, (tx) => {
+        //     tx.body.payload = base64ToBytes(tx.body.payload as string);
+        //     tx.body.payload_type = tx.body.payload_type
+        //     tx.body.fee = tx.body.fee
+        //     tx.body.nonce = tx.body.nonce
+        //     tx.body.salt = generateSalt(16)
+        // })
+
+        const salt = generateSalt(16);
+
+   
+
+        const digest = sha256BytesToBytes(base64ToBytes(tx.body.payload as string)).subarray(0, 20);
+
+        const signatureMessage = `${description}
+
+PayloadType: ${tx.body.payload_type}
+PayloadDigest: ${bytesToHex(digest).slice(2)}
+Fee: ${tx.body.fee}
+Nonce: ${tx.body.nonce}
+Salt: ${bytesToHex(salt).slice(2)}
+
+Kwil 🖋
+`
 
         const encodedTx = kwilEncode(preEncodedBody.body);
         const signedMessage = await executeSign(encodedTx, signer, signatureType)
@@ -187,14 +215,16 @@ export class TxnBuilderImpl implements TxnBuilder {
                 signature_bytes: bytesToBase64(signedMessage),
                 signature_type: signatureType.toString() as SignatureType
             };
-            tx.body = {
-                payload: bytesToBase64(tx.body.payload as Uint8Array),
-                payload_type: tx.body.payload_type as PayloadType,
-                fee: tx.body.fee.toString(),
-                nonce: tx.body.nonce,
-                salt: bytesToBase64(tx.body.salt as Uint8Array)
+            newTx.body = {
+                description: description,
+                payload: newTx.body.payload,
+                payload_type: newTx.body.payload_type as PayloadType,
+                fee: newTx.body.fee.toString(),
+                nonce: newTx.body.nonce,
+                salt: bytesToBase64(salt),
             };
-            tx.sender = bytesToBase64(pubKey);
+            newTx.sender = bytesToBase64(pubKey);
+            newTx.serialization = SerializationType.SIGNED_MSG_CONCAT;
         });
     }
 

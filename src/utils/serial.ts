@@ -2,6 +2,7 @@ import Long from 'long';
 import {strings} from "./strings";
 import {objects} from "./objects";
 import { HexString, NonNil } from './types';
+import { base64ToBytes, bytesToBase64 } from './base64';
 
 export function stringToBytes(str: string): Uint8Array {
     strings.requireNonNil(str as any);
@@ -102,6 +103,14 @@ export function hexToBytes(hex: string): Uint8Array {
         bytes[i / 2] = parseInt(hex.slice(i, i + 2), 16);
     }
     return bytes;
+}
+
+export function base64ToHex(base64: string): HexString {
+    return bytesToHex(base64ToBytes(base64));
+}
+
+export function hexToBase64(hex: HexString): string {
+    return bytesToBase64(hexToBytes(hex));
 }
 
 export function bytesToString(bytes: Uint8Array): string {

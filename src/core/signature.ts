@@ -3,6 +3,7 @@ import { EthSigner, SignerSupplier } from "./builders";
 import { Wallet as Walletv5, Signer as Signerv5 } from "ethers5";
 import { Wallet as Walletv6 } from "ethers";
 import { hexToBytes } from "../utils/serial";
+import { PayloadType } from "./enums";
 
 export interface Signature {
     signature_bytes: string | Uint8Array;
