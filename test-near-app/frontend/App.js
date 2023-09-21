@@ -10,6 +10,11 @@ import { deployDatabase } from './tests/deployDatabase';
 import { executeAction } from './tests/executeAction';
 import { testviewWithParam } from './tests/testViewWithParam';
 import { testViewWithSign } from './tests/testViewWithSign';
+import nacl from 'tweetnacl';
+import scrypt from 'scrypt-js';
+import { binary_to_base58 } from 'base58-js';
+import { KeyPairEd25519 } from '@near-js/crypto';
+
 
 export default function App({ isSignedIn, contractId, wallet }) {
   const [valueFromBlockchain, setValueFromBlockchain] = React.useState();
@@ -27,28 +32,28 @@ export default function App({ isSignedIn, contractId, wallet }) {
     // signer.createKey(wallet.accountId, 'testnet');
 
     const pubKey = (await signer.getPublicKey(wallet.accountId, 'testnet')).toString();
-
+    console.log(signer)
+    console.log(pubKey)
     return { signer, pubKey }
   }
 
   async function executeTest() {
     const { signer, pubKey } = await getSigner();
+    // const { signer, pubKey } = await customEdKeys();
     const dbid = kwil.getDBID(pubKey, "mydb")
     // await deployDatabase(kwil, signer, pubKey, wallet)
     // await executeAction(kwil, dbid, "add_post", signer, wallet, pubKey)
     // await testviewWithParam(kwil, dbid)
     // await testViewWithSign(kwil, dbid, signer, wallet, pubKey)
     // console.log(await kwil.listDatabases('93807a788636cbe4280b7ee929a7c67d3f765b929a9034cea51fd856232d0588'))
-    // console.log(await kwil.getSchema('x09f41f044925688ee749ad3b8da6f354f65ec3082ed1a598cd2fb76f'))
+    // console.log(await kwil.getSchema(dbid))
     // console.log(await kwil.getAccount(pubKey))
-    // console.log(await kwil.txInfo("0x1127c5d9cefbf218885b302e61158cd64acb2002b22ccc3f148cd553e1ee3a95"));
+    // console.log(await kwil.txInfo("9caede7125ded148df15b3f85958e5df1d679e3b9e808cc483db9ec75cfe86d8"));
     // console.log(await kwil.selectQuery(dbid, "SELECT * FROM posts"))
     // console.log(await kwil.ping())
     // await dropDatabase(kwil, "mydb", pubKey, signer, wallet)
     // console.log(await kwil.listDatabases('93807a788636cbe4280b7ee929a7c67d3f765b929a9034cea51fd856232d0588'))
   }
-
-
 
   // Get blockchain state once on component load
   React.useEffect(() => {

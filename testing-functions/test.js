@@ -20,7 +20,7 @@ async function test() {
     //update to goerli when live
     const provider = new ethers.JsonRpcProvider(process.env.ETH_PROVIDER)
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
-    const txHash = '0x8f09cbdfebf7b44c25b246d490e64491de8cacd30877f692aa0a53dadafc2e40'
+    const txHash = '8098502234e4ce9eb021651295c6b6595642569aac0224230b0dcca571c763d9'
 
     const kwil = new kwiljs.NodeKwil({
         kwilProvider: process.env.KWIL_PROVIDER || "SHOULD FAIL",
@@ -31,16 +31,22 @@ async function test() {
     const pubKey = await recoverPubKey(wallet)
 
     const pubByte = hexToBytes(pubKey)
-    const dbid = kwil.getDBID(pubByte, "fractal_db")
+    const dbid = kwil.getDBID(pubByte, "mydb")
     console.log(pubKey)
     // logger(dbid)
     // await addWallet(kwil, dbid, pubByte, wallet)
     // await testFractal(kwil, dbid, pubKey, wallet)
-    // broadcast(kwil, fractalDb, wallet, pubKey)
+    broadcast(kwil, testDB, wallet, pubKey)
     // await getTxInfo(kwil, txHash)
     // await getSchema(kwil, dbid)
-    getAccount(kwil, '0x0428179ef59832060b57cfbbbf56c6c19af471427660f490f99178d6d5cf060880c740d7ffdbd10b5de7c96794a0134e55039c1788e8c9ecbc0af97153396d1fa6')
+    // getAccount(kwil, pubKey)
     // listDatabases(kwil, pubByte)
+    //  getSchema(kwil, dbid)
+    //  getSchema(kwil, dbid)
+    //  await getSchema(kwil, dbid)
+
+
+   
     // ping(kwil)
     // getFunder(kwil, wallet)
     // getAllowance(kwil, wallet)
@@ -50,7 +56,7 @@ async function test() {
     // getDepositedBalance(kwil, wallet)
     // getTokenAddress(kwil, wallet)
     // await execSingleAction(kwil, dbid, "add_post", wallet, pubByte)
-    // select(kwil, dbid, "SELECT * FROM posts")
+    // await select(kwil, dbid, "SELECT * FROM posts")
     // select(kwil, dbid, `WITH RECURSIVE 
     //                          cnt(x) AS (
     //                          SELECT 1

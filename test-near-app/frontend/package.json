@@ -28,6 +28,7 @@
     "url": "^0.11.0"
   },
   "dependencies": {
+    "@near-js/crypto": "^0.0.5",
     "@near-wallet-selector/core": "^8.0.2",
     "@near-wallet-selector/here-wallet": "^8.5.1",
     "@near-wallet-selector/meteor-wallet": "^8.5.1",
@@ -36,10 +37,13 @@
     "@near-wallet-selector/near-wallet": "^8.5.1",
     "@near-wallet-selector/nightly": "^8.5.1",
     "@near-wallet-selector/sender": "^8.5.1",
+    "base58-js": "^2.0.0",
     "near-api-js": "^2.1.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "regenerator-runtime": "^0.13.11"
+    "regenerator-runtime": "^0.13.11",
+    "scrypt-js": "^3.0.1",
+    "tweetnacl": "^1.0.3"
   },
   "resolutions": {
     "@babel/preset-env": "7.13.8"
