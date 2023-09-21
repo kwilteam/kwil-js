@@ -45,6 +45,12 @@ async function test() {
     await getSchema(kwil, dbid)
     // getAccount(kwil, '0x0428179ef59832060b57cfbbbf56c6c19af471427660f490f99178d6d5cf060880c740d7ffdbd10b5de7c96794a0134e55039c1788e8c9ecbc0af97153396d1fa6')
     // listDatabases(kwil, pubByte)
+    //  getSchema(kwil, dbid)
+    //  getSchema(kwil, dbid)
+    //  await getSchema(kwil, dbid)
+
+
+   
     // ping(kwil)
     // getFunder(kwil, wallet)
     // getAllowance(kwil, wallet)
@@ -54,7 +60,7 @@ async function test() {
     // getDepositedBalance(kwil, wallet)
     // getTokenAddress(kwil, wallet)
     // await execSingleAction(kwil, dbid, "add_post", wallet, pubByte)
-    // select(kwil, dbid, "SELECT * FROM posts")
+    // await select(kwil, dbid, "SELECT * FROM posts")
     // select(kwil, dbid, `WITH RECURSIVE 
     //                          cnt(x) AS (
     //                          SELECT 1
