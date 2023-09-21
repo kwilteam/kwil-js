@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.1.0](https://github.com/kwilteam/kwil-js/compare/v0.0.3...v0.1.0) (2023-09-21)
+
+
+### ⚠ BREAKING CHANGES
+
+* The `.nearConfig()` method has been removed from the `.actionBuilder()` and
+`.dbBuilder()` classes, in favor of allowing developers to pass their own signing function to the
+'.signer()` methods.
+
+### Features
+
+* added custom signer functionality ([d29bc60](https://github.com/kwilteam/kwil-js/commit/d29bc60fbd7adcd6561d22802c80ea756bab84e0))
+
 ### [0.0.3](https://github.com/kwilteam/kwil-js/compare/v0.0.2...v0.0.3) (2023-09-06)
 
 
@@ -19,4 +32,3 @@ All notable changes to this project will be documented in this file. See [standa
 ### Bug Fixes
 
 * fix ethers v6 signature validation in browser ([6ceba14](https://github.com/kwilteam/kwil-js/commit/6ceba14e72fa7d0d9bb575fa403335aaa7a5e44b))
-
