@@ -9,7 +9,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 * The `.nearConfig()` method has been removed from the `.actionBuilder()` and
 `.dbBuilder()` classes, in favor of allowing developers to pass their own signing function to the
-'.signer()` methods.
+`.signer()` methods.
 
 ### Features
 
