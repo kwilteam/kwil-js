@@ -9,6 +9,9 @@ const util = require("util")
 const near = require('near-api-js')
 const { from_b58 } = require('../dist/utils/base58')
 const { bytesToHex, hexToBytes } = require('../dist/utils/serial')
+const scrypt = require("scrypt-js")
+const nacl = require("tweetnacl")
+const { sha256BytesToBytes } = require("../dist/utils/crypto")
 
 require("dotenv").config()
 
@@ -20,26 +23,27 @@ async function test() {
     //update to goerli when live
     const provider = new ethers.JsonRpcProvider(process.env.ETH_PROVIDER)
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
-    const txHash = '0x8f09cbdfebf7b44c25b246d490e64491de8cacd30877f692aa0a53dadafc2e40'
+    const txHash = '0x3617633a4e36a88c62937be37020ce9a021d68c16094ccc69e7b043017bd7333'
 
     const kwil = new kwiljs.NodeKwil({
         kwilProvider: process.env.KWIL_PROVIDER || "SHOULD FAIL",
         timeout: 10000,
         logging: true,
     })
-
+    
+    kwil.actionBuilder().signer
     const pubKey = await recoverPubKey(wallet)
 
     const pubByte = hexToBytes(pubKey)
-    const dbid = kwil.getDBID(pubByte, "fractal_db")
+    const dbid = kwil.getDBID(pubByte, "mydb")
     console.log(pubKey)
     // logger(dbid)
     // await addWallet(kwil, dbid, pubByte, wallet)
     // await testFractal(kwil, dbid, pubKey, wallet)
-    // broadcast(kwil, fractalDb, wallet, pubKey)
+    // broadcast(kwil, testDB, wallet, pubKey)
     // await getTxInfo(kwil, txHash)
-    // await getSchema(kwil, dbid)
-    getAccount(kwil, '0x0428179ef59832060b57cfbbbf56c6c19af471427660f490f99178d6d5cf060880c740d7ffdbd10b5de7c96794a0134e55039c1788e8c9ecbc0af97153396d1fa6')
+    await getSchema(kwil, dbid)
+    // getAccount(kwil, '0x0428179ef59832060b57cfbbbf56c6c19af471427660f490f99178d6d5cf060880c740d7ffdbd10b5de7c96794a0134e55039c1788e8c9ecbc0af97153396d1fa6')
     // listDatabases(kwil, pubByte)
     // ping(kwil)
     // getFunder(kwil, wallet)
@@ -69,7 +73,9 @@ async function test() {
     // await testNonViewAction(kwil, dbid, wallet)
     // await testViewWithParam(kwil, dbid, wallet)
     // await testViewWithSign(kwil, dbid, wallet, pubByte)
-    // decodebase58('AvnZPs4WBHx6RTfzAe62iWWhb6SZTFNJ9obCm2KbUe39')
+    // await customSignature(kwil, dbid)
+    // await julioSignature(kwil, dbid)
+    await customEd25519(kwil, dbid)
 }
 
 test()
@@ -359,4 +365,99 @@ async function testFractal(kwil, dbid, pk, signer) {
 
     const res = await kwil.broadcast(tx)
     console.log(res)
+}
+
+async function customSignature(kwil, dbid) {
+    const query = await kwil.selectQuery(dbid, "SELECT COUNT(*) FROM posts");
+
+    const count = query.data[0][`COUNT(*)`]
+
+    const Input = kwiljs.Utils.ActionInput
+
+    const solo = Input.of()
+        .put("$id", count + 1)
+        .put("$user", "Luke")
+        .put("$title", "Hello")
+        .put("$body", "Hello World")
+
+    const key = await deriveKeyPair64("password", "humanId")
+
+    const signCallback = (msg) => nacl.sign.detached(msg, key.secretKey)
+
+    const tx = await kwil
+        .actionBuilder()
+        .dbid(dbid)
+        .name("add_post")
+        .concat(solo)
+        .publicKey(key.publicKey)
+        .signer(signCallback, 'ed25519')
+        .buildTx();
+
+
+    const res = await kwil.broadcast(tx)
+
+    logger(res)
+}
+
+async function julioSignature(kwil, dbid) {
+    const key = await deriveKeyPair64("password", "humanId")
+
+    const signer = {
+        signMessage: async (msg) => {
+            return nacl.sign.detached(msg, key.secretKey)
+        },
+    }
+
+    const msg = await kwil
+        .actionBuilder()
+        .dbid(dbid)
+        .name("view_must_sign")
+        .publicKey(key.publicKey)
+        .signer(signer.signMessage, 'ed25519')
+        .buildMsg();
+
+    const res = await kwil.call(msg)
+
+    logger(res)
+}
+
+const deriveKeyPair64 = async (password, humanId) => {
+    const encoder = new TextEncoder();
+
+    const normalizedPassword = encoder.encode(password.normalize("NFKC"));
+    const salt = encoder.encode(humanId);
+
+    const derivedKey = await scrypt.scrypt(normalizedPassword, salt, 1024, 8, 1, 32);
+
+    return nacl.sign.keyPair.fromSeed(derivedKey);
+};
+
+async function customEd25519(kwil, dbid) {
+    const query = await kwil.selectQuery(dbid, "SELECT COUNT(*) FROM posts");
+
+    const count = query.data[0][`COUNT(*)`]
+
+    const Input = kwiljs.Utils.ActionInput
+
+    const solo = Input.of()
+        .put("$id", count + 1)
+        .put("$user", "Luke")
+        .put("$title", "Hello")
+        .put("$body", "Hello World")
+
+    const keys = nacl.sign.keyPair();
+    const customSigner = (msg) => nacl.sign.detached(msg, keys.secretKey);
+
+    const tx = await kwil
+        .actionBuilder()
+        .dbid(dbid)
+        .name('add_post')
+        .concat(solo)
+        .publicKey(keys.publicKey)
+        .signer(customSigner, 'ed25519')
+        .buildTx()
+
+    const res = await kwil.broadcast(tx);
+
+    logger(res)
 }

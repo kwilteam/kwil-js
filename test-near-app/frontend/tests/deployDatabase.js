@@ -1,13 +1,14 @@
 import mydb from '../mydb.json'
 
-export async function deployDatabase(kwil, signer, pubKey, wallet) {
+export async function deployDatabase(kwil, signer, pubKey) {
     const tx = await kwil
         .dbBuilder()
         .payload(mydb)
-        .signer(signer)
+        .signer(signer, 'ed25519_nr')
         .publicKey(pubKey)
-        .nearConfig(wallet.accountId, 'testnet')
         .buildTx()
+
+    console.log(tx)
 
     const res = await kwil.broadcast(tx)
 

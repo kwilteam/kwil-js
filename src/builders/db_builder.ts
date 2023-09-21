@@ -3,11 +3,11 @@ import {Nillable, NonNil, Promisy} from "../utils/types";
 import {objects} from "../utils/objects";
 import {Kwil} from "../client/kwil";
 import {TxnBuilderImpl} from "./transaction_builder";
-import {DBBuilder, SignerSupplier } from "../core/builders";
+import { CustomSigner, DBBuilder, SignerSupplier } from "../core/builders";
 import { AttributeType, DataType, IndexType, PayloadType } from "../core/enums";
 import { Database } from "../core/database";
 import { enforceDatabaseOrder } from "../core/order";
-import { NearConfig } from "../utils/keys";
+import { SignatureType, getSigType } from "../core/signature";
 
 /**
  * `DBBuilderImpl` class is an implementation of the `DBBuilder` interface.
@@ -18,9 +18,9 @@ export class DBBuilderImpl implements DBBuilder {
     private readonly client: Kwil;
     private _payload: Nillable<() => NonNil<object>> = null;
     private _signer: Nillable<SignerSupplier> = null;
+    private _signatureType: Nillable<SignatureType>;
     private _payloadType: Nillable<PayloadType> = null;
     private _publicKey: Nillable<string | Uint8Array> = null;
-    private _nearConfig: Nillable<NearConfig> = null;
 
     private constructor(client: Kwil, payloadType: PayloadType) {
         this.client = client;
@@ -31,10 +31,22 @@ export class DBBuilderImpl implements DBBuilder {
         return new DBBuilderImpl(objects.requireNonNil(client), objects.requireNonNil(payloadType));
     }
 
-    signer(signer: SignerSupplier): NonNil<DBBuilder> {
+    signer(signer: SignerSupplier, signatureType?: SignatureType): NonNil<DBBuilder> {
         this._signer = objects.requireNonNil(signer);
+        
+        if(!signatureType) {
+            this._signatureType = getSigType(signer);
+            if(this._signatureType === SignatureType.SIGNATURE_TYPE_INVALID) {
+                throw new Error("Could not determine signature type from signer. Please pass a signature type to .signer().");
+            }
+            return this;
+        }
+
+        this._signatureType = objects.requireNonNil(signatureType);
+
         return this;
     }
+
 
     payload(payload: (() => NonNil<object | DropDbPayload>) | NonNil<object | DropDbPayload>): NonNil<DBBuilder> {
         this._payload = typeof objects.requireNonNil(payload) !== "function" ?
@@ -48,14 +60,6 @@ export class DBBuilderImpl implements DBBuilder {
 
     publicKey(publicKey: string): NonNil<DBBuilder> {
         this._publicKey = objects.requireNonNil(publicKey);
-        return this;
-    }
-
-    nearConfig(accountId: string, networkId: string): NonNil<DBBuilder> {
-        this._nearConfig = objects.requireNonNil({
-            accountId,
-            networkId
-        });
         return this;
     }
 
@@ -73,17 +77,15 @@ export class DBBuilderImpl implements DBBuilder {
         }
 
         const payloadType = objects.requireNonNil(this._payloadType);
-        const signer = await Promisy.resolveOrReject(this._signer);
+        const signer = objects.requireNonNil(this._signer)
+        const signatureType = await Promisy.resolveOrReject(this._signatureType);
         let tx = TxnBuilderImpl
             .of(this.client)
             .payloadType(objects.requireNonNil(payloadType))
             .payload(objects.requireNonNil(cleanedPayload))
-            .signer(objects.requireNonNil(signer))
+            .signer(signer, signatureType)
             .publicKey(objects.requireNonNil(this._publicKey))
 
-            if(this._nearConfig) {
-                tx.nearConfig(objects.requireNonNil(this._nearConfig))
-            }
 
         return tx.buildTx();
     }

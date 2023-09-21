@@ -6,20 +6,21 @@ import {Wallet as Walletv5, Signer as Signerv5} from "ethers5";
 import { PayloadType } from "./enums";
 import { Message } from "./message";
 import { Signer as _NearSigner } from 'near-api-js'
-import { NearConfig } from "../utils/keys";
+import { SignatureType } from "./signature";
 
 export type EthSigner = NonNil<_Signer | JsonRpcSigner | ethers.Wallet | Walletv5 | Signerv5 >;
 export type NearSigner = NonNil<_NearSigner>;
-export type SignerSupplier = Promisy<EthSigner | NearSigner>
+
+export type CustomSigner = NonNil<(message: Uint8Array, ...args: any[]) => Promise<Uint8Array>>
+// export type AllSigners = NonNil<SignerSupplier | CustomSigner>;
+export type SignerSupplier = Promisy<EthSigner | CustomSigner>
 
 export interface TxnBuilder {
     payloadType(payloadType: NonNil<PayloadType>): NonNil<TxnBuilder>;
 
-    signer(signer: SignerSupplier): NonNil<TxnBuilder>;
+    signer(signer: SignerSupplier, sigType: SignatureType): NonNil<TxnBuilder>;
 
     publicKey(publicKey: string | Uint8Array): NonNil<TxnBuilder>;
-
-    nearConfig(nearConfig: NearConfig): NonNil<TxnBuilder>;
 
     payload(payload: (() => NonNil<object>) | NonNil<object>): NonNil<TxnBuilder>;
 
@@ -36,7 +37,7 @@ export interface DBBuilder {
      * @returns The current `DBBuilder` instance for chaining.
      */
 
-    signer(signer: SignerSupplier): NonNil<DBBuilder>;
+    signer(signer: SignerSupplier, signatureType?: SignatureType): NonNil<DBBuilder>;
 
     /**
      * Sets the database JSON payload for the database transaction.
@@ -46,17 +47,6 @@ export interface DBBuilder {
      */
 
     payload(payload: (() => NonNil<object>) | NonNil<object>): NonNil<DBBuilder>;
-
-    /**
-     * Set the NEAR protocol accountID and networkID for the Near Signer. This method is required if you are passing a NEAR protcol signer and public key.
-     * Do NOT use this method if using an Ethereum Signer and Public Key.
-     * 
-     * @param accountId - The account ID for the signer (E.g. kwil.near).
-     * @param networkId - The network ID for the signer (E.g. 'mainnet', 'testnet').
-     * @returns The current `DBBuilder` instance for chaining.
-     */
-
-    nearConfig(accountId: string, networkId: string): NonNil<DBBuilder>;
 
     /**
      * Set the public key for the transaction. This identifies the transaction sender.
@@ -116,7 +106,7 @@ export interface ActionBuilder {
      * @throws Will throw an error if the action is being built.
      */
 
-    signer(signer: SignerSupplier): NonNil<ActionBuilder>;
+    signer(signer: SignerSupplier, signatureType?: SignatureType): NonNil<ActionBuilder>;
 
     /**
      * Set the public key for the transaction. This identifies the transaction sender.
@@ -127,17 +117,6 @@ export interface ActionBuilder {
      */
 
     publicKey(publicKey: string | Uint8Array): NonNil<ActionBuilder>;
-
-    /**
-     * Set the NEAR protocol accountID and networkID for the Near Signer. This method is required if you are passing a NEAR protcol signer and public key.
-     * Do NOT use this method if using an Ethereum Signer and Public Key.
-     * 
-     * @param accountId - The account ID for the signer (E.g. kwil.near).
-     * @param networkId - The network ID for the signer (E.g. 'mainnet', 'testnet').
-     * @returns The current `DBBuilder` instance for chaining.
-     */
-
-    nearConfig(accountId: string, networkId: string): NonNil<ActionBuilder>;
 
     /**
      * Builds a transaction.

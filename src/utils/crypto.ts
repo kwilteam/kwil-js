@@ -39,6 +39,12 @@ export function sha224BytesToString(message: Uint8Array): string {
     return shaObj.getHash('HEX');
 }
 
+export function sha256BytesToBytes(message: Uint8Array): Uint8Array {
+    const shaObj = new jssha('SHA-256', 'UINT8ARRAY');
+    shaObj.update(message);
+    return shaObj.getHash('UINT8ARRAY');
+}
+
 export function generateSalt(length: number): Uint8Array {
     if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
         // Browser environment with Web Crypto API

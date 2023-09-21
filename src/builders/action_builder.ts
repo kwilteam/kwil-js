@@ -8,7 +8,7 @@ import {ActionInput} from "../core/actionInput";
 import {ActionSchema} from "../core/database";
 import { PayloadType, ValueType } from "../core/enums";
 import { Message, UnencodedMessagePayload } from "../core/message";
-import { NearConfig } from "../utils/keys";
+import { SignatureType, getSigType } from "../core/signature";
 
 interface CheckSchema {
     dbid: string;
@@ -28,9 +28,9 @@ export class ActionBuilderImpl implements ActionBuilder {
     private _signer: Nillable<SignerSupplier> = null;
     private _publicKey: Nillable<string | Uint8Array> = null;
     private _actions: ActionInput[] = [];
+    private _signatureType: Nillable<SignatureType>;
     private _name: Nillable<string>;
     private _dbid: Nillable<string>;
-    private _nearConfig: Nillable<NearConfig> = null;
 
     private constructor(client: Kwil) {
         this.client = objects.requireNonNil(client);
@@ -54,25 +54,27 @@ export class ActionBuilderImpl implements ActionBuilder {
         return this;
     }
 
-    signer(signer: SignerSupplier): NonNil<ActionBuilder> {
+    signer(signer: SignerSupplier, signatureType?: SignatureType): NonNil<ActionBuilder> {
         this.assertNotBuilding();
 
         this._signer = objects.requireNonNil(signer);
+
+        if(!signatureType) {
+            this._signatureType = getSigType(signer);
+            if(this._signatureType === SignatureType.SIGNATURE_TYPE_INVALID) {
+                throw new Error("Could not determine signature type from signer. Please pass a signature type to .signer().");
+            }
+            return this;
+        }
+
+        this._signatureType = objects.requireNonNil(signatureType);
+
         return this;
     }
 
     publicKey(publicKey: string | Uint8Array): NonNil<ActionBuilder> {
         this.assertNotBuilding();
         this._publicKey = objects.requireNonNil(publicKey);
-        return this;
-    }
-
-    nearConfig(accountId: string, networkId: string): NonNil<ActionBuilder> {
-        this.assertNotBuilding();
-        this._nearConfig = objects.requireNonNil({
-            accountId,
-            networkId
-        });
         return this;
     }
 
@@ -115,8 +117,9 @@ export class ActionBuilderImpl implements ActionBuilder {
     private async dobuildTx(actions: ActionInput[]): Promise<Transaction> {
         const { dbid, name, preparedActions } = await this.checkSchema(actions);
 
-        const signer = await Promisy.resolveOrReject(this._signer);
+        const signer = objects.requireNonNil(this._signer);
         const publicKey = await Promisy.resolveOrReject(this._publicKey);
+        const signatureType = await Promisy.resolveOrReject(this._signatureType);
 
         const payload = {
             "dbid": dbid,
@@ -128,12 +131,9 @@ export class ActionBuilderImpl implements ActionBuilder {
             .of(this.client)
             .payloadType(PayloadType.EXECUTE_ACTION)
             .payload(payload)
-            .signer(signer)
+            .signer(signer, signatureType)
             .publicKey(publicKey)
         
-        if(this._nearConfig) {
-            tx.nearConfig(this._nearConfig)
-        }
         return tx.buildTx();
     }
 
@@ -170,13 +170,10 @@ export class ActionBuilderImpl implements ActionBuilder {
 
         if(signer) {
             const publicKey = await Promisy.resolveOrReject(this._publicKey);
+            const signatureType = await Promisy.resolveOrReject(this._signatureType);
             msg = msg
-                .signer(signer)
+                .signer(signer, signatureType)
                 .publicKey(publicKey);
-        }
-
-        if(this._nearConfig) {
-            msg = msg.nearConfig(this._nearConfig);
         }
 
         return await msg.buildMsg();

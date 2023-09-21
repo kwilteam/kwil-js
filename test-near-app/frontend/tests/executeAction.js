@@ -12,15 +12,13 @@ export async function executeAction(kwil, dbid, action, signer, wallet, pubKey) 
         .put("$title", "Hello")
         .put("$body", "Hello World")
     
-        console.log(wallet.accountId)
     const tx = await kwil
         .actionBuilder()
         .dbid(dbid)
         .name(action)
         .concat(actionInput)
         .publicKey(pubKey)
-        .signer(signer)
-        .nearConfig(wallet.accountId, 'testnet')
+        .signer(signer, 'ed25519_nr')
         .buildTx();
 
     const res = await kwil.broadcast(tx)

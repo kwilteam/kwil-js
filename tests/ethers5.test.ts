@@ -1,9 +1,6 @@
 import { Wallet, providers } from "ethers5";
-import { NodeKwil, Types, Utils } from "../dist";
-import { Funder } from "../dist/funder/funding";
-import { AmntObject, FunderObj, kwil } from "./testingUtils";
-import { AllowanceRes, BalanceRes, DepositRes, TokenRes } from "../dist/funder/types";
-import { ContractTransactionResponse } from "ethers";
+import { Types, Utils } from "../dist";
+import { AmntObject, kwil } from "./testingUtils";
 import { ActionBuilder } from "../dist/core/builders";
 import { ActionBuilderImpl } from "../dist/builders/action_builder";
 import { Transaction, TxReceipt } from "../dist/core/tx";
@@ -12,7 +9,9 @@ require('dotenv').config();
 const provider = process.env.ETH_PROVIDER === "https://provider.kwil.com" ? new providers.InfuraProvider("goerli") : process.env.ETH_PROVIDER ? new providers.JsonRpcProvider(process.env.ETH_PROVIDER) : new providers.JsonRpcProvider("http://localhost:8545");
 const wallet = new Wallet(process.env.PRIVATE_KEY as string, provider);
 
-const dbid = kwil.getDBID(wallet.address, "mydb")
+const pubKey = '0x048767310544592e33b2fb5555527f49c0902cf0f472f4c87e65324abb75e7a5e1c035bc1ef5026f363c79588526c341af341a68fc37299183391699ee1864cc75'
+
+const dbid = kwil.getDBID(pubKey, "mydb")
 
 describe("ActionBuilder + Transaction signing works with Ethersv5 Wallet and Signer", () => {
     let actionBuilder: ActionBuilder;
@@ -57,7 +56,9 @@ describe("ActionBuilder + Transaction signing works with Ethersv5 Wallet and Sig
     });
 
     test("The actionBuilder.signer() method should returned a signed ActionBuilder", () => {
-        const result = actionBuilder.signer(wallet);
+        const result = actionBuilder
+            .signer(wallet)
+            .publicKey(pubKey)
 
         expect(result).toBeDefined();
         expect(result).toBeInstanceOf(ActionBuilderImpl);
@@ -78,12 +79,13 @@ describe("ActionBuilder + Transaction signing works with Ethersv5 Wallet and Sig
         expect(actionTx).toBeDefined();
         expect(actionTx).toBeInstanceOf(Transaction);
         expect(actionTx.isSigned()).toBe(true);
-        expect(actionTx.hash).toBeDefined();
-        expect(actionTx.payload_type).toBeDefined();
-        expect(actionTx.payload).toBeDefined();
-        expect(actionTx.fee).toBeDefined();
-        expect(actionTx.fee).not.toBe("0");
-        expect(actionTx.nonce).toBeGreaterThan(-1);
+        expect(actionTx.body.payload_type).toBeDefined();
+        expect(actionTx.body.payload).toBeDefined();
+        expect(actionTx.body.fee).toBeDefined();
+        expect(actionTx.body.nonce).toBeGreaterThan(-1);
+        expect(actionTx.body.salt).toBeDefined();
+        expect(actionTx.sender).toBeDefined();
+        expect(actionTx.isSigned()).toBe(true);
         expect(actionTx.signature).toBeDefined();
         expect(actionTx.signature.signature_bytes).toBeDefined();
         expect(actionTx.signature.signature_bytes).not.toHaveLength(0);
@@ -94,9 +96,7 @@ describe("ActionBuilder + Transaction signing works with Ethersv5 Wallet and Sig
         const result = await kwil.broadcast(actionTx);
         expect(result.data).toBeDefined();
         expect(result.data).toMatchObject<TxReceipt>({
-            txHash: expect.any(String),
-            fee: expect.any(String),
-            body: expect.any(Array),
+            tx_hash: expect.any(String),
         });
     });
 });

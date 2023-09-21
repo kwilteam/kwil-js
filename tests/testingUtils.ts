@@ -1,6 +1,8 @@
 import { Contract, JsonRpcProvider, JsonRpcSigner, Wallet } from "ethers";
 import {Kwil} from "../dist/client/kwil";
 import { NodeKwil, Utils } from "../dist";
+import scrypt from 'scrypt-js';
+import nacl from 'tweetnacl';
 require('dotenv').config();
 
 const provider = new JsonRpcProvider(process.env.ETH_PROVIDER)
@@ -84,3 +86,14 @@ export function waitForDeployment(hash: string): Promise<boolean> {
         }, 500);
     });
 }
+
+export const deriveKeyPair64 = async (password: string, humanId: string) => {
+    const encoder = new TextEncoder();
+
+    const normalizedPassword = encoder.encode(password.normalize("NFKC"));
+    const salt = encoder.encode(humanId);
+
+    const derivedKey = await scrypt.scrypt(normalizedPassword, salt, 1024, 8, 1, 32);
+
+    return nacl.sign.keyPair.fromSeed(derivedKey);
+};
