@@ -138,32 +138,35 @@ In the old version, there were case inconsistencies in data that was returned fr
 
 ## New Features
 
-### ED25519
+### ED25519 & Custom Signers
 
-This SDK allows for signing with ED25519 (NEAR Protocol) signatures.
+This version introduces support for ed25519 signatures.
 
-The signer should receive the NEAR [`InMemorySigner`](https://github.com/near/near-api-js/blob/master/packages/signers/src/in_memory_signer.ts).
+If you wish to sign with something other than an EtherJS signer, you may pass a callback function that returns a `Uint8Array()` and the enumerator for the signature type used.
 
-When signing, you must also pass an additional `.nearConfig()` method, indicating the Near Account ID and Netowrk ID. This allows the Kwil SDK to retrieve the signer from the passed `InMemorySigner`.
+Currently, Kwil supports three signature types:
+| Type  | Enumerator |
+|:----- |:------:|
+| Secp256k1  | 'secp256k1_ep'     |
+| Ed25519    | 'ed25519'     |
+| Ed25519 w/ NEAR Digest | 'ed25519_nr' |
 
-The NEAR public key passed to the `.publicKey()` method should be the Base58 encoded public key (with the "ed25519:" prefix.) The Kwil SDK will then convert the public key to a Uint8Array, which will be the transaction sender.
+To sign with a ed25519 signature:
 
 ```javascript
-import { keyStores, InMemorySigner } from 'near-api-js';
+import nacl from 'tweetnacl';
 
-const keystore = new keyStores.BrowserLocalStorageKeyStore(window.localStorage);
-const signer = new InMemorySigner(keyStore)
-const publicKey = (await signer.getPublicKey('accountid', 'networkId')).toString()
+const keys = nacl.sign.keyPair();
+const customSigner = (msg) => nacl.sign.detached(msg, keys.secretKey);
 
 const tx = await kwil
     .actionBuilder()
-    .dbid('some_dbid')
-    .name('action_name')
-    .concat('ActionInput...')
-    .publicKey(publicKey)
-    .signer(signer)
-    .nearConfig('accountId', 'networkId')
-    .buildTx();
+    .dbid(dbid)
+    .name('your_action_name')
+    .concat(input)
+    .publicKey(keys.publicKey)
+    .signer(customSigner, 'ed25519')
+    .buildTx()
 
 await kwil.broadcast(tx);
 ```

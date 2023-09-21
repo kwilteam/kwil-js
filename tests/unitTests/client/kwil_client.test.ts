@@ -4,8 +4,6 @@ import { ActionBuilderImpl } from "../../../src/builders/action_builder";
 import { DBBuilderImpl } from "../../../src/builders/db_builder";
 import { Transaction } from "../../../src/core/tx";
 import { Message } from "../../../src/core/message";
-import { JsonRpcProvider, Wallet } from "ethers";
-import { Funder } from "../../../src/funder/funding";
 import { PayloadType } from "../../../src/core/enums";
 
 class TestKwil extends Kwil {
@@ -87,7 +85,7 @@ describe('Kwil', () => {
 
     describe('dropDbBuilder', () => {
         it('should return a db builder', () => {
-            const dbBuilder = kwil.dropDBBuilder();
+            const dbBuilder = kwil.dropDbBuilder();
             expect(dbBuilder).toBeDefined();
             expect(dbBuilder).toBeInstanceOf(DBBuilderImpl)
         })

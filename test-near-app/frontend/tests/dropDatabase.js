@@ -4,12 +4,11 @@ export async function dropDatabase(kwil, dbName, pubKey, signer, wallet) {
     console.log(wallet.accountId)
     const tx = await kwil
         .dropDbBuilder()
-        .signer(signer)
+        .signer(signer, 'ed25519_nr')
         .publicKey(pubKey)
         .payload({
             dbid
         })
-        .nearConfig(wallet.accountId, 'testnet')
         .buildTx()
 
     console.log('tx', tx)

@@ -3,7 +3,7 @@ const logSpy = jest.spyOn(console, 'log').mockImplementation((...args) => {
     originalLog(...args);
 });
 jest.resetModules();
-import {AmntObject, kwil, waitForDeployment, wallet} from "./testingUtils";
+import {AmntObject, deriveKeyPair64, kwil, waitForDeployment, wallet} from "./testingUtils";
 import {DropDbPayload, Transaction, TxReceipt} from "../dist/core/tx";
 import {ActionBuilder, DBBuilder} from "../dist/core/builders";
 import {ActionBuilderImpl} from "../dist/builders/action_builder";
@@ -12,6 +12,12 @@ import schema from "./test_schema2.json";
 import {DBBuilderImpl} from "../dist/builders/db_builder";
 import { Types, Utils } from "../dist/index";
 import { Message, MsgReceipt } from "../dist/core/message";
+import { hexToBytes } from "../dist/utils/serial";
+import { SignatureType } from "../dist/core/signature";
+import nacl from "tweetnacl";
+import { InMemorySigner, Signer as _NearSigner } from "near-api-js";
+import { KeyPairEd25519 } from "near-api-js/lib/utils";
+import { to_b58 } from "../dist/utils/base58";
 
 function sleep(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -807,3 +813,182 @@ describe("Drop Database", () => {
         expect(result.data).not.toContain(payload);
     });
 });
+
+describe("Testing custom signers", () => {
+    let recordCount: number;
+    let input: Types.ActionInput;
+
+    beforeAll(async() => {
+        const count = await kwil.selectQuery(dbid, "SELECT COUNT(*) FROM posts");
+        if (count.status == 200 && count.data) {
+            const amnt = count.data[0] as AmntObject;
+            recordCount = amnt['COUNT(*)'];
+        } 
+    })
+
+    beforeEach(async () => {
+        input = new Utils.ActionInput();
+        input.put("$id", recordCount + 1);
+        input.put("$user", "Luke");
+        input.put("$title", "Test Post");
+        input.put("$body", "This is a test post");
+
+        recordCount++;
+    })
+
+    afterEach(async () => await sleep(500))
+
+    async function customSecpSigner(msg: Uint8Array): Promise<Uint8Array> {
+        const sig = await wallet.signMessage(msg);
+        return hexToBytes(sig);
+    }
+
+    async function getEdKeys(): Promise<nacl.SignKeyPair> {
+        return await deriveKeyPair64('69420', '69420');
+    }
+
+    async function customEdSigner(msg: Uint8Array): Promise<Uint8Array> {
+        const edKeys = await getEdKeys();
+        return nacl.sign.detached(msg, edKeys.secretKey);
+    }
+
+    async function getNearSigner(): Promise<_NearSigner> {
+        const edKeys = await getEdKeys();
+        const sk = to_b58(edKeys.secretKey);
+        const kp = new KeyPairEd25519(sk);
+        return await InMemorySigner.fromKeyPair('testnet', 'luke.testnet', kp);
+    }
+    
+    test("secp256k1 signed tx's should broadcast correctly", async() => {
+        const tx = await kwil
+            .actionBuilder()
+            .dbid(dbid)
+            .name("add_post")
+            .signer(customSecpSigner, SignatureType.SECP256K1_PERSONAL)
+            .publicKey(pubKey)
+            .concat(input)
+            .buildTx();
+
+        const result = await kwil.broadcast(tx);
+
+        expect(result.data).toBeDefined();
+        expect(result.data).toMatchObject<TxReceipt>({
+            tx_hash: expect.any(String),
+        });
+        expect(result.status).toBe(200);
+    })
+
+    test('secp256k1 signed msgs should call correctly', async () => {
+        const msg = await kwil
+            .actionBuilder()
+            .dbid(dbid)
+            .name('view_must_sign')
+            .publicKey(pubKey)
+            .signer(customSecpSigner, SignatureType.SECP256K1_PERSONAL)
+            .buildMsg();
+
+        const result = await kwil.call(msg);
+
+        expect(result.data).toBeDefined();
+        expect(result.data).toMatchObject<MsgReceipt>({
+            result: expect.any(Array),
+        });
+        expect(result.status).toBe(200);
+    })
+
+    test("ed25519 signed tx's should broadcast correctly", async() => {
+        const edKeys = await getEdKeys();
+        
+        const tx = await kwil
+            .actionBuilder()
+            .dbid(dbid)
+            .name("add_post")
+            .signer(customEdSigner, SignatureType.ED25519)
+            .publicKey(edKeys.publicKey)
+            .concat(input)
+            .buildTx();
+
+        const result = await kwil.broadcast(tx);
+
+        expect(result.data).toBeDefined();
+        expect(result.data).toMatchObject<TxReceipt>({
+            tx_hash: expect.any(String),
+        });
+        expect(result.status).toBe(200);
+    })
+
+    test("ed25519 signed msgs should call correctly", async() => {
+        const edKeys = await getEdKeys();
+
+        const msg = await kwil
+            .actionBuilder()
+            .dbid(dbid)
+            .name('view_must_sign')
+            .publicKey(edKeys.publicKey)
+            .signer(customEdSigner, SignatureType.ED25519)
+            .buildMsg();
+
+        const result = await kwil.call(msg);
+
+        expect(result.data).toBeDefined();
+        expect(result.data).toMatchObject<MsgReceipt>({
+            result: expect.any(Array),
+        });
+        expect(result.status).toBe(200);
+    })
+
+    test('ed25519_nr signed txs should broadcast correctly', async () => {
+        const nearSigner = await getNearSigner();
+
+        const customNearSigner = async (msg: Uint8Array): Promise<Uint8Array> => {
+            const sig = await nearSigner.signMessage(msg, 'luke.testnet', 'testnet');
+            return sig.signature;
+        }
+
+        const nearPublicKey = await nearSigner.getPublicKey('luke.testnet', 'testnet');
+
+        const tx = await kwil
+            .actionBuilder()
+            .dbid(dbid)
+            .name("add_post")
+            .signer(customNearSigner, SignatureType.ED25519_NEAR)
+            .publicKey(nearPublicKey.toString())
+            .concat(input)
+            .buildTx();
+
+        const result = await kwil.broadcast(tx);
+
+        expect(result.data).toBeDefined();
+        expect(result.data).toMatchObject<TxReceipt>({
+            tx_hash: expect.any(String),
+        });
+        expect(result.status).toBe(200);
+    });
+
+    test('ed25519_nr signed msgs should call correctly', async () => {
+        const nearSigner = await getNearSigner();
+
+        const customNearSigner = async (msg: Uint8Array): Promise<Uint8Array> => {
+            const sig = await nearSigner.signMessage(msg, 'luke.testnet', 'testnet');
+            return sig.signature;
+        }
+
+        const nearPublicKey = await nearSigner.getPublicKey('luke.testnet', 'testnet');
+
+        const msg = await kwil
+            .actionBuilder()
+            .dbid(dbid)
+            .name('view_must_sign')
+            .publicKey(nearPublicKey.toString())
+            .signer(customNearSigner, SignatureType.ED25519_NEAR)
+            .buildMsg();
+
+        const result = await kwil.call(msg);
+
+        expect(result.data).toBeDefined();
+        expect(result.data).toMatchObject<MsgReceipt>({
+            result: expect.any(Array),
+        });
+        expect(result.status).toBe(200);
+    });
+})

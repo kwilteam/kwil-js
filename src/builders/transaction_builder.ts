@@ -1,20 +1,19 @@
-import { HexString, Nillable, NonNil } from "../utils/types";
+import { Nillable, NonNil } from "../utils/types";
 import { Transaction } from "../core/tx";
-import { ethers, Signer } from "ethers";
 import { objects } from "../utils/objects";
 import { strings } from "../utils/strings";
 import { Txn } from "../core/tx";
 import { generateSalt } from "../utils/crypto";
 import { base64ToBytes, bytesToBase64 } from "../utils/base64";
 import { Kwil } from "../client/kwil";
-import { EthSigner, NearSigner, SignerSupplier, TxnBuilder } from "../core/builders";
+import { SignerSupplier, TxnBuilder } from "../core/builders";
 import { unwrap } from "../client/intern";
 import { PayloadType } from "../core/enums";
 import { kwilEncode } from "../utils/rlp";
-import { bytesToHex, hexToBytes } from "../utils/serial";
-import { SignatureType } from "../core/signature";
+import { hexToBytes } from "../utils/serial";
+import { SignatureType, executeSign } from "../core/signature";
 import { Message, Msg } from "../core/message";
-import { isNearPubKey, nearB58ToHex, ethSign, NearConfig, nearSign, isEthersSigner } from "../utils/keys";
+import { isNearPubKey, nearB58ToHex } from "../utils/keys";
 
 interface PreBuild {
     json: object;
@@ -28,7 +27,6 @@ export class TxnBuilderImpl implements TxnBuilder {
     private _signer: Nillable<SignerSupplier> = null;
     private _publicKey: Nillable<Uint8Array> = null;
     private _signatureType: Nillable<SignatureType> = null;
-    private _nearConfig: Nillable<NearConfig> = null;
 
     private constructor(client: Kwil) {
         this.client = objects.requireNonNil(client);
@@ -43,9 +41,9 @@ export class TxnBuilderImpl implements TxnBuilder {
         return new TxnBuilderImpl(client);
     }
 
-    signer(signer: SignerSupplier): NonNil<TxnBuilder> {
+    signer(signer: SignerSupplier, sigType: SignatureType): NonNil<TxnBuilder> {
         this._signer = objects.requireNonNil(signer);
-        this._signatureType = this.getSigType(signer);
+        this._signatureType = objects.requireNonNil(sigType);
         return this;
     }
 
@@ -73,11 +71,6 @@ export class TxnBuilderImpl implements TxnBuilder {
         return this;
     }
 
-    nearConfig(nearConfig: NearConfig): NonNil<TxnBuilder> {
-        this._nearConfig = nearConfig;
-        return this;
-    }
-
     async buildTx(): Promise<Transaction> {
         const { json, signer } = await this.preBuild();
 
@@ -92,7 +85,6 @@ export class TxnBuilderImpl implements TxnBuilder {
             throw new Error("Public key is required to build a transaction. Please chain the .publicKey() method to your builder.");
         }
         
-        //TODO: Refactor so that we do signature first, then ecr recover and do the getaccount info
         const acct = await this.client.getAccount(this._publicKey);
         if (acct.status !== 200 || !acct.data) {
             throw new Error(`Could not retrieve account ${this._publicKey}. Please double check that you have the correct account address.`);
@@ -125,7 +117,7 @@ export class TxnBuilderImpl implements TxnBuilder {
             throw new Error("Signature type is invalid.");
         }
 
-        return TxnBuilderImpl.signTx(postEstTxn, signer, this._publicKey, this._signatureType, this._nearConfig ? this._nearConfig : undefined);
+        return TxnBuilderImpl.signTx(postEstTxn, signer, this._publicKey, this._signatureType);
     }
 
     async buildMsg(): Promise<Message> {
@@ -157,7 +149,7 @@ export class TxnBuilderImpl implements TxnBuilder {
                 throw new Error("Signature type is invalid.");
             }
 
-            return await TxnBuilderImpl.signMsg(msg, signer, this._publicKey, this._signatureType, this._nearConfig ? this._nearConfig : undefined);
+            return await TxnBuilderImpl.signMsg(msg, signer, this._publicKey, this._signatureType);
         }
 
         return msg;
@@ -167,12 +159,7 @@ export class TxnBuilderImpl implements TxnBuilder {
         objects.requireNonNil(this.client);
 
         const payloadFn = objects.requireNonNil(this._payload);
-        
         const signer = this._signer;
-
-        if(signer) {
-            this._signatureType = this.getSigType(signer); 
-        }
 
         const json = objects.requireNonNil(payloadFn());
 
@@ -182,7 +169,7 @@ export class TxnBuilderImpl implements TxnBuilder {
         }
     }
 
-    private static async signTx(tx: Transaction, signer: SignerSupplier, pubKey: Uint8Array, signatureType: SignatureType, nearConfig?: NearConfig): Promise<Transaction> {
+    private static async signTx(tx: Transaction, signer: SignerSupplier, pubKey: Uint8Array, signatureType: SignatureType): Promise<Transaction> {
         // convert payload back to uint8array for rlp encoding before signing
         const preEncodedBody = Txn.copy(tx, (tx) => {
             tx.body.payload = base64ToBytes(tx.body.payload as string);
@@ -193,28 +180,11 @@ export class TxnBuilderImpl implements TxnBuilder {
         })
 
         const encodedTx = kwilEncode(preEncodedBody.body);
-        let signedMessage: string;
-
-        if (signatureType === SignatureType.SECP256K1_PERSONAL) {
-            if(!isEthersSigner(signer)) {
-                throw new Error("Wallet is not supported for secp256k1 personal signatures.");
-            }
-
-            signedMessage = await ethSign(encodedTx, signer as EthSigner);
-        }
-
-        if (signatureType === SignatureType.ED25519_NEAR) {
-            if(isEthersSigner(signer)) {
-                throw new Error("Signer must be a Wallet for ed25519 signatures.");
-            }
-
-            const signature = await nearSign(encodedTx, signer as NearSigner, objects.requireNonNil(nearConfig));
-            signedMessage = bytesToHex(signature.signature);
-        }
+        const signedMessage = await executeSign(encodedTx, signer, signatureType)
 
         return Txn.copy(preEncodedBody, (tx) => {
             tx.signature = {
-                signature_bytes: bytesToBase64(hexToBytes(signedMessage)),
+                signature_bytes: bytesToBase64(signedMessage),
                 signature_type: signatureType.toString() as SignatureType
             };
             tx.body = {
@@ -228,52 +198,21 @@ export class TxnBuilderImpl implements TxnBuilder {
         });
     }
 
-    // TODO: Fix signMsg
-    private static async signMsg(msg: Message, signer: SignerSupplier, pubKey: Uint8Array, signatureType: SignatureType, nearConfig?: NearConfig): Promise<Message> {
+    private static async signMsg(msg: Message, signer: SignerSupplier, pubKey: Uint8Array, signatureType: SignatureType): Promise<Message> {
         if(typeof msg.payload === "string") {
             throw new Error("Payload must be an object to sign a message.");
         }
 
-        let signedMessage: HexString;
-        const encodeMsg: Uint8Array = msg.payload;
-
-        if(signatureType === SignatureType.SECP256K1_PERSONAL) {
-            if(!isEthersSigner(signer)) {
-                throw new Error("Wallet is not supported for secp256k1 personal signatures.");
-            }
-            signedMessage = await ethSign(encodeMsg, signer as EthSigner);
-        }
-
-        if(signatureType === SignatureType.ED25519_NEAR) {
-            if(isEthersSigner(signer)) {
-                throw new Error("Signer must be a Wallet for ed25519 signatures.");
-            }
-            const signature = await nearSign(encodeMsg, signer as NearSigner, objects.requireNonNil(nearConfig));
-            signedMessage = bytesToHex(signature.signature);
-        }
-
+        const encodedMsg: Uint8Array = msg.payload;
+        let signedMessage = await executeSign(encodedMsg, signer, signatureType);
 
         return Msg.copy(msg, (msg) => {
-            msg.payload = bytesToBase64(encodeMsg);
+            msg.payload = bytesToBase64(encodedMsg);
             msg.signature = {
-                signature_bytes: bytesToBase64(hexToBytes(signedMessage)),
+                signature_bytes: bytesToBase64(signedMessage),
                 signature_type: signatureType.toString() as SignatureType
             };
             msg.sender = bytesToBase64(pubKey);
         })
-    }
-
-    private getSigType(signer: SignerSupplier): SignatureType {
-        if(isEthersSigner(signer))  {
-            return SignatureType.SECP256K1_PERSONAL;
-        }
-        
-   
-        // TODO: Refactor to actually check if its a near signer, rather than just checking if its not an ethers signer...
-        if(!isEthersSigner(signer)) {
-            return SignatureType.ED25519_NEAR;
-        }
-
-        return SignatureType.SIGNATURE_TYPE_INVALID;
     }
 }

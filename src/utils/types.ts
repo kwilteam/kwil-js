@@ -13,7 +13,7 @@ export type HexString = string;
 
 export type Promisy<T> =
     T extends null | undefined ? never :
-        T extends (() => infer R) | (() => Awaited<infer R>) ?
+        T extends (() => infer R) | (() => Awaited<infer R>) | ((...x: any[]) => infer R) | ((...x: any[]) => Awaited<infer R>) ?
                 T : T extends Function ? never : T;
 
 export namespace Promisy {

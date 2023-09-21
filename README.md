@@ -120,7 +120,9 @@ const res = await kwil.getAccount("public_key")
 
 Any action that executes a CUD operation must be signed and broadcasted to the network as a transaction.
 
-Note that the public key can be passed as a hex string or as bytes.
+The public key can be passed as a hex string or as bytes.
+
+Out of the box, kwil-js supports signers from [EthersJS](https://github.com/ethers-io/ethers.js) (v5 and v6). You can also pass a signing callback function (see below).
 
 ``` javascript
 import { Utils } from '@kwilteam/kwil-js'
@@ -154,26 +156,55 @@ const res = await kwil.broadcast(tx)
 */
 ```
 
-#### A note for NEAR (ED25519) Public Keys
+#### Custom Signers
 
-When building a transaction with an ED25519 key, you must also chain a .nearConfig() method, passing your accountId and networkId. The Near Public key may be passed as the [Base58 encoded public key](https://docs.near.org/integrator/implicit-accounts#converting-a-public-key-to-an-account-id) with the "ed25519:" prefix, a hex string, or bytes.
+If you wish to sign with something other than an EtherJS signer, you may pass a callback function that returns a `Uint8Array()` and the enumerator for the signature type used.
 
-Note that the key store must have a Near Access Key.
+Currently, Kwil supports three signature types:
+| Type  | Enumerator |
+|:----- |:------:|
+| Secp256k1  | 'secp256k1_ep'     |
+| Ed25519    | 'ed25519'     |
+| Ed25519 w/ NEAR Digest | 'ed25519_nr' |
+
+To sign with a ed25519 signature:
+
+```javascript
+import nacl from 'tweetnacl';
+
+const keys = nacl.sign.keyPair();
+const customSigner = (msg) => nacl.sign.detached(msg, keys.secretKey);
+
+const tx = await kwil
+    .actionBuilder()
+    .dbid(dbid)
+    .name('your_action_name')
+    .concat(input)
+    .publicKey(keys.publicKey)
+    .signer(customSigner, 'ed25519')
+    .buildTx()
+
+await kwil.broadcast(tx);
+```
+
+To sign with a NEAR Protocol Signer from [`near-api-js`](https://github.com/near/near-api-js):
 
 ```javascript
 import { keyStores, InMemorySigner } from 'near-api-js';
 
 const keyStore = new keyStores.BrowserLocalStorageKeyStore(window.localStorage);
-const signer = new InMemorySigner(keyStore)
+const nearSigner = new InMemorySigner(keyStore)
+const customSigner = async (msg) => {
+    return (await nearSigner.signMessage(msg, 'accountId', 'networkId')).signature;
+}
 
 const tx = await kwil
     .actionBuilder()
     .dbid(dbid)
     .name("your_action_name")
     .concat(input)
-    .publicKey('public_key') // Can be a hex-encoded public key, or bytes.
-    .nearConfig('account_id', 'network_id')
-    .signer(signer) // using Near Signer
+    .publicKey('near_public_key')
+    .signer(customSigner, 'ed25519_nr')
     .buildTx()
 
 await kwil.broadcast(tx);
