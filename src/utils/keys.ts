@@ -19,7 +19,7 @@ export function nearB58ToHex(b58: string): string {
     if(!b58Bytes) {
         throw new Error(`invalid base58 string: ${b58}`);
     }
-    return bytesToHex(b58Bytes).slice(2);
+    return bytesToHex(b58Bytes);
 }
 
 /**

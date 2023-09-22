@@ -13,8 +13,14 @@ export function stringToBytes(str: string): Uint8Array {
     return view;
 }
 
-export function stringToHex(str: string): string {
+export function stringToEthHex(str: string): HexString {
     let hex = '0x';
+    hex += stringToHex(str);
+    return hex;
+}
+
+export function stringToHex(str: string): HexString {
+    let hex = '';
     for (let i = 0; i < str.length; i++) {
         const code = str.charCodeAt(i);
         hex += code.toString(16).padStart(2, '0'); // Convert the code into a base-16 number and pad with a leading 0 if necessary
@@ -48,12 +54,16 @@ export function numberToBytes(num: number): Uint8Array {
     return new Uint8Array(buffer);
 }
 
+export function numberToEthHex(num: number): HexString {
+    return '0x' + numberToHex(num);
+}
+
 export function numberToHex(num: number): HexString {
     let hex = num.toString(16);
     if (hex.length % 2 !== 0) {
         hex = '0' + hex;
     }
-    return '0x' + hex;
+    return hex;
 }
 
 export function hexToNumber(hex: HexString): number {
@@ -68,8 +78,12 @@ export function hexToNumber(hex: HexString): number {
     return parseInt(hex, 16);
 }
 
+export function bytesToEthHex(bytes: Uint8Array): HexString {
+    return '0x' + bytesToHex(bytes);
+}    
+
 export function bytesToHex(bytes: Uint8Array): HexString {
-    return '0x' + bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');
+    return bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');
 }
 
 export function hexToBytes(hex: string): Uint8Array {

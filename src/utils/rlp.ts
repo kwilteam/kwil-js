@@ -1,6 +1,6 @@
 import { HexString, NonNil } from './types'
 import { concatBytes, numberToUint16BigEndian, uint16BigEndianToNumber } from './bytes'
-import { bytesToHex, hexToBytes, numberToHex, stringToHex, hexToString } from './serial'
+import { bytesToEthHex, hexToBytes, numberToEthHex, stringToEthHex, hexToString } from './serial'
 import { RlpStructuredData, decodeRlp, encodeRlp } from 'ethers';
 import { EncodingType } from '../core/enums';
 
@@ -23,19 +23,19 @@ function _objToNestedArray(input: NonNil<object>): any[] | HexString {
 function inputToHex(val: string | number | BigInt | Uint8Array | Boolean | null | undefined): HexString {
     if (typeof val === 'string') {
         // Convert only non-hex strings to hex
-        return stringToHex(val);
+        return stringToEthHex(val);
     } else if (typeof val === 'number' || typeof val === 'bigint') {
         const num = Number(val);
         if (num === 0) {
             return "0x"; // special case for RLP encoding 0
         }
-        return numberToHex(num);
+        return numberToEthHex(num);
     } else if (val instanceof Uint8Array) {
-        return bytesToHex(val);
+        return bytesToEthHex(val);
     } else if (typeof val === 'boolean') {
         return val ? "0x01" : "0x00";
     } else if (val === null || val === undefined) {
-        return bytesToHex(new Uint8Array(0));
+        return bytesToEthHex(new Uint8Array(0));
     } else {
         // Convert any other value to a string first
         throw new Error(`unknown type for value: ${val}`);
@@ -59,7 +59,7 @@ export function kwilDecode(encoding: Uint8Array): any {
     }
 
     const rlpBytes: Uint8Array = encoding.slice(2);
-    const rlpHex: HexString = bytesToHex(rlpBytes);
+    const rlpHex: HexString = bytesToEthHex(rlpBytes);
     const rlp: RlpStructuredData = decodeRlp(rlpHex);
 
     return _recursivelyDeHexlify(rlp);
