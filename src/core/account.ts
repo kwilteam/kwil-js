@@ -1,6 +1,5 @@
-
 export interface Account {
-    get address(): string;
-    get balance(): string;
-    get nonce(): string;
+    public_key: Uint8Array | string;
+    balance: string;
+    nonce: string;
 }

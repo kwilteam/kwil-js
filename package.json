@@ -1,6 +1,6 @@
 {
-  "name": "kwil",
-  "version": "3.3.1",
+  "name": "@kwilteam/kwil-js",
+  "version": "0.1.1",
   "description": "",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -30,7 +30,7 @@
   "devDependencies": {
     "@commitlint/cli": "^17.7.1",
     "@commitlint/config-conventional": "^17.7.0",
-    "@types/jest": "^29.5.1",
+    "@types/jest": "^29.5.3",
     "@types/node": "^18.11.17",
     "@typescript-eslint/eslint-plugin": "^5.38.0",
     "@typescript-eslint/parser": "^5.38.0",
@@ -44,19 +44,21 @@
     "jest": "^29.5.0",
     "prettier": "^2.7.1",
     "rimraf": "^3.0.2",
+    "scrypt-js": "^3.0.1",
     "standard-version": "^9.5.0",
     "ts-jest": "^29.1.0",
     "ts-node": "^10.9.1",
+    "tweetnacl": "^1.0.3",
     "typescript": "^4.9.4"
   },
   "dependencies": {
-    "@types/uuid": "^8.3.4",
     "axios": "^0.27.2",
     "dotenv": "^16.0.3",
-    "ethers": "^6.3.0",
+    "ethers": "^6.7.1",
     "ethers5": "npm:ethers@^5.7.2",
     "jssha": "^3.2.0",
-    "long": "^5.2.1"
+    "long": "^5.2.1",
+    "near-api-js": "^2.1.4"
   },
   "engines": {
     "node": ">=18.0.0"

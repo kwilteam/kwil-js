@@ -1,6 +1,8 @@
 import { Contract, JsonRpcProvider, JsonRpcSigner, Wallet } from "ethers";
 import {Kwil} from "../dist/client/kwil";
-import { NodeKwil } from "../dist";
+import { NodeKwil, Utils } from "../dist";
+import scrypt from 'scrypt-js';
+import nacl from 'tweetnacl';
 require('dotenv').config();
 
 const provider = new JsonRpcProvider(process.env.ETH_PROVIDER)
@@ -63,4 +65,35 @@ export const kwil = new NodeKwil({
     logging: true
 })
 
-export const dbid = kwil.getDBID(wallet.address, "mydb")
+
+export function waitForDeployment(hash: string): Promise<boolean> {
+    return new Promise(async (resolve) => {
+        setTimeout(async () => {
+            try {
+                const txQuery = await kwil.txInfo(hash);
+
+                if (txQuery.status === 200 && txQuery.data?.tx_result.log === 'success') {
+                    resolve(true);
+                } else {
+                    // Retry after 500ms if it's not a success
+                    resolve(await waitForDeployment(hash));
+                }
+            } catch (err) {
+                console.error("SDK Error:", err); // optionally log the error
+                // Instead of rejecting, retry
+                resolve(await waitForDeployment(hash));
+            }
+        }, 500);
+    });
+}
+
+export const deriveKeyPair64 = async (password: string, humanId: string) => {
+    const encoder = new TextEncoder();
+
+    const normalizedPassword = encoder.encode(password.normalize("NFKC"));
+    const salt = encoder.encode(humanId);
+
+    const derivedKey = await scrypt.scrypt(normalizedPassword, salt, 1024, 8, 1, 32);
+
+    return nacl.sign.keyPair.fromSeed(derivedKey);
+};

@@ -1,11 +1,21 @@
-import {PayloadType, Transaction} from "../core/tx";
+import { Transaction } from "../core/tx";
 import {objects} from "../utils/objects";
 import {Nillable, NonNil, Promisy} from "../utils/types";
 import {Kwil} from "../client/kwil";
-import {ActionBuilder, SignerSupplier} from "../core/builders";
+import {ActionBuilder, SignerSupplier, TxnBuilder} from "../core/builders";
 import {TxnBuilderImpl} from "./transaction_builder";
 import {ActionInput} from "../core/actionInput";
 import {ActionSchema} from "../core/database";
+import { PayloadType, ValueType } from "../core/enums";
+import { Message, UnencodedMessagePayload } from "../core/message";
+import { SignatureType, getSigType } from "../core/signature";
+
+interface CheckSchema {
+    dbid: string;
+    name: string;
+    actionSchema: ActionSchema;
+    preparedActions?: ValueType[][]
+}
 
 const TXN_BUILD_IN_PROGRESS: ActionInput[] = [];
 /**
@@ -16,7 +26,9 @@ const TXN_BUILD_IN_PROGRESS: ActionInput[] = [];
 export class ActionBuilderImpl implements ActionBuilder {
     private readonly client: Kwil;
     private _signer: Nillable<SignerSupplier> = null;
+    private _publicKey: Nillable<string | Uint8Array> = null;
     private _actions: ActionInput[] = [];
+    private _signatureType: Nillable<SignatureType>;
     private _name: Nillable<string>;
     private _dbid: Nillable<string>;
 
@@ -42,10 +54,27 @@ export class ActionBuilderImpl implements ActionBuilder {
         return this;
     }
 
-    signer(signer: SignerSupplier): NonNil<ActionBuilder> {
+    signer(signer: SignerSupplier, signatureType?: SignatureType): NonNil<ActionBuilder> {
         this.assertNotBuilding();
 
         this._signer = objects.requireNonNil(signer);
+
+        if(!signatureType) {
+            this._signatureType = getSigType(signer);
+            if(this._signatureType === SignatureType.SIGNATURE_TYPE_INVALID) {
+                throw new Error("Could not determine signature type from signer. Please pass a signature type to .signer().");
+            }
+            return this;
+        }
+
+        this._signatureType = objects.requireNonNil(signatureType);
+
+        return this;
+    }
+
+    publicKey(publicKey: string | Uint8Array): NonNil<ActionBuilder> {
+        this.assertNotBuilding();
+        this._publicKey = objects.requireNonNil(publicKey);
         return this;
     }
 
@@ -61,7 +90,7 @@ export class ActionBuilderImpl implements ActionBuilder {
         }
 
         return this;
-    }
+    } 
 
     async buildTx(): Promise<Transaction> {
         this.assertNotBuilding();
@@ -74,10 +103,85 @@ export class ActionBuilderImpl implements ActionBuilder {
             .finally(() => this._actions = cached);
     }
 
+    async buildMsg(): Promise<Message> {
+        this.assertNotBuilding();
+
+        const cached = this._actions;
+        this._actions = TXN_BUILD_IN_PROGRESS;
+
+        return await this
+            .doBuildMsg(cached.length > 0 ? cached : undefined)
+            .finally(() => this._actions = cached);
+    }
+
     private async dobuildTx(actions: ActionInput[]): Promise<Transaction> {
+        const { dbid, name, preparedActions } = await this.checkSchema(actions);
+
+        const signer = objects.requireNonNil(this._signer);
+        const publicKey = await Promisy.resolveOrReject(this._publicKey);
+        const signatureType = await Promisy.resolveOrReject(this._signatureType);
+
+        const payload = {
+            "dbid": dbid,
+            "action": name,
+            "params": preparedActions
+        }
+
+        const tx = TxnBuilderImpl
+            .of(this.client)
+            .payloadType(PayloadType.EXECUTE_ACTION)
+            .payload(payload)
+            .signer(signer, signatureType)
+            .publicKey(publicKey)
+        
+        return tx.buildTx();
+    }
+
+    private async doBuildMsg(action?: ActionInput[]): Promise<Message> {
+        const { dbid, name, preparedActions, actionSchema } = await this.checkSchema(action ? action : undefined);
+
+        if(preparedActions && preparedActions.length > 1) {
+            throw new Error("Cannot pass an array of actions inputs to a message. Please pass a single action input object.");
+        }
+
+        if(actionSchema.mutability === "update") {
+            throw new Error(`Action ${name} is not a state-changing action. Please use buildTx() instead.`);
+        }
+
+        if(actionSchema.inputs && actionSchema.inputs.length > 0 && (!preparedActions || preparedActions.length === 0)) {
+            throw new Error(`Action ${name} requires inputs. Please provide inputs. With the ActionInput class and .concat method.`);
+        }
+
+        const signer = this._signer ? this._signer : null;
+
+        const payload: UnencodedMessagePayload = !preparedActions ? {
+            "dbid": dbid,
+            "action": name,
+            "arguments": []
+        } : {
+            "dbid": dbid,
+            "action": name,
+            "arguments": preparedActions[0]
+        }
+
+        let msg: TxnBuilder = TxnBuilderImpl
+            .of(this.client)
+            .payload(payload)
+
+        if(signer) {
+            const publicKey = await Promisy.resolveOrReject(this._publicKey);
+            const signatureType = await Promisy.resolveOrReject(this._signatureType);
+            msg = msg
+                .signer(signer, signatureType)
+                .publicKey(publicKey);
+        }
+
+        return await msg.buildMsg();
+    }
+
+    private async checkSchema(actions?: ActionInput[]): Promise<CheckSchema> {
         const dbid = objects.requireNonNil(this._dbid);
         const name = objects.requireNonNil(this._name);
-        const signer = await Promisy.resolveOrReject(this._signer);
 
         const schema = await this.client.getSchema(dbid);
         if (!schema?.data?.actions) {
@@ -89,23 +193,25 @@ export class ActionBuilderImpl implements ActionBuilder {
             throw new Error(`Could not find action ${name} in database ${dbid}. Please double check that you have the correct DBID and action name.`);
         }
 
-        const preparedActions = this.prepareActions(actions, actionSchema, name);
-
-        const payload = {
-            "action": name,
-            "dbid": dbid,
-            "params": preparedActions
+        if(actions) {
+            const preparedActions = this.prepareActions(actions, actionSchema, name);
+            return {
+                dbid: dbid,
+                name: name,
+                actionSchema: actionSchema,
+                preparedActions: preparedActions
+            }
+        } else {
+            return {
+                dbid: dbid,
+                name: name,
+                actionSchema: actionSchema
+            }
         }
-
-        return TxnBuilderImpl
-            .of(this.client)
-            .payloadType(PayloadType.EXECUTE_ACTION)
-            .payload(payload)
-            .signer(signer)
-            .build();
+  
     }
 
-    private prepareActions(actions: ActionInput[], actionSchema: ActionSchema, actionName: string): ActionInput[] {
+    private prepareActions(actions: ActionInput[], actionSchema: ActionSchema, actionName: string): ValueType[][] {
         if ((!actionSchema.inputs || actionSchema.inputs.length === 0) && actions.length === 0) {
             return [];
         }
@@ -130,7 +236,7 @@ export class ActionBuilderImpl implements ActionBuilder {
             throw new Error(`Actions do not match action schema inputs: ${Array.from(missingActions)}`)
         }
 
-        const preparedActions: ActionInput[] = [];
+        const preparedActions: ValueType[][] = [];
         const missingInputs = new Set<string>();
         actions.forEach((a) => {
             const copy = ActionInput.from(a);
@@ -154,7 +260,13 @@ export class ActionBuilderImpl implements ActionBuilder {
             })
 
             if (missingInputs.size === 0) {
-                preparedActions.push(copy);
+                preparedActions.push(actionSchema.inputs.map((i) => {
+                    const val = copy.get(i)
+                    if(val) {
+                        return val.toString();
+                    }
+                    return val;
+                }));
             }
         });
 

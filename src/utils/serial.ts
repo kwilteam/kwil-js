@@ -1,8 +1,9 @@
 import Long from 'long';
 import {strings} from "./strings";
 import {objects} from "./objects";
+import { HexString, NonNil } from './types';
 
-export function StringToBytes(str: string): Uint8Array {
+export function stringToBytes(str: string): Uint8Array {
     strings.requireNonNil(str as any);
     const buffer = new ArrayBuffer(str.length);
     const view = new Uint8Array(buffer);
@@ -12,7 +13,84 @@ export function StringToBytes(str: string): Uint8Array {
     return view;
 }
 
-export function BytesToString(bytes: Uint8Array): string {
+export function stringToHex(str: string): string {
+    let hex = '0x';
+    for (let i = 0; i < str.length; i++) {
+        const code = str.charCodeAt(i);
+        hex += code.toString(16).padStart(2, '0'); // Convert the code into a base-16 number and pad with a leading 0 if necessary
+    }
+    return hex;
+}
+
+export function hexToString(hex: HexString): string {
+    strings.requireNonNil(hex);
+
+    if (hex.length % 2 !== 0) {
+        throw new Error(`invalid hex string: ${hex}`);
+    }
+    // strip 0x prefix
+    if (hex.startsWith('0x')) {
+        hex = hex.slice(2);
+    }
+    let str = '';
+    for (let i = 0; i < hex.length; i += 2) {
+        const code = parseInt(hex.slice(i, i + 2), 16);
+        str += String.fromCharCode(code);
+    }
+    return str;
+}
+
+export function numberToBytes(num: number): Uint8Array {
+    objects.requireNonNilNumber(num);
+    const buffer = new ArrayBuffer(1);
+    const view = new DataView(buffer);
+    view.setUint8(0, num);
+    return new Uint8Array(buffer);
+}
+
+export function numberToHex(num: number): HexString {
+    let hex = num.toString(16);
+    if (hex.length % 2 !== 0) {
+        hex = '0' + hex;
+    }
+    return '0x' + hex;
+}
+
+export function hexToNumber(hex: HexString): number {
+    strings.requireNonNil(hex);
+    if (hex.length % 2 !== 0) {
+        throw new Error(`invalid hex string: ${hex}`);
+    }
+    // strip 0x prefix
+    if (hex.startsWith('0x')) {
+        hex = hex.slice(2);
+    }
+    return parseInt(hex, 16);
+}
+
+export function bytesToHex(bytes: Uint8Array): HexString {
+    return '0x' + bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');
+}
+
+export function hexToBytes(hex: string): Uint8Array {
+    strings.requireNonNil(hex);
+    if (hex.length % 2 !== 0) {
+        throw new Error(`invalid hex string: ${hex}`);
+    }
+
+    // strip 0x prefix
+    if (hex.startsWith('0x')) {
+        hex = hex.slice(2);
+    }
+
+    const bytes = new Uint8Array(hex.length / 2);
+    for (let i = 0; i < hex.length; i += 2) {
+        bytes[i / 2] = parseInt(hex.slice(i, i + 2), 16);
+    }
+    return bytes;
+}
+
+export function bytesToString(bytes: Uint8Array): string {
     objects.requireNonNil(bytes);
     let string = '';
     for (let i = 0; i < bytes.length; i++) {
@@ -21,7 +99,7 @@ export function BytesToString(bytes: Uint8Array): string {
     return string;
 }
 
-export function Int32ToBytes(num: number): Uint8Array {
+export function int32ToBytes(num: number): Uint8Array {
     objects.requireNonNilNumber(num);
     const buffer = new ArrayBuffer(4);
     const view = new DataView(buffer);
@@ -29,7 +107,7 @@ export function Int32ToBytes(num: number): Uint8Array {
     return new Uint8Array(buffer);
 }
 
-export function BytesToInt32(bytes: Uint8Array): number {
+export function bytesToInt32(bytes: Uint8Array): number {
     objects.requireNonNil(bytes);
     const buffer = new ArrayBuffer(4);
     const view = new DataView(buffer);
@@ -39,7 +117,7 @@ export function BytesToInt32(bytes: Uint8Array): number {
     return view.getInt32(0, true);
 }
 
-export function Int64ToBytes(num: number): Uint8Array {
+export function int64ToBytes(num: number): Uint8Array {
     objects.requireNonNilNumber(num);
     const longNum = Long.fromNumber(num, true);
     const buffer = new ArrayBuffer(8);
@@ -49,7 +127,7 @@ export function Int64ToBytes(num: number): Uint8Array {
     return new Uint8Array(buffer);
 }
 
-export function BytesToInt64(bytes: Uint8Array): number {
+export function bytesToInt64(bytes: Uint8Array): number {
     objects.requireNonNil(bytes);
     const buffer = new ArrayBuffer(8);
     const view = new DataView(buffer);
@@ -59,7 +137,7 @@ export function BytesToInt64(bytes: Uint8Array): number {
     return view.getInt32(0, true);
 }
 
-export function BooleanToBytes(bool: boolean): Uint8Array {
+export function booleanToBytes(bool: boolean): Uint8Array {
     objects.requireNonNil(bool);
     const buffer = new ArrayBuffer(1);
     const view = new DataView(buffer);
@@ -67,7 +145,7 @@ export function BooleanToBytes(bool: boolean): Uint8Array {
     return new Uint8Array(buffer);
 }
 
-export function BytesToBoolean(bytes: Uint8Array): boolean {
+export function bytesToBoolean(bytes: Uint8Array): boolean {
     objects.requireNonNil(bytes);
     const buffer = new ArrayBuffer(1);
     const view = new DataView(buffer);
@@ -75,4 +153,8 @@ export function BytesToBoolean(bytes: Uint8Array): boolean {
         view.setUint8(i, bytes[i]);
     }
     return view.getUint8(0) === 1;
+}
+
+export function base64UrlEncode(base64: string): string {
+    return base64.replace(/\+/g, '-').replace(/\//g, '_');
 }

@@ -1,6 +1,11 @@
 import {Database} from "./database";
 import {Account} from "./account";
-import {TxnData, TxReceipt} from "./tx";
+import {Transaction, TxnData } from "./tx";
+import { TxResult } from "./txQuery";
+
+type SchemaRes = Database & {
+    owner: string;
+}
 
 export interface GenericResponse<T> {
     status: number;
@@ -8,7 +13,7 @@ export interface GenericResponse<T> {
 }
 
 export interface GetSchemaResponse {
-    dataset: Database<string>;
+    schema: SchemaRes;
 }
 
 export interface GetAccountResponse {
@@ -32,7 +37,11 @@ export interface BroadcastReq {
 }
 
 export interface BroadcastRes {
-    receipt: TxReceipt;
+    tx_hash: string;
+}
+
+export interface CallRes {
+    result: string;
 }
 
 export interface PongRes {
@@ -42,8 +51,14 @@ export interface PongRes {
 export interface SelectRes {
     result: string
 }
-export interface FundingConfigRes {
-    chain_code: number;
-    provider_address: string;
-    pool_address: string;
+
+export interface TxQueryReq {
+    tx_hash: string;
+}
+
+export interface TxQueryRes {
+    hash: string;
+    height: number;
+    tx: Transaction;
+    tx_result: TxResult;
 }

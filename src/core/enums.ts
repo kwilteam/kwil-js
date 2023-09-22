@@ -1,12 +1,13 @@
 export type ValueType = string | number | null;
 
 export enum DataType {
-    NULL = "NULL",
+    NULL = "",
     TEXT = "TEXT",
     INT = "INT"
 }
 
 export enum AttributeType {
+    INVALID_TYPE = "",
     PRIMARY_KEY = "PRIMARY_KEY",
     UNIQUE = "UNIQUE",
     NOT_NULL = "NOT_NULL",
@@ -19,6 +20,20 @@ export enum AttributeType {
 
 
 export enum IndexType {
+    INVALID_INDEX_TYPE = "",
     BTREE = "BTREE",
     UNIQUE_BTREE = "UNIQUE_BTREE"
+}
+
+export enum EncodingType {
+    INVALID_ENCODING_TYPE = 0,
+    RLP_ENCODING
+}
+
+export enum PayloadType {
+    INVALID_PAYLOAD_TYPE = 'invalid',
+    DEPLOY_DATABASE = 'deploy_schema',
+    DROP_DATABASE = 'drop_schema',
+    EXECUTE_ACTION = 'execute_action',
+    CALL_ACTION = 'call_action',
 }

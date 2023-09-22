@@ -1,20 +1,32 @@
-import {NonNil, Promisy} from "../utils/types";
-import {PayloadType, Transaction} from "./tx";
-import {ethers, Signer as _Signer} from "ethers";
+import { NonNil, Promisy } from "../utils/types";
+import { Transaction } from "./tx";
+import {ethers, Signer as _Signer, JsonRpcSigner } from "ethers";
 import {ActionInput} from "./actionInput";
 import {Wallet as Walletv5, Signer as Signerv5} from "ethers5";
+import { PayloadType } from "./enums";
+import { Message } from "./message";
+import { Signer as _NearSigner } from 'near-api-js'
+import { SignatureType } from "./signature";
 
-export type Signer = NonNil<_Signer | ethers.Wallet | Walletv5 | Signerv5>;
-export type SignerSupplier = Promisy<Signer>
+export type EthSigner = NonNil<_Signer | JsonRpcSigner | ethers.Wallet | Walletv5 | Signerv5 >;
+export type NearSigner = NonNil<_NearSigner>;
+
+export type CustomSigner = NonNil<(message: Uint8Array, ...args: any[]) => Promise<Uint8Array>>
+// export type AllSigners = NonNil<SignerSupplier | CustomSigner>;
+export type SignerSupplier = Promisy<EthSigner | CustomSigner>
 
 export interface TxnBuilder {
     payloadType(payloadType: NonNil<PayloadType>): NonNil<TxnBuilder>;
 
-    signer(signer: SignerSupplier): NonNil<TxnBuilder>;
+    signer(signer: SignerSupplier, sigType: SignatureType): NonNil<TxnBuilder>;
+
+    publicKey(publicKey: string | Uint8Array): NonNil<TxnBuilder>;
 
     payload(payload: (() => NonNil<object>) | NonNil<object>): NonNil<TxnBuilder>;
 
-    build(): Promise<Transaction>;
+    buildTx(): Promise<Transaction>;
+
+    buildMsg(): Promise<Message>;
 }
 
 export interface DBBuilder {
@@ -25,7 +37,7 @@ export interface DBBuilder {
      * @returns The current `DBBuilder` instance for chaining.
      */
 
-    signer(signer: SignerSupplier): NonNil<DBBuilder>;
+    signer(signer: SignerSupplier, signatureType?: SignatureType): NonNil<DBBuilder>;
 
     /**
      * Sets the database JSON payload for the database transaction.
@@ -35,6 +47,16 @@ export interface DBBuilder {
      */
 
     payload(payload: (() => NonNil<object>) | NonNil<object>): NonNil<DBBuilder>;
+
+    /**
+     * Set the public key for the transaction. This identifies the transaction sender.
+     * This should be the public key of the signer.
+     * 
+     * @param publicKey - The public key for the transaction sender. Ethereum keys can be passed as a hex string (0x123...) or as bytes (Uint8Array). NEAR protocol public keys can be passed as the base58 encoded public key (with "ed25519:" prefix), a hex string, or bytes (Uint8Array).
+     * @returns The current `DBBuilder` instance for chaining.
+     */
+
+    publicKey(publicKey: string | Uint8Array): NonNil<DBBuilder>;
 
     /**
      * Builds a database transaction.
@@ -84,14 +106,33 @@ export interface ActionBuilder {
      * @throws Will throw an error if the action is being built.
      */
 
-    signer(signer: SignerSupplier): NonNil<ActionBuilder>;
+    signer(signer: SignerSupplier, signatureType?: SignatureType): NonNil<ActionBuilder>;
+
+    /**
+     * Set the public key for the transaction. This identifies the transaction sender.
+     * This should be the public key of the signer.
+     * 
+     * @param publicKey - The public key for the transaction sender. Ethereum keys can be passed as a hex string (0x123...) or as bytes (Uint8Array). NEAR protocol public keys can be passed as the base58 encoded public key (with "ed25519:" prefix), a hex string, or bytes (Uint8Array).
+     * @returns The current `DBBuilder` instance for chaining.
+     */
+
+    publicKey(publicKey: string | Uint8Array): NonNil<ActionBuilder>;
 
     /**
      * Builds a transaction.
      * 
-     * @returns A promise that resolves to a Transaction object. This transaction can be broadcasted to the Kwil network.
+     * @returns A promise that resolves to a Transaction object. This transaction can be broadcasted to the Kwil network with the `kwil.broadcast()` api.
      * @throws Will throw an error if the action is being built or if there's an issue with the schema retrieval for validating the action.
      */
 
     buildTx(): Promise<Transaction>;
+
+    /**
+     * Builds a message.
+     * 
+     * @returns A promise that resolves to a Message object. This message can be sent to the Kwil network with the `kwil.call()` api.
+     * @throws Will throw an error if the action is being built or if there's an issue with the schema retrieval for validating the action.
+     */
+
+    buildMsg(): Promise<Message>;
 }

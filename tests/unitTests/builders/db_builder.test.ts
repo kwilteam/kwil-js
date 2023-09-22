@@ -3,7 +3,8 @@ import { DBBuilderImpl } from "../../../src/builders/db_builder";
 import { DBBuilder } from "../../../src/core/builders";
 import { Kwil } from "../../../src/client/kwil";
 import { Wallet } from "ethers";
-import { PayloadType, Transaction } from "../../../src/core/tx";
+import { Transaction } from "../../../src/core/tx";
+import { PayloadType } from "../../../src/core/enums";
 
 class TestKwil extends Kwil {
     public constructor() {
@@ -16,14 +17,14 @@ describe('DbBuilder', () => {
     const mockKwil = new TestKwil();
 
     beforeEach(() => {
-        dbBuilder = DBBuilderImpl.of(mockKwil);
+        dbBuilder = DBBuilderImpl.of(mockKwil, PayloadType.DEPLOY_DATABASE);
         getMock.mockReset();
         postMock.mockReset();
     });
 
     describe('of', () => {
         it('should return a DBBuilderImpl', () => {
-            const result = DBBuilderImpl.of(mockKwil);
+            const result = DBBuilderImpl.of(mockKwil, PayloadType.DEPLOY_DATABASE);
             expect(result).toBeInstanceOf(DBBuilderImpl);
         });
     })

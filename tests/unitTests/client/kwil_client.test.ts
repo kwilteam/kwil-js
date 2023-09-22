@@ -2,8 +2,9 @@ import { getMock, postMock } from "../api_client/api-utils";
 import { Kwil } from "../../../src/client/kwil";
 import { ActionBuilderImpl } from "../../../src/builders/action_builder";
 import { DBBuilderImpl } from "../../../src/builders/db_builder";
-import { PayloadType, Transaction } from "../../../src/core/tx";
-import { DropDBBuilderImpl } from "../../../src/builders/drop_db_builder";
+import { Transaction } from "../../../src/core/tx";
+import { Message } from "../../../src/core/message";
+import { PayloadType } from "../../../src/core/enums";
 
 class TestKwil extends Kwil {
     constructor() {
@@ -84,9 +85,9 @@ describe('Kwil', () => {
 
     describe('dropDbBuilder', () => {
         it('should return a db builder', () => {
-            const dbBuilder = kwil.dropDBBuilder();
+            const dbBuilder = kwil.dropDbBuilder();
             expect(dbBuilder).toBeDefined();
-            expect(dbBuilder).toBeInstanceOf(DropDBBuilderImpl)
+            expect(dbBuilder).toBeInstanceOf(DBBuilderImpl)
         })
     })
 
@@ -118,6 +119,28 @@ describe('Kwil', () => {
                 txHash: '0xdc3fc49be86a999606fd997bf897ec6a0d01d618c3feddd9ff8dad936c6bbbc79c9820f5e1d638399eaad75a373ee10f',
                 fee: 'mockFee',
                 body: []
+            });
+        })
+    })
+
+    describe('call', () => {
+        it('should send a message to a kwil node (read only operation)', async () => {
+            const msg = new Message({
+                payload: "mockPayload",
+                sender: "mockSender",
+                signature: {
+                    signature_bytes: "mockSignatureBytes",
+                    signature_type: 1
+                }
+            })
+            postMock.mockResolvedValue({
+                status: 200,
+                data: { result: 'W10=' }
+            });
+            const result = await kwil.call(msg);
+            expect(result.status).toBe(200);
+            expect(result.data).toEqual({
+                result: []
             });
         })
     })

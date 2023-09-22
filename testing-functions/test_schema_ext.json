@@ -1,0 +1,82 @@
+{
+  "owner": "",
+  "name": "testnet_balance",
+  "tables": [
+    {
+      "name": "users",
+      "columns": [
+        {
+          "name": "id",
+          "type": "int",
+          "attributes": [
+            {
+              "type": "primary_key"
+            },
+            {
+              "type": "not_null"
+            }
+          ]
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "attributes": [
+            {
+              "type": "not_null"
+            }
+          ]
+        },
+        {
+          "name": "balance",
+          "type": "int",
+          "attributes": [
+            {
+              "type": "not_null"
+            }
+          ]
+        },
+        {
+          "name": "wallet",
+          "type": "text",
+          "attributes": [
+            {
+              "type": "not_null"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "name": "add_user",
+      "public": true,
+      "inputs": [
+        "$id",
+        "$name"
+      ],
+      "statements": [
+        "$bal=kwil_testnet.retrieveBalance(@caller);",
+        "INSERT INTO users\n    VALUES ($id, $name, $bal, @caller);"
+      ]
+    },
+    {
+      "name": "get_users",
+      "public": true,
+      "inputs": null,
+      "statements": [
+        "$bal=kwil_testnet.checkBalance(@caller);",
+        "SELECT * FROM users;"
+      ]
+    }
+  ],
+  "extensions": [
+    {
+      "name": "erc20extensions",
+      "config": {
+        "erc_address": "\"0x123b2cc26f7083c9eB38A9A2015F021dBf6368de\""
+      },
+      "alias": "kwil_testnet"
+    }
+  ]
+}

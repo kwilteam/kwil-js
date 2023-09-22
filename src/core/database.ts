@@ -1,43 +1,70 @@
 import { AttributeType, DataType, IndexType } from "./enums";
 
-export interface Database<T> {
-    get name(): string;
-    get owner(): string;
-    get tables(): ReadonlyArray<Table<T>>;
-    get actions(): ReadonlyArray<ActionSchema>;
+export interface Database {
+    owner: Uint8Array;
+    name: string;
+    tables: ReadonlyArray<Table>;
+    actions: ReadonlyArray<ActionSchema>;
+    extensions: ReadonlyArray<Extension>;
 }
 
-export interface Table<T> {
-    get name(): string;
-    get columns(): ReadonlyArray<Column<T>>;
-    get indexes(): ReadonlyArray<Index>;
+export interface Table{
+    name: string;
+    columns: ReadonlyArray<Column>;
+    indexes: ReadonlyArray<Index>;
+    foreign_keys: ReadonlyArray<ForeignKey>;
 }
 
-export interface Column<T> {
-    get name(): string;
-    get type(): DataType;
-    get attributes(): ReadonlyArray<Attribute<T>>;
+export interface Column {
+    name: string;
+    type: DataType;
+    attributes: ReadonlyArray<Attribute>;
 }
 
-export interface Attribute<T> {
-    get type(): AttributeType;
-    get value(): T;
+export interface Attribute {
+    type: AttributeType;
+    value: string;
 }
 
 export interface Index {
-    get name(): string;
-    get columns(): ReadonlyArray<string>;
-    get type(): IndexType;
+    name: string;
+    columns: ReadonlyArray<string>;
+    type: IndexType;
+}
+
+export interface ForeignKey {
+    child_keys: ReadonlyArray<string>;
+    parent_keys: ReadonlyArray<string>;
+    parent_table: string;
+    actions: ReadonlyArray<ForeignKeyAction>;
+}
+
+export interface ForeignKeyAction {
+    on: string;
+    do: string;
 }
 
 export interface ActionSchema {
-    get name(): string;
-    get public(): boolean;
-    get inputs(): ReadonlyArray<string>;
-    get statements(): ReadonlyArray<string>;
+    name: string;
+    inputs: ReadonlyArray<string>;
+    mutability: string;
+    auxiliaries: ReadonlyArray<string>;
+    public: boolean;
+    statements: ReadonlyArray<string>;
+}
+
+export interface Extension {
+    name: string;
+    config: ReadonlyArray<ExtensionConfig>;
+    alias: string;
+}
+
+export interface ExtensionConfig {
+    Argument: string;
+    Value: string;
 }
 
 export interface SelectQuery {
-    get dbid(): string;
-    get query(): string;
+    dbid: string;
+    query: string;
 }

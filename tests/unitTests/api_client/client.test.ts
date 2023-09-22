@@ -1,7 +1,14 @@
 
 import { getMock, postMock } from './api-utils';
 import Client from "../../../src/api_client/client";
-import { PayloadType, Transaction } from "../../../src/core/tx";
+import { Transaction } from "../../../src/core/tx";
+import { Message } from '../../../src/core/message';
+import { PayloadType } from '../../../src/core/enums';
+import { SignatureType } from '../../../src/core/signature';
+import { bytesToHex, hexToBytes, stringToBytes } from '../../../dist/utils/serial';
+import { base64ToBytes, bytesToBase64 } from '../../../src/utils/base64';
+import { concatBytes } from '../../../src/utils/bytes';
+import { encodeRlp } from 'ethers';
 require('dotenv').config();
 
 describe('Client', () => {
@@ -23,25 +30,25 @@ describe('Client', () => {
         jest.clearAllMocks();
     })
 
-    it('should get funding config', async () => {
-        getMock.mockResolvedValue({ status: 200, data: 1 });
-
-        const result = await client.getFundingConfig();
-        expect(result.status).toBe(200);
-        expect(result.data).toBe(1);
-
-        expect(getMock).toHaveBeenCalledWith('/api/v1/config', undefined);
-    });
-
     describe('getSchema', () => {
         it('should get schema if schema exists', async () => {
             getMock.mockResolvedValue({
                 status: 200,
-                data: { dataset: 'mockDataset' }
+                data: { schema: {
+                    name: 'mockName',
+                    owner: 'bW9ja093bmVy',
+                    tables: [],
+                    actions: [],
+                    extensions: []
+                }}
             });
             const result = await client.getSchema('someDbId');
             expect(result.status).toBe(200);
-            expect(result.data).toEqual('mockDataset');
+            expect(result.data?.owner).toBeDefined();
+            expect(result.data?.name).toBeDefined();
+            expect(result.data?.tables).toBeDefined();
+            expect(result.data?.actions).toBeDefined();
+            expect(result.data?.extensions).toBeDefined();
             expect(getMock).toHaveBeenCalledWith('/api/v1/databases/someDbId/schema', undefined);
         });
 
@@ -61,12 +68,16 @@ describe('Client', () => {
         it('should get account if account exists', async () => {
             getMock.mockResolvedValue({
                 status: 200,
-                data: { account: 'mockAccount' }
+                data: { account: {
+                    public_key: 'bW9ja093bmVy',
+                    nonce: '1',
+                    balance: 'mockBalance'
+                }}
             });
-            const result = await client.getAccount('someAddress');
+            const result = await client.getAccount(stringToBytes('someAddress'));
             expect(result.status).toBe(200);
-            expect(result.data).toEqual('mockAccount');
-            expect(getMock).toHaveBeenCalledWith('/api/v1/accounts/someAddress', undefined);
+            expect(result.data?.public_key).toBeDefined();
+            expect(getMock).toHaveBeenCalledWith('/api/v1/accounts/c29tZUFkZHJlc3M=', undefined);
         });
 
         it('should throw error if account does not exist', async () => {
@@ -76,8 +87,8 @@ describe('Client', () => {
 
             getMock.mockResolvedValue(mockRes);
 
-            await expect(client.getAccount('someAddress')).rejects.toThrow('An unknown error has occurred.  Please check your network connection.');
-            expect(getMock).toHaveBeenCalledWith('/api/v1/accounts/someAddress', undefined);
+            await expect(client.getAccount(stringToBytes('someAddress'))).rejects.toThrow('An unknown error has occurred.  Please check your network connection.');
+            expect(getMock).toHaveBeenCalledWith('/api/v1/accounts/c29tZUFkZHJlc3M=', undefined);
         });
     })
 
@@ -87,10 +98,10 @@ describe('Client', () => {
                 status: 200,
                 data: { databases: ['mockDatabase1', 'mockDatabase2'] }
             });
-            const result = await client.listDatabases("someAddress");
+            const result = await client.listDatabases(stringToBytes('someAddress'));
             expect(result.status).toBe(200);
             expect(result.data).toEqual(['mockDatabase1', 'mockDatabase2']);
-            expect(getMock).toHaveBeenCalledWith('/api/v1/someAddress/databases', undefined);
+            expect(getMock).toHaveBeenCalledWith('/api/v1/c29tZUFkZHJlc3M=/databases', undefined);
         });
 
         it('should throw error if databases do not exist', async () => {
@@ -101,8 +112,8 @@ describe('Client', () => {
 
             getMock.mockResolvedValue(mockRes);
 
-            await expect(client.listDatabases('someAddress')).rejects.toThrow('No databases for wallet');
-            expect(getMock).toHaveBeenCalledWith('/api/v1/someAddress/databases', undefined);
+            await expect(client.listDatabases(stringToBytes('someAddress'))).rejects.toThrow('No databases for wallet');
+            expect(getMock).toHaveBeenCalledWith('/api/v1/c29tZUFkZHJlc3M=/databases', undefined);
         });
     });
 
@@ -141,15 +152,17 @@ describe('Client', () => {
 
         it('should broadcast a signed transaction', async () => {
             const tx = new Transaction({
-                hash: 'mockHash',
-                payload_type: PayloadType.EXECUTE_ACTION,
-                payload: 'mockPayload',
-                fee: 'mockFee',
-                nonce: 1,
+                body: {
+                    payload: 'mockPayload',
+                    payload_type: PayloadType.EXECUTE_ACTION,
+                    fee: 'mockFee',
+                    nonce: 1,
+                    salt: new Uint8Array()
+                },
                 sender: 'mockSender',
                 signature: {
                     signature_bytes: 'mockSignatureBytes',
-                    signature_type: 1
+                    signature_type: SignatureType.SECP256K1_PERSONAL
                 }
             })
 
@@ -162,9 +175,7 @@ describe('Client', () => {
 
             expect(result.status).toBe(200);
             expect(result.data).toEqual({
-                txHash: '0xdc3fc49be86a999606fd997bf897ec6a0d01d618c3feddd9ff8dad936c6bbbc79c9820f5e1d638399eaad75a373ee10f',
-                fee: 'mockFee',
-                body: []
+                tx_hash: "0x"
             });
             expect(postMock).toHaveBeenCalledWith('/api/v1/broadcast', { tx }, undefined);
         });
@@ -225,6 +236,102 @@ describe('Client', () => {
 
             await expect(client.selectQuery(query)).rejects.toThrow('Error selecting query');
             expect(postMock).toHaveBeenCalledWith('/api/v1/query', query, undefined);
+        });
+    });
+
+    describe('txInfo', () => {
+        it('should get tx info for a given tx hash', async() => {
+            const txHash = 'mockTxHash';
+
+            const rlpPayload = encodeRlp(bytesToHex(base64ToBytes('W10=')));
+            const mockPayload = concatBytes(new Uint8Array([0, 1]), hexToBytes(rlpPayload))
+
+            postMock.mockResolvedValue({
+                status: 200,
+                data: { 
+                    hash: 'bW9ja0hhc2gNCg==',
+                    height: 1, 
+                    tx: {
+                        body: {
+                            payload: bytesToBase64(mockPayload),
+                            payload_type: PayloadType.EXECUTE_ACTION,
+                            fee: 'mockFee',
+                            nonce: 1,
+                            salt: bytesToBase64(new Uint8Array())
+                        },
+                        signature: {
+                            signature_bytes: 'W10=',
+                            signature_type: SignatureType.SECP256K1_PERSONAL
+                        },
+                        sender: 'bW9ja1NlbmRlcg=='
+                    },
+                    tx_result: 'mockTxResult'
+                }
+            });
+            const result = await client.txInfo(txHash);
+            expect(result.status).toBe(200);
+            expect(result.data).toBeDefined();
+            expect(result.data?.hash).toBeDefined();
+            expect(result.data?.height).toBeDefined();
+            expect(result.data?.tx).toBeDefined();
+            expect(result.data?.tx_result).toBeDefined();
+            expect(postMock).toHaveBeenCalledWith('/api/v1/tx_query', { tx_hash: 'AAwAAAA=' }, undefined);
+        })
+
+        it('should throw error if tx does not exist', async () => {
+            const txHash = 'mockTxHash';
+            const mockRes = {
+                status: 400,
+                data: "Error getting tx info"
+            };
+
+            postMock.mockResolvedValue(mockRes);
+
+            await expect(client.txInfo(txHash)).rejects.toThrow('Error getting tx info');
+            expect(postMock).toHaveBeenCalledWith('/api/v1/tx_query', { tx_hash: 'AAwAAAA=' }, undefined);
+        })
+    });
+
+    describe('call', () => {
+        it('should send a message to the call endpoint', async () => {
+            const msg = new Message({
+                payload: "mockPayload",
+                sender: "mockSender",
+                signature: {
+                    signature_bytes: "mockSignatureBytes",
+                    signature_type: SignatureType.SECP256K1_PERSONAL
+                }
+            })
+            postMock.mockResolvedValue({
+                status: 200,
+                data: { result: 'W10=' }
+            });
+            const result = await client.call(msg);
+            expect(result.status).toBe(200);
+            expect(result.data).toEqual({
+                result: []
+            });
+            expect(postMock).toHaveBeenCalled();
+        });
+
+        it('should throw error if call fails', async () => {
+            const msg = new Message({
+                payload: "mockPayload",
+                sender: "mockSender",
+                signature: {
+                    signature_bytes: "mockSignatureBytes",
+                    signature_type: SignatureType.SECP256K1_PERSONAL
+                }
+            })
+            const mockRes = {
+                status: 400,
+                data: "Error calling"
+            };
+
+            postMock.mockResolvedValue(mockRes);
+
+            await expect(client.call(msg)).rejects.toThrow('Error calling');
+            expect(postMock).toHaveBeenCalled();
         });
     });
 });
