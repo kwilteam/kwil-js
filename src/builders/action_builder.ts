@@ -181,8 +181,8 @@ export class ActionBuilderImpl implements ActionBuilder {
             const signatureType = await Promisy.resolveOrReject(this._signatureType);
             msg = msg
                 .signer(signer, signatureType)
-                .publicKey(publicKey);
-                .description(this._description)
+                .publicKey(publicKey)
+                .description(this._description);
         }
 
         return await msg.buildMsg();

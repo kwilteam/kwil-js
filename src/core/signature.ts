@@ -2,7 +2,7 @@ import { HexString } from "../utils/types";
 import { EthSigner, SignerSupplier } from "./builders";
 import { Wallet as Walletv5, Signer as Signerv5 } from "ethers5";
 import { Wallet as Walletv6 } from "ethers";
-import { hexToBytes } from "../utils/serial";
+import { hexToBytes, stringToBytes } from "../utils/serial";
 import { PayloadType } from "./enums";
 
 export interface Signature {
@@ -47,7 +47,7 @@ export function isEthersSigner(signer: SignerSupplier): boolean {
     return false
 }
 
-export async function executeSign(msg: Uint8Array, signer: SignerSupplier, signatureType: SignatureType): Promise<Uint8Array> {
+export async function executeSign(msg: Uint8Array , signer: SignerSupplier, signatureType: SignatureType): Promise<Uint8Array> {
     if(isEthersSigner(signer) && signatureType === SignatureType.SECP256K1_PERSONAL) {
         const hexSig =  await ethSign(msg, signer as EthSigner);
         return hexToBytes(hexSig);

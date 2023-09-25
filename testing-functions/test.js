@@ -42,7 +42,7 @@ async function test() {
     // logger(dbid)
     // await addWallet(kwil, dbid, pubByte, wallet)
     // await testFractal(kwil, dbid, pubKey, wallet)
-    // broadcast(kwil, testDB, wallet, pubKey)
+    broadcast(kwil, testDB, wallet, pubKey)
     // await getTxInfo(kwil, txHash)
     // await getSchema(kwil, dbid)
     // getAccount(kwil, '0x0428179ef59832060b57cfbbbf56c6c19af471427660f490f99178d6d5cf060880c740d7ffdbd10b5de7c96794a0134e55039c1788e8c9ecbc0af97153396d1fa6')
@@ -50,9 +50,6 @@ async function test() {
     //  getSchema(kwil, dbid)
     //  getSchema(kwil, dbid)
     //  await getSchema(kwil, dbid)
-
-
-   
     // ping(kwil)
     // getFunder(kwil, wallet)
     // getAllowance(kwil, wallet)
@@ -83,7 +80,7 @@ async function test() {
     // await testViewWithSign(kwil, dbid, wallet, pubByte)
     // await customSignature(kwil, dbid)
     // await julioSignature(kwil, dbid)
-    await customEd25519(kwil, dbid)
+    // await customEd25519(kwil, dbid)
 }
 
 test()

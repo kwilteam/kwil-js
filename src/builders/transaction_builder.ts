@@ -11,7 +11,7 @@ import { unwrap } from "../client/intern";
 import { PayloadType, SerializationType } from "../core/enums";
 import { kwilEncode } from "../utils/rlp";
 import { base64ToHex, bytesToHex, bytesToString, hexToBase64, hexToBytes, stringToBytes, stringToHex } from "../utils/serial";
-import { SignatureType } from "../core/signature";
+import { SignatureType, executeSign } from "../core/signature";
 import { Message, Msg } from "../core/message";
 import { isNearPubKey, nearB58ToHex } from "../utils/keys";
 import util from 'util';
@@ -89,7 +89,6 @@ export class TxnBuilderImpl implements TxnBuilder {
 
         const payloadType = objects.requireNonNil(this._payloadType);
 
-
         if(!this._publicKey) {
             throw new Error("Public key is required to build a transaction. Please chain the .publicKey() method to your builder.");
         }
@@ -98,9 +97,6 @@ export class TxnBuilderImpl implements TxnBuilder {
         if (acct.status !== 200 || !acct.data) {
             throw new Error(`Could not retrieve account ${this._publicKey}. Please double check that you have the correct account address.`);
         }
-
-        console.log('RAW PAYLOAD ===')
-        console.log(util.inspect(json, false, null, true /* enable colors */))
 
         const preEstTxn = Txn.create(tx => {
             tx.body.payload = bytesToBase64(kwilEncode(json));
@@ -190,28 +186,28 @@ export class TxnBuilderImpl implements TxnBuilder {
         //     tx.body.salt = generateSalt(16)
         // })
 
-        const salt = generateSalt(16);
-
-   
+        // const salt = generateSalt(16);
+        const salt = new Uint8Array();
 
         const digest = sha256BytesToBytes(base64ToBytes(tx.body.payload as string)).subarray(0, 20);
 
         const signatureMessage = `${description}
 
 PayloadType: ${tx.body.payload_type}
-PayloadDigest: ${bytesToHex(digest).slice(2)}
+PayloadDigest: ${bytesToHex(digest)}
 Fee: ${tx.body.fee}
 Nonce: ${tx.body.nonce}
-Salt: ${bytesToHex(salt).slice(2)}
+Salt: ${bytesToHex(salt)}
 
 Kwil 🖋
 `
+console.log(signatureMessage)
+        const signedMessage = await executeSign(stringToBytes(signatureMessage), signer, signatureType)
 
-        const encodedTx = kwilEncode(preEncodedBody.body);
-        const signedMessage = await executeSign(encodedTx, signer, signatureType)
+        console.log(signedMessage)
 
-        return Txn.copy(preEncodedBody, (tx) => {
-            tx.signature = {
+        return Txn.copy(tx, (newTx) => {
+            newTx.signature = {
                 signature_bytes: bytesToBase64(signedMessage),
                 signature_type: signatureType.toString() as SignatureType
             };
