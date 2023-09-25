@@ -63,7 +63,7 @@ export class DBBuilderImpl implements DBBuilder {
         this._publicKey = objects.requireNonNil(publicKey);
         return this;
     }
-    
+
     description(description: string): NonNil<DBBuilder> {
         this._description = objects.requireNonNil(description);
         return this;

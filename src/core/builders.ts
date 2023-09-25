@@ -21,8 +21,6 @@ export interface TxnBuilder {
     signer(signer: SignerSupplier, sigType: SignatureType): NonNil<TxnBuilder>;
 
     publicKey(publicKey: string | Uint8Array): NonNil<TxnBuilder>;
-    
-    description(description: Nillable<string>): NonNil<TxnBuilder>;
 
     description(description: Nillable<string>): NonNil<TxnBuilder>;
 
@@ -123,8 +121,6 @@ export interface ActionBuilder {
      */
 
     publicKey(publicKey: string | Uint8Array): NonNil<ActionBuilder>;
-
-    description(description: string): NonNil<ActionBuilder>;
 
     description(description: string): NonNil<ActionBuilder>;
 
