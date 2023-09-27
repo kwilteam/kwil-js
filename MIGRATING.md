@@ -201,8 +201,6 @@ const res = await kwil.call(msg);
 
 If a `view` action has a `must_sign` auxiliary, you should also chain `.signer()` and `.publicKey()` methods to the builder. You can also chain a `.description()` to customize the signature message.
 
-If you are using a NEAR signer, you must also chain the `.nearConfig()` method.
-
 ### TxInfo Endpoint
 
 After broadcasting a transaction, you can check its status (success, failure, blockheight, etc) by calling the `kwil.txInfo()` method.

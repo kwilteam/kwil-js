@@ -183,6 +183,7 @@ const tx = await kwil
     .concat(input)
     .publicKey(keys.publicKey)
     .signer(customSigner, 'ed25519')
+    .description("Click sign to execute the action!")
     .buildTx()
 
 await kwil.broadcast(tx);
@@ -256,8 +257,6 @@ const res = await kwil.call(msg)
 `View` actions may also require a signer, depending on if the original actions were deployed with a `must_sign` attribute. You can check if an action requires a signature by calling `kwil.getSchema()`.
 
 If an action requires a signature, you should chain `.publicKey()` and `.signer()` methods before building. You can also customize the message with the `.description()` method.
-
-If you are using an ED25519 signer, you should also chain a `.nearConfig()` method.
 
 #### Select Query
 
