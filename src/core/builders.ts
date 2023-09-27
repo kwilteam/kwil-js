@@ -12,7 +12,6 @@ export type EthSigner = NonNil<_Signer | JsonRpcSigner | ethers.Wallet | Walletv
 export type NearSigner = NonNil<_NearSigner>;
 
 export type CustomSigner = NonNil<(message: Uint8Array, ...args: any[]) => Promise<Uint8Array>>
-// export type AllSigners = NonNil<SignerSupplier | CustomSigner>;
 export type SignerSupplier = Promisy<EthSigner | CustomSigner>
 
 export interface TxnBuilder {
@@ -35,8 +34,9 @@ export interface DBBuilder {
     /**
      * Sets the signer for the database transaction.
      * 
-     * @param signer - The signer for the database transaction. This must be a valid Ethereum signer from Ethers v5 or Ethers v6.
-     * @returns The current `DBBuilder` instance for chaining.
+     * @param {SignerSupplier} signer - The signer for the database transaction. This can be a `Signer` from Ethers v5 or Ethers v6 or a custom signer function. Custom signers must be of the form `(message: Uint8Array, ...args: any[]) => Promise<Uint8Array>`.
+     * @param {SignatureType} [signatureType='secp256k1'] - The signature type for the database transaction. This is only required if the signer is a custom signer function.
+     * @returns {DBBuilder} The current `DBBuilder` instance for chaining.
      */
 
     signer(signer: SignerSupplier, signatureType?: SignatureType): NonNil<DBBuilder>;
@@ -60,6 +60,13 @@ export interface DBBuilder {
 
     publicKey(publicKey: string | Uint8Array): NonNil<DBBuilder>;
 
+    /**
+     * Add a description for the signature message that will appear in browser wallets (e.g. Metamask, Coinbase Wallet, etc).
+     * The description should be a short message that describes the transaction.
+     * 
+     * @param description - The description that will appear in metamask.
+     * @returns The current `DBBuilder` instance for chaining.
+     */
     description(description: string): NonNil<DBBuilder>;
 
     /**
@@ -105,8 +112,8 @@ export interface ActionBuilder {
     /**
      * Sets the signer for the action transaction.
      * 
-     * @param signer - The signer for the action. This must be a valid Ethereum signer from Ethers v5 or Ethers v6.
-     * @returns The current `ActionBuilder` instance for chaining.
+     * @param signer - The signer for the database transaction. This can be a `Signer` from Ethers v5 or Ethers v6 or a custom signer function. Custom signers must be of the form `(message: Uint8Array, ...args: any[]) => Promise<Uint8Array>`.
+     * @param signatureType - The signature type for the database transaction. This is only required if the signer is a custom signer function.
      * @throws Will throw an error if the action is being built.
      */
 
@@ -122,6 +129,13 @@ export interface ActionBuilder {
 
     publicKey(publicKey: string | Uint8Array): NonNil<ActionBuilder>;
 
+    /**
+     * Add a description for the signature message that will appear in browser wallets (e.g. Metamask, Coinbase Wallet, etc).
+     * The description should be a short message that describes the action being executed.
+     * 
+     * @param description - The description that will appear in metamask.
+     * @returns The current `ActionBuilder` instance for chaining.
+     */
     description(description: string): NonNil<ActionBuilder>;
 
     /**

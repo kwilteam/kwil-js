@@ -463,6 +463,14 @@ describe("ActionBuilder + ActionInput + Transaction public methods & broadcastin
         expect(result).toBe(actionBuilder);
     })
 
+    test("This actionbuilder.description() method should return an actionBuilder with a description", () => {
+        const result = actionBuilder.description("This is a test action");
+
+        expect(result).toBeDefined();
+        expect(result).toBeInstanceOf(ActionBuilderImpl);
+        expect(result).toBe(actionBuilder);
+    })
+
     let actionTx: Transaction;
 
     test("The actionBuilder.buildTx() method should return a signed transaction", async () => {
@@ -547,6 +555,13 @@ describe("DBBuilder", () => {
         expect(newDb).toBeInstanceOf(DBBuilderImpl);
     });
 
+    test("DBBuilderImpl.description() should return a DBBuilder", () => {
+        newDb = newDb.description("This is a test database");
+
+        expect(newDb).toBeDefined();
+        expect(newDb).toBeInstanceOf(DBBuilderImpl);
+    });
+
     let dbTx: Transaction;
 
     test('buildTx should return a signed transaction', async () => {
@@ -589,9 +604,8 @@ describe("DBBuilder", () => {
 });
 
 describe("Testing case insentivity on test_db", () => {
-    let dbName: string;
     let dbid: string;
-
+    
     beforeEach(async () => await sleep(2000))
 
     const actionInputs = Utils.ActionInput.of()
@@ -705,7 +719,9 @@ describe("ActionBuilder to Message", () => {
         actionBuilder = kwil
             .actionBuilder()
             .dbid(dbid)
-            .name("read_posts");
+            .name("read_posts")
+            .description('This is a test action')
+            ;
     })
 
     let message: Message;
@@ -770,6 +786,13 @@ describe("Drop Database", () => {
         expect(dropDb).toBeDefined();
         expect(dropDb).toBeInstanceOf(DBBuilderImpl);
     })
+
+    test('DBBuilderImpl.description() should return a DBBuilder', () => {
+        dropDb = dropDb.description("This is a test database");
+
+        expect(dropDb).toBeDefined();
+        expect(dropDb).toBeInstanceOf(DBBuilderImpl);
+    });
 
     let dropDbTx: Transaction;
 

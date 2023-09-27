@@ -163,9 +163,10 @@ export default class Client extends Api {
     
     public async call(msg: Message): Promise<GenericResponse<MsgReceipt>> {
         let req: MsgData = {
-            payload: msg.payload,
+            body: msg.body,
             sender: msg.sender,
-            signature: msg.signature
+            signature: msg.signature,
+            serialization: msg.serialization
         }
 
         const res = await super.post<CallRes>(`/api/v1/call`, req);

@@ -105,6 +105,9 @@ export namespace Txn {
             tx.body = source.body;
             tx.signature = source.signature;
             tx.body = source.body;
+            tx.sender = source.sender;
+            tx.serialization = source.serialization;
+            
             configure(tx);
         });
     }

@@ -12,7 +12,7 @@ import { PayloadType, SerializationType } from "../core/enums";
 import { kwilEncode } from "../utils/rlp";
 import { base64ToHex, bytesToHex, bytesToString, hexToBase64, hexToBytes, stringToBytes, stringToHex } from "../utils/serial";
 import { SignatureType, executeSign } from "../core/signature";
-import { Message, Msg } from "../core/message";
+import { Message, Msg, UnencodedMessagePayload } from "../core/message";
 import { isNearPubKey, nearB58ToHex } from "../utils/keys";
 import util from 'util';
 
@@ -135,18 +135,13 @@ export class TxnBuilderImpl implements TxnBuilder {
         }
 
         let msg = Msg.create(msg => {
-            msg.sender = '';
-            msg.payload = bytesToBase64(kwilEncode(json));
+            msg.body.payload = json as UnencodedMessagePayload;
         });
 
         if(signer) {
             if(!this._publicKey) {
                 throw new Error("Public key is required to build a message that uses a signer.");
             }
-
-            msg = Msg.copy(msg, msg => {
-                msg.payload = base64ToBytes(msg.payload as string);
-            });
 
             if(!this._signatureType) {
                 throw new Error("Signature is required to build a signed message.");
@@ -156,10 +151,12 @@ export class TxnBuilderImpl implements TxnBuilder {
                 throw new Error("Signature type is invalid.");
             }
 
-            return await TxnBuilderImpl.signMsg(msg, signer, this._publicKey, this._signatureType);
+            return await TxnBuilderImpl.signMsg(msg, signer, this._publicKey, this._signatureType, this._description);
         }
 
-        return msg;
+        return msg = Msg.copy(msg, msg => {
+            msg.body.payload = bytesToBase64(kwilEncode(json));
+        });
     }
 
     private async preBuild(): Promise<PreBuild> {
@@ -177,17 +174,7 @@ export class TxnBuilderImpl implements TxnBuilder {
     }
 
     private static async signTx(tx: Transaction, signer: SignerSupplier, pubKey: Uint8Array, signatureType: SignatureType, description: string): Promise<Transaction> {
-        // convert payload back to uint8array for rlp encoding before signing
-        // const preEncodedBody = Txn.copy(tx, (tx) => {
-        //     tx.body.payload = base64ToBytes(tx.body.payload as string);
-        //     tx.body.payload_type = tx.body.payload_type
-        //     tx.body.fee = tx.body.fee
-        //     tx.body.nonce = tx.body.nonce
-        //     tx.body.salt = generateSalt(16)
-        // })
-
-        // const salt = generateSalt(16);
-        const salt = new Uint8Array();
+        const salt = generateSalt(16);
 
         const digest = sha256BytesToBytes(base64ToBytes(tx.body.payload as string)).subarray(0, 20);
 
@@ -201,10 +188,8 @@ Salt: ${bytesToHex(salt)}
 
 Kwil 🖋
 `
-console.log(signatureMessage)
-        const signedMessage = await executeSign(stringToBytes(signatureMessage), signer, signatureType)
 
-        console.log(signedMessage)
+        const signedMessage = await executeSign(stringToBytes(signatureMessage), signer, signatureType)
 
         return Txn.copy(tx, (newTx) => {
             newTx.signature = {
@@ -224,21 +209,34 @@ console.log(signatureMessage)
         });
     }
 
-    private static async signMsg(msg: Message, signer: SignerSupplier, pubKey: Uint8Array, signatureType: SignatureType): Promise<Message> {
-        if(typeof msg.payload === "string") {
+    private static async signMsg(msg: Message, signer: SignerSupplier, pubKey: Uint8Array, signatureType: SignatureType, description: string): Promise<Message> {
+        if(typeof msg.body.payload === "string") {
             throw new Error("Payload must be an object to sign a message.");
         }
 
-        const encodedMsg: Uint8Array = msg.payload;
-        let signedMessage = await executeSign(encodedMsg, signer, signatureType);
+        const encodedPayload = kwilEncode(msg.body.payload);
+
+        const digest = sha256BytesToBytes(encodedPayload).subarray(0, 20);
+
+        const signatureMessage = `${description}
+
+DBID: ${msg.body.payload.dbid}
+Action: ${msg.body.payload.action}
+PayloadDigest: ${bytesToHex(digest)}
+
+Kwil 🖋
+`
+        const signedMessage = await executeSign(stringToBytes(signatureMessage), signer, signatureType);
 
         return Msg.copy(msg, (msg) => {
-            msg.payload = bytesToBase64(encodedMsg);
+            msg.body.payload = bytesToBase64(encodedPayload);
+            msg.body.description = description;
             msg.signature = {
                 signature_bytes: bytesToBase64(signedMessage),
                 signature_type: signatureType.toString() as SignatureType
             };
             msg.sender = bytesToBase64(pubKey);
+            msg.serialization = SerializationType.SIGNED_MSG_CONCAT;
         })
     }
 }
