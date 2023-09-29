@@ -37,3 +37,9 @@ export enum PayloadType {
     EXECUTE_ACTION = 'execute_action',
     CALL_ACTION = 'call_action',
 }
+
+export enum SerializationType {
+    INVALID_SERIALIZATION_TYPE = 'invalid',
+    SIGNED_MSG_CONCAT = 'concat',
+    SIGNED_MSG_EIP712 = 'eip712',
+}

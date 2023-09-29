@@ -6,6 +6,7 @@ export async function dropDatabase(kwil: WebKwil, dbid: string, pubKey: string, 
         .dropDbBuilder()
         .signer(signer)
         .publicKey(pubKey)
+        .description('This transaction will drop the database!')
         .payload({
             dbid
         })

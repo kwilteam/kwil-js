@@ -4,6 +4,7 @@
 const kwiljs = require("../dist/index")
 const ethers = require("ethers")
 const testDB = require("./mydb.json")
+const simpleDb = require("./test_schema_simple.json")
 const fractalDb = require("./fractal_db.json")
 const util = require("util")
 const near = require('near-api-js')
@@ -23,7 +24,7 @@ async function test() {
     //update to goerli when live
     const provider = new ethers.JsonRpcProvider(process.env.ETH_PROVIDER)
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
-    const txHash = '0x3617633a4e36a88c62937be37020ce9a021d68c16094ccc69e7b043017bd7333'
+    const txHash = '5339cc7d55307dccf51bd29ed7d22120a30c8f31cb3516b80b1fe98177c4d318'
 
     const kwil = new kwiljs.NodeKwil({
         kwilProvider: process.env.KWIL_PROVIDER || "SHOULD FAIL",
@@ -31,26 +32,24 @@ async function test() {
         logging: true,
     })
     
-    kwil.actionBuilder().signer
+    kwil.dbBuilder().signer()
     const pubKey = await recoverPubKey(wallet)
 
     const pubByte = hexToBytes(pubKey)
     const dbid = kwil.getDBID(pubByte, "mydb")
     console.log(pubKey)
+    // await debugFriendlySign(kwil, wallet, pubKey)
     // logger(dbid)
     // await addWallet(kwil, dbid, pubByte, wallet)
     // await testFractal(kwil, dbid, pubKey, wallet)
     // broadcast(kwil, testDB, wallet, pubKey)
     // await getTxInfo(kwil, txHash)
-    await getSchema(kwil, dbid)
+    // await getSchema(kwil, dbid)
     // getAccount(kwil, '0x0428179ef59832060b57cfbbbf56c6c19af471427660f490f99178d6d5cf060880c740d7ffdbd10b5de7c96794a0134e55039c1788e8c9ecbc0af97153396d1fa6')
     // listDatabases(kwil, pubByte)
     //  getSchema(kwil, dbid)
     //  getSchema(kwil, dbid)
     //  await getSchema(kwil, dbid)
-
-
-   
     // ping(kwil)
     // getFunder(kwil, wallet)
     // getAllowance(kwil, wallet)
@@ -81,7 +80,7 @@ async function test() {
     // await testViewWithSign(kwil, dbid, wallet, pubByte)
     // await customSignature(kwil, dbid)
     // await julioSignature(kwil, dbid)
-    await customEd25519(kwil, dbid)
+    // await customEd25519(kwil, dbid)
 }
 
 test()
@@ -98,7 +97,7 @@ async function getAccount(kwil, owner) {
 
 async function broadcast(kwil, tx, sig, pK) {
     let ownedTx = tx
-    ownedTx.owner = sig.address
+    ownedTx.owner = pK
     const readytx = await kwil
         .dbBuilder()
         .payload(ownedTx)
@@ -106,7 +105,8 @@ async function broadcast(kwil, tx, sig, pK) {
         .publicKey(pK)
         .buildTx()
 
-    logger('readytx', readytx)
+    logger('readytx')
+    logger(readytx)
     const txHash = await kwil.broadcast(readytx)
     logger(txHash)
 }
@@ -185,6 +185,7 @@ async function execSingleAction(kwil, dbid, action, w, pubKey) {
         .dbid(dbid)
         .name(action)
         .concat(solo)
+        .description('This is my friendly description!')
         .publicKey(pubKey)
         .signer(w)
         .buildTx();
@@ -319,6 +320,7 @@ async function testViewWithSign(kwil, dbid, wallet, pubKey) {
         .dbid(dbid)
         .name('view_must_sign')
         .publicKey(pubKey)
+        .description('This is my friendly description!')
         .signer(wallet)
         .buildMsg()
 
@@ -466,4 +468,21 @@ async function customEd25519(kwil, dbid) {
     const res = await kwil.broadcast(tx);
 
     logger(res)
+}
+
+async function debugFriendlySign(kwil, signer, pk) {
+    const inputs = new kwiljs.Utils.ActionInput()
+        .put('foo', '32')
+
+    const tx = await kwil
+        .actionBuilder()
+        .dbid('xf617af1ca774ebbd6d23e8fe12c56d41d25a22d81e88f67c6c6ee0d4')
+        .name('create_user')
+        .concat(inputs)
+        .publicKey(pk)
+        .signer(signer)
+        .buildTx()
+
+    const res = await kwil.broadcast(tx)
+    console.log(res)
 }

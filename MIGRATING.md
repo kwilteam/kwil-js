@@ -69,9 +69,11 @@ const res = await kwil.getAccount('public_key');
 
 ```
 
-### ActionBuilder and DBBuilder
+### ActionBuilder and DBBuilder + Friendly Signature Messages
 
 The ActionBuilder and DBBuilder classes now require you to chain a `.publicKey()` method to the builder. The `.publicKey()` can receive a hex string or Uint8Array. If using a NEAR public key, you may also pass the Base58 encoded public key with the "ed25519:" prefix.
+
+You can also customize the signature message that appears in metamask by chaining a `.description()` method to the builder.
 
 #### Old Version
 
@@ -93,8 +95,9 @@ const tx = await kwil
     .dbid('some dbid')
     .name('action_name')
     .concat([ 'inputs', 'inputs' ])
-    .publicKey('signer_public_key') // new method
     .signer(signer)
+    .publicKey('signer_public_key') // new method
+    .description('Click sign to execute your action!') // Custom signature message.
     .buildTx();
 ```
 
@@ -196,9 +199,7 @@ const res = await kwil.call(msg);
 */
 ```
 
-If a `view` action has a `must_sign` auxiliary, you should also chain `.signer()` and `.publicKey()` methods to the builder.
-
-If you are using a NEAR signer, you must also chain the `.nearConfig()` method.
+If a `view` action has a `must_sign` auxiliary, you should also chain `.signer()` and `.publicKey()` methods to the builder. You can also chain a `.description()` to customize the signature message.
 
 ### TxInfo Endpoint
 

@@ -2,16 +2,41 @@ import Long from 'long';
 import {strings} from "./strings";
 import {objects} from "./objects";
 import { HexString, NonNil } from './types';
+import { base64ToBytes, bytesToBase64 } from './base64';
 
 export function stringToBytes(str: string): Uint8Array {
-    strings.requireNonNil(str as any);
-    const buffer = new ArrayBuffer(str.length);
-    const view = new Uint8Array(buffer);
-    for (let i = 0; i < str.length; i++) {
-        view[i] = str.charCodeAt(i);
+        strings.requireNonNil(str as any);
+        let result: Array<number> = [];
+        for (let i = 0; i < str.length; i++) {
+            const c = str.charCodeAt(i);
+    
+            if (c < 0x80) {
+                result.push(c);
+    
+            } else if (c < 0x800) {
+                result.push((c >> 6) | 0xc0);
+                result.push((c & 0x3f) | 0x80);
+    
+            } else if ((c & 0xfc00) == 0xd800) {
+                i++;
+                const c2 = str.charCodeAt(i);
+    
+                // Surrogate Pair
+                const pair = 0x10000 + ((c & 0x03ff) << 10) + (c2 & 0x03ff);
+                result.push((pair >> 18) | 0xf0);
+                result.push(((pair >> 12) & 0x3f) | 0x80);
+                result.push(((pair >> 6) & 0x3f) | 0x80);
+                result.push((pair & 0x3f) | 0x80);
+    
+            } else {
+                result.push((c >> 12) | 0xe0);
+                result.push(((c >> 6) & 0x3f) | 0x80);
+                result.push((c & 0x3f) | 0x80);
+            }
+        }
+    
+        return new Uint8Array(result);
     }
-    return view;
-}
 
 export function stringToEthHex(str: string): HexString {
     let hex = '0x';
@@ -46,11 +71,30 @@ export function hexToString(hex: HexString): string {
     return str;
 }
 
-export function numberToBytes(num: number): Uint8Array {
-    objects.requireNonNilNumber(num);
-    const buffer = new ArrayBuffer(1);
+export function numberToBytes(num: number | bigint): Uint8Array {
+    const buffer = new ArrayBuffer(8);
     const view = new DataView(buffer);
-    view.setUint8(0, num);
+
+    if (typeof num === 'number') {
+        if (num < 0 || num > 9007199254740991) {  // 2^53 - 1
+            throw new Error('Number out of bounds for safe integer representation');
+        }
+        const high = Math.floor(num / 4294967296);  // 2^32
+        const low = num % 4294967296;
+        view.setUint32(0, high);  // High 32 bits
+        view.setUint32(4, low);   // Low 32 bits
+    } else if (typeof num === 'bigint') {
+        if (num < 0n || num > 0xFFFFFFFFFFFFFFFFn) {
+            throw new Error('Number out of bounds for Uint64 representation');
+        }
+        const high = Number(num >> 32n);
+        const low = Number(num & 0xFFFFFFFFn);
+        view.setUint32(0, high);
+        view.setUint32(4, low);
+    } else {
+        throw new Error('Unsupported type for conversion to bytes');
+    }
+
     return new Uint8Array(buffer);
 }
 
@@ -102,6 +146,14 @@ export function hexToBytes(hex: string): Uint8Array {
         bytes[i / 2] = parseInt(hex.slice(i, i + 2), 16);
     }
     return bytes;
+}
+
+export function base64ToHex(base64: string): HexString {
+    return bytesToHex(base64ToBytes(base64));
+}
+
+export function hexToBase64(hex: HexString): string {
+    return bytesToBase64(hexToBytes(hex));
 }
 
 export function bytesToString(bytes: Uint8Array): string {

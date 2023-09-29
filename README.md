@@ -120,7 +120,7 @@ const res = await kwil.getAccount("public_key")
 
 Any action that executes a CUD operation must be signed and broadcasted to the network as a transaction.
 
-The public key can be passed as a hex string or as bytes.
+The public key can be passed as a hex string or as bytes. You can also customize the signature message that the user will see with the `.description()` method.
 
 Out of the box, kwil-js supports signers from [EthersJS](https://github.com/ethers-io/ethers.js) (v5 and v6). You can also pass a signing callback function (see below).
 
@@ -144,6 +144,7 @@ const tx = await kwil
     .concat(input)
     .publicKey('public_key') // Can be a hex-encoded public key, or bytes.
     .signer(await provider.getSigner()) // can use wallet if NodeJS
+    .description("Click sign to execute the action!") // your custom signature message
     .buildTx()
 
 // broadcast transaction to kwil network
@@ -182,6 +183,7 @@ const tx = await kwil
     .concat(input)
     .publicKey(keys.publicKey)
     .signer(customSigner, 'ed25519')
+    .description("Click sign to execute the action!")
     .buildTx()
 
 await kwil.broadcast(tx);
@@ -205,6 +207,7 @@ const tx = await kwil
     .concat(input)
     .publicKey('near_public_key')
     .signer(customSigner, 'ed25519_nr')
+    .description("Click sign to execute the action!")
     .buildTx()
 
 await kwil.broadcast(tx);
@@ -253,9 +256,7 @@ const res = await kwil.call(msg)
 
 `View` actions may also require a signer, depending on if the original actions were deployed with a `must_sign` attribute. You can check if an action requires a signature by calling `kwil.getSchema()`.
 
-If an action requires a signature, you should chain `.publicKey()` and `.signer()` methods before building.
-
-If you are using an ED25519 signer, you should also chain a `.nearConfig()` method.
+If an action requires a signature, you should chain `.publicKey()` and `.signer()` methods before building. You can also customize the message with the `.description()` method.
 
 #### Select Query
 
@@ -292,6 +293,7 @@ const tx = await kwil
     .payload(myDB)
     .publicKey('public_key') // Can be a hex-encoded public key, or bytes.
     .signer(await provider.getSigner()) // can use Wallet for NodeJS
+    .description("Sign to deploy your database") // custom message
     .buildTx();
 
 // broadcast transaction
@@ -307,5 +309,3 @@ const res = await kwil.broadcast(tx);
     }
 */
 ```
-
-Note that if you are using an If you are using an ED25519 signer, you should also chain a `.nearConfig()` method before building the transaction.

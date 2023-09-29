@@ -31,6 +31,7 @@ export class ActionBuilderImpl implements ActionBuilder {
     private _signatureType: Nillable<SignatureType>;
     private _name: Nillable<string>;
     private _dbid: Nillable<string>;
+    private _description: Nillable<string> = null;
 
     private constructor(client: Kwil) {
         this.client = objects.requireNonNil(client);
@@ -75,6 +76,12 @@ export class ActionBuilderImpl implements ActionBuilder {
     publicKey(publicKey: string | Uint8Array): NonNil<ActionBuilder> {
         this.assertNotBuilding();
         this._publicKey = objects.requireNonNil(publicKey);
+        return this;
+    }
+
+    description(description: string): ActionBuilder {
+        this.assertNotBuilding();
+        this._description = objects.requireNonNil(description);
         return this;
     }
 
@@ -132,6 +139,7 @@ export class ActionBuilderImpl implements ActionBuilder {
             .payloadType(PayloadType.EXECUTE_ACTION)
             .payload(payload)
             .signer(signer, signatureType)
+            .description(this._description)
             .publicKey(publicKey)
         
         return tx.buildTx();
@@ -173,7 +181,8 @@ export class ActionBuilderImpl implements ActionBuilder {
             const signatureType = await Promisy.resolveOrReject(this._signatureType);
             msg = msg
                 .signer(signer, signatureType)
-                .publicKey(publicKey);
+                .publicKey(publicKey)
+                .description(this._description);
         }
 
         return await msg.buildMsg();
