@@ -17,7 +17,7 @@ export enum SignatureType {
     ED25519 = 'ed25519'
 }
 
-export function getSigType(signer: SignerSupplier): SignatureType {
+export function getSignatureType(signer: SignerSupplier): SignatureType {
     if(isEthersSigner(signer))  {
         return SignatureType.SECP256K1_PERSONAL;
     }

@@ -13,6 +13,7 @@ const { bytesToHex, hexToBytes } = require('../dist/utils/serial')
 const scrypt = require("scrypt-js")
 const nacl = require("tweetnacl")
 const { sha256BytesToBytes } = require("../dist/utils/crypto")
+const { KwilSigner } = require("../dist/core/kwilSigner")
 
 require("dotenv").config()
 
@@ -32,7 +33,6 @@ async function test() {
         logging: true,
     })
     
-    kwil.dbBuilder().signer()
     const pubKey = await recoverPubKey(wallet)
 
     const pubByte = hexToBytes(pubKey)

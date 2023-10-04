@@ -5,11 +5,9 @@ import {ActionInput} from "./actionInput";
 import {Wallet as Walletv5, Signer as Signerv5} from "ethers5";
 import { PayloadType } from "./enums";
 import { Message } from "./message";
-import { Signer as _NearSigner } from 'near-api-js'
 import { SignatureType } from "./signature";
 
 export type EthSigner = NonNil<_Signer | JsonRpcSigner | ethers.Wallet | Walletv5 | Signerv5 >;
-export type NearSigner = NonNil<_NearSigner>;
 
 export type CustomSigner = NonNil<(message: Uint8Array, ...args: any[]) => Promise<Uint8Array>>
 export type SignerSupplier = Promisy<EthSigner | CustomSigner>
