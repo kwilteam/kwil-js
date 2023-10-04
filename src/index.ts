@@ -11,6 +11,7 @@ import { TxResult as _TxResult, TxInfoReceipt as _TxInfoReceipt } from './core/t
 import { Account as _Account } from './core/account'
 import { MsgReceipt as _MsgReceipt } from './core/message'
 import { recoverSecp256k1PubKey } from './utils/keys'
+import { KwilSigner } from './core/kwilSigner'
 
 namespace Types {
     export type TxReceipt = _TxReceipt
@@ -54,4 +55,4 @@ const Utils = {
     recoverSecp256k1PubKey
 }
 
-export { NodeKwil, WebKwil, Types, Utils }
+export { NodeKwil, WebKwil, KwilSigner, Types, Utils }

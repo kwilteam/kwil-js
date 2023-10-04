@@ -8,7 +8,7 @@ import {ActionInput} from "../core/actionInput";
 import {ActionSchema} from "../core/database";
 import { PayloadType, ValueType } from "../core/enums";
 import { Message, UnencodedMessagePayload } from "../core/message";
-import { AnySignatureType, SignatureType, getSigType } from "../core/signature";
+import { AnySignatureType, SignatureType, getSignatureType } from "../core/signature";
 
 interface CheckSchema {
     dbid: string;
@@ -61,7 +61,7 @@ export class ActionBuilderImpl implements ActionBuilder {
         this._signer = objects.requireNonNil(signer);
 
         if(!signatureType) {
-            this._signatureType = getSigType(signer);
+            this._signatureType = getSignatureType(signer);
             if(this._signatureType === SignatureType.SIGNATURE_TYPE_INVALID) {
                 throw new Error("Could not determine signature type from signer. Please pass a signature type to .signer().");
             }

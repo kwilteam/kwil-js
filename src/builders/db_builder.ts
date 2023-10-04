@@ -7,7 +7,7 @@ import { DBBuilder, SignerSupplier } from "../core/builders";
 import { AttributeType, DataType, IndexType, PayloadType } from "../core/enums";
 import { Database } from "../core/database";
 import { enforceDatabaseOrder } from "../core/order";
-import { AnySignatureType, SignatureType, getSigType } from "../core/signature";
+import { AnySignatureType, SignatureType, getSignatureType } from "../core/signature";
 
 /**
  * `DBBuilderImpl` class is an implementation of the `DBBuilder` interface.
@@ -36,7 +36,7 @@ export class DBBuilderImpl implements DBBuilder {
         this._signer = objects.requireNonNil(signer);
         
         if(!signatureType) {
-            this._signatureType = getSigType(signer);
+            this._signatureType = getSignatureType(signer);
             if(this._signatureType === SignatureType.SIGNATURE_TYPE_INVALID) {
                 throw new Error("Could not determine signature type from signer. Please pass a signature type to .signer().");
             }
