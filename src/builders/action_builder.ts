@@ -8,7 +8,7 @@ import {ActionInput} from "../core/actionInput";
 import {ActionSchema} from "../core/database";
 import { PayloadType, ValueType } from "../core/enums";
 import { Message, UnencodedMessagePayload } from "../core/message";
-import { SignatureType, getSigType } from "../core/signature";
+import { AnySignatureType, SignatureType, getSigType } from "../core/signature";
 
 interface CheckSchema {
     dbid: string;
@@ -28,7 +28,7 @@ export class ActionBuilderImpl implements ActionBuilder {
     private _signer: Nillable<SignerSupplier> = null;
     private _publicKey: Nillable<string | Uint8Array> = null;
     private _actions: ActionInput[] = [];
-    private _signatureType: Nillable<SignatureType>;
+    private _signatureType: Nillable<AnySignatureType>;
     private _name: Nillable<string>;
     private _dbid: Nillable<string>;
     private _description: Nillable<string> = null;
@@ -55,7 +55,7 @@ export class ActionBuilderImpl implements ActionBuilder {
         return this;
     }
 
-    signer(signer: SignerSupplier, signatureType?: SignatureType): NonNil<ActionBuilder> {
+    signer(signer: SignerSupplier, signatureType?: AnySignatureType): NonNil<ActionBuilder> {
         this.assertNotBuilding();
 
         this._signer = objects.requireNonNil(signer);
