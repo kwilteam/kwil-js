@@ -42,7 +42,7 @@ async function test() {
     // logger(dbid)
     // await addWallet(kwil, dbid, pubByte, wallet)
     // await testFractal(kwil, dbid, pubKey, wallet)
-    // broadcast(kwil, testDB, wallet, pubKey)
+    broadcast(kwil, testDB, wallet, pubKey)
     // await getTxInfo(kwil, txHash)
     // await getSchema(kwil, dbid)
     // getAccount(kwil, '0x0428179ef59832060b57cfbbbf56c6c19af471427660f490f99178d6d5cf060880c740d7ffdbd10b5de7c96794a0134e55039c1788e8c9ecbc0af97153396d1fa6')
@@ -177,7 +177,7 @@ async function execSingleAction(kwil, dbid, action, w, pubKey) {
     const solo = Input.of()
         .put("$id", count + 1)
         .put("$user", "Luke")
-        .put("$title", "Hello")
+        .put("$title", "Hello") 
         .put("$body", "Hello World")
 
     let act = await kwil

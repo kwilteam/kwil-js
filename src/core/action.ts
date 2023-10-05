@@ -10,6 +10,25 @@ export type Entries = { [key: string]: ValueType };
 export type Predicate =
     (k: [key: string, v: ValueType]) => boolean;
 
+export interface ActionBody {
+    dbid: string;
+    action: string;
+    inputs?: Entries[] | ActionInput[];
+    description?: string;
+}
+
+export function resolveActionInputs(inputs: Entries[] | ActionInput[]): ActionInput[] {
+    if (inputs) {
+        if (inputs instanceof ActionInput) {
+            return inputs;
+        } else {
+            return  new ActionInput().putFromObjects(inputs as Entries[]);
+        }
+    } else {
+        return [];
+    }
+}
+    
 /**
  * `ActionInput` class is a utility class for creating action inputs.
  */

@@ -4,7 +4,17 @@ import { ActionBuilderImpl } from "../../../src/builders/action_builder";
 import { DBBuilderImpl } from "../../../src/builders/db_builder";
 import { Transaction } from "../../../src/core/tx";
 import { Message } from "../../../src/core/message";
-import { PayloadType } from "../../../src/core/enums";
+import { PayloadType, SerializationType } from "../../../src/core/enums";
+import { SignatureType } from "../../../src/core/signature";
+import { bytesToString, stringToBytes, stringToHex } from "../../../dist/utils/serial";
+import { base64ToBytes, bytesToBase64 } from "../../../src/utils/base64";
+import { Wallet } from "ethers";
+import { recoverSecp256k1PubKey } from "../../../src/utils/keys";
+import { KwilSigner } from "../../../dist";
+import { ActionBody, ActionInput } from "../../../src/core/action";
+import { DeployBody } from "../../../src/core/database";
+import compiledKF from '../../test_schema2.json'
+import { DropBody } from "../../../dist/core/database";
 
 class TestKwil extends Kwil {
     constructor() {
@@ -21,49 +31,68 @@ describe('Kwil', () => {
         postMock.mockReset();
     });
 
+    const pubKey = '0x048767310544592e33b2fb5555527f49c0902cf0f472f4c87e65324abb75e7a5e1c035bc1ef5026f363c79588526c341af341a68fc37299183391699ee1864cc75';
+
     describe('getDBID', () => {
         it('should return the dbid', () => {
-            const address = '0xc89D42189f0450C2b2c3c61f58Ec5d628176A1E7';
-            const dbid = kwil.getDBID(address, 'mydb');
-            expect(dbid).toBe('xcdd04ff7c5e4a939d5365ec9b54cc4aab8c610c415f5f9b33323ae77');
+            const dbid = kwil.getDBID(pubKey, 'mydb');
+            expect(dbid).toBe('xd924382720df474c6bb62d26da9aeb10add2ad2835c0b7e4a6336ad8');
         });
     })
 
     describe('getSchema', () => {
+        const mockSchema = {
+            name: 'mockSchema',
+            owner: bytesToBase64(stringToBytes('mockOwner')),
+            tables: [],
+            actions: [],
+            extensions: []
+        }
+
         it('should return a schema for a given dbid', async () => {
             getMock.mockResolvedValue({
                 status: 200,
-                data: { dataset: 'mockDataset' }
+                data: { schema: mockSchema }
             });
     
             const result = await kwil.getSchema('somedbid')
             expect(result.status).toBe(200);
-            expect(result.data).toBe('mockDataset');
+            expect(result.data?.name).toBe(mockSchema.name);
+            expect(result.data?.owner).toBeInstanceOf(Uint8Array);
         })
 
         it('should not have to make a second request if searching for the same dbid', async() => {
             getMock.mockResolvedValue({
                 status: 200,
-                data: { dataset: 'mockDataset' }
+                data: { schema: mockSchema }
             });
     
             await kwil.getSchema('somedbid');
-            const res = await kwil.getSchema('somedbid');
+            const result = await kwil.getSchema('somedbid');
             expect(getMock).toHaveBeenCalledTimes(1);
-            expect(res.data).toBe('mockDataset');
+            expect(result.data?.name).toBe(mockSchema.name);
+            expect(result.data?.owner).toBeInstanceOf(Uint8Array);
         })
     })
 
     describe('getAccount', () => {
         it('should return account info for a given wallet address', async () => {
+            const mockAccount = {
+                public_key: bytesToBase64(stringToBytes(pubKey)),
+                balance: 'mockBalance',
+                nonce: 'mockNonce'
+            }
+
             getMock.mockResolvedValue({
                 status: 200,
-                data: { account: 'mockAccount' }
+                data: { account: mockAccount }
             });
 
-            const result = await kwil.getAccount('someaddress');
+            const result = await kwil.getAccount(pubKey);
             expect(result.status).toBe(200);
-            expect(result.data).toBe('mockAccount');
+            expect(result.data?.public_key).toBeInstanceOf(Uint8Array);
+            expect(result.data?.balance).toBe(mockAccount.balance);
+            expect(result.data?.nonce).toBe(mockAccount.nonce);
         })
     })
 
@@ -94,21 +123,25 @@ describe('Kwil', () => {
     describe('broadcast', () => {
         it('should broadcast a transaction', async () => {
             const tx = new Transaction({
-                hash: 'mockHash',
-                payload_type: PayloadType.EXECUTE_ACTION,
-                payload: 'mockPayload',
-                fee: 'mockFee',
-                nonce: 1,
-                sender: 'mockSender',
                 signature: {
                     signature_bytes: 'mockSignatureBytes',
-                    signature_type: 1
-                }
+                    signature_type: SignatureType.SECP256K1_PERSONAL
+                },
+                body: {
+                    payload: 'mockPayload',
+                    payload_type: PayloadType.EXECUTE_ACTION,
+                    fee: BigInt(0),
+                    nonce: null,
+                    salt: '',
+                    description: ''
+                },
+                sender: 'mockSender',
+                serialization: SerializationType.SIGNED_MSG_CONCAT
             })
 
             postMock.mockResolvedValue({
                 status: 200,
-                data: { receipt: { txHash: '3D/Em+hqmZYG/Zl7+Jfsag0B1hjD/t3Z/42tk2xru8ecmCD14dY4OZ6q11o3PuEP', fee: 'mockFee', body: 'W10=' } }
+                data: { tx_hash: bytesToBase64(stringToBytes('some_hash')) }
             });
 
             const result = await kwil.broadcast(tx);
@@ -116,32 +149,468 @@ describe('Kwil', () => {
             expect(result.status).toBe(200);
             expect(result.status).toBe(200);
             expect(result.data).toEqual({
-                txHash: '0xdc3fc49be86a999606fd997bf897ec6a0d01d618c3feddd9ff8dad936c6bbbc79c9820f5e1d638399eaad75a373ee10f',
-                fee: 'mockFee',
-                body: []
+                tx_hash: stringToHex('some_hash')
             });
         })
     })
 
-    describe('call', () => {
-        it('should send a message to a kwil node (read only operation)', async () => {
-            const msg = new Message({
-                payload: "mockPayload",
-                sender: "mockSender",
-                signature: {
-                    signature_bytes: "mockSignatureBytes",
-                    signature_type: 1
-                }
+    describe('DB Operations: .execute(), .call(), .deploy(), .drop()', () => {
+        let kSigner: KwilSigner;
+
+        beforeAll(async () => {
+            const wallet = Wallet.createRandom();
+            const pubKey = await recoverSecp256k1PubKey(wallet);
+            kSigner = new KwilSigner(pubKey, wallet);
+        })
+
+        describe('execute', () => {
+            describe ('success cases', () => {
+                let skipBefore: boolean = false
+
+                beforeEach(() => {
+                    if(skipBefore) {
+                        return;
+                    }
+                    getMock.mockResolvedValueOnce({
+                        status: 200,
+                        data: {
+                            schema: {
+                                name: 'testName',
+                                owner: bytesToBase64(stringToBytes('mockOwner')),
+                                tables: "someTables",
+                                actions: [{
+                                    name: 'mockaction',
+                                    public: true,
+                                    mutability: 'update',
+                                    auxiliaries: [],
+                                    inputs: ['$mockInput'],
+                                    statements: ['test']
+                                }]
+                            }
+                        }
+                    });
+    
+                    const mockAccount = {
+                        public_key: bytesToBase64(stringToBytes(pubKey)),
+                        balance: 'mockBalance',
+                        nonce: 'mockNonce'
+                    }
+        
+                    getMock.mockResolvedValueOnce({
+                        status: 200,
+                        data: {
+                            account: mockAccount
+                        }
+                    })
+    
+                    postMock.mockResolvedValueOnce({
+                        status: 200,
+                        data: {
+                            price: "0"
+                        }
+                    });
+    
+                    postMock.mockResolvedValue({
+                        status: 200,
+                        data: { tx_hash: bytesToBase64(stringToBytes('some_hash')) }
+                    });
+                })
+    
+                it('should execute a transaction when inputs are provided as an array of objects', async () => {
+                    const inputs: ActionBody = {
+                        dbid: 'mockDbid',
+                        action: 'mockAction',
+                        inputs: [{ "$mockInput": "mockInput" }],
+                        description: 'Sign me!'
+                    }
+    
+                    const res = await kwil.execute(inputs, kSigner);
+    
+                    expect(res.status).toBe(200);
+                    expect(res.data?.tx_hash).toBe(stringToHex('some_hash'));
+                })
+    
+                it('should execute a transaction when inputs are provided as ActionInputs', async () => {
+                    const actionInput = new ActionInput()
+                        .put('$mockInput', 'mockInput');
+                    
+                    const inputs: ActionBody = {
+                        dbid: 'mockDbid',
+                        action: 'mockAction',
+                        inputs: [ actionInput ],
+                        description: 'Sign me!'
+                    }
+    
+                    const res = await kwil.execute(inputs, kSigner);
+    
+                    expect(res.status).toBe(200);
+                    expect(res.data?.tx_hash).toBe(stringToHex('some_hash'));
+                    skipBefore = true;
+                })
+
+                it('should succeed if the action has no inputs and no inputs are provided', async() => {
+                    getMock.mockResolvedValueOnce({
+                        status: 200,
+                        data: {
+                            schema: {
+                                name: 'testName',
+                                owner: bytesToBase64(stringToBytes('mockOwner')),
+                                tables: "someTables",
+                                actions: [{
+                                    name: 'mockaction',
+                                    public: true,
+                                    mutability: 'update',
+                                    auxiliaries: [],
+                                    inputs: [],
+                                    statements: ['test']
+                                }]
+                            }
+                        }
+                    });
+    
+                    const mockAccount = {
+                        public_key: bytesToBase64(stringToBytes(pubKey)),
+                        balance: 'mockBalance',
+                        nonce: 'mockNonce'
+                    }
+        
+                    getMock.mockResolvedValueOnce({
+                        status: 200,
+                        data: {
+                            account: mockAccount
+                        }
+                    })
+    
+                    postMock.mockResolvedValueOnce({
+                        status: 200,
+                        data: {
+                            price: "0"
+                        }
+                    });
+    
+                    postMock.mockResolvedValue({
+                        status: 200,
+                        data: { tx_hash: bytesToBase64(stringToBytes('some_hash')) }
+                    });
+
+                    const inputs: ActionBody = {
+                        dbid: 'mockDbid',
+                        action: 'mockAction'
+                    }
+
+                    const res = await kwil.execute(inputs, kSigner);
+
+                    expect(res.status).toBe(200);
+                    expect(res.data?.tx_hash).toBe(stringToHex('some_hash'));
+                    
+                    skipBefore = false;
+                });
+            });
+
+            describe('failure cases', () => {
+                beforeEach(() => {
+                    getMock.mockResolvedValueOnce({
+                        status: 200,
+                        data: {
+                            schema: {
+                                name: 'testName',
+                                owner: bytesToBase64(stringToBytes('mockOwner')),
+                                tables: "someTables",
+                                actions: [{
+                                    name: 'mockaction',
+                                    public: true,
+                                    mutability: 'view',
+                                    auxiliaries: [],
+                                    inputs: ['$mockInput'],
+                                    statements: ['test']
+                                }]
+                            }
+                        }
+                    });
+                })
+
+                it('should through an error if the dbid is not a update mutability', async () => {
+                    const inputs: ActionBody = {
+                        dbid: 'mockDbid',
+                        action: 'mockAction',
+                        inputs: [{ "$mockInput": "mockInput" }],
+                        description: 'Sign me!'
+                    }
+    
+                    await expect(kwil.execute(inputs, kSigner)).rejects.toThrowError(`Action mockaction is a 'view' action. Please use kwil.call().`);
+                })
+
+                it('should throw an error if the action name is not present in the schema', async () => {
+                    const inputs: ActionBody = {
+                        dbid: 'mockDbid',
+                        action: 'should_not_exist',
+                        inputs: [{ "$mockInput": "mockInput" }],
+                        description: 'Sign me!'
+                    }
+    
+                    await expect(kwil.execute(inputs, kSigner)).rejects.toThrowError(`Could not find action should_not_exist in database mockDbid. Please double check that you have the correct DBID and action name.`);
+                })
+            });
+        })
+
+        describe('call', () => {
+            describe('with the output of actionBuilder()', () => {
+                it('should send a message to a kwil node (read only operation)', async () => {
+                    const msg = new Message({
+                        body: {
+                            payload: 'mockPayload',
+                            description: ''
+                        },
+                        signature: null,
+                        sender: 'mocksender',
+                        serialization: SerializationType.SIGNED_MSG_CONCAT
+                    })
+                    postMock.mockResolvedValue({
+                        status: 200,
+                        data: { result: 'W10=' }
+                    });
+                    const result = await kwil.call(msg);
+                    expect(result.status).toBe(200);
+                    expect(result.data).toEqual({
+                        result: []
+                    });
+                })
             })
-            postMock.mockResolvedValue({
-                status: 200,
-                data: { result: 'W10=' }
-            });
-            const result = await kwil.call(msg);
-            expect(result.status).toBe(200);
-            expect(result.data).toEqual({
-                result: []
-            });
+    
+            describe('success cases', () => {
+                let skipBefore: boolean = false
+    
+                beforeEach(() => {
+                    if(skipBefore) {
+                        return;
+                    }
+                    getMock.mockResolvedValueOnce({
+                        status: 200,
+                        data: {
+                            schema: {
+                                name: 'testName',
+                                owner: bytesToBase64(stringToBytes('mockOwner')),
+                                tables: "someTables",
+                                actions: [{
+                                    name: 'mockaction',
+                                    public: true,
+                                    mutability: 'view',
+                                    auxiliaries: [],
+                                    inputs: ['$mockInput'],
+                                    statements: ['test']
+                                }]
+                            }
+                        }
+                    });
+    
+                    postMock.mockResolvedValue({
+                        status: 200,
+                        data: { result: 'W10=' }
+                    });
+                });
+    
+                it('should return call data when inputs are provided as an array of objects', async () => {
+                    const inputs: ActionBody = {
+                        dbid: 'mockDbid',
+                        action: 'mockAction',
+                        inputs: [{ "$mockInput": "mockInput" }],
+                        description: 'Sign me!'
+                    }
+    
+                    const res = await kwil.call(inputs);
+    
+                    expect(res.status).toBe(200);
+                    expect(res.data?.result).toEqual([]);
+                })
+    
+                it('should return call data when inputs are provided as ActionInputs', async () => {
+                    const actionInput = new ActionInput()
+                        .put('$mockInput', 'mockInput');
+                    
+                    const inputs: ActionBody = {
+                        dbid: 'mockDbid',
+                        action: 'mockAction',
+                        inputs: [ actionInput ],
+                        description: 'Sign me!'
+                    }
+    
+                    const res = await kwil.call(inputs);
+    
+                    expect(res.status).toBe(200);
+                    expect(res.data?.result).toEqual([]);
+    
+                    skipBefore = true;
+                });
+    
+                it('should succeed if the action has no inputs and no inputs are provided', async() => {
+                    getMock.mockResolvedValueOnce({
+                        status: 200,
+                        data: {
+                            schema: {
+                                name: 'testName',
+                                owner: bytesToBase64(stringToBytes('mockOwner')),
+                                tables: "someTables",
+                                actions: [{
+                                    name: 'mockaction',
+                                    public: true,
+                                    mutability: 'view',
+                                    auxiliaries: [],
+                                    inputs: [],
+                                    statements: ['test']
+                                }]
+                            }
+                        }
+                    });
+    
+                    postMock.mockResolvedValue({
+                        status: 200,
+                        data: { result: 'W10=' }
+                    });
+    
+                    const inputs: ActionBody = {
+                        dbid: 'mockDbid',
+                        action: 'mockAction'
+                    }
+    
+                    const res = await kwil.call(inputs);
+    
+                    expect(res.status).toBe(200);
+                    expect(res.data?.result).toEqual([]);
+                    
+                    skipBefore = false;
+                });
+            })
+    
+            describe('failure cases', () => { 
+                beforeEach(() => {
+                    getMock.mockResolvedValueOnce({
+                        status: 200,
+                        data: {
+                            schema: {
+                                name: 'testName',
+                                owner: bytesToBase64(stringToBytes('mockOwner')),
+                                tables: "someTables",
+                                actions: [{
+                                    name: 'mockaction',
+                                    public: true,
+                                    mutability: 'update',
+                                    auxiliaries: [],
+                                    inputs: ['$mockInput'],
+                                    statements: ['test']
+                                }]
+                            }
+                        }
+                    });
+                });
+    
+                it('should through an error if the dbid is not a view mutability', async () => {
+                    const inputs: ActionBody = {
+                        dbid: 'mockDbid',
+                        action: 'mockAction',
+                        inputs: [{ "$mockInput": "mockInput" }],
+                        description: 'Sign me!'
+                    }
+    
+                    await expect(kwil.call(inputs)).rejects.toThrowError(`Action mockaction is not a view only action. Please use kwil.execute().`);
+                });
+    
+                it('should throw an error if the action name is not present in the schema', async () => {
+                    const inputs: ActionBody = {
+                        dbid: 'mockDbid',
+                        action: 'should_not_exist',
+                        inputs: [{ "$mockInput": "mockInput" }],
+                        description: 'Sign me!'
+                    }
+    
+                    await expect(kwil.call(inputs)).rejects.toThrowError(`Could not find action should_not_exist in database mockDbid. Please double check that you have the correct DBID and action name.`);
+                });
+             });
+        })
+
+        describe('deploy', () => {
+            describe('success cases', () => {
+                beforeEach(() => {
+                    const mockAccount = {
+                        public_key: bytesToBase64(stringToBytes(pubKey)),
+                        balance: 'mockBalance',
+                        nonce: 'mockNonce'
+                    }
+        
+                    getMock.mockResolvedValueOnce({
+                        status: 200,
+                        data: {
+                            account: mockAccount
+                        }
+                    })
+    
+                    postMock.mockResolvedValueOnce({
+                        status: 200,
+                        data: {
+                            price: "0"
+                        }
+                    });
+
+                    postMock.mockResolvedValue({
+                        status: 200,
+                        data: { tx_hash: bytesToBase64(stringToBytes('some_hash')) }
+                    });
+                })
+
+                it('should deploy a database', async () => {
+                    const payload: DeployBody = {
+                        schema: compiledKF,
+                        description: 'Sign me!'
+                    }
+
+                    const res = await kwil.deploy(payload, kSigner);
+
+                    expect(res.status).toBe(200);
+                    expect(res.data?.tx_hash).toBe(stringToHex('some_hash'));
+                });
+            })
+        })
+
+        describe('drop', () => {
+            describe('success cases', () => {
+                beforeEach(() => {
+                    const mockAccount = {
+                        public_key: bytesToBase64(stringToBytes(pubKey)),
+                        balance: 'mockBalance',
+                        nonce: 'mockNonce'
+                    }
+        
+                    getMock.mockResolvedValueOnce({
+                        status: 200,
+                        data: {
+                            account: mockAccount
+                        }
+                    })
+    
+                    postMock.mockResolvedValueOnce({
+                        status: 200,
+                        data: {
+                            price: "0"
+                        }
+                    });
+
+                    postMock.mockResolvedValue({
+                        status: 200,
+                        data: { tx_hash: bytesToBase64(stringToBytes('some_hash')) }
+                    });
+                })
+
+                it('should drop a database', async () => {
+                    const payload: DropBody = {
+                        dbid: 'yo',
+                        description: 'Sign me!'
+                    }
+
+                    const res = await kwil.drop(payload, kSigner);
+
+                    expect(res.status).toBe(200);
+                    expect(res.data?.tx_hash).toBe(stringToHex('some_hash'));
+                });
+            })
         })
     })
 
@@ -151,7 +620,7 @@ describe('Kwil', () => {
                 status: 200,
                 data: { databases: ['db1', 'db2'] }
             });
-            const result = await kwil.listDatabases('someaddress');
+            const result = await kwil.listDatabases(pubKey);
             expect(result.status).toBe(200);
             expect(result.data).toEqual(['db1', 'db2']);
         });
@@ -168,25 +637,6 @@ describe('Kwil', () => {
             expect(result.data).toEqual('pong');
         })
     })
-
-    // TODO: need to add mocks for smart contract calls
-    // describe('getFunder', () => {
-    //     it('should return the funder for a given signer', async () => {
-    //         const provider = new JsonRpcProvider(process.env.ETH_PROVIDER)
-    //         const sig = Wallet.createRandom(provider)
-
-    //         getMock.mockResolvedValueOnce({
-    //             status: 200,
-    //             data: { 
-    //                 "chain_code": "2",
-    //                 "provider_address": "0x37Fc1953e4A26007E6Df52f06B5897a998F51f5D",
-    //                 "pool_address": "0xb0a194286A901FeAEA39D2b765247BEd64aD4F41"
-    //             }
-    //         });
-    //         const result = await kwil.getFunder(sig);
-    //         expect(result).toBeInstanceOf(Funder);
-    //     })
-    // })
 
     describe('selectQuery', () => {
         it('should return data for a select query', async () => {
