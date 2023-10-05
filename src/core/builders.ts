@@ -1,7 +1,7 @@
 import { Nillable, NonNil, Promisy } from "../utils/types";
 import { Transaction } from "./tx";
 import {ethers, Signer as _Signer, JsonRpcSigner } from "ethers";
-import {ActionInput} from "./actionInput";
+import {ActionInput} from "./action";
 import {Wallet as Walletv5, Signer as Signerv5} from "ethers5";
 import { PayloadType } from "./enums";
 import { Message } from "./message";

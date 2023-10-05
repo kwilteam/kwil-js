@@ -4,7 +4,7 @@ import {Nillable, NonNil, Promisy} from "../utils/types";
 import {Kwil} from "../client/kwil";
 import {ActionBuilder, SignerSupplier, TxnBuilder} from "../core/builders";
 import {TxnBuilderImpl} from "./transaction_builder";
-import {ActionInput} from "../core/actionInput";
+import {ActionInput} from "../core/action";
 import {ActionSchema} from "../core/database";
 import { PayloadType, ValueType } from "../core/enums";
 import { Message, UnencodedMessagePayload } from "../core/message";
@@ -122,11 +122,15 @@ export class ActionBuilderImpl implements ActionBuilder {
     }
 
     private async dobuildTx(actions: ActionInput[]): Promise<Transaction> {
-        const { dbid, name, preparedActions } = await this.checkSchema(actions);
+        const { dbid, name, preparedActions, actionSchema } = await this.checkSchema(actions);
 
         const signer = objects.requireNonNil(this._signer);
         const publicKey = await Promisy.resolveOrReject(this._publicKey);
         const signatureType = await Promisy.resolveOrReject(this._signatureType);
+
+        if(actionSchema.mutability === "view") {
+            throw new Error(`Action ${name} is a 'view' action. Please use kwil.call().`);
+        }
 
         const payload = {
             "dbid": dbid,
@@ -153,7 +157,7 @@ export class ActionBuilderImpl implements ActionBuilder {
         }
 
         if(actionSchema.mutability === "update") {
-            throw new Error(`Action ${name} is not a state-changing action. Please use buildTx() instead.`);
+            throw new Error(`Action ${name} is not a view only action. Please use kwil.execute().`);
         }
 
         if(actionSchema.inputs && actionSchema.inputs.length > 0 && (!preparedActions || preparedActions.length === 0)) {
