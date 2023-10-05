@@ -1,6 +1,6 @@
 import { Nillable, NonNil } from "../utils/types";
 import { SerializationType, ValueType } from "./enums";
-import { Signature, SignatureType } from "./signature";
+import { Signature } from "./signature";
 
 export type UnencodedMessagePayload = {
     dbid: string;

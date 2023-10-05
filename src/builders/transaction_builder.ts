@@ -11,7 +11,7 @@ import { unwrap } from "../client/intern";
 import { PayloadType, SerializationType } from "../core/enums";
 import { kwilEncode } from "../utils/rlp";
 import { base64ToHex, bytesToHex, bytesToString, hexToBase64, hexToBytes, stringToBytes, stringToHex } from "../utils/serial";
-import { SignatureType, executeSign } from "../core/signature";
+import { AnySignatureType, SignatureType, executeSign } from "../core/signature";
 import { Message, Msg, UnencodedMessagePayload } from "../core/message";
 import { isNearPubKey, nearB58ToHex } from "../utils/keys";
 import util from 'util';
@@ -27,7 +27,7 @@ export class TxnBuilderImpl implements TxnBuilder {
     private _payload: Nillable<() => NonNil<object>> = null;
     private _signer: Nillable<SignerSupplier> = null;
     private _publicKey: Nillable<Uint8Array> = null;
-    private _signatureType: Nillable<SignatureType> = null;
+    private _signatureType: Nillable<AnySignatureType> = null;
     private _description: NonNil<string> = "";
 
     private constructor(client: Kwil) {
@@ -43,7 +43,7 @@ export class TxnBuilderImpl implements TxnBuilder {
         return new TxnBuilderImpl(client);
     }
 
-    signer(signer: SignerSupplier, sigType: SignatureType): NonNil<TxnBuilder> {
+    signer(signer: SignerSupplier, sigType: AnySignatureType): NonNil<TxnBuilder> {
         this._signer = objects.requireNonNil(signer);
         this._signatureType = objects.requireNonNil(sigType);
         return this;
@@ -173,7 +173,7 @@ export class TxnBuilderImpl implements TxnBuilder {
         }
     }
 
-    private static async signTx(tx: Transaction, signer: SignerSupplier, pubKey: Uint8Array, signatureType: SignatureType, description: string): Promise<Transaction> {
+    private static async signTx(tx: Transaction, signer: SignerSupplier, pubKey: Uint8Array, signatureType: AnySignatureType, description: string): Promise<Transaction> {
         const salt = generateSalt(16);
 
         const digest = sha256BytesToBytes(base64ToBytes(tx.body.payload as string)).subarray(0, 20);
@@ -209,7 +209,7 @@ Kwil 🖋
         });
     }
 
-    private static async signMsg(msg: Message, signer: SignerSupplier, pubKey: Uint8Array, signatureType: SignatureType, description: string): Promise<Message> {
+    private static async signMsg(msg: Message, signer: SignerSupplier, pubKey: Uint8Array, signatureType: AnySignatureType, description: string): Promise<Message> {
         if(typeof msg.body.payload === "string") {
             throw new Error("Payload must be an object to sign a message.");
         }

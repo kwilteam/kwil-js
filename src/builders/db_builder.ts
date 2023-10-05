@@ -3,11 +3,11 @@ import {Nillable, NonNil, Promisy} from "../utils/types";
 import {objects} from "../utils/objects";
 import {Kwil} from "../client/kwil";
 import {TxnBuilderImpl} from "./transaction_builder";
-import { CustomSigner, DBBuilder, SignerSupplier } from "../core/builders";
+import { DBBuilder, SignerSupplier } from "../core/builders";
 import { AttributeType, DataType, IndexType, PayloadType } from "../core/enums";
 import { Database } from "../core/database";
 import { enforceDatabaseOrder } from "../core/order";
-import { SignatureType, getSigType } from "../core/signature";
+import { AnySignatureType, SignatureType, getSigType } from "../core/signature";
 
 /**
  * `DBBuilderImpl` class is an implementation of the `DBBuilder` interface.
@@ -18,7 +18,7 @@ export class DBBuilderImpl implements DBBuilder {
     private readonly client: Kwil;
     private _payload: Nillable<() => NonNil<object>> = null;
     private _signer: Nillable<SignerSupplier> = null;
-    private _signatureType: Nillable<SignatureType>;
+    private _signatureType: Nillable<AnySignatureType>;
     private _payloadType: Nillable<PayloadType> = null;
     private _publicKey: Nillable<string | Uint8Array> = null;
     private _description: Nillable<string> = null;
@@ -32,7 +32,7 @@ export class DBBuilderImpl implements DBBuilder {
         return new DBBuilderImpl(objects.requireNonNil(client), objects.requireNonNil(payloadType));
     }
 
-    signer(signer: SignerSupplier, signatureType?: SignatureType): NonNil<DBBuilder> {
+    signer(signer: SignerSupplier, signatureType?: AnySignatureType): NonNil<DBBuilder> {
         this._signer = objects.requireNonNil(signer);
         
         if(!signatureType) {

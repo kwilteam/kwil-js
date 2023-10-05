@@ -17,6 +17,10 @@ export enum SignatureType {
     ED25519 = 'ed25519'
 }
 
+export type CustomSignatureType = string;
+
+export type AnySignatureType = SignatureType | CustomSignatureType;
+
 export function getSigType(signer: SignerSupplier): SignatureType {
     if(isEthersSigner(signer))  {
         return SignatureType.SECP256K1_PERSONAL;
@@ -47,7 +51,7 @@ export function isEthersSigner(signer: SignerSupplier): boolean {
     return false
 }
 
-export async function executeSign(msg: Uint8Array , signer: SignerSupplier, signatureType: SignatureType): Promise<Uint8Array> {
+export async function executeSign(msg: Uint8Array , signer: SignerSupplier, signatureType: AnySignatureType): Promise<Uint8Array> {
     if(isEthersSigner(signer) && signatureType === SignatureType.SECP256K1_PERSONAL) {
         const hexSig =  await ethSign(msg, signer as EthSigner);
         return hexToBytes(hexSig);

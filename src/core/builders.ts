@@ -6,7 +6,7 @@ import {Wallet as Walletv5, Signer as Signerv5} from "ethers5";
 import { PayloadType } from "./enums";
 import { Message } from "./message";
 import { Signer as _NearSigner } from 'near-api-js'
-import { SignatureType } from "./signature";
+import { AnySignatureType } from "./signature";
 
 export type EthSigner = NonNil<_Signer | JsonRpcSigner | ethers.Wallet | Walletv5 | Signerv5 >;
 export type NearSigner = NonNil<_NearSigner>;
@@ -17,7 +17,7 @@ export type SignerSupplier = Promisy<EthSigner | CustomSigner>
 export interface TxnBuilder {
     payloadType(payloadType: NonNil<PayloadType>): NonNil<TxnBuilder>;
 
-    signer(signer: SignerSupplier, sigType: SignatureType): NonNil<TxnBuilder>;
+    signer(signer: SignerSupplier, sigType: AnySignatureType): NonNil<TxnBuilder>;
 
     publicKey(publicKey: string | Uint8Array): NonNil<TxnBuilder>;
 
@@ -35,11 +35,11 @@ export interface DBBuilder {
      * Sets the signer for the database transaction.
      * 
      * @param {SignerSupplier} signer - The signer for the database transaction. This can be a `Signer` from Ethers v5 or Ethers v6 or a custom signer function. Custom signers must be of the form `(message: Uint8Array, ...args: any[]) => Promise<Uint8Array>`.
-     * @param {SignatureType} [signatureType='secp256k1'] - The signature type for the database transaction. This is only required if the signer is a custom signer function.
+     * @param {AnySignatureType} [signatureType='secp256k1'] - The signature type for the database transaction. This is only required if the signer is a custom signer function.
      * @returns {DBBuilder} The current `DBBuilder` instance for chaining.
      */
 
-    signer(signer: SignerSupplier, signatureType?: SignatureType): NonNil<DBBuilder>;
+    signer(signer: SignerSupplier, signatureType?: AnySignatureType): NonNil<DBBuilder>;
 
     /**
      * Sets the database JSON payload for the database transaction.
@@ -117,7 +117,7 @@ export interface ActionBuilder {
      * @throws Will throw an error if the action is being built.
      */
 
-    signer(signer: SignerSupplier, signatureType?: SignatureType): NonNil<ActionBuilder>;
+    signer(signer: SignerSupplier, signatureType?: AnySignatureType): NonNil<ActionBuilder>;
 
     /**
      * Set the public key for the transaction. This identifies the transaction sender.
