@@ -18,7 +18,7 @@ class TestKwil extends Kwil {
     }
 }
 
-const pubKey = '0x048767310544592e33b2fb5555527f49c0902cf0f472f4c87e65324abb75e7a5e1c035bc1ef5026f363c79588526c341af341a68fc37299183391699ee1864cc75'
+const pubKey = '048767310544592e33b2fb5555527f49c0902cf0f472f4c87e65324abb75e7a5e1c035bc1ef5026f363c79588526c341af341a68fc37299183391699ee1864cc75'
 
 describe('ActionBuilder', () => {
     let actionBuilder: ActionBuilder;
@@ -125,7 +125,7 @@ describe('ActionBuilder', () => {
                 status: 200,
                 data: {
                     schema: {
-                        ame: 'testName',
+                        name: 'testName',
                         owner: bytesToBase64(stringToBytes('mockOwner')),
                         tables: "someTables",
                         actions: [{
@@ -143,7 +143,7 @@ describe('ActionBuilder', () => {
             const wallet = Wallet.createRandom()
 
             const mockedAccount: Account = {
-                public_key: pubKey,
+                public_key: hexToBase64(pubKey),
                 balance: "10000000000000000",
                 nonce: '1'
             }
@@ -213,7 +213,7 @@ describe('ActionBuilder', () => {
                 status: 200,
                 data: {
                     schema: {
-                        ame: 'testName',
+                        name: 'testName',
                         owner: bytesToBase64(stringToBytes('mockOwner')),
                         tables: "someTables",
                         actions: [{

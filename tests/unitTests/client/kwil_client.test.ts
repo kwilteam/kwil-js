@@ -10,11 +10,11 @@ import { bytesToString, stringToBytes, stringToHex } from "../../../dist/utils/s
 import { base64ToBytes, bytesToBase64 } from "../../../src/utils/base64";
 import { Wallet } from "ethers";
 import { recoverSecp256k1PubKey } from "../../../src/utils/keys";
-import { KwilSigner } from "../../../dist";
+import { KwilSigner } from "../../../src";
 import { ActionBody, ActionInput } from "../../../src/core/action";
 import { DeployBody } from "../../../src/core/database";
 import compiledKF from '../../test_schema2.json'
-import { DropBody } from "../../../dist/core/database";
+import { DropBody } from "../../../src/core/database";
 
 class TestKwil extends Kwil {
     constructor() {

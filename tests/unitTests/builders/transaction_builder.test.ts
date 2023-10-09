@@ -2,17 +2,20 @@ import { getMock, postMock } from '../api_client/api-utils';
 import { TxnBuilderImpl } from '../../../src/builders/transaction_builder';
 import { TxnBuilder } from '../../../src/core/builders';
 import { Kwil } from '../../../src/client/kwil';
-import { Transaction } from '../../../src/core/tx';
+import { Transaction, TxnData } from '../../../src/core/tx';
 import { Message } from '../../../src/core/message';
 import { Wallet } from 'ethers';
-import { PayloadType } from '../../../src/core/enums';
+import { PayloadType, SerializationType } from '../../../src/core/enums';
 import { SignatureType } from '../../../src/core/signature';
+import { hexToBase64, stringToBytes, stringToHex } from '../../../src/utils/serial';
 
 class TestKwil extends Kwil {
     constructor() {
         super({kwilProvider: 'doesnt matter' })
     }
 }
+
+const pubKey = '048767310544592e33b2fb5555527f49c0902cf0f472f4c87e65324abb75e7a5e1c035bc1ef5026f363c79588526c341af341a68fc37299183391699ee1864cc75'
 
 describe('Transaction Builder', () => {
     let txBuilder: TxnBuilder;
@@ -31,19 +34,11 @@ describe('Transaction Builder', () => {
         });
     })
 
-    describe('payload', () => {
-        it('should set the payloadand return TxnBuilderImpl', () => {
-            const result = txBuilder.payload({foo: 'bar'});
-            expect(result).toBeInstanceOf(TxnBuilderImpl);
-            expect((result as any)._payload).toBeDefined();
-        });
-    })
-
     describe('payloadType', () => {
         it('should set the payloadType and return TxnBuilderImpl', () => {
             const result = txBuilder.payloadType(PayloadType.DEPLOY_DATABASE);
             expect(result).toBeInstanceOf(TxnBuilderImpl);
-            expect((result as any)._payloadType).toBe(101);
+            expect((result as any)._payloadType).toBe('deploy_schema');
         })
     })
 
@@ -56,12 +51,36 @@ describe('Transaction Builder', () => {
         });
     });
 
+    describe('payload', () => {
+        it('should set the payload and return TxnBuilderImpl', () => {
+            const result = txBuilder.payload({foo: 'bar'});
+            expect(result).toBeInstanceOf(TxnBuilderImpl);
+            expect((result as any)._payload).toBeDefined();
+        });
+    })
+
+    describe('publicKey', () => {
+        it('should set the publicKey and return TxnBuilderImpl', () => {
+            const result = txBuilder.publicKey(stringToHex('1234'));
+            expect(result).toBeInstanceOf(TxnBuilderImpl);
+            expect((result as any)._publicKey).toStrictEqual(stringToBytes('1234'));
+        });
+    });
+
+    describe('description', () => {
+        it('should set the description and return TxnBuilderImpl', () => {
+            const result = txBuilder.description('test');
+            expect(result).toBeInstanceOf(TxnBuilderImpl);
+            expect((result as any)._description).toBe('test');
+        });
+    });
+
     describe('buildTx', () => {
         it('should build a transaction', async () => {
             const wallet = Wallet.createRandom()
 
             const mockedAccount = {
-                address: wallet.address,
+                public_key: hexToBase64(pubKey),
                 balance: "10000000000000000",
                 nonce: 1
             }
@@ -82,30 +101,24 @@ describe('Transaction Builder', () => {
 
             const result = await txBuilder
                 .payload({foo: 'bar'})
-                .payloadType(PayloadType.DEPLOY_DATABASE)
+                .payloadType(PayloadType.EXECUTE_ACTION)
+                .publicKey(pubKey)
+                .description('test')
                 .signer(wallet, SignatureType.SECP256K1_PERSONAL)
                 .buildTx();
 
-            const extRes = {
-                hash: 'kWBaCs+MeotmBuOMSKJFxsDaA2r0yIBmv9ljdMIHRnc8vbVfkY4Hg4uTvYfYJitM',
-                payload_type: 'execute_action',
-                payload: 'eyJmb28iOiJiYXIifQ==',
-                fee: '100000',
-                nonce: 2,
-                signature: {
-                  signature_bytes: 'string',
-                  signature_type: 2
-                },
-                sender: wallet.address
-              }
             expect(result).toBeInstanceOf(Transaction);
-            expect(result.body.payload_type).toBe(extRes.payload_type);
-            expect(result.body.payload).toBe(extRes.payload);
-            expect(result.fee).toBe(extRes.fee);
-            expect(result.nonce).toBe(extRes.nonce);
-            expect(result.signature.signature_type).toEqual(extRes.signature.signature_type);
-            expect(typeof result.signature.signature_bytes).toEqual(extRes.signature.signature_bytes);
-            expect(result.sender).toBe(wallet.address);
+            expect(result.body.payload_type).toBe('execute_action');
+            expect(result.body.description).toBe('test');
+            expect(result.body.fee).toBe('100000');
+            expect(result.body.nonce).toBe(2);
+            expect(typeof result.body.payload).toBe('string');
+            expect(typeof result.body.salt).toBe('string');
+            expect(result.isSigned()).toBe(true);
+            expect(result.sender).toBe(hexToBase64(pubKey));
+            expect(result.signature.signature_type).toBe('secp256k1_ep');
+            expect(typeof result.signature.signature_bytes).toBe('string');
+            expect(result.serialization).toBe(SerializationType.SIGNED_MSG_CONCAT);
         });
 
         it('should throw error if account does not exist', async() => {
@@ -123,8 +136,9 @@ describe('Transaction Builder', () => {
                     .payload({foo: 'bar'})
                     .payloadType(PayloadType.DEPLOY_DATABASE)
                     .signer(wallet, SignatureType.SECP256K1_PERSONAL)
+                    .publicKey(pubKey)
                     .buildTx()
-            ).rejects.toThrow();
+            ).rejects.toThrowError('');
         })
 
         it('should throw error if it cannot estimate cost', async () => {
@@ -154,7 +168,8 @@ describe('Transaction Builder', () => {
                 txBuilder
                     .payload({foo: 'bar'})
                     .payloadType(PayloadType.DEPLOY_DATABASE)
-                    .signer(wallet)
+                    .publicKey(pubKey)
+                    .signer(wallet, SignatureType.SECP256K1_PERSONAL)
                     .buildTx()
             ).rejects.toThrow();
         })
@@ -166,14 +181,19 @@ describe('Transaction Builder', () => {
 
             const msg: Message = await txBuilder
                 .payload({foo: 'bar'})
-                .signer(wallet)
+                .publicKey(pubKey)
+                .description('test')
+                .signer(wallet, SignatureType.SECP256K1_PERSONAL)
                 .buildMsg();
 
             expect(msg).toBeInstanceOf(Message);
-            expect(msg.payload).toBe('eyJmb28iOiJiYXIifQ==');
-            expect(msg.sender).toBe(wallet.address);
-            expect(msg.signature.signature_type).toBe(2);
-            expect(typeof msg.signature.signature_bytes).toBe('string');
+            expect(typeof msg.body.payload).toBe('string');
+            expect(msg.body.description).toBe('test');
+            expect(msg.sender).toBe(hexToBase64(pubKey));
+            expect(msg.serialization).toBe('concat')
+            expect(msg.signature?.signature_type).toBe('secp256k1_ep');
+            expect(typeof msg.signature?.signature_bytes).toBe('string');
+
         });
 
         it('should build a message without a signature', async () => {
@@ -182,10 +202,10 @@ describe('Transaction Builder', () => {
                 .buildMsg();
 
             expect(msg).toBeInstanceOf(Message);
-            expect(msg.payload).toBe('eyJmb28iOiJiYXIifQ==');
+            expect(typeof msg.body.payload).toBe('string');
             expect(msg.sender).toBe('');
-            expect(msg.signature.signature_type).toBe(0);
-            expect(msg.signature.signature_bytes).toBe('');
+            expect(msg.serialization).toBe('concat')
+            expect(msg.signature).toBeNull();
         });
 
         it('should through error without a payload', async () =>    {

@@ -93,12 +93,12 @@ describe('DbBuilder', () => {
             expect(result.body.fee).toBe('100000');
             expect(result.body.payload_type).toBe('deploy_schema');
             expect(result.body.description).toBe('test');
-            expect(result.body.salt).toBeInstanceOf(Uint8Array);
+            expect(typeof result.body.salt).toBe('string');
             expect(result.body.nonce).toBe(Number(mockedAccount.nonce) + 1);
             expect(result.body.payload).toBe('AAHFgIDAwMA=');
             expect(result.sender).toBe('BIdnMQVEWS4zsvtVVVJ/ScCQLPD0cvTIfmUySrt156XhwDW8HvUCbzY8eViFJsNBrzQaaPw3KZGDORaZ7hhkzHU=');
             expect(typeof result.signature.signature_bytes).toBe('string');
-            expect(result.signature.signature_type).toBe('sec256k1_ep');
+            expect(result.signature.signature_type).toBe('secp256k1_ep');
         })
     })
 })
