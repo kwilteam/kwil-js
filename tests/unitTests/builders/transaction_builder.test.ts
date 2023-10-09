@@ -6,6 +6,7 @@ import { Transaction } from '../../../src/core/tx';
 import { Message } from '../../../src/core/message';
 import { Wallet } from 'ethers';
 import { PayloadType } from '../../../src/core/enums';
+import { SignatureType } from '../../../src/core/signature';
 
 class TestKwil extends Kwil {
     constructor() {
@@ -49,7 +50,7 @@ describe('Transaction Builder', () => {
     describe('signer', () => {
         it('should set the signer and return TxnBuilderImpl', () => {
             const sig = Wallet.createRandom();
-            const result = txBuilder.signer(sig);
+            const result = txBuilder.signer(sig, SignatureType.SECP256K1_PERSONAL);
             expect(result).toBeInstanceOf(TxnBuilderImpl);
             expect((result as any)._signer).toBe(sig);
         });
@@ -82,12 +83,12 @@ describe('Transaction Builder', () => {
             const result = await txBuilder
                 .payload({foo: 'bar'})
                 .payloadType(PayloadType.DEPLOY_DATABASE)
-                .signer(wallet)
+                .signer(wallet, SignatureType.SECP256K1_PERSONAL)
                 .buildTx();
 
             const extRes = {
                 hash: 'kWBaCs+MeotmBuOMSKJFxsDaA2r0yIBmv9ljdMIHRnc8vbVfkY4Hg4uTvYfYJitM',
-                payload_type: 101,
+                payload_type: 'execute_action',
                 payload: 'eyJmb28iOiJiYXIifQ==',
                 fee: '100000',
                 nonce: 2,
@@ -98,9 +99,8 @@ describe('Transaction Builder', () => {
                 sender: wallet.address
               }
             expect(result).toBeInstanceOf(Transaction);
-            expect(result.hash).toBe(extRes.hash);
-            expect(result.payload_type).toBe(extRes.payload_type);
-            expect(result.payload).toBe(extRes.payload);
+            expect(result.body.payload_type).toBe(extRes.payload_type);
+            expect(result.body.payload).toBe(extRes.payload);
             expect(result.fee).toBe(extRes.fee);
             expect(result.nonce).toBe(extRes.nonce);
             expect(result.signature.signature_type).toEqual(extRes.signature.signature_type);
@@ -122,7 +122,7 @@ describe('Transaction Builder', () => {
                 txBuilder
                     .payload({foo: 'bar'})
                     .payloadType(PayloadType.DEPLOY_DATABASE)
-                    .signer(wallet)
+                    .signer(wallet, SignatureType.SECP256K1_PERSONAL)
                     .buildTx()
             ).rejects.toThrow();
         })

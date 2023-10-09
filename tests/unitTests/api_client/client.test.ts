@@ -3,7 +3,7 @@ import { getMock, postMock } from './api-utils';
 import Client from "../../../src/api_client/client";
 import { Transaction } from "../../../src/core/tx";
 import { Message } from '../../../src/core/message';
-import { PayloadType } from '../../../src/core/enums';
+import { PayloadType, SerializationType } from '../../../src/core/enums';
 import { SignatureType } from '../../../src/core/signature';
 import { bytesToHex, hexToBytes, stringToBytes } from '../../../dist/utils/serial';
 import { base64ToBytes, bytesToBase64 } from '../../../src/utils/base64';
@@ -35,8 +35,8 @@ describe('Client', () => {
             getMock.mockResolvedValue({
                 status: 200,
                 data: { schema: {
-                    name: 'mockName',
-                    owner: 'bW9ja093bmVy',
+                    name: 'mockSchema',
+                    owner: bytesToBase64(stringToBytes('mockOwner')),
                     tables: [],
                     actions: [],
                     extensions: []
@@ -152,18 +152,20 @@ describe('Client', () => {
 
         it('should broadcast a signed transaction', async () => {
             const tx = new Transaction({
-                body: {
-                    payload: 'mockPayload',
-                    payload_type: PayloadType.EXECUTE_ACTION,
-                    fee: 'mockFee',
-                    nonce: 1,
-                    salt: new Uint8Array()
-                },
-                sender: 'mockSender',
                 signature: {
                     signature_bytes: 'mockSignatureBytes',
                     signature_type: SignatureType.SECP256K1_PERSONAL
-                }
+                },
+                body: {
+                    payload: 'mockPayload',
+                    payload_type: PayloadType.EXECUTE_ACTION,
+                    fee: BigInt(0),
+                    nonce: null,
+                    salt: '',
+                    description: ''
+                },
+                sender: 'mockSender',
+                serialization: SerializationType.SIGNED_MSG_CONCAT
             })
 
             postMock.mockResolvedValue({
@@ -243,7 +245,7 @@ describe('Client', () => {
         it('should get tx info for a given tx hash', async() => {
             const txHash = 'mockTxHash';
 
-            const rlpPayload = encodeRlp(bytesToHex(base64ToBytes('W10=')));
+            const rlpPayload = encodeRlp('0x' + bytesToHex(base64ToBytes('W10=')));
             const mockPayload = concatBytes(new Uint8Array([0, 1]), hexToBytes(rlpPayload))
 
             postMock.mockResolvedValue({
@@ -295,12 +297,13 @@ describe('Client', () => {
     describe('call', () => {
         it('should send a message to the call endpoint', async () => {
             const msg = new Message({
-                payload: "mockPayload",
-                sender: "mockSender",
-                signature: {
-                    signature_bytes: "mockSignatureBytes",
-                    signature_type: SignatureType.SECP256K1_PERSONAL
-                }
+                body: {
+                    payload: 'mockPayload',
+                    description: ''
+                },
+                signature: null,
+                sender: 'mocksender',
+                serialization: SerializationType.SIGNED_MSG_CONCAT
             })
             postMock.mockResolvedValue({
                 status: 200,
@@ -316,12 +319,13 @@ describe('Client', () => {
 
         it('should throw error if call fails', async () => {
             const msg = new Message({
-                payload: "mockPayload",
-                sender: "mockSender",
-                signature: {
-                    signature_bytes: "mockSignatureBytes",
-                    signature_type: SignatureType.SECP256K1_PERSONAL
-                }
+                body: {
+                    payload: 'mockPayload',
+                    description: ''
+                },
+                signature: null,
+                sender: 'mocksender',
+                serialization: SerializationType.SIGNED_MSG_CONCAT
             })
             const mockRes = {
                 status: 400,
