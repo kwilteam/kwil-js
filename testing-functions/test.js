@@ -37,7 +37,7 @@ async function test() {
 
     const pubByte = hexToBytes(pubKey)
     const dbid = kwil.getDBID(pubByte, "mydb")
-    console.log(pubKey)
+    console.log(dbid)
     // await debugFriendlySign(kwil, wallet, pubKey)
     // logger(dbid)
     // await addWallet(kwil, dbid, pubByte, wallet)

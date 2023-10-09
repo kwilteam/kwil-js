@@ -34,13 +34,13 @@ export class TxnBuilderImpl implements TxnBuilder {
         this.client = objects.requireNonNil(client);
     }
 
+    public static of(client: NonNil<Kwil>): NonNil<TxnBuilder> {
+        return new TxnBuilderImpl(client);
+    }
+
     payloadType(payloadType: NonNil<PayloadType>): TxnBuilder {
         this._payloadType = objects.requireNonNil(payloadType);
         return this;
-    }
-
-    public static of(client: NonNil<Kwil>): NonNil<TxnBuilder> {
-        return new TxnBuilderImpl(client);
     }
 
     signer(signer: SignerSupplier, sigType: AnySignatureType): NonNil<TxnBuilder> {

@@ -1,4 +1,3 @@
-
 import { getMock, postMock } from './api-utils';
 import Client from "../../../src/api_client/client";
 import { Transaction } from "../../../src/core/tx";
@@ -9,6 +8,7 @@ import { bytesToHex, hexToBytes, stringToBytes } from '../../../dist/utils/seria
 import { base64ToBytes, bytesToBase64 } from '../../../src/utils/base64';
 import { concatBytes } from '../../../src/utils/bytes';
 import { encodeRlp } from 'ethers';
+import { base64ToHex } from '../../../src/utils/serial';
 require('dotenv').config();
 
 describe('Client', () => {
@@ -168,16 +168,18 @@ describe('Client', () => {
                 serialization: SerializationType.SIGNED_MSG_CONCAT
             })
 
+            const hash = bytesToBase64(hexToBytes('mockTxHash'));
+
             postMock.mockResolvedValue({
                 status: 200,
-                data: { receipt: { txHash: '3D/Em+hqmZYG/Zl7+Jfsag0B1hjD/t3Z/42tk2xru8ecmCD14dY4OZ6q11o3PuEP', fee: 'mockFee', body: 'W10=' } }
+                data: { tx_hash: hash }
             });
 
             const result = await client.broadcast(tx);
 
             expect(result.status).toBe(200);
             expect(result.data).toEqual({
-                tx_hash: "0x"
+                tx_hash: base64ToHex(hash)
             });
             expect(postMock).toHaveBeenCalledWith('/api/v1/broadcast', { tx }, undefined);
         });
