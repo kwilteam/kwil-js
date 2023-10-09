@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.1](https://github.com/kwilteam/kwil-js/compare/v0.1.1...v0.2.1) (2023-10-09)
+
+
+### Features
+
+* custom singature names ([#35](https://github.com/kwilteam/kwil-js/issues/35)) ([ac07ccd](https://github.com/kwilteam/kwil-js/commit/ac07ccdcbed67121ce8ff1b1177b0690a7c667c1)), closes [#34](https://github.com/kwilteam/kwil-js/issues/34)
+
 ### [0.2.0](https://github.com/kwilteam/kwil-js/compare/v0.1.1...v0.2.0) (2023-09-30)
 
 Version 0.2.0 supports friendly signatures, which is compatible with the [Kwil Daemon v0.6.0](https://github.com/kwilteam/binary-releases/releases) and above.
