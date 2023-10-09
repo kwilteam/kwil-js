@@ -98,7 +98,7 @@ export default class Client extends Api {
         checkRes(res);
 
         let body = {
-            tx_hash: '0x'
+            tx_hash: ''
         };
 
         if (res.data.tx_hash) {
@@ -106,6 +106,7 @@ export default class Client extends Api {
             body.tx_hash = bytesToHex(base64ToBytes(bytes))
         }
 
+        //TODO: Should we always be returning body, regardless of 
         return {
             status: res.status,
             data: body
