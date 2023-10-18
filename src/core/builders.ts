@@ -1,4 +1,4 @@
-import { Nillable, NonNil, Promisy } from "../utils/types";
+import { HexString, Nillable, NonNil, Promisy } from "../utils/types";
 import { Transaction } from "./tx";
 import {ethers, Signer as _Signer, JsonRpcSigner } from "ethers";
 import {ActionInput} from "./action";
@@ -6,151 +6,262 @@ import {Wallet as Walletv5, Signer as Signerv5} from "ethers5";
 import { PayloadType } from "./enums";
 import { Message } from "./message";
 import { AnySignatureType } from "./signature";
+import { DbPayloadType } from "./payload";
 
-export type EthSigner = NonNil<_Signer | JsonRpcSigner | ethers.Wallet | Walletv5 | Signerv5 >;
+export type EthSigner = NonNil<_Signer | JsonRpcSigner | ethers.Wallet | Walletv5 | Signerv5>;
 
 export type CustomSigner = NonNil<(message: Uint8Array, ...args: any[]) => Promise<Uint8Array>>
 export type SignerSupplier = Promisy<EthSigner | CustomSigner>
 
-export interface TxnBuilder {
-    payloadType(payloadType: NonNil<PayloadType>): NonNil<TxnBuilder>;
+/**
+ * `PayloadBuilder` is the interface for building transactions and messages that are sent over GRPC to a Kwil network.
+ */
+export interface PayloadBuilder {
+    /**
+     * Specify the payload type to be built.
+     * 
+     * @param {PayloadType} payloadType - The payload type to be built. See {@link PayloadType} for more information.
+     * @returns {PayloadBuilder} - The current `PayloadBuilder` instance for chaining.
+     * @throws {Error} - If the payload type is null or undefined.
+     */
+    payloadType(payloadType: NonNil<PayloadType>): NonNil<PayloadBuilder>;
 
-    signer(signer: SignerSupplier, sigType: AnySignatureType): NonNil<TxnBuilder>;
+    /**
+     * Specify the signer and the signature type.
+     * 
+     * @param {SignerSupplier} signer - The signer to be used to sign the transaction.
+     * @param {AnySignatureType} sigType - The signature type to be used to sign the transaction. See {@link AnySignatureType} for more information.
+     * @returns The current `PayloadBuilder` instance for chaining.
+     * @throws {Error} - If the signer is null or undefined.
+     * @throws {Error} - If the signature type is null or undefined.
+     */
+    signer(signer: SignerSupplier, sigType: AnySignatureType): NonNil<PayloadBuilder>;
 
-    publicKey(publicKey: string | Uint8Array): NonNil<TxnBuilder>;
+    /**
+     * Specify the public key for the payload signer.
+     * 
+     * @param {HexString | Uint8Array} publicKey - The public key to be used to sign the transaction. This can be a hex string or a Uint8Array.
+     * @returns {PayloadBuilder} - The current `PayloadBuilder` instance for chaining.
+     * @throws {Error} - If the public key is null or undefined.
+     */
+    publicKey(publicKey: HexString | Uint8Array): NonNil<PayloadBuilder>;
 
-    description(description: Nillable<string>): NonNil<TxnBuilder>;
+    /**
+     * Set the description to be included in the payload signature.
+     * 
+     * @param {string | null} description - The description to be included in the payload signature.
+     * @returns {PayloadBuilder} - The current `PayloadBuilder` instance for chaining.
+     */
+    description(description: Nillable<string>): NonNil<PayloadBuilder>;
 
-    payload(payload: (() => NonNil<object>) | NonNil<object>): NonNil<TxnBuilder>;
+    /**
+     * Sets the content for the body of the payload object.
+     * 
+     * @param {() => NonNil<AllPayloads> | NonNil<AllPayloads>} payload - The payload to be built. This can be a function that returns an object or an object.
+     * @returns {PayloadBuilder} - The current `PayloadBuilder` instance for chaining.
+     * @throws {Error} - If the payload is null or undefined.
+     */
+    payload(payload: (() => NonNil<object>) | NonNil<object>): NonNil<PayloadBuilder>;
 
+    /**
+     * Builds the payload for the `kwil.broadcast()` method (i.e. the tx GRPC endpoint - see {@link https://github.com/kwilteam/proto/blob/main/kwil/tx/v1/tx.proto})
+     * 
+     * @returns {Transaction} - A promise that resolves to the signed transaction.
+     * @throws {Error} - If the required fields in the builder are null or undefined.
+     */
     buildTx(): Promise<Transaction>;
 
+    /**
+     * Build the payload structure for message to the `kwil.call()` method (i.e. the call GRPC endpoint - see {@link https://github.com/kwilteam/proto/blob/main/kwil/tx/v1/call.proto})
+     * 
+     * @returns {Message} - A promise that resolves to the built message, with signature if provided.
+     * @throws {Error} - If the required fields in the builder are null or undefined.
+     */
     buildMsg(): Promise<Message>;
 }
 
-export interface DBBuilder {
+/**
+ * `DBBuilder` is the interface for building database deployment and database drop transactions.
+ */
+export interface DBBuilder<T extends PayloadType.DEPLOY_DATABASE | PayloadType.DROP_DATABASE> {
     /**
-     * Sets the signer for the database transaction.
+     * Specify the signer for the action operation.
+     * 
+     * @param {EthSigner} signer - The signer for the database operation. This must be a signer from Ethers v5 or Ethers v6.
+     * @returns {DBBuilder} The current `ActionBuilder` instance for chaining.
+     * @throws Will throw an error if the action is being built.
+     * @throws Will throw an error if the signer is null or undefined.
+     * @throws Will throw an error if it cannot infer the signature type from the signer.
+     */
+    signer(signer: EthSigner): NonNil<DBBuilder<T>>;
+
+    /**
+     * Specify the signer for the action operation.
+     * 
+     * @param {CustomSigner} signer - The signer for the database operation. This must be a custom signer function of the form `(message: Uint8Array, ...args: any[]) => Promise<Uint8Array>`.
+     * @param {AnySignatureType} signatureType - The signature type for the database operation. This can be a `SignatureType` enum value or a string for a network-specific signature type, if implemented at the network level.
+     * @returns {DBBuilder} The current `ActionBuilder` instance for chaining.
+     * @throws Will throw an error if the action is being built.
+     * @throws Will throw an error if the signer is null or undefined.
+     * @throws Will throw an error if the signature type is null or undefined.
+     */
+    signer(signer: CustomSigner, signatureType: AnySignatureType): NonNil<DBBuilder<T>>;
+
+    /**
+     * Specifies the signer for the database transaction.
      * 
      * @param {SignerSupplier} signer - The signer for the database transaction. This can be a `Signer` from Ethers v5 or Ethers v6 or a custom signer function. Custom signers must be of the form `(message: Uint8Array, ...args: any[]) => Promise<Uint8Array>`.
-     * @param {AnySignatureType} [signatureType='secp256k1'] - The signature type for the database transaction. This is only required if the signer is a custom signer function.
+     * @param {AnySignatureType} signatureType - The signature type for the database transaction. This is only required if the signer is a custom signer function. 
      * @returns {DBBuilder} The current `DBBuilder` instance for chaining.
+     * @throws Will throw an error if the signer is null or undefined.
+     * @throws Will throw an error if the signature type is null or undefined.
+     * @throws Will throw an error if it cannot infer the signature type from the signer.
      */
+    signer(signer: SignerSupplier, signatureType?: AnySignatureType): NonNil<DBBuilder<T>>;
 
-    signer(signer: SignerSupplier, signatureType?: AnySignatureType): NonNil<DBBuilder>;
+     /**
+     * The payload for the database deployment or database drop.
+     * 
+     * @param {DbPayloadType<T>} payload - The payload for the database deployment or database drop. This should be a callback function that resolves to either a `CompiledKuneiform` or `DropDbPayload` object, or just objects that match either of those interfaces.
+     * @returns {DBBuilder} The current `DBBuilder` instance for chaining.
+     * @throws Will throw an error if the payload is null or undefined.
+     */
+    payload(payload: DbPayloadType<T>): NonNil<DBBuilder<T>>;
 
     /**
-     * Sets the database JSON payload for the database transaction.
+     * Specifies the public key for the database deployment / drop.
      * 
-     * @param payload - The payload for the database transaction. This must be a valid JSON from compiled Kuneiform. See Kwil docs for more info.
-     * @returns The current `DBBuilder` instance for chaining.
+     * @param {HexString | Uint8Array} publicKey - The public key for the database deployment / drop. 
+     * @returns {DBBuilder} The current `DBBuilder` instance for chaining.
+     * @throws Will throw an error if the public key is null or undefined.
      */
-
-    payload(payload: (() => NonNil<object>) | NonNil<object>): NonNil<DBBuilder>;
+    publicKey(publicKey: HexString | Uint8Array): NonNil<DBBuilder<T>>;
 
     /**
-     * Set the public key for the transaction. This identifies the transaction sender.
-     * This should be the public key of the signer.
+     * Specifies the descriptions to be included in the message that is signed.
      * 
-     * @param publicKey - The public key for the transaction sender. Ethereum keys can be passed as a hex string (0x123...) or as bytes (Uint8Array). NEAR protocol public keys can be passed as the base58 encoded public key (with "ed25519:" prefix), a hex string, or bytes (Uint8Array).
-     * @returns The current `DBBuilder` instance for chaining.
+     * @param {string} description - The description to be included in the message that is signed. 
+     * @returns {DBBuilder} The current `DBBuilder` instance for chaining.
+     * @throws Will throw an error if the description is null or undefined.
      */
-
-    publicKey(publicKey: string | Uint8Array): NonNil<DBBuilder>;
+    description(description: string): NonNil<DBBuilder<T>>;
 
     /**
-     * Add a description for the signature message that will appear in browser wallets (e.g. Metamask, Coinbase Wallet, etc).
-     * The description should be a short message that describes the transaction.
+     * Builds a Transaction. This will call the kwil network to retrieve the nonce for the signer.
      * 
-     * @param description - The description that will appear in metamask.
-     * @returns The current `DBBuilder` instance for chaining.
+     * @returns {Promise<Transaction>} - A promise that resolves to a `Transaction` object. The `Transaction` object can be broadcasted to the Kwil network using `kwil.broadcast(tx)`.
+     * @throws Will throw an error if there are any errors in the payload.
+     * @throws Will throw an error if there is an issue with the account retrieval.
      */
-    description(description: string): NonNil<DBBuilder>;
-
-    /**
-     * Builds a database transaction.
-     * 
-     * @returns A promise that resolves to a Transaction object. This transaction can be broadcasted to the Kwil network.
-     */
-
     buildTx(): Promise<Transaction>;
 }
 
+/**
+ * `ActionBuilder` is the interface for building `update` action transactions and `view` actions messages.
+ */
 export interface ActionBuilder {
     /**
-     * Sets the name of the action to be executed. This must be an action that is defined in the database schema for the given DBID.
+     * Specifies the name of the action to be executed.
      * 
-     * @param actionName - The name of the action.
-     * @returns The current `ActionBuilder` instance for chaining.
-     * @throws Will throw an error if the action is being built.
+     * @param {string} actionName - The name of the action to be executed.
+     * @returns {ActionBuilder} The current `ActionBuilder` instance for chaining.
+     * @throws Will throw an error if the value is specified while the action is being built.
+     * @throws Will throw an error if the action name is null or undefined.
      */
-
     name(actionName: string): NonNil<ActionBuilder>;
 
     /**
-     * Sets the database identifier (DBID) of the database that contains the action to be executed.
+     * Specifies the database identifier (DBID) of the database that contains the action to be executed.
      * 
-     * @param dbid - The database identifier.
-     * @returns The current `ActionBuilder` instance for chaining.
-     * @throws Will throw an error if the action is being built.
+     * @param {string} dbid - The database identifier.
+     * @returns {ActionBuilder} The current `ActionBuilder` instance for chaining.
+     * @throws Will throw an error if the value is specified while the action is being built.
+     * @throws Will throw an error if the dbid is null or undefined.
      */
-
     dbid(dbid: string): NonNil<ActionBuilder>;
 
-    /**
-     * Concatenates the provided actionInputs to the list of inputs to be executed in the action transaction.
+   /**
+     * Adds actionInputs to the list of inputs to be executed in the action.
      * 
-     * @param actions - The actions to concatenate. This should be from the `ActionInput` class.
+     * @param {ActionInput | ActionInput[]} actions - The actions to add. This should be from the `ActionInput` class.
      * @returns The current `ActionBuilder` instance for chaining.
-     * @throws Will throw an error if the action is being built.
+     * @throws Will throw an error if the value is specified while the action is being built.
+     * @throws Will throw an error if the action is null or undefined.
      */
-    
     concat(action: ActionInput | ActionInput[]): NonNil<ActionBuilder>;
 
     /**
-     * Sets the signer for the action transaction.
+     * Specify the signer for the action operation.
      * 
-     * @param signer - The signer for the database transaction. This can be a `Signer` from Ethers v5 or Ethers v6 or a custom signer function. Custom signers must be of the form `(message: Uint8Array, ...args: any[]) => Promise<Uint8Array>`.
-     * @param signatureType - The signature type for the database transaction. This is only required if the signer is a custom signer function.
+     * @param {EthSigner} signer - The signer for the database operation. This must be a signer from Ethers v5 or Ethers v6.
+     * @returns {ActionBuilder} The current `ActionBuilder` instance for chaining.
      * @throws Will throw an error if the action is being built.
+     * @throws Will throw an error if the signer is null or undefined.
+     * @throws Will throw an error if it cannot infer the signature type from the signer.
      */
+    signer(signer: EthSigner): NonNil<ActionBuilder>;
+
+    /**
+     * Specify the signer for the action operation.
+     * 
+     * @param {CustomSigner} signer - The signer for the database operation. This must be a custom signer function of the form `(message: Uint8Array, ...args: any[]) => Promise<Uint8Array>`.
+     * @param {AnySignatureType} signatureType - The signature type for the database operation. This can be a `SignatureType` enum value or a string for a network-specific signature type, if implemented at the network level.
+     * @returns {ActionBuilder} The current `ActionBuilder` instance for chaining.
+     * @throws Will throw an error if the action is being built.
+     * @throws Will throw an error if the signer is null or undefined.
+     * @throws Will throw an error if the signature type is null or undefined.
+     */
+    signer(signer: CustomSigner, signatureType: AnySignatureType): NonNil<ActionBuilder>;
+
+    /** 
+     * Specifies the signer for the action operation.
+     * 
+     * @param {SignerSupplier} signer - The signer for the database operation. This can be a signer from Ethers v5 or Ethers v6 or a custom signer function of the form `(message: Uint8Array, ...args: any[]) => Promise<Uint8Array>`.
+     * @param {AnySignatureType} signatureType - The signature type for the database operation. This can be a `SignatureType` enum value or a string for a network-specific signature type. Ethers v5 and Ethers v6 signers will have the signature type inferred from the signer.
+     * @returns {ActionBuilder} The current `ActionBuilder` instance for chaining.
+     * @throws Will throw an error if the action is being built.
+     * @throws Will throw an error if the signer is null or undefined.
+     * @throws Will throw an error if the signature type is null or undefined.
+     * @throws Will throw an error if it cannot infer the signature type from the signer.
+    */
 
     signer(signer: SignerSupplier, signatureType?: AnySignatureType): NonNil<ActionBuilder>;
 
     /**
-     * Set the public key for the transaction. This identifies the transaction sender.
-     * This should be the public key of the signer.
+     * Specifies the public key of the wallet signing for the database operation.
      * 
-     * @param publicKey - The public key for the transaction sender. Ethereum keys can be passed as a hex string (0x123...) or as bytes (Uint8Array). NEAR protocol public keys can be passed as the base58 encoded public key (with "ed25519:" prefix), a hex string, or bytes (Uint8Array).
-     * @returns The current `DBBuilder` instance for chaining.
+     * @param {HexString | Uint8Array} publicKey - The public key of the wallet signing for the database operation.
+     * @returns {ActionBuilder} The current `ActionBuilder` instance for chaining.
+     * @throws Will throw an error if the value is specified while the action is being built.
+     * @throws Will throw an error if the public key is null or undefined.
      */
-
-    publicKey(publicKey: string | Uint8Array): NonNil<ActionBuilder>;
+    publicKey(publicKey: HexString | Uint8Array): NonNil<ActionBuilder>;
 
     /**
-     * Add a description for the signature message that will appear in browser wallets (e.g. Metamask, Coinbase Wallet, etc).
-     * The description should be a short message that describes the action being executed.
+     * Specifies the description to be included in the message that is signed.
      * 
-     * @param description - The description that will appear in metamask.
-     * @returns The current `ActionBuilder` instance for chaining.
+     * @param {string} description - The description to be included in the message that is signed.
+     * @returns {ActionBuilder} The current `ActionBuilder` instance for chaining.
+     * @throws Will throw an error if the value is specified while the action is being built.
+     * @throws Will throw an error if the description is null or undefined.
      */
     description(description: string): NonNil<ActionBuilder>;
 
     /**
-     * Builds a transaction.
+     * Builds a transaction. This will call the kwil network to retrieve the schema and the signer's account.
      * 
-     * @returns A promise that resolves to a Transaction object. This transaction can be broadcasted to the Kwil network with the `kwil.broadcast()` api.
-     * @throws Will throw an error if the action is being built or if there's an issue with the schema retrieval for validating the action.
+     * @returns {Promise<Transaction>} - A promise that resolves to a Transaction object. This transaction can be broadcasted to the Kwil network with the `kwil.broadcast()` api.
+     * @throws Will throw an error if the action is being built or if there's an issue with the schema or account retrieval.
+     * @throws Will throw an error if the action is not a update action.
      */
-
     buildTx(): Promise<Transaction>;
 
     /**
-     * Builds a message.
+     * Builds the message structure for view actions. This can be provided to the `kwil.call()` api.
      * 
-     * @returns A promise that resolves to a Message object. This message can be sent to the Kwil network with the `kwil.call()` api.
-     * @throws Will throw an error if the action is being built or if there's an issue with the schema retrieval for validating the action.
+     * @returns {Promise<Message>} - A message object that can be sent to the Kwil network.
+     * @throws Will throw an error if the action is being built or if there's an issue with the schema or account retrieval.
+     * @throws Will throw an error if the action is not a view action.
      */
-
     buildMsg(): Promise<Message>;
 }

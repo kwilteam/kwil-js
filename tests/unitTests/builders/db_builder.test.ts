@@ -16,7 +16,7 @@ class TestKwil extends Kwil {
 const pubKey = '0x048767310544592e33b2fb5555527f49c0902cf0f472f4c87e65324abb75e7a5e1c035bc1ef5026f363c79588526c341af341a68fc37299183391699ee1864cc75'
 
 describe('DbBuilder', () => {
-    let dbBuilder: DBBuilder;
+    let dbBuilder: DBBuilder<PayloadType.DEPLOY_DATABASE>;
     const mockKwil = new TestKwil();
 
     beforeEach(() => {

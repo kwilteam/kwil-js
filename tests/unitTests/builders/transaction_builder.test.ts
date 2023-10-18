@@ -1,6 +1,6 @@
 import { getMock, postMock } from '../api_client/api-utils';
-import { TxnBuilderImpl } from '../../../src/builders/transaction_builder';
-import { TxnBuilder } from '../../../src/core/builders';
+import { PayloadBuilderImpl } from '../../../src/builders/payload_builder';
+import { PayloadBuilder } from '../../../src/core/builders';
 import { Kwil } from '../../../src/client/kwil';
 import { Transaction, TxnData } from '../../../src/core/tx';
 import { Message } from '../../../src/core/message';
@@ -18,26 +18,26 @@ class TestKwil extends Kwil {
 const pubKey = '048767310544592e33b2fb5555527f49c0902cf0f472f4c87e65324abb75e7a5e1c035bc1ef5026f363c79588526c341af341a68fc37299183391699ee1864cc75'
 
 describe('Transaction Builder', () => {
-    let txBuilder: TxnBuilder;
+    let txBuilder: PayloadBuilder;
     let mockKwil = new TestKwil();
 
     beforeEach(() => {
-        txBuilder = TxnBuilderImpl.of(mockKwil);
+        txBuilder = PayloadBuilderImpl.of(mockKwil);
         getMock.mockReset();
         postMock.mockReset();
     });
 
     describe('of', () => {
         it('should return a TxnBuilderImpl', () => {
-            const result = TxnBuilderImpl.of(mockKwil);
-            expect(result).toBeInstanceOf(TxnBuilderImpl);
+            const result = PayloadBuilderImpl.of(mockKwil);
+            expect(result).toBeInstanceOf(PayloadBuilderImpl);
         });
     })
 
     describe('payloadType', () => {
         it('should set the payloadType and return TxnBuilderImpl', () => {
             const result = txBuilder.payloadType(PayloadType.DEPLOY_DATABASE);
-            expect(result).toBeInstanceOf(TxnBuilderImpl);
+            expect(result).toBeInstanceOf(PayloadBuilderImpl);
             expect((result as any)._payloadType).toBe('deploy_schema');
         })
     })
@@ -46,7 +46,7 @@ describe('Transaction Builder', () => {
         it('should set the signer and return TxnBuilderImpl', () => {
             const sig = Wallet.createRandom();
             const result = txBuilder.signer(sig, SignatureType.SECP256K1_PERSONAL);
-            expect(result).toBeInstanceOf(TxnBuilderImpl);
+            expect(result).toBeInstanceOf(PayloadBuilderImpl);
             expect((result as any)._signer).toBe(sig);
         });
     });
@@ -54,7 +54,7 @@ describe('Transaction Builder', () => {
     describe('payload', () => {
         it('should set the payload and return TxnBuilderImpl', () => {
             const result = txBuilder.payload({foo: 'bar'});
-            expect(result).toBeInstanceOf(TxnBuilderImpl);
+            expect(result).toBeInstanceOf(PayloadBuilderImpl);
             expect((result as any)._payload).toBeDefined();
         });
     })
@@ -62,7 +62,7 @@ describe('Transaction Builder', () => {
     describe('publicKey', () => {
         it('should set the publicKey and return TxnBuilderImpl', () => {
             const result = txBuilder.publicKey(stringToHex('1234'));
-            expect(result).toBeInstanceOf(TxnBuilderImpl);
+            expect(result).toBeInstanceOf(PayloadBuilderImpl);
             expect((result as any)._publicKey).toStrictEqual(stringToBytes('1234'));
         });
     });
@@ -70,7 +70,7 @@ describe('Transaction Builder', () => {
     describe('description', () => {
         it('should set the description and return TxnBuilderImpl', () => {
             const result = txBuilder.description('test');
-            expect(result).toBeInstanceOf(TxnBuilderImpl);
+            expect(result).toBeInstanceOf(PayloadBuilderImpl);
             expect((result as any)._description).toBe('test');
         });
     });

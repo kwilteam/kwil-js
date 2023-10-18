@@ -23,10 +23,6 @@ interface TxBody {
     salt: Uint8Array | string;
 }
 
-export interface DropDbPayload {
-    dbid: string
-}
-
 export class Transaction implements TxnData {
     private readonly data: Readonly<TxnData>;
 

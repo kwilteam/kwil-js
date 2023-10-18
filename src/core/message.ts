@@ -1,12 +1,7 @@
 import { Nillable, NonNil } from "../utils/types";
-import { SerializationType, ValueType } from "./enums";
+import { PayloadType, SerializationType } from "./enums";
+import { UnencodedActionPayload } from "./payload";
 import { Signature } from "./signature";
-
-export type UnencodedMessagePayload = {
-    dbid: string;
-    action: string;
-    arguments: ValueType[];
-}
 
 export interface MsgData {
     body: MsgBody;
@@ -16,7 +11,7 @@ export interface MsgData {
 }
 
 interface MsgBody {
-    payload: string | UnencodedMessagePayload;
+    payload: string | UnencodedActionPayload<PayloadType.CALL_ACTION>;
     description: string;
 }
 

@@ -1,4 +1,5 @@
 import { AttributeType, DataType, IndexType } from "./enums";
+import { CompiledKuneiform } from "./payload";
 
 export interface DeployBody {
     schema: CompiledKuneiform;
@@ -77,35 +78,4 @@ export interface ExtensionConfig {
 export interface SelectQuery {
     dbid: string;
     query: string;
-}
-
-export interface CompiledKuneiform {
-    owner: Uint8Array | string;
-    name: string;
-    tables?: Partial<CompiledTable>[];
-    actions?: Partial<CompiledAction>[];
-    extensions?: Partial<Extension>[];
-};
-
-type CompiledTable = Omit<Table, 'columns' | 'indexes'> & {
-    columns: ReadonlyArray<Partial<CompiledColumn>>;
-    indexes: ReadonlyArray<Partial<CompiledIndex>>;
-}
-
-type CompiledColumn = Omit<Column, 'attributes' | 'type'> & {
-    type: string;
-    attributes: ReadonlyArray<Partial<CompiledAttribute>>;
-}
-
-type CompiledAttribute = Omit<Attribute, 'type'> & {
-    type: string;
-}
-
-type CompiledIndex = Omit<Index, 'type'> & {
-    type: string;
-}
-
-type CompiledAction = Omit<ActionSchema, 'auxiliaries' | 'inputs'> & {
-    auxiliaries: ReadonlyArray<string> | null;
-    inputs: ReadonlyArray<string> | null;
 }

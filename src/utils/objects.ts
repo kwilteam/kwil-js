@@ -31,8 +31,7 @@ export const objects = {
     // value is returned.
     requireNonNil: <T>(value: T, message?: string | ((v: T) => Error)): NonNil<T> => {
         if (!objects.isNil(value)) {
-            // @ts-ignore: Unreachable code error
-            return value;
+            return value as NonNil<T>;
         }
 
         if (typeof message === 'function') {
