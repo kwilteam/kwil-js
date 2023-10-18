@@ -20,6 +20,7 @@ import { KeyPairEd25519 } from "near-api-js/lib/utils";
 import { to_b58 } from "../dist/utils/base58";
 import { ActionBody, ActionInput } from "../dist/core/action";
 import { CompiledKuneiform, DeployBody, DropBody } from "../dist/core/database";
+import { PayloadType } from "../dist/core/enums";
 
 function sleep(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -516,7 +517,7 @@ let newDbName: string;
 // Testing all methods to be called on DBBuilder and in relation to DBBuilder (e.g. kwil.newDatabase & kwil.broadcast)
 describe("DBBuilder", () => {
     let db: schemaObj = schema;
-    let newDb: DBBuilder;
+    let newDb: DBBuilder<PayloadType.DEPLOY_DATABASE>;
 
     beforeEach(async () => await sleep(500))
 
@@ -748,7 +749,7 @@ describe("Drop Database", () => {
     let payload: DropDbPayload = {
         dbid: ''
     }
-    let dropDb: DBBuilder;
+    let dropDb: DBBuilder<PayloadType.DROP_DATABASE>;
     let dbName: string;
 
     beforeEach(async () => await sleep(500))

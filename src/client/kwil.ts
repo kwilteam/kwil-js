@@ -17,7 +17,7 @@ import { Message, MsgReceipt } from "../core/message";
 import { PayloadType } from "../core/enums";
 import { hexToBytes } from "../utils/serial";
 import { isNearPubKey, nearB58ToHex } from "../utils/keys";
-import { ActionBody, ActionInput, Entries } from "../core/action";
+import { ActionBody, ActionInput, Entries, resolveActionInputs } from "../core/action";
 import { KwilSigner } from "../core/kwilSigner";
 
 /**
@@ -41,6 +41,8 @@ export abstract class Kwil {
         });
 
         this.schemas = Cache.passive(opts.cache);
+
+        //create a wrapped symbol of estimateCost method
         wrap(this, this.client.estimateCost.bind(this.client));
     }
 
@@ -117,8 +119,8 @@ export abstract class Kwil {
      * @returns A DBBuilder instance. DBBuilder is used to build new database transactions to be broadcasted to the Kwil network.
      */
 
-    public dbBuilder(): NonNil<DBBuilder> {
-        return DBBuilderImpl.of(this, PayloadType.DEPLOY_DATABASE);
+    public dbBuilder(): NonNil<DBBuilder<PayloadType.DEPLOY_DATABASE>> {
+        return DBBuilderImpl.of<PayloadType.DEPLOY_DATABASE>(this, PayloadType.DEPLOY_DATABASE);
     }
 
     /**
@@ -127,8 +129,8 @@ export abstract class Kwil {
     * @returns A Drop Database Builder instance. Drop Database Builder is used to build drop database transactions to be broadcasted to the Kwil network.
     */
 
-     public dropDbBuilder(): NonNil<DBBuilder> {
-        return DBBuilderImpl.of(this, PayloadType.DROP_DATABASE);
+     public dropDbBuilder(): NonNil<DBBuilder<PayloadType.DROP_DATABASE>> {
+        return DBBuilderImpl.of<PayloadType.DROP_DATABASE>(this, PayloadType.DROP_DATABASE);
      }
 
     /**
@@ -150,7 +152,7 @@ export abstract class Kwil {
      * @returns A promise that resolves to the receipt of the transaction.
     */
     public async execute(actionBody: ActionBody, kwilSigner: KwilSigner): Promise<GenericResponse<TxReceipt>> {
-        let tx = this.actionBuilder()
+        let tx = ActionBuilderImpl.of(this)
             .dbid(actionBody.dbid)
             .name(actionBody.action)
             .description(actionBody.description || '')
@@ -158,7 +160,7 @@ export abstract class Kwil {
             .signer(kwilSigner.signer, kwilSigner.signatureType);
 
         if(actionBody.inputs) {
-            const inputs = actionBody.inputs[0] instanceof ActionInput ? actionBody.inputs as ActionInput[] : new ActionInput().putFromObjects(actionBody.inputs as Entries[]);
+            const inputs = resolveActionInputs(actionBody.inputs);
 
             tx = tx.concat(inputs);
         }
@@ -176,7 +178,7 @@ export abstract class Kwil {
      * @returns A promise that resolves to the receipt of the transaction.
      */
     public async deploy(deployBody: DeployBody, kwilSigner: KwilSigner): Promise<GenericResponse<TxReceipt>> {
-        const tx = await this.dbBuilder()
+        const tx = await DBBuilderImpl.of<PayloadType.DEPLOY_DATABASE>(this, PayloadType.DEPLOY_DATABASE)
             .description(deployBody.description || '')
             .payload(deployBody.schema)
             .publicKey(kwilSigner.publicKey)
@@ -194,7 +196,7 @@ export abstract class Kwil {
      * @returns A promise that resolves to the receipt of the transaction.
      */
     public async drop(dropBody: DropBody, kwilSigner: KwilSigner): Promise<GenericResponse<TxReceipt>> {
-        const tx = await this.dropDbBuilder()
+        const tx = await DBBuilderImpl.of<PayloadType.DROP_DATABASE>(this, PayloadType.DROP_DATABASE)
             .description(dropBody.description || '')
             .payload({ dbid: dropBody.dbid })
             .publicKey(kwilSigner.publicKey)

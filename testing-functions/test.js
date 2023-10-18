@@ -25,15 +25,16 @@ async function test() {
     //update to goerli when live
     const provider = new ethers.JsonRpcProvider(process.env.ETH_PROVIDER)
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
-    const txHash = '5339cc7d55307dccf51bd29ed7d22120a30c8f31cb3516b80b1fe98177c4d318'
+    const txHash = 'b5a02b5f1369dba78074685dafc8d242fad37385f0f055577f01f962c16ddd69'
 
     const kwil = new kwiljs.NodeKwil({
         kwilProvider: process.env.KWIL_PROVIDER || "SHOULD FAIL",
         timeout: 10000,
         logging: true,
     })
-    
+
     const pubKey = await recoverPubKey(wallet)
+    const kwilSigner = new KwilSigner(pubKey, wallet)
 
     const pubByte = hexToBytes(pubKey)
     const dbid = kwil.getDBID(pubByte, "mydb")
@@ -42,7 +43,7 @@ async function test() {
     // logger(dbid)
     // await addWallet(kwil, dbid, pubByte, wallet)
     // await testFractal(kwil, dbid, pubKey, wallet)
-    broadcast(kwil, testDB, wallet, pubKey)
+    // broadcast(kwil, testDB, wallet, pubKey)
     // await getTxInfo(kwil, txHash)
     // await getSchema(kwil, dbid)
     // getAccount(kwil, '0x0428179ef59832060b57cfbbbf56c6c19af471427660f490f99178d6d5cf060880c740d7ffdbd10b5de7c96794a0134e55039c1788e8c9ecbc0af97153396d1fa6')
@@ -51,15 +52,8 @@ async function test() {
     //  getSchema(kwil, dbid)
     //  await getSchema(kwil, dbid)
     // ping(kwil)
-    // getFunder(kwil, wallet)
-    // getAllowance(kwil, wallet)
-    // getBalance(kwil, wallet)
-    // await approve(kwil, wallet, BigInt(10 * 10^18))
-    // await deposit(kwil, wallet, BigInt(10 * 10^18))
-    // getDepositedBalance(kwil, wallet)
-    // getTokenAddress(kwil, wallet)
     // await execSingleAction(kwil, dbid, "add_post", wallet, pubByte)
-    // await select(kwil, dbid, "SELECT * FROM posts")
+    await select(kwil, dbid, "SELECT * FROM posts")
     // select(kwil, dbid, `WITH RECURSIVE 
     //                          cnt(x) AS (
     //                          SELECT 1
@@ -119,47 +113,6 @@ async function listDatabases(kwil, owner) {
 async function ping(kwil) {
     const ping = await kwil.ping()
     logger(ping)
-}
-
-async function getFunder(kwil, w) {
-    const funder = await kwil.getFunder(w)
-    logger(funder)
-}
-
-async function getAllowance(kwil, w) {
-    const funder = await kwil.getFunder(w)
-    const allowance = await funder.getAllowance(w.address)
-    logger(allowance)
-}
-
-async function getBalance(kwil, w) {
-    const funder = await kwil.getFunder(w)
-    const balance = await funder.getBalance(w.address)
-    logger(balance)
-}
-
-async function approve(kwil, w, amount) {
-    const funder = await kwil.getFunder(w)
-    const tx = await funder.approve(amount)
-    logger(tx)
-}
-
-async function deposit(kwil, w, amount) {
-    const funder = await kwil.getFunder(w)
-    const tx = await funder.deposit(amount)
-    logger(tx)
-}
-
-async function getDepositedBalance(kwil, w) {
-    const funder = await kwil.getFunder(w)
-    const balance = await funder.getDepositedBalance(w.address)
-    logger(balance)
-}
-
-async function getTokenAddress(kwil, w) {
-    const funder = await kwil.getFunder(w)
-    const tokenAddress = await funder.getTokenAddress()
-    logger(tokenAddress)
 }
 
 async function getAction(kwil) {

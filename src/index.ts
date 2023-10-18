@@ -12,13 +12,14 @@ import { Account as _Account } from './core/account'
 import { MsgReceipt as _MsgReceipt } from './core/message'
 import { recoverSecp256k1PubKey } from './utils/keys'
 import { KwilSigner } from './core/kwilSigner'
+import { PayloadType as _PayloadType } from './core/enums'
 
 namespace Types {
     export type TxReceipt = _TxReceipt
     export type MsgReceipt = _MsgReceipt
     export type ActionBuilder = _ActionBuilder
     export type ActionInput = _ActionInput
-    export type DBBuilder = _DBBuilder
+    export type DBBuilder<T extends _PayloadType.DEPLOY_DATABASE | _PayloadType.DROP_DATABASE> = _DBBuilder<T>
     export type Transaction= _Transaction
     export type Database = _Database
     export type Table = _Table
@@ -35,6 +36,7 @@ namespace Types {
     export type TxResult = _TxResult
     export type TxInfoReceipt = _TxInfoReceipt
     export type Account = _Account
+    export type PayloadType = _PayloadType
 }
 
 const ActionInput = _ActionInput
