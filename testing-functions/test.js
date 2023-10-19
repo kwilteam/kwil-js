@@ -25,7 +25,7 @@ async function test() {
     //update to goerli when live
     const provider = new ethers.JsonRpcProvider(process.env.ETH_PROVIDER)
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
-    const txHash = 'b5a02b5f1369dba78074685dafc8d242fad37385f0f055577f01f962c16ddd69'
+    const txHash = '3b1afbf33ae847f65945b478c347ebdd2b5e8fd6b69fd244a8fd1273cfa03cb4'
 
     const kwil = new kwiljs.NodeKwil({
         kwilProvider: process.env.KWIL_PROVIDER || "SHOULD FAIL",
@@ -38,22 +38,16 @@ async function test() {
 
     const pubByte = hexToBytes(pubKey)
     const dbid = kwil.getDBID(pubByte, "mydb")
-    console.log(dbid)
-    // await debugFriendlySign(kwil, wallet, pubKey)
+
     // logger(dbid)
-    // await addWallet(kwil, dbid, pubByte, wallet)
-    // await testFractal(kwil, dbid, pubKey, wallet)
     // broadcast(kwil, testDB, wallet, pubKey)
     // await getTxInfo(kwil, txHash)
     // await getSchema(kwil, dbid)
-    // getAccount(kwil, '0x0428179ef59832060b57cfbbbf56c6c19af471427660f490f99178d6d5cf060880c740d7ffdbd10b5de7c96794a0134e55039c1788e8c9ecbc0af97153396d1fa6')
+    // getAccount(kwil, pubByte)
     // listDatabases(kwil, pubByte)
-    //  getSchema(kwil, dbid)
-    //  getSchema(kwil, dbid)
-    //  await getSchema(kwil, dbid)
     // ping(kwil)
     // await execSingleAction(kwil, dbid, "add_post", wallet, pubByte)
-    await select(kwil, dbid, "SELECT * FROM posts")
+    // await select(kwil, dbid, "SELECT * FROM posts")
     // select(kwil, dbid, `WITH RECURSIVE 
     //                          cnt(x) AS (
     //                          SELECT 1
@@ -66,15 +60,12 @@ async function test() {
     //                      WHERE x NOT IN (SELECT id FROM posts) AND x <= 135;
     //          `)
     // bulkAction(kwil, dbid, "add_post", wallet, pubKey)
-    // getSelectAction(kwil, dbid, "select_posts", wallet)
-    // await dropDb(kwil, dbid, wallet, pubByte)
-    // getSelectAction(kwil, dbid2, "get_items", wallet)
-    // await testNonViewAction(kwil, dbid, wallet)
     // await testViewWithParam(kwil, dbid, wallet)
     // await testViewWithSign(kwil, dbid, wallet, pubByte)
     // await customSignature(kwil, dbid)
     // await julioSignature(kwil, dbid)
     // await customEd25519(kwil, dbid)
+    // await dropDb(kwil, dbid, wallet, pubByte)
 }
 
 test()
@@ -99,8 +90,6 @@ async function broadcast(kwil, tx, sig, pK) {
         .publicKey(pK)
         .buildTx()
 
-    logger('readytx')
-    logger(readytx)
     const txHash = await kwil.broadcast(readytx)
     logger(txHash)
 }
@@ -145,17 +134,6 @@ async function execSingleAction(kwil, dbid, action, w, pubKey) {
 
     const res = await kwil.broadcast(act)
 
-    logger(res)
-}
-
-async function getSelectAction(kwil, dbid, selectAction, wallet) {
-    const tx = await kwil
-        .actionBuilder()
-        .dbid(dbid)
-        .name(selectAction)
-        .signer(wallet)
-        .buildTx()
-    const res = await kwil.broadcast(tx)
     logger(res)
 }
 
@@ -235,19 +213,6 @@ async function dropDb(kwil, dbid, w, pubKey) {
     logger(res)
 }
 
-async function testNonViewAction(kwil, dbid, wallet) {
-    const tx = await kwil
-        .actionBuilder()
-        .dbid(dbid)
-        .name('read_posts')
-        .signer(wallet)
-        .buildTx()
-
-    const res = await kwil.broadcast(tx)
-
-    logger(res.data)
-}
-
 async function testViewWithParam(kwil, dbid, wallet) {
     const actionInput = kwiljs.Utils.ActionInput
         .of()
@@ -289,43 +254,6 @@ async function recoverPubKey(signer) {
 
 function decodebase58(string) {
     console.log(bytesToHex(from_b58(string)))
-}
-
-async function addWallet(kwil, dbid, pk, signer) {
-    const input = new kwiljs.Utils.ActionInput()
-        .put('$id', 1)
-        .put('$human_id', 1)
-
-    const tx = await kwil
-        .actionBuilder()
-        .dbid(dbid)
-        .name('add_wallet')
-        .concat(input)
-        .publicKey(pk)
-        .signer(signer)
-        .buildTx()
-
-    const res = await kwil.broadcast(tx)
-    console.log(res)
-}
-
-async function testFractal(kwil, dbid, pk, signer) {
-    const input = new kwiljs.Utils.ActionInput()
-        .put("$id", 2)
-        .put("$attribute_key", 1)
-        .put('$value', 'Hello world')
-
-    const tx = await kwil
-        .actionBuilder()
-        .dbid(dbid)
-        .name('add_attribute')
-        .concat(input)
-        .publicKey(pk)
-        .signer(signer)
-        .buildTx()
-
-    const res = await kwil.broadcast(tx)
-    console.log(res)
 }
 
 async function customSignature(kwil, dbid) {
@@ -421,21 +349,4 @@ async function customEd25519(kwil, dbid) {
     const res = await kwil.broadcast(tx);
 
     logger(res)
-}
-
-async function debugFriendlySign(kwil, signer, pk) {
-    const inputs = new kwiljs.Utils.ActionInput()
-        .put('foo', '32')
-
-    const tx = await kwil
-        .actionBuilder()
-        .dbid('xf617af1ca774ebbd6d23e8fe12c56d41d25a22d81e88f67c6c6ee0d4')
-        .name('create_user')
-        .concat(inputs)
-        .publicKey(pk)
-        .signer(signer)
-        .buildTx()
-
-    const res = await kwil.broadcast(tx)
-    console.log(res)
 }

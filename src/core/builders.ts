@@ -1,9 +1,9 @@
 import { HexString, Nillable, NonNil, Promisy } from "../utils/types";
-import { Transaction } from "./tx";
+import { BaseTransaction, Transaction } from "./tx";
 import {ethers, Signer as _Signer, JsonRpcSigner } from "ethers";
 import {ActionInput} from "./action";
 import {Wallet as Walletv5, Signer as Signerv5} from "ethers5";
-import { PayloadType } from "./enums";
+import { DeployOrDrop, PayloadType } from "./enums";
 import { Message } from "./message";
 import { AnySignatureType } from "./signature";
 import { DbPayloadType } from "./payload";
@@ -64,9 +64,9 @@ export interface PayloadBuilder {
     payload(payload: (() => NonNil<object>) | NonNil<object>): NonNil<PayloadBuilder>;
 
     /**
-     * Builds the payload for the `kwil.broadcast()` method (i.e. the tx GRPC endpoint - see {@link https://github.com/kwilteam/proto/blob/main/kwil/tx/v1/tx.proto})
+     * Builds the payload for the `kwil.broadcast()` method (i.e. the broadcast GRPC endpoint - see {@link https://github.com/kwilteam/proto/blob/main/kwil/tx/v1/broadcast.proto})
      * 
-     * @returns {Transaction} - A promise that resolves to the signed transaction.
+     * @returns {BaseTransaction} - A promise that resolves to the signed transaction.
      * @throws {Error} - If the required fields in the builder are null or undefined.
      */
     buildTx(): Promise<Transaction>;
@@ -83,7 +83,7 @@ export interface PayloadBuilder {
 /**
  * `DBBuilder` is the interface for building database deployment and database drop transactions.
  */
-export interface DBBuilder<T extends PayloadType.DEPLOY_DATABASE | PayloadType.DROP_DATABASE> {
+export interface DBBuilder<T extends DeployOrDrop> {
     /**
      * Specify the signer for the action operation.
      * 
@@ -149,7 +149,7 @@ export interface DBBuilder<T extends PayloadType.DEPLOY_DATABASE | PayloadType.D
     /**
      * Builds a Transaction. This will call the kwil network to retrieve the nonce for the signer.
      * 
-     * @returns {Promise<Transaction>} - A promise that resolves to a `Transaction` object. The `Transaction` object can be broadcasted to the Kwil network using `kwil.broadcast(tx)`.
+     * @returns {Promise<BaseTransaction>} - A promise that resolves to a `Transaction` object. The `Transaction` object can be broadcasted to the Kwil network using `kwil.broadcast(tx)`.
      * @throws Will throw an error if there are any errors in the payload.
      * @throws Will throw an error if there is an issue with the account retrieval.
      */
@@ -250,7 +250,7 @@ export interface ActionBuilder {
     /**
      * Builds a transaction. This will call the kwil network to retrieve the schema and the signer's account.
      * 
-     * @returns {Promise<Transaction>} - A promise that resolves to a Transaction object. This transaction can be broadcasted to the Kwil network with the `kwil.broadcast()` api.
+     * @returns {Promise<BaseTransaction>} - A promise that resolves to a Transaction object. This transaction can be broadcasted to the Kwil network with the `kwil.broadcast()` api.
      * @throws Will throw an error if the action is being built or if there's an issue with the schema or account retrieval.
      * @throws Will throw an error if the action is not a update action.
      */

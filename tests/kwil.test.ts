@@ -4,14 +4,14 @@ const logSpy = jest.spyOn(console, 'log').mockImplementation((...args) => {
 });
 jest.resetModules();
 import {AmntObject, deriveKeyPair64, kwil, waitForDeployment, wallet} from "./testingUtils";
-import {DropDbPayload, Transaction, TxReceipt} from "../dist/core/tx";
+import {BaseTransaction, Transaction, TxReceipt} from "../dist/core/tx";
 import {ActionBuilder, DBBuilder} from "../dist/core/builders";
 import {ActionBuilderImpl} from "../dist/builders/action_builder";
 import { schemaObj } from "./testingUtils";
 import schema from "./test_schema2.json";
 import {DBBuilderImpl} from "../dist/builders/db_builder";
 import { KwilSigner, Types, Utils } from "../dist/index";
-import { Message, MsgReceipt } from "../dist/core/message";
+import { BaseMessage, Message, MsgReceipt } from "../dist/core/message";
 import { hexToBytes } from "../dist/utils/serial";
 import { SignatureType } from "../dist/core/signature";
 import nacl from "tweetnacl";
@@ -19,8 +19,9 @@ import { InMemorySigner, Signer as _NearSigner } from "near-api-js";
 import { KeyPairEd25519 } from "near-api-js/lib/utils";
 import { to_b58 } from "../dist/utils/base58";
 import { ActionBody, ActionInput } from "../dist/core/action";
-import { CompiledKuneiform, DeployBody, DropBody } from "../dist/core/database";
+import { DeployBody, DropBody } from "../dist/core/database";
 import { PayloadType } from "../dist/core/enums";
+import { CompiledKuneiform, DropDbPayload } from "../dist/core/payload";
 
 function sleep(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -480,13 +481,13 @@ describe("ActionBuilder + ActionInput + Transaction public methods & broadcastin
         actionTx = await actionBuilder.buildTx();
 
         expect(actionTx).toBeDefined();
-        expect(actionTx).toBeInstanceOf(Transaction);
+        expect(actionTx).toBeInstanceOf(BaseTransaction);
         expect(actionTx.isSigned()).toBe(true);
     });
 
     test("All methods and getters on the Transaction class should return the correct values", () => {
         expect(actionTx).toBeDefined();
-        expect(actionTx).toBeInstanceOf(Transaction);
+        expect(actionTx).toBeInstanceOf(BaseTransaction);
         expect(actionTx.isSigned()).toBe(true);
         expect(actionTx.signature).toBeDefined();
         expect(actionTx.signature.signature_bytes).toBeDefined();
@@ -498,7 +499,7 @@ describe("ActionBuilder + ActionInput + Transaction public methods & broadcastin
         expect(actionTx.body.payload_type).toBeDefined();
         expect(actionTx.body.nonce).toBeGreaterThan(0);
         expect(actionTx.body.salt).toBeDefined();
-        expect(actionTx.body.salt.length).toBeGreaterThan(0);
+        expect(actionTx.body.salt?.length).toBeGreaterThan(0);
         expect(actionTx.sender).toBeDefined();
     });
 
@@ -571,13 +572,13 @@ describe("DBBuilder", () => {
         dbTx = await newDb
             .buildTx();
         expect(dbTx).toBeDefined();
-        expect(dbTx).toBeInstanceOf(Transaction);
+        expect(dbTx).toBeInstanceOf(BaseTransaction);
         expect(dbTx.isSigned()).toBe(true);
     });
 
     test("All methods and getters on the Transaction class should return the correct values", () => {
         expect(dbTx).toBeDefined();
-        expect(dbTx).toBeInstanceOf(Transaction);
+        expect(dbTx).toBeInstanceOf(BaseTransaction);
         expect(dbTx.isSigned()).toBe(true);
         expect(dbTx.signature).toBeDefined();
         expect(dbTx.signature.signature_bytes).toBeDefined();
@@ -589,7 +590,7 @@ describe("DBBuilder", () => {
         expect(dbTx.body.payload_type).toBeDefined();
         expect(dbTx.body.nonce).toBeGreaterThan(0);
         expect(dbTx.body.salt).toBeDefined();
-        expect(dbTx.body.salt.length).toBeGreaterThan(0);
+        expect(dbTx.body.salt?.length).toBeGreaterThan(0);
         expect(dbTx.sender).toBeDefined();
     });
 
@@ -732,7 +733,7 @@ describe("ActionBuilder to Message", () => {
     test("The actionBuilder.buildMessage() method should return a message", async () => {
         message = await actionBuilder.buildMsg();
         expect(message).toBeDefined();
-        expect(message).toBeInstanceOf(Message);
+        expect(message).toBeInstanceOf(BaseMessage);
     });
 
     test('kwil.call() should return a MsgReceipt', async () => {
@@ -803,13 +804,13 @@ describe("Drop Database", () => {
         dropDbTx = await dropDb
             .buildTx();
         expect(dropDbTx).toBeDefined();
-        expect(dropDbTx).toBeInstanceOf(Transaction);
+        expect(dropDbTx).toBeInstanceOf(BaseTransaction);
         expect(dropDbTx.isSigned()).toBe(true);
     });
 
     test("All methods and getters on the Transaction class should return the correct values", () => {
         expect(dropDbTx).toBeDefined();
-        expect(dropDbTx).toBeInstanceOf(Transaction);
+        expect(dropDbTx).toBeInstanceOf(BaseTransaction);
         expect(dropDbTx.isSigned()).toBe(true);
         expect(dropDbTx.signature).toBeDefined();
         expect(dropDbTx.signature.signature_bytes).toBeDefined();
@@ -821,7 +822,7 @@ describe("Drop Database", () => {
         expect(dropDbTx.body.payload_type).toBeDefined();
         expect(dropDbTx.body.nonce).toBeGreaterThan(0);
         expect(dropDbTx.body.salt).toBeDefined();
-        expect(dropDbTx.body.salt.length).toBeGreaterThan(0);
+        expect(dropDbTx.body.salt?.length).toBeGreaterThan(0);
         expect(dropDbTx.sender).toBeDefined();
     });
 

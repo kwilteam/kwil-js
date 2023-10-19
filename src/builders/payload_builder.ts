@@ -1,5 +1,5 @@
 import { HexString, Nillable, NonNil } from "../utils/types";
-import { Transaction } from "../core/tx";
+import { BaseTransaction, Transaction } from "../core/tx";
 import { objects } from "../utils/objects";
 import { strings } from "../utils/strings";
 import { Txn } from "../core/tx";
@@ -8,11 +8,11 @@ import { base64ToBytes, bytesToBase64 } from "../utils/base64";
 import { Kwil } from "../client/kwil";
 import { SignerSupplier, PayloadBuilder as PayloadBuilder } from "../core/builders";
 import { unwrap } from "../client/intern";
-import { PayloadType, SerializationType } from "../core/enums";
+import { BytesEncodingStatus, PayloadType, SerializationType } from "../core/enums";
 import { kwilEncode } from "../utils/rlp";
 import { bytesToHex, hexToBytes, stringToBytes } from "../utils/serial";
-import { SignatureType, executeSign } from "../core/signature";
-import { Message, Msg } from "../core/message";
+import { AnySignatureType, SignatureType, executeSign } from "../core/signature";
+import { BaseMessage, Message, Msg } from "../core/message";
 import { isNearPubKey, nearB58ToHex } from "../utils/keys";
 import { AllPayloads, UnencodedActionPayload } from "../core/payload";
 
@@ -26,7 +26,7 @@ export class PayloadBuilderImpl implements PayloadBuilder {
     private _payload: Nillable<() => NonNil<AllPayloads>> = null;
     private _signer: Nillable<SignerSupplier> = null;
     private _publicKey: Nillable<Uint8Array> = null;
-    private _signatureType: Nillable<SignatureType> = null;
+    private _signatureType: Nillable<AnySignatureType> = null;
     private _description: NonNil<string> = "";
 
     /**
@@ -66,12 +66,12 @@ export class PayloadBuilderImpl implements PayloadBuilder {
      * Specify the signer and the signature type.
      * 
      * @param {SignerSupplier} signer - The signer to be used to sign the transaction.
-     * @param {SignatureType} sigType - The signature type to be used to sign the transaction. See {@link SignatureType} for more information.
+     * @param {AnySignatureType} sigType - The signature type to be used to sign the transaction. See {@link SignatureType} for more information.
      * @returns The current `PayloadBuilder` instance for chaining.
      * @throws {Error} - If the signer is null or undefined.
      * @throws {Error} - If the signature type is null or undefined.
      */
-    signer(signer: SignerSupplier, sigType: SignatureType): NonNil<PayloadBuilder> {
+    signer(signer: SignerSupplier, sigType: AnySignatureType): NonNil<PayloadBuilder> {
         // throw runtime errors if signer or signature type are null or undefined
         this._signer = objects.requireNonNil(signer);
         this._signatureType = objects.requireNonNil(sigType, "signature type is required to build a transaction.");
@@ -140,9 +140,9 @@ export class PayloadBuilderImpl implements PayloadBuilder {
     }
 
     /**
-     * Builds the payload for the `kwil.broadcast()` method (i.e. the tx GRPC endpoint - see {@link https://github.com/kwilteam/proto/blob/main/kwil/tx/v1/tx.proto})
+     * Builds the payload for the `kwil.broadcast()` method (i.e. the broadcast GRPC endpoint - see {@link https://github.com/kwilteam/proto/blob/main/kwil/tx/v1/tx.proto})
      * 
-     * @returns {Transaction} - A promise that resolves to the signed transaction.
+     * @returns {BaseTransaction} - A promise that resolves to the signed transaction.
      * @throws {Error} - If the required fields in the builder are null or undefined.
      */
     async buildTx(): Promise<Transaction> {
@@ -155,12 +155,11 @@ export class PayloadBuilderImpl implements PayloadBuilder {
         const publicKey = objects.requireNonNil(this._publicKey, "public key is required to build a transaction. Please chain the .publicKey() method to your builder.");
         const signatureType = objects.requireNonNil(this._signatureType, "signature type is required to build a transaction.");
 
-        // create transaction payload for estimating cost
-        const preEstTxn = Txn.create(tx => {
+        // create transaction payload for estimating cost. Set the Tx bytes type to base64 encoded because we need to make GRPC estimate cost request.
+        const preEstTxn = Txn.create<BytesEncodingStatus.BASE64_ENCODED>(tx => {
             // rlp encode the payload and convert to base64
             tx.body.payload = bytesToBase64(kwilEncode(resolvedPayload));
             tx.body.payload_type = payloadType;
-            tx.body.fee = tx.body.fee.toString()
         });
 
         // estimate the cost of the transaction with the estimateCost symbol from the client
@@ -169,8 +168,9 @@ export class PayloadBuilderImpl implements PayloadBuilder {
         // retrieve the account for the nonce
         const acct = await this.client.getAccount(publicKey);
         
-        // add the nonce and fee to the transaction
-        const postEstTxn = Txn.copy(preEstTxn, tx => {
+        // add the nonce and fee to the transaction. Set the tx bytes back to uint8 so we can do the signature.
+        const postEstTxn = Txn.copy<BytesEncodingStatus.UINT8_ENCODED>(preEstTxn, tx => {
+            tx.body.payload = base64ToBytes(preEstTxn.body.payload as string);
             tx.body.fee = BigInt(strings.requireNonNil(cost.data, 'something went wrong estimating the cost of your transaction.'));
             tx.body.nonce = Number(objects.requireNonNil(acct.data?.nonce, 'something went wrong retrieving your account nonce.')) + 1;
         })
@@ -193,8 +193,8 @@ export class PayloadBuilderImpl implements PayloadBuilder {
         // complete lazy evaluation of payload
         const resolvedPayload = await this.resolvePayload();
 
-        // create the msg object with the payload
-        let msg = Msg.create(msg => {
+        // create the msg object with the payload, with the payload bytes type set to uint8 for RLP encoding.
+        let msg = Msg.create<BytesEncodingStatus.UINT8_ENCODED>(msg => {
             msg.body.payload = resolvedPayload as UnencodedActionPayload<PayloadType.CALL_ACTION>;
         });
 
@@ -213,8 +213,8 @@ export class PayloadBuilderImpl implements PayloadBuilder {
             return await PayloadBuilderImpl.signMsg(msg, this._signer, publicKey, signatureType, this._description);
         }
 
-        // return the unsigned message
-        return msg = Msg.copy(msg, msg => {
+        // return the unsigned message, with the payload base64 encoded
+        return Msg.copy<BytesEncodingStatus.BASE64_ENCODED>(msg, msg => {
             // rlp encode the payload and convert to base64 for transport over GRPC
             msg.body.payload = bytesToBase64(kwilEncode(resolvedPayload));
         });
@@ -234,22 +234,22 @@ export class PayloadBuilderImpl implements PayloadBuilder {
     }
 
     /**
-     * Signs the payload of a transaction / request to the tx GRPC endpoint.
+     * Signs the payload of a transaction / request to the broadcast GRPC endpoint.
      * 
-     * @param {Transaction} tx - The transaction to sign. See {@link Transaction} for more information.
+     * @param {BaseTransaction} tx - The transaction to sign. See {@link BaseTransaction} for more information.
      * @param {SignerSupplier} signer - The signer to be used to sign the transaction.
      * @param {Uint8Array} pubKey - The public key for the signature, represented as bytes.
-     * @param {SignatureType} signatureType - The signature type being used. See {@link SignatureType} for more information.
+     * @param {AnySignatureType} signatureType - The signature type being used. See {@link SignatureType} for more information.
      * @param {string} description - The description to be included in the signature.
-     * @returns {Transaction} - A promise that resolves to the signed transaction.
+     * @returns {BaseTransaction} - A promise that resolves to the signed transaction.
      * @throws {Error} - If the the signer is not an Ethers Signer or a function that accepts and returns a Uint8Array.
      */
-    private static async signTx(tx: Transaction, signer: SignerSupplier, pubKey: Uint8Array, signatureType: SignatureType, description: string): Promise<Transaction> {
+    private static async signTx(tx: BaseTransaction<BytesEncodingStatus.UINT8_ENCODED>, signer: SignerSupplier, pubKey: Uint8Array, signatureType: AnySignatureType, description: string): Promise<Transaction> {
         // create salt
         const salt = generateSalt(16);
 
         // create the digest, which is the first bytes of the sha256 hash of the rlp-encoded payload
-        const digest = sha256BytesToBytes(base64ToBytes(tx.body.payload as string)).subarray(0, 20);
+        const digest = sha256BytesToBytes(tx.body.payload as Uint8Array).subarray(0, 20);
 
         // create the signature message
         const signatureMessage = `${description}
@@ -267,7 +267,7 @@ Kwil 🖋
         const signedMessage = await executeSign(stringToBytes(signatureMessage), signer, signatureType);
 
         // copy the transaction and add the signature
-        return Txn.copy(tx, (newTx) => {
+        return Txn.copy<BytesEncodingStatus.BASE64_ENCODED>(tx, (newTx) => {
             newTx.signature = {
                 // bytes must be base64 encoded for transport over GRPC
                 signature_bytes: bytesToBase64(signedMessage),
@@ -275,9 +275,9 @@ Kwil 🖋
             };
             newTx.body = {
                 description: description,
-                payload: newTx.body.payload,
+                payload: bytesToBase64(tx.body.payload as Uint8Array),
                 payload_type: newTx.body.payload_type as PayloadType,
-                fee: newTx.body.fee.toString(),
+                fee: newTx.body.fee?.toString(),
                 nonce: newTx.body.nonce,
                 // bytes must be base64 encoded for transport over GRPC
                 salt: bytesToBase64(salt),
@@ -294,19 +294,19 @@ Kwil 🖋
      * @param {Message} msg - The message to sign. See {@link Message} for more information. 
      * @param {SignerSupplier} signer - The signer to be used to sign the message.
      * @param {Uint8Array} pubKey - The public key for the signature, represented as bytes.
-     * @param {SignatureType} signatureType - The signature type being used. See {@link SignatureType} for more information.
+     * @param {AnySignatureType} signatureType - The signature type being used. See {@link SignatureType} for more information.
      * @param {string} description - The description to be included in the signature. 
      * @returns Message - A promise that resolves to the signed message.
      * @throws {Error} - If the the signer is not an Ethers Signer or a function that accepts and returns a Uint8Array.
      */
-    private static async signMsg(msg: Message, signer: SignerSupplier, pubKey: Uint8Array, signatureType: SignatureType, description: string): Promise<Message> {
+    private static async signMsg(msg: BaseMessage<BytesEncodingStatus.UINT8_ENCODED>, signer: SignerSupplier, pubKey: Uint8Array, signatureType: AnySignatureType, description: string): Promise<Message> {
         // ensure that the payload is not already base64 encoded
         if(typeof msg.body.payload === "string") {
             throw new Error("Payload must be an object to sign a message.");
         }
 
         // rlp encode the payload
-        const encodedPayload = kwilEncode(msg.body.payload);
+        const encodedPayload = kwilEncode(msg.body.payload as UnencodedActionPayload<PayloadType.CALL_ACTION>);
 
         // create the digest, which is the first bytes of the sha256 hash of the rlp-encoded payload
         const digest = sha256BytesToBytes(encodedPayload).subarray(0, 20);
@@ -314,8 +314,8 @@ Kwil 🖋
         // create the signature message
         const signatureMessage = `${description}
 
-DBID: ${msg.body.payload.dbid}
-Action: ${msg.body.payload.action}
+DBID: ${msg.body.payload?.dbid}
+Action: ${msg.body.payload?.action}
 PayloadDigest: ${bytesToHex(digest)}
 
 Kwil 🖋
@@ -323,8 +323,8 @@ Kwil 🖋
         // sign the above message
         const signedMessage = await executeSign(stringToBytes(signatureMessage), signer, signatureType);
 
-        // copy the message and add the signature
-        return Msg.copy(msg, (msg) => {
+        // copy the message and add the signature, with bytes set to base64 for transport over GRPC
+        return Msg.copy<BytesEncodingStatus.BASE64_ENCODED>(msg, (msg) => {
             // bytes must be base64 encoded for transport over GRPC
             msg.body.payload = bytesToBase64(encodedPayload);
             msg.body.description = description;

@@ -1,12 +1,12 @@
 import { NonNil } from "../utils/types";
 import { ActionSchema, Attribute, Column, Extension, Index, Table, Database } from "./database";
-import { PayloadType, ValueType } from "./enums";
+import { DeployOrDrop, PayloadType, ValueType } from "./enums";
 
 /**
  * `AllPayloads` is the union of all payload types.
  */
 export type AllPayloads = UnencodedActionPayload<PayloadType.CALL_ACTION | PayloadType.EXECUTE_ACTION> |
-    DbPayloadType<PayloadType.DEPLOY_DATABASE | PayloadType.DROP_DATABASE> |
+    DbPayloadType<DeployOrDrop> |
     DropDbPayload |
     CompiledKuneiform;
 
@@ -33,7 +33,7 @@ type ActionValueType<T extends PayloadType.CALL_ACTION | PayloadType.EXECUTE_ACT
  * `DBPayloadType` is the the payload type for deploying and dropping databases.
  * The generic allows the Builder to be typed to the correct payload type.
  */
-export type DbPayloadType<T extends PayloadType.DEPLOY_DATABASE | PayloadType.DROP_DATABASE> = T extends PayloadType.DEPLOY_DATABASE ?
+export type DbPayloadType<T extends DeployOrDrop> = T extends PayloadType.DEPLOY_DATABASE ?
     (() => NonNil<CompiledKuneiform>) | NonNil<CompiledKuneiform> :
     (() => NonNil<DropDbPayload>) | NonNil<DropDbPayload>;
 

@@ -1,7 +1,8 @@
 import {Database} from "./database";
 import {Account} from "./account";
-import {Transaction, TxnData } from "./tx";
+import {BaseTransaction, TxnData } from "./tx";
 import { TxResult } from "./txQuery";
+import { BytesEncodingStatus } from "./enums";
 
 type SchemaRes = Database & {
     owner: string;
@@ -25,7 +26,7 @@ export interface ListDatabasesResponse {
 }
 
 export interface EstimateCostReq {
-    tx: TxnData;
+    tx: TxnData<BytesEncodingStatus.BASE64_ENCODED>;
 }
 
 export interface EstimateCostRes {
@@ -33,7 +34,7 @@ export interface EstimateCostRes {
 }
 
 export interface BroadcastReq {
-    tx: TxnData;
+    tx: TxnData<BytesEncodingStatus.BASE64_ENCODED>;
 }
 
 export interface BroadcastRes {
@@ -59,6 +60,6 @@ export interface TxQueryReq {
 export interface TxQueryRes {
     hash: string;
     height: number;
-    tx: Transaction;
+    tx: BaseTransaction<BytesEncodingStatus.BASE64_ENCODED>;
     tx_result: TxResult;
 }

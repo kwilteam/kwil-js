@@ -1,10 +1,10 @@
-import { Transaction} from "../core/tx";
-import {Nillable, NonNil, Promisy} from "../utils/types";
-import {objects} from "../utils/objects";
-import {Kwil} from "../client/kwil";
-import {PayloadBuilderImpl} from "./payload_builder";
+import { Transaction } from "../core/tx";
+import { Nillable, NonNil, Promisy } from "../utils/types";
+import { objects } from "../utils/objects";
+import { Kwil } from "../client/kwil";
+import { PayloadBuilderImpl } from "./payload_builder";
 import { DBBuilder, SignerSupplier } from "../core/builders";
-import { AttributeType, DataType, IndexType, PayloadType } from "../core/enums";
+import { AttributeType, DataType, DeployOrDrop, IndexType, PayloadType } from "../core/enums";
 import { Database } from "../core/database";
 import { enforceDatabaseOrder } from "../core/order";
 import { AnySignatureType, SignatureType, getSignatureType } from "../core/signature";
@@ -15,7 +15,7 @@ import { CompiledKuneiform, DbPayloadType, DropDbPayload } from "../core/payload
  * It creates a transaction to deploy a new database on the Kwil network.
  */
 
-export class DBBuilderImpl<T extends PayloadType.DEPLOY_DATABASE | PayloadType.DROP_DATABASE> implements DBBuilder<T> {
+export class DBBuilderImpl<T extends DeployOrDrop> implements DBBuilder<T> {
     private readonly client: Kwil;
     private _payload: Nillable<() => NonNil<CompiledKuneiform | DropDbPayload>> = null;
     private _signer: Nillable<SignerSupplier> = null;
@@ -28,10 +28,10 @@ export class DBBuilderImpl<T extends PayloadType.DEPLOY_DATABASE | PayloadType.D
      * Initializes a new `DBBuilderImpl` instance.
      * 
      * @param {Kwil} client = The Kwil client, used to call higher level methods on the Kwil class.
-     * @param {PayloadType} payloadType - The payload type for the database transaction. This should be `PayloadType.DEPLOY_DATABASE` or `PayloadType.DROP_DATABASE`.
+     * @param {DeployOrDrop} payloadType - The payload type for the database transaction. This should be `PayloadType.DEPLOY_DATABASE` or `PayloadType.DROP_DATABASE`.
      * @returns {DBBuilder} A new `DBBuilderImpl` instance.
      */
-    private constructor(client: Kwil, payloadType: PayloadType.DEPLOY_DATABASE | PayloadType.DROP_DATABASE) {
+    private constructor(client: Kwil, payloadType: DeployOrDrop) {
         this.client = client;
         this._payloadType = payloadType;
     }
@@ -43,10 +43,10 @@ export class DBBuilderImpl<T extends PayloadType.DEPLOY_DATABASE | PayloadType.D
      * @param {PayloadType} payloadType - The payload type for the database transaction. This should be `PayloadType.DEPLOY_DATABASE` or `PayloadType.DROP_DATABASE`.
      * @returns {DBBuilder} A new `DBBuilderImpl` instance.
      */
-    public static of<T extends PayloadType.DEPLOY_DATABASE | PayloadType.DROP_DATABASE>(client: NonNil<Kwil>, payloadType: NonNil<PayloadType.DEPLOY_DATABASE | PayloadType.DROP_DATABASE>): NonNil<DBBuilder<T>> {
+    public static of<T extends DeployOrDrop>(client: NonNil<Kwil>, payloadType: NonNil<DeployOrDrop>): NonNil<DBBuilder<T>> {
         // throw runtime error if client or payloadType is null
         return new DBBuilderImpl<T>(
-            objects.requireNonNil(client, 'client is required for DbBuilder. Please pass a valid Kwil client. This is an internal error, please create an issue.'), 
+            objects.requireNonNil(client, 'client is required for DbBuilder. Please pass a valid Kwil client. This is an internal error, please create an issue.'),
             objects.requireNonNil(payloadType, 'payloadType is required for DbBuilder. Please pass a valid PayloadType. This is an internal error, please create an issue.')
         );
     }
@@ -64,13 +64,13 @@ export class DBBuilderImpl<T extends PayloadType.DEPLOY_DATABASE | PayloadType.D
     signer(signer: SignerSupplier, signatureType?: AnySignatureType): NonNil<DBBuilder<T>> {
         // throw runtime error if signer is null
         this._signer = objects.requireNonNil(signer, 'no signer provided. please specify a signing function or pass an Ethers signer in the KwilSigner.');
-        
-        if(!signatureType) {
+
+        if (!signatureType) {
             // infer signature type from signer
             this._signatureType = getSignatureType(signer);
 
             // throw runtime error if signature type is null
-            if(this._signatureType === SignatureType.SIGNATURE_TYPE_INVALID) {
+            if (this._signatureType === SignatureType.SIGNATURE_TYPE_INVALID) {
                 throw new Error("Could not determine signature type from signer. Please pass a signature type to .signer().");
             }
             return this;
@@ -92,12 +92,12 @@ export class DBBuilderImpl<T extends PayloadType.DEPLOY_DATABASE | PayloadType.D
     payload(payload: DbPayloadType<T>): NonNil<DBBuilder<T>> {
         // throw runtime error if payload is null
         const ensuredPayload = objects.requireNonNil(payload, 'dbBuilder payload cannot be null');
-        
+
         // ensure payload is a callback function for lazy evaluation
         this._payload = typeof ensuredPayload !== "function" ?
             () => ensuredPayload :
             ensuredPayload as () => NonNil<CompiledKuneiform | DropDbPayload>;
-        
+
         return this;
     }
 
@@ -137,7 +137,7 @@ export class DBBuilderImpl<T extends PayloadType.DEPLOY_DATABASE | PayloadType.D
     async buildTx(): Promise<Transaction> {
         // throw runtime error if payload is null
         const payload = objects.requireNonNil(this._payload, 'payload cannot be null or undefined. please provide a payload to DBBuilder.');
-        
+
         // create cleanedPayload that is equal to the current callback function
         let cleanedPayload: () => NonNil<object> = () => payload();
 
@@ -145,7 +145,7 @@ export class DBBuilderImpl<T extends PayloadType.DEPLOY_DATABASE | PayloadType.D
         if (this._payloadType === PayloadType.DEPLOY_DATABASE) {
             // make the payload encodable
             const encodablePayload = this.makePayloadEncodable(payload as () => NonNil<CompiledKuneiform>);
-            
+
             // reassign cleanedPayload to be a callback function that returns the encodable payload with the correct order
             cleanedPayload = () => enforceDatabaseOrder(encodablePayload);
         }
@@ -155,8 +155,8 @@ export class DBBuilderImpl<T extends PayloadType.DEPLOY_DATABASE | PayloadType.D
         const signer = objects.requireNonNil(this._signer, 'signer cannot be null or undefined. please specify a signer.')
         const publicKey = objects.requireNonNil(this._publicKey, 'public key cannot be null or undefined. please specify a public key.');
         const signatureType = await Promisy.resolveOrReject(this._signatureType, 'signature type cannot be null or undefined. please specify a signature type.');
-        
-        
+
+
         const tx = PayloadBuilderImpl
             .of(this.client)
             .payloadType(payloadType)
@@ -164,7 +164,7 @@ export class DBBuilderImpl<T extends PayloadType.DEPLOY_DATABASE | PayloadType.D
             .signer(signer, signatureType)
             .publicKey(publicKey)
             .description(this._description)
-        
+
         return tx.buildTx();
     }
 
@@ -223,7 +223,7 @@ export class DBBuilderImpl<T extends PayloadType.DEPLOY_DATABASE | PayloadType.D
                     if (!attribute.value) {
                         attribute.value = "";
                     }
-                });                
+                });
             });
 
             if (!table.indexes) {

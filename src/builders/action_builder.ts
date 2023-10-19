@@ -2,7 +2,7 @@ import { Transaction } from "../core/tx";
 import { objects } from "../utils/objects";
 import { HexString, Nillable, NonNil, Promisy } from "../utils/types";
 import { Kwil } from "../client/kwil";
-import { ActionBuilder, CustomSigner, EthSigner, SignerSupplier, PayloadBuilder } from "../core/builders";
+import { ActionBuilder, SignerSupplier, PayloadBuilder } from "../core/builders";
 import { PayloadBuilderImpl } from "./payload_builder";
 import { ActionInput } from "../core/action";
 import { ActionSchema } from "../core/database";
@@ -86,41 +86,18 @@ export class ActionBuilderImpl implements ActionBuilder {
         return this;
     }
 
-    /**
-     * Specify the signer for the action operation.
-     * 
-     * @param {EthSigner} signer - The signer for the database operation. This must be a signer from Ethers v5 or Ethers v6.
-     * @returns {ActionBuilder} The current `ActionBuilder` instance for chaining.
-     * @throws Will throw an error if the value is specified while the action is being built.
-     * @throws Will throw an error if the signer is null or undefined.
-     * @throws Will throw an error if it cannot infer the signature type from the signer.
-     */
-    signer(signer: EthSigner): NonNil<ActionBuilder>;
-
-    /**
-     * Specify the signer for the action operation.
-     * 
-     * @param {CustomSigner} signer - The signer for the database operation. This must be a custom signer function of the form `(message: Uint8Array, ...args: any[]) => Promise<Uint8Array>`.
-     * @param {SignatureType} signatureType - The signature type for the database operation. This can be a `SignatureType` enum value or a string for a network-specific signature type, if implemented at the network level.
-     * @returns {ActionBuilder} The current `ActionBuilder` instance for chaining.
-     * @throws Will throw an error if the value is specified while the action is being built.
-     * @throws Will throw an error if the signer is null or undefined.
-     * @throws Will throw an error if the signature type is null or undefined.
-     */
-    signer(signer: CustomSigner, signatureType: SignatureType): NonNil<ActionBuilder>;
-
     /** 
      * Specifies the signer for the action operation.
      * 
      * @param {SignerSupplier} signer - The signer for the database operation. This can be a signer from Ethers v5 or Ethers v6 or a custom signer function of the form `(message: Uint8Array, ...args: any[]) => Promise<Uint8Array>`.
-     * @param {SignatureType} signatureType - The signature type for the database operation. This can be a `SignatureType` enum value or a string for a network-specific signature type. Ethers v5 and Ethers v6 signers will have the signature type inferred from the signer.
+     * @param {AnySignatureType} signatureType - The signature type for the database operation. This can be a `SignatureType` enum value or a string for a network-specific signature type. Ethers v5 and Ethers v6 signers will have the signature type inferred from the signer.
      * @returns {ActionBuilder} The current `ActionBuilder` instance for chaining.
      * @throws Will throw an error if the value is specified while the action is being built.
      * @throws Will throw an error if the signer is null or undefined.
      * @throws Will throw an error if the signature type is null or undefined.
      * @throws Will throw an error if it cannot infer the signature type from the signer.
     */
-    signer(signer: SignerSupplier, signatureType?: SignatureType): NonNil<ActionBuilder> {
+    signer(signer: SignerSupplier, signatureType?: AnySignatureType): NonNil<ActionBuilder> {
         this.assertNotBuilding();
 
         // throw runtime error if signer is null or undefined
@@ -319,7 +296,8 @@ export class ActionBuilderImpl implements ActionBuilder {
         const payload: UnencodedActionPayload<PayloadType.CALL_ACTION> = {
             "dbid": dbid,
             "action": name,
-            "arguments": preparedActions ? preparedActions[0] : []
+            // if there are prepared actions, then the first element in the array is the action inputs.
+            "arguments": preparedActions.length > 0 ? preparedActions[0] : []
         }
 
         let msg: PayloadBuilder = PayloadBuilderImpl

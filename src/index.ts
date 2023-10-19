@@ -9,18 +9,19 @@ import { Database as _Database, Table as _Table, Column as _Column, Attribute as
 import { GenericResponse as _GenericResponse } from './core/resreq'
 import { TxResult as _TxResult, TxInfoReceipt as _TxInfoReceipt } from './core/txQuery'
 import { Account as _Account } from './core/account'
-import { MsgReceipt as _MsgReceipt } from './core/message'
+import { MsgReceipt as _MsgReceipt, Message as _Message } from './core/message'
 import { recoverSecp256k1PubKey } from './utils/keys'
 import { KwilSigner } from './core/kwilSigner'
-import { PayloadType as _PayloadType } from './core/enums'
+import { DeployOrDrop, PayloadType as _PayloadType } from './core/enums'
 
 namespace Types {
     export type TxReceipt = _TxReceipt
     export type MsgReceipt = _MsgReceipt
     export type ActionBuilder = _ActionBuilder
     export type ActionInput = _ActionInput
-    export type DBBuilder<T extends _PayloadType.DEPLOY_DATABASE | _PayloadType.DROP_DATABASE> = _DBBuilder<T>
+    export type DBBuilder<T extends DeployOrDrop> = _DBBuilder<T>
     export type Transaction= _Transaction
+    export type Message = _Message
     export type Database = _Database
     export type Table = _Table
     export type Column = _Column

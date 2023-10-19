@@ -13,6 +13,7 @@ export type Runnable = () => void;
  * A string that represents a hex encoded value.
  */
 export type HexString = string;
+export type Base64String = string;
 
 export type Promisy<T> =
     T extends null | undefined ? never :

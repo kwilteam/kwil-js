@@ -1,7 +1,7 @@
 import { base64ToBytes, bytesToBase64 } from "../utils/base64";
 import { Account } from "../core/account";
 import { Database, SelectQuery } from "../core/database";
-import { Transaction, TxReceipt } from "../core/tx";
+import { BaseTransaction, Transaction, TxReceipt } from "../core/tx";
 import { Api } from "./api";
 import { Config } from "./config";
 import {
@@ -18,6 +18,7 @@ import { base64UrlEncode, bytesToHex, hexToBytes } from "../utils/serial";
 import { TxInfoReceipt } from "../core/txQuery";
 import { Message, MsgData, MsgReceipt } from "../core/message";
 import { kwilDecode } from "../utils/rlp";
+import { BytesEncodingStatus } from "../core/enums";
 
 export default class Client extends Api {
     constructor(opts: Config) {
@@ -140,7 +141,7 @@ export default class Client extends Api {
                     body: {
                         payload: kwilDecode(base64ToBytes(res.data.tx.body.payload as string)),
                         payload_type: res.data.tx.body.payload_type,
-                        fee: res.data.tx.body.fee,
+                        fee: res.data.tx.body.fee ? BigInt(res.data.tx.body.fee) : null,
                         nonce: res.data.tx.body.nonce,
                         salt: base64ToBytes(res.data.tx.body.salt as string),
                         description: res.data.tx.body.description
@@ -163,7 +164,7 @@ export default class Client extends Api {
     }
     
     public async call(msg: Message): Promise<GenericResponse<MsgReceipt>> {
-        let req: MsgData = {
+        let req: MsgData<BytesEncodingStatus.BASE64_ENCODED> = {
             body: msg.body,
             sender: msg.sender,
             signature: msg.signature,

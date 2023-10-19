@@ -1,3 +1,4 @@
+import { BytesEncodingStatus } from "./enums";
 import { TxnData } from "./tx";
 
 export interface TxResult {
@@ -12,6 +13,6 @@ export interface TxResult {
 export interface TxInfoReceipt {
     get hash(): string;
     get height(): number;
-    get tx(): TxnData;
+    get tx(): TxnData<BytesEncodingStatus.UINT8_ENCODED>;
     get tx_result(): TxResult;
 }

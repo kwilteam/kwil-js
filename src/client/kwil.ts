@@ -13,8 +13,8 @@ import {ActionBuilder, DBBuilder} from "../core/builders";
 import {wrap} from "./intern";
 import { Cache } from "../utils/cache";
 import { TxInfoReceipt } from "../core/txQuery";
-import { Message, MsgReceipt } from "../core/message";
-import { PayloadType } from "../core/enums";
+import { BaseMessage, Message, MsgReceipt } from "../core/message";
+import { BytesEncodingStatus, PayloadType } from "../core/enums";
 import { hexToBytes } from "../utils/serial";
 import { isNearPubKey, nearB58ToHex } from "../utils/keys";
 import { ActionBody, ActionInput, Entries, resolveActionInputs } from "../core/action";
@@ -224,7 +224,7 @@ export abstract class Kwil {
     public async call(actionBody: Message): Promise<GenericResponse<MsgReceipt>>;
 
     public async call(actionBody: Message | ActionBody, kwilSigner?: KwilSigner): Promise<GenericResponse<MsgReceipt>> {
-        if(actionBody instanceof Message) {
+        if(actionBody instanceof BaseMessage) {
             return await this.client.call(actionBody);
         }
 
