@@ -14,7 +14,7 @@ import {wrap} from "./intern";
 import { Cache } from "../utils/cache";
 import { TxInfoReceipt } from "../core/txQuery";
 import { BaseMessage, Message, MsgReceipt } from "../core/message";
-import { BytesEncodingStatus, PayloadType } from "../core/enums";
+import { PayloadType } from "../core/enums";
 import { hexToBytes } from "../utils/serial";
 import { isNearPubKey, nearB58ToHex } from "../utils/keys";
 import { ActionBody, ActionInput, Entries, resolveActionInputs } from "../core/action";

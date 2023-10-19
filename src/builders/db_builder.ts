@@ -92,12 +92,10 @@ export class DBBuilderImpl<T extends DeployOrDrop> implements DBBuilder<T> {
     payload(payload: DbPayloadType<T>): NonNil<DBBuilder<T>> {
         // throw runtime error if payload is null
         const ensuredPayload = objects.requireNonNil(payload, 'dbBuilder payload cannot be null');
-
         // ensure payload is a callback function for lazy evaluation
         this._payload = typeof ensuredPayload !== "function" ?
             () => ensuredPayload :
             ensuredPayload as () => NonNil<CompiledKuneiform | DropDbPayload>;
-
         return this;
     }
 
@@ -145,7 +143,6 @@ export class DBBuilderImpl<T extends DeployOrDrop> implements DBBuilder<T> {
         if (this._payloadType === PayloadType.DEPLOY_DATABASE) {
             // make the payload encodable
             const encodablePayload = this.makePayloadEncodable(payload as () => NonNil<CompiledKuneiform>);
-
             // reassign cleanedPayload to be a callback function that returns the encodable payload with the correct order
             cleanedPayload = () => enforceDatabaseOrder(encodablePayload);
         }
@@ -164,7 +161,6 @@ export class DBBuilderImpl<T extends DeployOrDrop> implements DBBuilder<T> {
             .signer(signer, signatureType)
             .publicKey(publicKey)
             .description(this._description)
-
         return tx.buildTx();
     }
 

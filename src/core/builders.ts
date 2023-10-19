@@ -149,7 +149,7 @@ export interface DBBuilder<T extends DeployOrDrop> {
     /**
      * Builds a Transaction. This will call the kwil network to retrieve the nonce for the signer.
      * 
-     * @returns {Promise<BaseTransaction>} - A promise that resolves to a `Transaction` object. The `Transaction` object can be broadcasted to the Kwil network using `kwil.broadcast(tx)`.
+     * @returns {Promise<Transaction>} - A promise that resolves to a `Transaction` object. The `Transaction` object can be broadcasted to the Kwil network using `kwil.broadcast(tx)`.
      * @throws Will throw an error if there are any errors in the payload.
      * @throws Will throw an error if there is an issue with the account retrieval.
      */

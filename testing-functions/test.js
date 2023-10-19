@@ -38,7 +38,6 @@ async function test() {
 
     const pubByte = hexToBytes(pubKey)
     const dbid = kwil.getDBID(pubByte, "mydb")
-
     // logger(dbid)
     // broadcast(kwil, testDB, wallet, pubKey)
     // await getTxInfo(kwil, txHash)
@@ -47,7 +46,7 @@ async function test() {
     // listDatabases(kwil, pubByte)
     // ping(kwil)
     // await execSingleAction(kwil, dbid, "add_post", wallet, pubByte)
-    // await select(kwil, dbid, "SELECT * FROM posts")
+    await select(kwil, dbid, "SELECT * FROM posts")
     // select(kwil, dbid, `WITH RECURSIVE 
     //                          cnt(x) AS (
     //                          SELECT 1
