@@ -34,7 +34,7 @@ interface TxBody<T extends PayloadBytesTypes> {
  * `Transaction` is the payload structure for a a request to the Kwil `broadcast` GRPC endpoint {@link https://github.com/kwilteam/proto/blob/main/kwil/tx/v1/broadcast.proto}.
  * All bytes in the payload are base64 encoded.
  */
-export type Transaction = BaseTransaction<BytesEncodingStatus.BASE64_ENCODED>
+export type Transaction = BaseTransaction<BytesEncodingStatus.BASE64_ENCODED>;
 
 /**
  * `BaseTransaction` is the base class for a payload structure for a a request to the Kwil `broadcast` GRPC endpoint {@link https://github.com/kwilteam/proto/blob/main/kwil/tx/v1/broadcast.proto}.
@@ -44,7 +44,7 @@ export type Transaction = BaseTransaction<BytesEncodingStatus.BASE64_ENCODED>
  * @implements {TxnData<T>} - The transaction data interface.
  */
 export class BaseTransaction<T extends PayloadBytesTypes> implements TxnData<T> {
-    private readonly data: Readonly<TxnData<T>>;
+    protected readonly data: Readonly<TxnData<T>>;
 
     constructor(data?: NonNil<TxnData<T>>) {
         // create basic template of tx. Null values are used to be compatible with both types in PayloadBytesTypes.
@@ -54,16 +54,20 @@ export class BaseTransaction<T extends PayloadBytesTypes> implements TxnData<T> 
                 signature_type: SignatureType.SIGNATURE_TYPE_INVALID
             },
             body: {
+                description: '',
                 payload: null,
                 payload_type: PayloadType.INVALID_PAYLOAD_TYPE,
                 fee: null,
                 nonce: null,
-                salt: null,
-                description: ''
+                salt: null,     
             },
             sender: null,
             serialization: SerializationType.SIGNED_MSG_CONCAT
         };
+    }
+
+    public get txData(): Readonly<TxnData<T>> {
+        return this.data;
     }
 
     public isSigned(): boolean {
@@ -101,15 +105,15 @@ export namespace Txn {
         const tx = {
             signature: {
                 signature_bytes: null,
-                signature_type: SignatureType.SIGNATURE_TYPE_INVALID
+                signature_type: SignatureType.SECP256K1_PERSONAL
             },
             body: {
+                description: '',
                 payload: null,
                 payload_type: PayloadType.INVALID_PAYLOAD_TYPE,
                 fee: null,
                 nonce: null,
                 salt: null,
-                description: ''
             },
             sender: null,
             serialization: SerializationType.SIGNED_MSG_CONCAT

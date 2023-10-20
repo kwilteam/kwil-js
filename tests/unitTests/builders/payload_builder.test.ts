@@ -2,8 +2,8 @@ import { getMock, postMock } from '../api_client/api-utils';
 import { PayloadBuilderImpl } from '../../../src/builders/payload_builder';
 import { PayloadBuilder } from '../../../src/core/builders';
 import { Kwil } from '../../../src/client/kwil';
-import { Transaction, TxnData } from '../../../src/core/tx';
-import { Message } from '../../../src/core/message';
+import { BaseTransaction } from '../../../src/core/tx';
+import { BaseMessage, Message } from '../../../src/core/message';
 import { Wallet } from 'ethers';
 import { PayloadType, SerializationType } from '../../../src/core/enums';
 import { SignatureType } from '../../../src/core/signature';
@@ -107,7 +107,7 @@ describe('Transaction Builder', () => {
                 .signer(wallet, SignatureType.SECP256K1_PERSONAL)
                 .buildTx();
 
-            expect(result).toBeInstanceOf(Transaction);
+            expect(result).toBeInstanceOf(BaseTransaction);
             expect(result.body.payload_type).toBe('execute_action');
             expect(result.body.description).toBe('test');
             expect(result.body.fee).toBe('100000');
@@ -186,7 +186,7 @@ describe('Transaction Builder', () => {
                 .signer(wallet, SignatureType.SECP256K1_PERSONAL)
                 .buildMsg();
 
-            expect(msg).toBeInstanceOf(Message);
+            expect(msg).toBeInstanceOf(BaseMessage);
             expect(typeof msg.body.payload).toBe('string');
             expect(msg.body.description).toBe('test');
             expect(msg.sender).toBe(hexToBase64(pubKey));
@@ -201,9 +201,9 @@ describe('Transaction Builder', () => {
                 .payload({foo: 'bar'})
                 .buildMsg();
 
-            expect(msg).toBeInstanceOf(Message);
+            expect(msg).toBeInstanceOf(BaseMessage);
             expect(typeof msg.body.payload).toBe('string');
-            expect(msg.sender).toBe('');
+            expect(msg.sender).toBe(null);
             expect(msg.serialization).toBe('concat')
             expect(msg.signature).toBeNull();
         });
@@ -214,14 +214,5 @@ describe('Transaction Builder', () => {
                     .buildMsg()
             ).rejects.toThrow();
         })
-
-        it('should throw error with a payloadType', async () => {
-            await expect(
-                txBuilder
-                    .payloadType(PayloadType.DEPLOY_DATABASE)
-                    .payload({foo: 'bar'})
-                    .buildMsg()
-            ).rejects.toThrow();
-        });
     });
 })

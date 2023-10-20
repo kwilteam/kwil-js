@@ -3,7 +3,7 @@ import Client from "../api_client/client";
 import { Config } from "../api_client/config";
 import {GenericResponse} from "../core/resreq";
 import {Database, DeployBody, DropBody, SelectQuery} from "../core/database";
-import {Transaction, TxReceipt} from "../core/tx";
+import {BaseTransaction, Transaction, TxReceipt} from "../core/tx";
 import {Account} from "../core/account";
 import {ActionBuilderImpl} from "../builders/action_builder";
 import {base64ToBytes} from "../utils/base64";
@@ -14,7 +14,7 @@ import {wrap} from "./intern";
 import { Cache } from "../utils/cache";
 import { TxInfoReceipt } from "../core/txQuery";
 import { BaseMessage, Message, MsgReceipt } from "../core/message";
-import { PayloadType } from "../core/enums";
+import { BytesEncodingStatus, PayloadType } from "../core/enums";
 import { hexToBytes } from "../utils/serial";
 import { isNearPubKey, nearB58ToHex } from "../utils/keys";
 import { ActionBody, ActionInput, Entries, resolveActionInputs } from "../core/action";
@@ -140,7 +140,7 @@ export abstract class Kwil {
      * @returns A promise that resolves to the receipt of the transaction. The transaction receipt includes the transaction hash, fee, and body.
      */
 
-    public async broadcast(tx: Transaction): Promise<GenericResponse<TxReceipt>> {
+    public async broadcast(tx: BaseTransaction<BytesEncodingStatus.BASE64_ENCODED>): Promise<GenericResponse<TxReceipt>> {
         return await this.client.broadcast(tx);
     }
 

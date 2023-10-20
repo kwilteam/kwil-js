@@ -84,7 +84,8 @@ export default class Client extends Api {
     }
 
     public async estimateCost(tx: Transaction): Promise<GenericResponse<string>> {
-        let req: EstimateCostReq = { tx }
+        let req: EstimateCostReq = {tx: tx.txData}
+
         const res = await super.post<EstimateCostRes>(`/api/v1/estimate_price`, req);
         return checkRes(res, r => r.price);
     }
@@ -94,7 +95,7 @@ export default class Client extends Api {
             throw new Error('Tx must be signed before broadcasting.');
         }
 
-        let req: BroadcastReq = { tx }
+        let req: BroadcastReq = {tx: tx.txData}
         const res = await super.post<BroadcastRes>(`/api/v1/broadcast`, req);
         checkRes(res);
 

@@ -26,7 +26,7 @@ async function test() {
     const provider = new ethers.JsonRpcProvider(process.env.ETH_PROVIDER)
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
     const txHash = '3b1afbf33ae847f65945b478c347ebdd2b5e8fd6b69fd244a8fd1273cfa03cb4'
-
+    
     const kwil = new kwiljs.NodeKwil({
         kwilProvider: process.env.KWIL_PROVIDER || "SHOULD FAIL",
         timeout: 10000,
@@ -34,7 +34,7 @@ async function test() {
     })
 
     const pubKey = await recoverPubKey(wallet)
-    const kwilSigner = new KwilSigner(pubKey, wallet)
+    const kwilSigner = new KwilSigner(wallet, pubKey)
 
     const pubByte = hexToBytes(pubKey)
     const dbid = kwil.getDBID(pubByte, "mydb")
@@ -46,7 +46,7 @@ async function test() {
     // listDatabases(kwil, pubByte)
     // ping(kwil)
     // await execSingleAction(kwil, dbid, "add_post", wallet, pubByte)
-    await select(kwil, dbid, "SELECT * FROM posts")
+    // await select(kwil, dbid, "SELECT * FROM posts")
     // select(kwil, dbid, `WITH RECURSIVE 
     //                          cnt(x) AS (
     //                          SELECT 1

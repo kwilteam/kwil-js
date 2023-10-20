@@ -9,7 +9,7 @@ describe('KwilSigner Unit Tests', () => {
         const ethSigner = Wallet.createRandom();
         const publicKey = await recoverSecp256k1PubKey(ethSigner);
 
-        const kSigner = new KwilSigner(publicKey, ethSigner);
+        const kSigner = new KwilSigner(ethSigner, publicKey);
 
         expect(kSigner).toBeDefined();
         expect(kSigner.publicKey).toBe(publicKey);
@@ -22,7 +22,7 @@ describe('KwilSigner Unit Tests', () => {
         const keyPair = nacl.sign.keyPair();
         const customSigner = async (message: Uint8Array) => nacl.sign.detached(message, keyPair.secretKey);
         
-        const kSigner = new KwilSigner(keyPair.publicKey, customSigner, SignatureType.ED25519);
+        const kSigner = new KwilSigner(customSigner, keyPair.publicKey, SignatureType.ED25519);
 
         expect(kSigner).toBeDefined();
         expect(kSigner.publicKey).toBe(keyPair.publicKey);
@@ -37,7 +37,7 @@ describe('KwilSigner Unit Tests', () => {
         
         expect(() => {
             // @ts-ignore
-            new KwilSigner(keyPair.publicKey, customSigner);
+            new KwilSigner(customSigner, keyPair.publicKey);
         }).toThrowError('Could not determine signature type from signer. Please pass a signature type to the KwilSigner constructor.');
     });
 })

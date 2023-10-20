@@ -1021,7 +1021,7 @@ describe("Testing custom signers", () => {
 })
 
 describe("Testing simple actions and db deploy / drop (builder pattern alternative)", () => {
-    let kSigner = new KwilSigner(pubKey, wallet);
+    let kSigner = new KwilSigner(wallet, pubKey);
 
     afterEach(async () => await sleep(500))
 
