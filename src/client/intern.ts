@@ -1,7 +1,7 @@
-import {Transaction} from "../core/tx";
-import {GenericResponse} from "../core/resreq";
-import {Kwil} from "./kwil";
-import {objects} from "../utils/objects";
+import { Transaction } from "../core/tx";
+import { GenericResponse } from "../core/resreq";
+import { Kwil } from "./kwil";
+import { objects } from "../utils/objects";
 
 const key = Symbol();
 

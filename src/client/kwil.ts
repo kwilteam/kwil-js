@@ -2,8 +2,8 @@ import { generateDBID } from "../utils/dbid";
 import Client from "../api_client/client";
 import { Config } from "../api_client/config";
 import {GenericResponse} from "../core/resreq";
-import {Database, SelectQuery} from "../core/database";
-import {Transaction, TxReceipt} from "../core/tx";
+import {Database, DeployBody, DropBody, SelectQuery} from "../core/database";
+import {BaseTransaction, Transaction, TxReceipt} from "../core/tx";
 import {Account} from "../core/account";
 import {ActionBuilderImpl} from "../builders/action_builder";
 import {base64ToBytes} from "../utils/base64";
@@ -13,10 +13,12 @@ import {ActionBuilder, DBBuilder} from "../core/builders";
 import {wrap} from "./intern";
 import { Cache } from "../utils/cache";
 import { TxInfoReceipt } from "../core/txQuery";
-import { Message, MsgReceipt } from "../core/message";
-import { PayloadType } from "../core/enums";
+import { BaseMessage, Message, MsgReceipt } from "../core/message";
+import { BytesEncodingStatus, PayloadType } from "../core/enums";
 import { hexToBytes } from "../utils/serial";
 import { isNearPubKey, nearB58ToHex } from "../utils/keys";
+import { ActionBody, ActionInput, Entries, resolveActionInputs } from "../core/action";
+import { KwilSigner } from "../core/kwilSigner";
 
 /**
  * The main class for interacting with the Kwil network.
@@ -39,6 +41,8 @@ export abstract class Kwil {
         });
 
         this.schemas = Cache.passive(opts.cache);
+
+        //create a wrapped symbol of estimateCost method
         wrap(this, this.client.estimateCost.bind(this.client));
     }
 
@@ -115,8 +119,8 @@ export abstract class Kwil {
      * @returns A DBBuilder instance. DBBuilder is used to build new database transactions to be broadcasted to the Kwil network.
      */
 
-    public dbBuilder(): NonNil<DBBuilder> {
-        return DBBuilderImpl.of(this, PayloadType.DEPLOY_DATABASE);
+    public dbBuilder(): NonNil<DBBuilder<PayloadType.DEPLOY_DATABASE>> {
+        return DBBuilderImpl.of<PayloadType.DEPLOY_DATABASE>(this, PayloadType.DEPLOY_DATABASE);
     }
 
     /**
@@ -125,8 +129,8 @@ export abstract class Kwil {
     * @returns A Drop Database Builder instance. Drop Database Builder is used to build drop database transactions to be broadcasted to the Kwil network.
     */
 
-     public dropDbBuilder(): NonNil<DBBuilder> {
-        return DBBuilderImpl.of(this, PayloadType.DROP_DATABASE);
+     public dropDbBuilder(): NonNil<DBBuilder<PayloadType.DROP_DATABASE>> {
+        return DBBuilderImpl.of<PayloadType.DROP_DATABASE>(this, PayloadType.DROP_DATABASE);
      }
 
     /**
@@ -136,19 +140,114 @@ export abstract class Kwil {
      * @returns A promise that resolves to the receipt of the transaction. The transaction receipt includes the transaction hash, fee, and body.
      */
 
-    public async broadcast(tx: Transaction): Promise<GenericResponse<TxReceipt>> {
+    public async broadcast(tx: BaseTransaction<BytesEncodingStatus.BASE64_ENCODED>): Promise<GenericResponse<TxReceipt>> {
         return await this.client.broadcast(tx);
     }
 
     /**
-     * Sends a message to a Kwil node. This can be used to execute read-only ('view') actions on Kwil.
+     * Executes a transaction on a Kwil network. These are mutative actions that must be mined on the Kwil network's blockchain.
      * 
-     * @param msg - The message to send. The message can be built using the ActionBuilder class.
+     * @param actionBody - The body of the action to send. This should use the `ActionBody` interface.
+     * @param kwilSigner - The signer for the action transactions.
+     * @returns A promise that resolves to the receipt of the transaction.
+    */
+    public async execute(actionBody: ActionBody, kwilSigner: KwilSigner): Promise<GenericResponse<TxReceipt>> {
+        let tx = ActionBuilderImpl.of(this)
+            .dbid(actionBody.dbid)
+            .name(actionBody.action)
+            .description(actionBody.description || '')
+            .publicKey(kwilSigner.publicKey)
+            .signer(kwilSigner.signer, kwilSigner.signatureType);
+
+        if(actionBody.inputs) {
+            const inputs = resolveActionInputs(actionBody.inputs);
+
+            tx = tx.concat(inputs);
+        }
+
+        const transaction = await tx.buildTx();
+
+        return await this.client.broadcast(transaction);
+    }
+
+    /**
+     * Deploys a database to the Kwil network.
+     * 
+     * @param deployBody - The body of the database to deploy. This should use the `DeployBody` interface.
+     * @param kwilSigner - The signer for the database deployment.
+     * @returns A promise that resolves to the receipt of the transaction.
+     */
+    public async deploy(deployBody: DeployBody, kwilSigner: KwilSigner): Promise<GenericResponse<TxReceipt>> {
+        const tx = await DBBuilderImpl.of<PayloadType.DEPLOY_DATABASE>(this, PayloadType.DEPLOY_DATABASE)
+            .description(deployBody.description || '')
+            .payload(deployBody.schema)
+            .publicKey(kwilSigner.publicKey)
+            .signer(kwilSigner.signer, kwilSigner.signatureType)
+            .buildTx();
+
+        return await this.client.broadcast(tx);
+    }
+
+    /**
+     * Drops a database from the Kwil network.
+     * 
+     * @param dropBody - The body of the database to drop. This should use the `DropBody` interface.
+     * @param kwilSigner - The signer for the database drop.
+     * @returns A promise that resolves to the receipt of the transaction.
+     */
+    public async drop(dropBody: DropBody, kwilSigner: KwilSigner): Promise<GenericResponse<TxReceipt>> {
+        const tx = await DBBuilderImpl.of<PayloadType.DROP_DATABASE>(this, PayloadType.DROP_DATABASE)
+            .description(dropBody.description || '')
+            .payload({ dbid: dropBody.dbid })
+            .publicKey(kwilSigner.publicKey)
+            .signer(kwilSigner.signer, kwilSigner.signatureType)
+            .buildTx();
+
+        return await this.client.broadcast(tx);
+    }
+
+    /** 
+     * Calls a Kwil node. This can be used to execute read-only ('view') actions on Kwil.
+     * 
+     * @param actionBody - The body of the action to send. This should use the `ActionBody` interface.
+     * @param kwilSigner (optional) - The signer for the action call, if required. Signers are only required for actions with a `must_sign` attribute. You can check the attributes on an action by calling `kwil.getSchema(dbid)`.
+     * @returns A promise that resolves to the receipt of the message.
+    */
+        public async call(actionBody: ActionBody, kwilSigner?: KwilSigner): Promise<GenericResponse<MsgReceipt>>;
+
+    /**
+     * Calls a Kwil node. This can be used to execute read-only ('view') actions on Kwil.
+     * 
+     * @param actionBody - The message to send. The message can be built using the ActionBuilder class.
      * @returns A promise that resolves to the receipt of the message.
      */
+    public async call(actionBody: Message): Promise<GenericResponse<MsgReceipt>>;
 
-    public async call(msg: Message): Promise<GenericResponse<MsgReceipt>> {
-        return await this.client.call(msg);
+    public async call(actionBody: Message | ActionBody, kwilSigner?: KwilSigner): Promise<GenericResponse<MsgReceipt>> {
+        if(actionBody instanceof BaseMessage) {
+            return await this.client.call(actionBody);
+        }
+
+        let msg = this.actionBuilder()
+            .dbid(actionBody.dbid)
+            .name(actionBody.action)
+            .description(actionBody.description || '')
+
+            if(actionBody.inputs) {
+                const inputs = actionBody.inputs[0] instanceof ActionInput ? actionBody.inputs as ActionInput[] : new ActionInput().putFromObjects(actionBody.inputs as Entries[]);
+
+                msg = msg.concat(inputs);
+            }
+
+            if(kwilSigner) {
+                msg = msg
+                    .signer(kwilSigner.signer, kwilSigner.signatureType)
+                    .publicKey(kwilSigner.publicKey)
+            }
+            
+        const message = await msg.buildMsg();
+        
+        return await this.client.call(message);
     }
 
     /**

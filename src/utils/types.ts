@@ -9,7 +9,11 @@ export type Func<T, U> = (t: T) => U;
 export type Unary<T> = Func<T, T>;
 export type Runnable = () => void;
 
+/**
+ * A string that represents a hex encoded value.
+ */
 export type HexString = string;
+export type Base64String = string;
 
 export type Promisy<T> =
     T extends null | undefined ? never :
@@ -27,9 +31,9 @@ export namespace Promisy {
 
     // If promisy is null or undefined, returns a rejected
     // Promise else returns result of resolve(promisy)
-    export async function resolveOrReject<T>(promisy: Nillable<Promisy<T>>): Promise<T> {
+    export async function resolveOrReject<T>(promisy: Nillable<Promisy<T>>, nilError?: string): Promise<T> {
         return objects.isNil(promisy) ?
-            Promise.reject<T>(new NillableError()) :
+            Promise.reject<T>(new NillableError(nilError)) :
             resolve(promisy as Promisy<T>);
     }
 }

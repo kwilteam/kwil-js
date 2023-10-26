@@ -3,15 +3,22 @@ import { ActionBuilderImpl } from '../../../src/builders/action_builder';
 import { ActionBuilder } from '../../../src/core/builders';
 import { Kwil } from '../../../src/client/kwil';
 import { Wallet } from 'ethers';
-import { ActionInput } from '../../../src/core/actionInput';
 import { Transaction } from '../../../src/core/tx';
 import { Message } from '../../../src/core/message';
+import { ActionInput } from '../../../src/core/action';
+import { Account } from '../../../src/core/account';
+import { bytesToBase64 } from '../../../src/utils/base64';
+import { hexToBase64, stringToBytes } from '../../../src/utils/serial';
+import nacl from 'tweetnacl';
+import { SignatureType } from '../../../src/core/signature';
 
 class TestKwil extends Kwil {
     public constructor() {
         super({ kwilProvider: 'doesnt matter' });
     }
 }
+
+const pubKey = '048767310544592e33b2fb5555527f49c0902cf0f472f4c87e65324abb75e7a5e1c035bc1ef5026f363c79588526c341af341a68fc37299183391699ee1864cc75'
 
 describe('ActionBuilder', () => {
     let actionBuilder: ActionBuilder;
@@ -49,12 +56,40 @@ describe('ActionBuilder', () => {
     });
 
     describe('signer', () => {
-        it('should set the _signer field and return actionBuilder', () => {
+        it('should accept a custom signer and signature type and return the actionBuilder', () => {
+            const customSignature = async (msg: Uint8Array) => {
+                return await nacl.sign.detached(msg, stringToBytes('test'));
+            }
+
+            const result = actionBuilder.signer(customSignature, SignatureType.ED25519);
+        
+            expect(result).toBe(actionBuilder);
+            expect((actionBuilder as any)._signer).toBe(customSignature);
+            expect((actionBuilder as any)._signatureType).toBe(SignatureType.ED25519);
+        })
+
+        it('should accept an etherjs signer and infer the signature type, return actionBuilder', () => {
             const sig = Wallet.createRandom()
             const result = actionBuilder.signer(sig);
             expect(result).toBe(actionBuilder);
-            expect((actionBuilder as any)._signer).toBeDefined();
             expect((actionBuilder as any)._signer).toBe(sig);
+            expect((actionBuilder as any)._signatureType).toBe(SignatureType.SECP256K1_PERSONAL);
+        });
+    });
+
+    describe('publicKey', () => {
+        it('should set the _publicKey field and return actionBuilder', () => {
+            const result = actionBuilder.publicKey(pubKey);
+            expect(result).toBe(actionBuilder);
+            expect((actionBuilder as any)._publicKey).toBe(pubKey);
+        });
+    });
+
+    describe('description', () => {
+        it('should set the _description field and return actionBuilder', () => {
+            const result = actionBuilder.description('testDescription');
+            expect(result).toBe(actionBuilder);
+            expect((actionBuilder as any)._description).toBe('testDescription');
         });
     });
 
@@ -89,14 +124,14 @@ describe('ActionBuilder', () => {
             getMock.mockResolvedValueOnce({
                 status: 200,
                 data: {
-                    dataset: {
+                    schema: {
                         name: 'testName',
-                        dbid: 'testDbid',
+                        owner: bytesToBase64(stringToBytes('mockOwner')),
                         tables: "someTables",
                         actions: [{
                             name: 'testactionname',
                             public: true,
-                            mutability: 'view',
+                            mutability: 'update',
                             auxiliaries: [],
                             inputs: ['test'],
                             statements: ['test']
@@ -107,10 +142,10 @@ describe('ActionBuilder', () => {
 
             const wallet = Wallet.createRandom()
 
-            const mockedAccount = {
-                address: wallet.address,
+            const mockedAccount: Account = {
+                public_key: hexToBase64(pubKey),
                 balance: "10000000000000000",
-                nonce: 1
+                nonce: '1'
             }
 
             getMock.mockResolvedValueOnce({
@@ -132,18 +167,21 @@ describe('ActionBuilder', () => {
                 .dbid('testDbid')
                 .signer(wallet)
                 .concat(actionInput)
+                .description('test')
+                .publicKey(pubKey)
                 .buildTx();
 
             expect(result).toBeDefined();
             expect(result).toBeInstanceOf(Transaction);
-            expect(result.fee).toBe('100000');
+            expect(result.body.fee).toBe('100000');
+            expect(result.body.description).toBe('test');
             expect(typeof result.signature.signature_bytes).toBe('string');
-            expect(result.signature.signature_type).toBe(2);
-            expect(result.payload).toBe('eyJhY3Rpb24iOiJ0ZXN0YWN0aW9ubmFtZSIsImRiaWQiOiJ0ZXN0RGJpZCIsInBhcmFtcyI6W3sidGVzdCI6InRlc3QifV19')
-            expect(result.sender).toBe(wallet.address);
-            expect(result.payload_type).toBe(104);
-            expect(result.nonce).toBe(mockedAccount.nonce + 1);
-            expect(result.hash).toBe('cNbUo4v85dSU0ZJDGJwiwXmw7l0UQEbblzGctbihq7UqhCta4ixAvOtfCZK3Bui9');
+            expect(result.signature.signature_type).toBe('secp256k1_ep');
+            expect(result.body.payload).toBe('AAHfiHRlc3REYmlkjnRlc3RhY3Rpb25uYW1lxsWEdGVzdA==')
+            expect(result.sender).toBe(hexToBase64(pubKey));
+            expect(result.body.payload_type).toBe('execute_action');
+            expect(result.body.nonce).toBe(Number(mockedAccount.nonce) + 1);
+            expect(result.serialization).toBe('concat')
         });
 
         it('should throw error when the db has no actions', async () => {
@@ -161,6 +199,8 @@ describe('ActionBuilder', () => {
                     .name('testactionname')
                     .dbid('test2')
                     .signer(wallet)
+                    .publicKey(pubKey)
+                    .description('test')
                     .concat(actionInput)
                     .buildTx()
             ).rejects.toThrow();
@@ -172,9 +212,9 @@ describe('ActionBuilder', () => {
             getMock.mockResolvedValueOnce({
                 status: 200,
                 data: {
-                    dataset: {
+                    schema: {
                         name: 'testName',
-                        dbid: 'testDbid',
+                        owner: bytesToBase64(stringToBytes('mockOwner')),
                         tables: "someTables",
                         actions: [{
                             name: 'testactionname',
@@ -200,149 +240,156 @@ describe('ActionBuilder', () => {
             ).rejects.toThrow();
         })
     });
+});
 
-    describe('buildMsg', () => {
-        it('should build a message without a signature', async () => {
-            const actionInput = new ActionInput().put('test', 'test');
+describe('buildMsg', () => {
+    let actionBuilder: ActionBuilder;
+    
+    beforeEach(() => {
+        actionBuilder = ActionBuilderImpl.of(new TestKwil());
+    })
 
-            getMock.mockResolvedValueOnce({
-                status: 200,
-                data: {
-                    dataset: {
-                        name: 'testName',
-                        dbid: 'testDbid',
-                        tables: "someTables",
-                        actions: [{
-                            name: 'testactionname',
-                            public: true,
-                            mutability: 'view',
-                            auxiliaries: [],
-                            inputs: ['test'],
-                            statements: ['test']
-                        }]
-                    }
+    it('should build a message without a signature', async () => {
+        const actionInput = new ActionInput().put('test', 'test');
+
+        getMock.mockResolvedValueOnce({
+            status: 200,
+            data: {
+                schema: {
+                    ame: 'testName',
+                    owner: bytesToBase64(stringToBytes('mockOwner')),
+                    tables: "someTables",
+                    actions: [{
+                        name: 'testactionname',
+                        public: true,
+                        mutability: 'view',
+                        auxiliaries: [],
+                        inputs: ['test'],
+                        statements: ['test']
+                    }]
                 }
-            });
-   
-            const msg: Message = await actionBuilder
-                .name('testactionname')
-                .dbid('testDbid')
-                .concat(actionInput)
-                .buildMsg();
-
-            expect(msg).toBeDefined();
-            expect(msg.payload).toBe("eyJkYmlkIjoidGVzdERiaWQiLCJhY3Rpb24iOiJ0ZXN0YWN0aW9ubmFtZSIsInBhcmFtcyI6eyJ0ZXN0IjoidGVzdCJ9fQ==");
-            expect(msg.sender).toBe("")
-            expect(msg.signature).toStrictEqual({
-                signature_type: 0,
-                signature_bytes: ""
-            })
+            }
         });
 
-        it('should build a message with a signature', async () => {
-            const actionInput = new ActionInput().put('test', 'test');
+        const msg: Message = await actionBuilder
+            .name('testactionname')
+            .dbid('testDbid')
+            .concat(actionInput)
+            .buildMsg();
 
-            getMock.mockResolvedValueOnce({
-                status: 200,
-                data: {
-                    dataset: {
-                        name: 'testName',
-                        dbid: 'testDbid',
-                        tables: "someTables",
-                        actions: [{
-                            name: 'testactionname',
-                            public: true,
-                            mutability: 'view',
-                            auxiliaries: [],
-                            inputs: ['test'],
-                            statements: ['test']
-                        }]
-                    }
+        expect(msg).toBeDefined();
+        expect(msg.body.payload).toBe("AAHeiHRlc3REYmlkjnRlc3RhY3Rpb25uYW1lxYR0ZXN0");
+        expect(msg.sender).toBe("")
+        expect(msg.signature).toBeNull();
+    });
+
+    it('should build a message with a signature', async () => {
+        const actionInput = ActionInput.of().put('test', 'test');
+
+        console.log(actionInput)
+        getMock.mockResolvedValueOnce({
+            status: 200,
+            data: {
+                schema: {
+                    name: 'testName',
+                    owner: bytesToBase64(stringToBytes('mockOwner')),
+                    tables: "someTables",
+                    actions: [{
+                        name: 'testactionname',
+                        public: true,
+                        mutability: 'view',
+                        auxiliaries: [],
+                        inputs: ['test'],
+                        statements: ['test']
+                    }]
                 }
-            });
-   
-            const wallet = Wallet.createRandom();
-
-            const msg: Message = await actionBuilder
-                .name('testactionname')
-                .dbid('testDbid')
-                .concat(actionInput)
-                .signer(wallet)
-                .buildMsg();
-                
-            expect(msg).toBeDefined();
-            expect(msg.payload).toBe("eyJkYmlkIjoidGVzdERiaWQiLCJhY3Rpb24iOiJ0ZXN0YWN0aW9ubmFtZSIsInBhcmFtcyI6eyJ0ZXN0IjoidGVzdCJ9fQ==");
-            expect(msg.sender).toBe(wallet.address)
-            expect(msg.signature).toStrictEqual({
-                signature_type: 2,
-                signature_bytes: expect.any(String)
-            })
+            }
         });
 
-        it('should throw an error when the action requires inputs but none are provided', async () => {
-            getMock.mockResolvedValueOnce({
-                status: 200,
-                data: {
-                    dataset: {
-                        name: 'testName',
-                        dbid: 'testDbid',
-                        tables: "someTables",
-                        actions: [{
-                            name: 'testactionname',
-                            public: true,
-                            mutability: 'view',
-                            auxiliaries: [],
-                            inputs: ['test'],
-                            statements: ['test']
-                        }]
-                    }
-                }
-            });
-   
-            const wallet = Wallet.createRandom();
+        const wallet = Wallet.createRandom();
 
-            await expect(
-                actionBuilder
-                    .name('testactionname')
-                    .dbid('testDbid')
-                    .signer(wallet)
-                    .buildMsg()
-            ).rejects.toThrow();
-        });
-
-        it('should throw an error when an array of of inputs are passed to the action', () => {
-            const actionInput1 = new ActionInput().put('test', 'test');
-            const actionInput2 = new ActionInput().put('test2', 'test2');
-
-            getMock.mockResolvedValueOnce({
-                status: 200,
-                data: {
-                    dataset: {
-                        name: 'testName',
-                        dbid: 'testDbid',
-                        tables: "someTables",
-                        actions: [{
-                            name: 'testactionname',
-                            public: true,
-                            mutability: 'view',
-                            auxiliaries: [],
-                            inputs: ['test'],
-                            statements: ['test']
-                        }]
-                    }
-                }
-            });
-
-            const wallet = Wallet.createRandom();
-
-            expect(
-                actionBuilder
-                    .name('testactionname')
-                    .dbid('testDbid')
-                    .signer(wallet)
-                    .concat([actionInput1, actionInput2])
-                    .buildMsg()
-            ).rejects.toThrow();
+        const msg: Message = await actionBuilder
+            .name('testactionname')
+            .dbid('testDbid')
+            .description('test')
+            .concat(actionInput)
+            .publicKey(pubKey)
+            .signer(wallet)
+            .buildMsg();
+            
+        expect(msg).toBeDefined();
+        expect(msg.body.description).toBe('test')
+        expect(msg.body.payload).toBe("AAHeiHRlc3REYmlkjnRlc3RhY3Rpb25uYW1lxYR0ZXN0");
+        expect(msg.sender).toBe(hexToBase64(pubKey))
+        expect(msg.signature).toStrictEqual({
+            signature_type: 'secp256k1_ep',
+            signature_bytes: expect.any(String)
         })
     });
+
+    it('should throw an error when the action requires inputs but none are provided', async () => {
+        getMock.mockResolvedValueOnce({
+            status: 200,
+            data: {
+                schema: {
+                    ame: 'testName',
+                    owner: bytesToBase64(stringToBytes('mockOwner')),
+                    tables: "someTables",
+                    actions: [{
+                        name: 'testactionname',
+                        public: true,
+                        mutability: 'view',
+                        auxiliaries: [],
+                        inputs: ['test'],
+                        statements: ['test']
+                    }]
+                }
+            }
+        });
+
+        const wallet = Wallet.createRandom();
+
+        await expect(
+            actionBuilder
+                .name('testactionname')
+                .dbid('testDbid')
+                .signer(wallet)
+                .buildMsg()
+        ).rejects.toThrow();
+    });
+
+    it('should throw an error when an array of of inputs are passed to the action', () => {
+        const actionInput1 = new ActionInput().put('test', 'test');
+        const actionInput2 = new ActionInput().put('test2', 'test2');
+
+        getMock.mockResolvedValueOnce({
+            status: 200,
+            data: {
+                schema: {
+                    ame: 'testName',
+                    owner: bytesToBase64(stringToBytes('mockOwner')),
+                    tables: "someTables",
+                    actions: [{
+                        name: 'testactionname',
+                        public: true,
+                        mutability: 'view',
+                        auxiliaries: [],
+                        inputs: ['test'],
+                        statements: ['test']
+                    }]
+                }
+            }
+        });
+
+        const wallet = Wallet.createRandom();
+
+        expect(
+            actionBuilder
+                .name('testactionname')
+                .dbid('testDbid')
+                .signer(wallet)
+                .concat([actionInput1, actionInput2])
+                .buildMsg()
+        ).rejects.toThrow();
+    })
 });

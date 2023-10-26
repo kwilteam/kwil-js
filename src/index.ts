@@ -3,22 +3,30 @@ import {WebKwil} from './client/web/webKwil'
 import { generateDBID } from './utils/dbid'
 import { TxReceipt as _TxReceipt } from './core/tx'
 import { ActionBuilder as _ActionBuilder, DBBuilder as _DBBuilder } from './core/builders'
-import { ActionInput as _ActionInput} from './core/actionInput'
+import { ActionInput as _ActionInput, ActionBody as _ActionBody } from './core/action'
 import { Transaction as _Transaction } from './core/tx'
-import { Database as _Database, Table as _Table, Column as _Column, Attribute as _Attribute, Index as _Index, ActionSchema as _ActionSchema, SelectQuery as _SelectQuery, ForeignKey as _ForeignKey, ForeignKeyAction as _ForeignKeyAction, Extension as _Extension, ExtensionConfig as _ExtensionConfig } from './core/database'
+import { Database as _Database, Table as _Table, Column as _Column, 
+    Attribute as _Attribute, Index as _Index, ActionSchema as _ActionSchema, 
+    SelectQuery as _SelectQuery, ForeignKey as _ForeignKey, ForeignKeyAction as _ForeignKeyAction, 
+    Extension as _Extension, ExtensionConfig as _ExtensionConfig, DeployBody as _DeployBody,
+    DropBody as _DropBody
+} from './core/database'
 import { GenericResponse as _GenericResponse } from './core/resreq'
 import { TxResult as _TxResult, TxInfoReceipt as _TxInfoReceipt } from './core/txQuery'
 import { Account as _Account } from './core/account'
-import { MsgReceipt as _MsgReceipt } from './core/message'
+import { MsgReceipt as _MsgReceipt, Message as _Message } from './core/message'
 import { recoverSecp256k1PubKey } from './utils/keys'
+import { KwilSigner } from './core/kwilSigner'
+import { DeployOrDrop, PayloadType as _PayloadType } from './core/enums'
 
 namespace Types {
     export type TxReceipt = _TxReceipt
     export type MsgReceipt = _MsgReceipt
     export type ActionBuilder = _ActionBuilder
     export type ActionInput = _ActionInput
-    export type DBBuilder = _DBBuilder
+    export type DBBuilder<T extends DeployOrDrop> = _DBBuilder<T>
     export type Transaction= _Transaction
+    export type Message = _Message
     export type Database = _Database
     export type Table = _Table
     export type Column = _Column
@@ -34,6 +42,10 @@ namespace Types {
     export type TxResult = _TxResult
     export type TxInfoReceipt = _TxInfoReceipt
     export type Account = _Account
+    export type PayloadType = _PayloadType
+    export type DeployBody = _DeployBody
+    export type DropBody = _DropBody
+    export type ActionBody = _ActionBody
 }
 
 const ActionInput = _ActionInput
@@ -54,4 +66,4 @@ const Utils = {
     recoverSecp256k1PubKey
 }
 
-export { NodeKwil, WebKwil, Types, Utils }
+export { NodeKwil, WebKwil, KwilSigner, Types, Utils }

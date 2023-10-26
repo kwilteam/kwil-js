@@ -1,7 +1,7 @@
 import { base64ToBytes, bytesToBase64 } from "../utils/base64";
 import { Account } from "../core/account";
 import { Database, SelectQuery } from "../core/database";
-import { Transaction, TxReceipt } from "../core/tx";
+import { BaseTransaction, Transaction, TxReceipt } from "../core/tx";
 import { Api } from "./api";
 import { Config } from "./config";
 import {
@@ -18,6 +18,7 @@ import { base64UrlEncode, bytesToHex, hexToBytes } from "../utils/serial";
 import { TxInfoReceipt } from "../core/txQuery";
 import { Message, MsgData, MsgReceipt } from "../core/message";
 import { kwilDecode } from "../utils/rlp";
+import { BytesEncodingStatus } from "../core/enums";
 
 export default class Client extends Api {
     constructor(opts: Config) {
@@ -83,7 +84,8 @@ export default class Client extends Api {
     }
 
     public async estimateCost(tx: Transaction): Promise<GenericResponse<string>> {
-        let req: EstimateCostReq = { tx }
+        let req: EstimateCostReq = {tx: tx.txData}
+
         const res = await super.post<EstimateCostRes>(`/api/v1/estimate_price`, req);
         return checkRes(res, r => r.price);
     }
@@ -93,12 +95,12 @@ export default class Client extends Api {
             throw new Error('Tx must be signed before broadcasting.');
         }
 
-        let req: BroadcastReq = { tx }
+        let req: BroadcastReq = {tx: tx.txData}
         const res = await super.post<BroadcastRes>(`/api/v1/broadcast`, req);
         checkRes(res);
 
         let body = {
-            tx_hash: '0x'
+            tx_hash: ''
         };
 
         if (res.data.tx_hash) {
@@ -106,6 +108,7 @@ export default class Client extends Api {
             body.tx_hash = bytesToHex(base64ToBytes(bytes))
         }
 
+        //TODO: Should we always be returning body, regardless of 
         return {
             status: res.status,
             data: body
@@ -139,7 +142,7 @@ export default class Client extends Api {
                     body: {
                         payload: kwilDecode(base64ToBytes(res.data.tx.body.payload as string)),
                         payload_type: res.data.tx.body.payload_type,
-                        fee: res.data.tx.body.fee,
+                        fee: res.data.tx.body.fee ? BigInt(res.data.tx.body.fee) : null,
                         nonce: res.data.tx.body.nonce,
                         salt: base64ToBytes(res.data.tx.body.salt as string),
                         description: res.data.tx.body.description
@@ -162,7 +165,7 @@ export default class Client extends Api {
     }
     
     public async call(msg: Message): Promise<GenericResponse<MsgReceipt>> {
-        let req: MsgData = {
+        let req: MsgData<BytesEncodingStatus.BASE64_ENCODED> = {
             body: msg.body,
             sender: msg.sender,
             signature: msg.signature,

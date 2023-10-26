@@ -1,4 +1,15 @@
 import { AttributeType, DataType, IndexType } from "./enums";
+import { CompiledKuneiform } from "./payload";
+
+export interface DeployBody {
+    schema: CompiledKuneiform;
+    description?: string;
+};
+
+export interface DropBody {
+    dbid: string;
+    description?: string;
+}
 
 export interface Database {
     owner: Uint8Array;
@@ -8,7 +19,7 @@ export interface Database {
     extensions: ReadonlyArray<Extension>;
 }
 
-export interface Table{
+export interface Table {
     name: string;
     columns: ReadonlyArray<Column>;
     indexes: ReadonlyArray<Index>;

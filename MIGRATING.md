@@ -2,7 +2,7 @@
 
 Below is a list of all key changes from the [Kwil v3 SDK](https://www.npmjs.com/package/kwil).
 
-Note that this SDK must be used with a Kwil Daemon that is running the CometBFT Release (September 2023). If you are not using the CometBFT Release, please use [Kwil v3](https://www.npmjs.com/package/kwil).
+Note that this SDK must be used with a Kwil Daemon that is running the CometBFT Release (Kwil Daemon v0.6.0+). If you are not using the CometBFT Release, please use [Kwil v3](https://www.npmjs.com/package/kwil).
 
 ## Breaking Changes
 
@@ -69,11 +69,11 @@ const res = await kwil.getAccount('public_key');
 
 ```
 
-### ActionBuilder and DBBuilder + Friendly Signature Messages
+### Executing Actions + Friendly Signature Messages
 
-The ActionBuilder and DBBuilder classes now require you to chain a `.publicKey()` method to the builder. The `.publicKey()` can receive a hex string or Uint8Array. If using a NEAR public key, you may also pass the Base58 encoded public key with the "ed25519:" prefix.
+The previous version of Kwil used an `ActionBuilder()` class to build and sign transactions. `ActionBuilder()` has been moved internally. Actions can now be executed by using the `kwil.execute()` method, passing an object that matches the `ActionBody` interface and a [KwilSigner](#kwil-signer-class--ed25519-signatures) (see more below).
 
-You can also customize the signature message that appears in metamask by chaining a `.description()` method to the builder.
+You can also customize the signature message that appears in metamask by adding a `decscription` field to the action body.
 
 #### Old Version
 
@@ -90,15 +90,14 @@ const tx = await kwil
 #### New Version
 
 ```javascript
-const tx = await kwil
-    .actionBuilder()
-    .dbid('some dbid')
-    .name('action_name')
-    .concat([ 'inputs', 'inputs' ])
-    .signer(signer)
-    .publicKey('signer_public_key') // new method
-    .description('Click sign to execute your action!') // Custom signature message.
-    .buildTx();
+const actionBody = {
+    dbid: 'some dbid',
+    action: 'action_name',
+    inputs: [ 'inputs', 'inputs' ],
+    description: 'Click sign to execute the action!'
+}
+
+const res = await kwil.execute(actionBody, kwilSigner);
 ```
 
 ### Data Returned From Broadcast
@@ -141,56 +140,65 @@ In the old version, there were case inconsistencies in data that was returned fr
 
 ## New Features
 
-### ED25519 & Custom Signers
+### Kwil Signer Class & ED25519 Signatures
 
-This version introduces support for ed25519 signatures.
+In the old version, the Kwil SDK used EtherJS signers for signing transactions. Now, the Kwil SDK uses a `KwilSigner` class, which can be used to sign transactions with multiple signature types.
 
-If you wish to sign with something other than an EtherJS signer, you may pass a callback function that returns a `Uint8Array()` and the enumerator for the signature type used.
+The `KwilSigner` still natively supports `EthersJS` signers. You can also pass a signing callback function (see below) and specifiyng the signature type.
 
-Currently, Kwil supports three signature types:
+```javascript
+import { Utils, KwilSigner } from '@kwilteam/kwil-js';
+import { BrowserProvider } from 'ethers';
+
+// get ethers signer
+const provider = new BrowserProvider(window.ethereum)
+const signer = await provider.getSigner();
+
+// get secp256k1 public key
+const publicKey = await Utils.recoverSecp256k1PubKey(signer);
+
+// create kwil signer
+const kwilSigner = new KwilSigner(signer, publicKey);
+
+```
+
+If you wish to sign with something other than an EtherJS signer, you may pass a callback function that accepts and returns a `Uint8Array()` and the enumerator for the signature type used.
+
+Currently, Kwil supports two signature types:
 | Type  | Enumerator |
 |:----- |:------:|
 | Secp256k1  | 'secp256k1_ep'     |
 | Ed25519    | 'ed25519'     |
-| Ed25519 w/ NEAR Digest | 'ed25519_nr' |
 
-To sign with a ed25519 signature:
+To use an ed25519 signature:
 
 ```javascript
 import nacl from 'tweetnacl';
+import { KwilSigner } from '@kwilteam/kwil-js';
 
+// create keypair and signer
 const keys = nacl.sign.keyPair();
 const customSigner = (msg) => nacl.sign.detached(msg, keys.secretKey);
 
-const tx = await kwil
-    .actionBuilder()
-    .dbid(dbid)
-    .name('your_action_name')
-    .concat(input)
-    .publicKey(keys.publicKey)
-    .signer(customSigner, 'ed25519')
-    .buildTx()
-
-await kwil.broadcast(tx);
+const kwilSigner = new KwilSigner(customSigner, keys.publicKey, 'ed25519');
 ```
 
 ### Read-Only Actions / Messages
 
-Any action with `mutability` set to `view` should be called by building a message and passing the message to `kwil.call()`.
+Any action with `mutability` set to `view` should be called by passing an `ActionBody` object to the `kwil.call()` method.
 
 You can check if an action is a `view` action by calling `kwil.getSchema()`.
 
 Note that view actions should be read-only. The advantage to using `view` actions is that you do not have to wait for a transaction to be mined on the network; you can view the result of your read-only query instantly.
 
 ```javascript
-const msg = await kwil
-    .actionBuilder()
-    .dbid('some_dbid')
-    .name('action_name')
-    .concat('ActionInput...')
-    .buildMsg();
+const actionBody = {
+    dbid: 'some_dbid',
+    action: 'action_name',
+    inputs: [ 'inputs', 'inputs' ]
+}
 
-const res = await kwil.call(msg);
+const res = await kwil.call(actionBody);
 
 /*
     res.data = {
@@ -199,7 +207,7 @@ const res = await kwil.call(msg);
 */
 ```
 
-If a `view` action has a `must_sign` auxiliary, you should also chain `.signer()` and `.publicKey()` methods to the builder. You can also chain a `.description()` to customize the signature message.
+If a `view` action has a `mustsign` auxiliary, you can also pass a `KwilSigner` as a second argument to the `kwil.call()` method.
 
 ### TxInfo Endpoint
 

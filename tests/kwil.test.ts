@@ -4,20 +4,24 @@ const logSpy = jest.spyOn(console, 'log').mockImplementation((...args) => {
 });
 jest.resetModules();
 import {AmntObject, deriveKeyPair64, kwil, waitForDeployment, wallet} from "./testingUtils";
-import {DropDbPayload, Transaction, TxReceipt} from "../dist/core/tx";
+import {BaseTransaction, Transaction, TxReceipt} from "../dist/core/tx";
 import {ActionBuilder, DBBuilder} from "../dist/core/builders";
 import {ActionBuilderImpl} from "../dist/builders/action_builder";
 import { schemaObj } from "./testingUtils";
 import schema from "./test_schema2.json";
 import {DBBuilderImpl} from "../dist/builders/db_builder";
-import { Types, Utils } from "../dist/index";
-import { Message, MsgReceipt } from "../dist/core/message";
+import { KwilSigner, Types, Utils } from "../dist/index";
+import { BaseMessage, Message, MsgReceipt } from "../dist/core/message";
 import { hexToBytes } from "../dist/utils/serial";
 import { SignatureType } from "../dist/core/signature";
 import nacl from "tweetnacl";
 import { InMemorySigner, Signer as _NearSigner } from "near-api-js";
 import { KeyPairEd25519 } from "near-api-js/lib/utils";
 import { to_b58 } from "../dist/utils/base58";
+import { ActionBody, ActionInput } from "../dist/core/action";
+import { DeployBody, DropBody } from "../dist/core/database";
+import { PayloadType } from "../dist/core/enums";
+import { CompiledKuneiform, DropDbPayload } from "../dist/core/payload";
 
 function sleep(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -477,13 +481,13 @@ describe("ActionBuilder + ActionInput + Transaction public methods & broadcastin
         actionTx = await actionBuilder.buildTx();
 
         expect(actionTx).toBeDefined();
-        expect(actionTx).toBeInstanceOf(Transaction);
+        expect(actionTx).toBeInstanceOf(BaseTransaction);
         expect(actionTx.isSigned()).toBe(true);
     });
 
     test("All methods and getters on the Transaction class should return the correct values", () => {
         expect(actionTx).toBeDefined();
-        expect(actionTx).toBeInstanceOf(Transaction);
+        expect(actionTx).toBeInstanceOf(BaseTransaction);
         expect(actionTx.isSigned()).toBe(true);
         expect(actionTx.signature).toBeDefined();
         expect(actionTx.signature.signature_bytes).toBeDefined();
@@ -495,7 +499,7 @@ describe("ActionBuilder + ActionInput + Transaction public methods & broadcastin
         expect(actionTx.body.payload_type).toBeDefined();
         expect(actionTx.body.nonce).toBeGreaterThan(0);
         expect(actionTx.body.salt).toBeDefined();
-        expect(actionTx.body.salt.length).toBeGreaterThan(0);
+        expect(actionTx.body.salt?.length).toBeGreaterThan(0);
         expect(actionTx.sender).toBeDefined();
     });
 
@@ -514,7 +518,7 @@ let newDbName: string;
 // Testing all methods to be called on DBBuilder and in relation to DBBuilder (e.g. kwil.newDatabase & kwil.broadcast)
 describe("DBBuilder", () => {
     let db: schemaObj = schema;
-    let newDb: DBBuilder;
+    let newDb: DBBuilder<PayloadType.DEPLOY_DATABASE>;
 
     beforeEach(async () => await sleep(500))
 
@@ -568,13 +572,13 @@ describe("DBBuilder", () => {
         dbTx = await newDb
             .buildTx();
         expect(dbTx).toBeDefined();
-        expect(dbTx).toBeInstanceOf(Transaction);
+        expect(dbTx).toBeInstanceOf(BaseTransaction);
         expect(dbTx.isSigned()).toBe(true);
     });
 
     test("All methods and getters on the Transaction class should return the correct values", () => {
         expect(dbTx).toBeDefined();
-        expect(dbTx).toBeInstanceOf(Transaction);
+        expect(dbTx).toBeInstanceOf(BaseTransaction);
         expect(dbTx.isSigned()).toBe(true);
         expect(dbTx.signature).toBeDefined();
         expect(dbTx.signature.signature_bytes).toBeDefined();
@@ -586,7 +590,7 @@ describe("DBBuilder", () => {
         expect(dbTx.body.payload_type).toBeDefined();
         expect(dbTx.body.nonce).toBeGreaterThan(0);
         expect(dbTx.body.salt).toBeDefined();
-        expect(dbTx.body.salt.length).toBeGreaterThan(0);
+        expect(dbTx.body.salt?.length).toBeGreaterThan(0);
         expect(dbTx.sender).toBeDefined();
     });
 
@@ -729,7 +733,7 @@ describe("ActionBuilder to Message", () => {
     test("The actionBuilder.buildMessage() method should return a message", async () => {
         message = await actionBuilder.buildMsg();
         expect(message).toBeDefined();
-        expect(message).toBeInstanceOf(Message);
+        expect(message).toBeInstanceOf(BaseMessage);
     });
 
     test('kwil.call() should return a MsgReceipt', async () => {
@@ -746,7 +750,7 @@ describe("Drop Database", () => {
     let payload: DropDbPayload = {
         dbid: ''
     }
-    let dropDb: DBBuilder;
+    let dropDb: DBBuilder<PayloadType.DROP_DATABASE>;
     let dbName: string;
 
     beforeEach(async () => await sleep(500))
@@ -800,13 +804,13 @@ describe("Drop Database", () => {
         dropDbTx = await dropDb
             .buildTx();
         expect(dropDbTx).toBeDefined();
-        expect(dropDbTx).toBeInstanceOf(Transaction);
+        expect(dropDbTx).toBeInstanceOf(BaseTransaction);
         expect(dropDbTx.isSigned()).toBe(true);
     });
 
     test("All methods and getters on the Transaction class should return the correct values", () => {
         expect(dropDbTx).toBeDefined();
-        expect(dropDbTx).toBeInstanceOf(Transaction);
+        expect(dropDbTx).toBeInstanceOf(BaseTransaction);
         expect(dropDbTx.isSigned()).toBe(true);
         expect(dropDbTx.signature).toBeDefined();
         expect(dropDbTx.signature.signature_bytes).toBeDefined();
@@ -818,7 +822,7 @@ describe("Drop Database", () => {
         expect(dropDbTx.body.payload_type).toBeDefined();
         expect(dropDbTx.body.nonce).toBeGreaterThan(0);
         expect(dropDbTx.body.salt).toBeDefined();
-        expect(dropDbTx.body.salt.length).toBeGreaterThan(0);
+        expect(dropDbTx.body.salt?.length).toBeGreaterThan(0);
         expect(dropDbTx.sender).toBeDefined();
     });
 
@@ -856,7 +860,7 @@ describe("Testing custom signers", () => {
         input.put("$title", "Test Post");
         input.put("$body", "This is a test post");
 
-        recordCount++;
+        recordCount = recordCount++;
     })
 
     afterEach(async () => await sleep(500))
@@ -1014,4 +1018,217 @@ describe("Testing custom signers", () => {
         });
         expect(result.status).toBe(200);
     });
+})
+
+describe("Testing simple actions and db deploy / drop (builder pattern alternative)", () => {
+    let kSigner = new KwilSigner(wallet, pubKey);
+
+    afterEach(async () => await sleep(500))
+
+    test("kwil.call() with ActionBody interface as first argument, action inputs NOT REQUIRED, and no signature required should return a MsgReceipt", async () => {
+        const actionBody: ActionBody = {
+            dbid: dbid,
+            action: "read_posts"
+        }
+
+        const result = await kwil.call(actionBody);
+        console.log(result.data)
+        expect(result.data).toBeDefined();
+        expect(result.status).toBe(200);
+        expect(result.data).toMatchObject<MsgReceipt>({
+            result: expect.any(Array),
+        });
+    });
+
+    describe("kwil.call() with ActionBody interface as first argument, action inputs REQUIRED, and no signature required should return a MsgReceipt", () => {
+        test('with action inputs as array of objects', async () => {
+            const actionBody: ActionBody = {
+                dbid,
+                action: "view_with_param",
+                inputs: [
+                    {
+                        "$id": 1
+                    }
+                ]
+            }
+    
+            const result = await kwil.call(actionBody);
+            expect(result.data).toBeDefined();
+            expect(result.status).toBe(200);
+            expect(result.data).toMatchObject<MsgReceipt>({
+                result: expect.any(Array),
+            });
+        });
+
+        test('with action inputs as ActionInput', async () => {
+            const input = ActionInput.of().put("$id", 1);
+
+            const actionBody: ActionBody = {
+                dbid,
+                action: "view_with_param",
+                inputs: [ input ]
+            }
+
+            const result = await kwil.call(actionBody);
+
+            expect(result.data).toBeDefined();
+            expect(result.status).toBe(200);
+            expect(result.data).toMatchObject<MsgReceipt>({
+                result: expect.any(Array),
+            });
+        })
+    });
+
+    test("kwil.call() with ActionBody interface as first argument, action inputs NOT REQUIRED, and signature required should return a MsgReceipt", async () => {
+        const actionBody: ActionBody = {
+            dbid,
+            action: "view_must_sign",
+            description: "This is a test action"
+        }
+
+        const result = await kwil.call(actionBody, kSigner);
+        expect(result.data).toBeDefined();
+        expect(result.status).toBe(200);
+        expect(result.data).toMatchObject<MsgReceipt>({
+            result: expect.any(Array),
+        });
+    });
+
+    test("kwil.call() with ActionBody Interface as first argument, action has `must_sign` attribute, but no signer is provided should throw an error", async () => {
+        const actionBody: ActionBody = {
+            dbid,
+            action: "view_must_sign",
+        }
+
+        await expect(kwil.call(actionBody)).rejects.toThrowError();
+    });
+
+    describe("kwil.execute() with ActionBody interface as first argument, action inputs ARE REQUIRED should return a TxReceipt", () => {
+        let recordCount: number;
+
+        beforeAll(async() => {
+            const count = await kwil.selectQuery(dbid, "SELECT COUNT(*) FROM posts");
+            if (count.status == 200 && count.data) {
+                const amnt = count.data[0] as AmntObject;
+                recordCount = amnt['COUNT(*)'] + 1;
+                console.log(recordCount)
+            }
+        })
+
+        afterEach(() => recordCount++)
+        
+        test('with action inputs as array of objects', async () => {
+            const actionBody: ActionBody = {
+                dbid,
+                action: "add_post",
+                inputs: [{
+                    "$id": recordCount,
+                    "$user": "Luke",
+                    "$title": "Test Post",
+                    "$body": "This is a test post"
+                }],
+                description: "This is a test action"
+            }
+
+            const result = await kwil.execute(actionBody, kSigner);
+            const hash = result.data?.tx_hash;
+
+            expect(result.data).toBeDefined();
+            expect(result.status).toBe(200);
+            expect(result.data).toMatchObject<TxReceipt>({
+                tx_hash: expect.any(String),
+            });
+
+            await sleep(1050);
+            const txResult = (await kwil.txInfo(hash as string)).data?.tx_result.log;
+            expect(txResult).toBe('success');
+        });
+
+        test('with action inputs as ActionInput', async () => {
+            const input = ActionInput.of()
+                .putFromObject({
+                    "$id": recordCount,
+                    "$user": "Luke",
+                    "$title": "Test Post",
+                    "$body": "This is a test post"
+                });
+
+            const actionBody: ActionBody = {
+                dbid,
+                action: "add_post",
+                inputs: [ input ],
+                description: "This is a test action"
+            }
+
+            const result = await kwil.execute(actionBody, kSigner);
+            const hash = result.data?.tx_hash;
+
+            expect(result.data).toBeDefined();
+            expect(result.status).toBe(200);
+            expect(result.data).toMatchObject<TxReceipt>({
+                tx_hash: expect.any(String),
+            });
+
+            await sleep(1050);
+            const txResult = (await kwil.txInfo(hash as string)).data?.tx_result.log;
+            expect(txResult).toBe('success');
+        });
+    });
+    
+    describe('kwil.deploy() and kwil.drop() should each return a TxReceipt', () => { 
+        let dbName: string;
+
+        beforeAll(async () => {
+            const dbAmount = await kwil.listDatabases(kSigner.publicKey);
+            const count = dbAmount.data as string[];
+            dbName = `test_db_${count.length + 1}`;
+        })
+
+        test('kwil.deploy()', async () => {
+            let kfSchema: CompiledKuneiform = schema;
+            kfSchema.name = dbName;
+            kfSchema.owner = kSigner.publicKey as Uint8Array;
+
+            const deployBody: DeployBody = {
+                schema: kfSchema,
+                description: "This is a test database"
+            }
+
+            const result = await kwil.deploy(deployBody, kSigner);
+            const hash = result.data?.tx_hash;
+
+            expect(result.data).toBeDefined();
+            expect(result.status).toBe(200);
+            expect(result.data).toMatchObject<TxReceipt>({
+                tx_hash: expect.any(String),
+            });
+
+            await sleep(1100);
+
+            const txResult = (await kwil.txInfo(hash as string)).data?.tx_result.log;
+            expect(txResult).toBe('success');
+        })
+
+        test('kwil.drop()', async () => {
+            const dbid = kwil.getDBID(kSigner.publicKey, dbName);
+            const dropBody: DropBody = {
+                dbid,
+                description: "This is a test database"
+            }
+
+            const result = await kwil.drop(dropBody, kSigner);
+            const hash = result.data?.tx_hash;
+
+            expect(result.data).toBeDefined();
+            expect(result.status).toBe(200);
+            expect(result.data).toMatchObject<TxReceipt>({
+                tx_hash: expect.any(String),
+            });
+
+            await sleep(1050);
+
+            const txResult = (await kwil.txInfo(hash as string)).data?.tx_result.log;
+            expect(txResult).toBe('success');
+        });
+     })
 })

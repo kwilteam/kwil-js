@@ -1,5 +1,5 @@
-import {objects} from "../utils/objects";
-import {ValueType} from "./enums";
+import { objects } from "../utils/objects";
+import { ValueType } from "./enums";
 
 export type Entry<T extends ValueType> = [string, T];
 
@@ -9,6 +9,25 @@ export type Entries = { [key: string]: ValueType };
 
 export type Predicate =
     (k: [key: string, v: ValueType]) => boolean;
+
+export interface ActionBody {
+    dbid: string;
+    action: string;
+    inputs?: Entries[] | ActionInput[];
+    description?: string;
+}
+
+export function resolveActionInputs(inputs: Entries[] | ActionInput[]): ActionInput[] {
+    if (inputs && Array.isArray(inputs)) {
+        if ((inputs as ActionInput[]).every((item: ActionInput) => item instanceof ActionInput)) {
+            return inputs as ActionInput[];
+        } else {
+            return new ActionInput().putFromObjects(inputs as Entries[]);
+        }
+    } else {
+        throw new Error('action inputs must be an array of entries or an array of ActionInput instances');
+    }
+}
 
 /**
  * `ActionInput` class is a utility class for creating action inputs.
@@ -48,13 +67,13 @@ export class ActionInput implements Iterable<EntryType> {
         return this;
     }
 
-     /**
-     * Replaces a value for a single action input if the key is already present.
-     * 
-     * @param key - The action input name.
-     * @param value - The value to replace for the action input.
-     * @returns The current `ActionInput` instance for chaining.
-     */
+    /**
+    * Replaces a value for a single action input if the key is already present.
+    * 
+    * @param key - The action input name.
+    * @param value - The value to replace for the action input.
+    * @returns The current `ActionInput` instance for chaining.
+    */
 
     public replace<T extends ValueType>(key: string, value: T): ActionInput {
         if (this.containsKey(key)) {
@@ -108,12 +127,12 @@ export class ActionInput implements Iterable<EntryType> {
         return delete this.map[key];
     }
 
-     /**
-     * Converts the map of action inputs to an array of entries.
-     * 
-     * @param filter - An optional filter function.
-     * @returns A read-only array of entries.
-     */
+    /**
+    * Converts the map of action inputs to an array of entries.
+    * 
+    * @param filter - An optional filter function.
+    * @returns A read-only array of entries.
+    */
 
     public toArray(filter?: Predicate): ReadonlyArray<EntryType> {
         return Object
@@ -202,11 +221,11 @@ export class ActionInput implements Iterable<EntryType> {
         return actions;
     }
 
-     /**
-     * Factory method to create a new instance of `ActionInput`.
-     * 
-     * @returns A new `ActionInput` instance.
-     */
+    /**
+    * Factory method to create a new instance of `ActionInput`.
+    * 
+    * @returns A new `ActionInput` instance.
+    */
 
     public static of(): ActionInput {
         return new ActionInput();

@@ -5,6 +5,7 @@ import { Kwil } from "../../../src/client/kwil";
 import { Wallet } from "ethers";
 import { Transaction } from "../../../src/core/tx";
 import { PayloadType } from "../../../src/core/enums";
+import { hexToBase64 } from "../../../src/utils/serial";
 
 class TestKwil extends Kwil {
     public constructor() {
@@ -12,8 +13,10 @@ class TestKwil extends Kwil {
     }
 }
 
+const pubKey = '0x048767310544592e33b2fb5555527f49c0902cf0f472f4c87e65324abb75e7a5e1c035bc1ef5026f363c79588526c341af341a68fc37299183391699ee1864cc75'
+
 describe('DbBuilder', () => {
-    let dbBuilder: DBBuilder;
+    let dbBuilder: DBBuilder<PayloadType.DEPLOY_DATABASE>;
     const mockKwil = new TestKwil();
 
     beforeEach(() => {
@@ -38,6 +41,14 @@ describe('DbBuilder', () => {
         })
     })
 
+    describe('publicKey', () => {
+        it('should set the _publicKey field and return a dbBuilder', () => {
+            const result = dbBuilder.publicKey(pubKey);
+            expect(result).toBe(dbBuilder);
+            expect((dbBuilder as any)._publicKey).toBe(pubKey);
+        });
+    })
+
     describe('payload', () => {
         it('should set the _payload field and return a dbBuilder', () => {
             const payload = { test: 'test' };
@@ -52,9 +63,9 @@ describe('DbBuilder', () => {
             const wallet = Wallet.createRandom()
 
             const mockedAccount = {
-                address: wallet.address,
+                public_key: hexToBase64(pubKey),
                 balance: "10000000000000000",
-                nonce: 1
+                nonce: '1'
             }
 
             getMock.mockResolvedValueOnce({
@@ -73,17 +84,21 @@ describe('DbBuilder', () => {
 
             const result: Transaction = await dbBuilder
                 .signer(wallet)
+                .publicKey(pubKey)
                 .payload({ test: 'test' })
+                .description('test')
                 .buildTx();
 
             expect(result).toBeInstanceOf(Transaction);
-            expect(result.hash).toBe('042jEOCmIUkhIH7l/BZd6i6v4PNeu9WhAZvnD1cztaH8o7HJPCjsTppQ9Ov7Yt5X');
-            expect(result.fee).toBe('100000');
-            expect(result.nonce).toBe(mockedAccount.nonce + 1);
-            expect(result.payload).toBe('eyJ0ZXN0IjoidGVzdCJ9');
-            expect(result.sender).toBe(wallet.address);
+            expect(result.body.fee).toBe('100000');
+            expect(result.body.payload_type).toBe('deploy_schema');
+            expect(result.body.description).toBe('test');
+            expect(typeof result.body.salt).toBe('string');
+            expect(result.body.nonce).toBe(Number(mockedAccount.nonce) + 1);
+            expect(result.body.payload).toBe('AAHFgIDAwMA=');
+            expect(result.sender).toBe('BIdnMQVEWS4zsvtVVVJ/ScCQLPD0cvTIfmUySrt156XhwDW8HvUCbzY8eViFJsNBrzQaaPw3KZGDORaZ7hhkzHU=');
             expect(typeof result.signature.signature_bytes).toBe('string');
-            expect(result.signature.signature_type).toBe(2);
+            expect(result.signature.signature_type).toBe('secp256k1_ep');
         })
     })
 })

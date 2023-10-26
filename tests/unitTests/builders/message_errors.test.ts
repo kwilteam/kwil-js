@@ -4,12 +4,17 @@ import { Kwil } from "../../../src/client/kwil";
 import { ActionBuilder } from "../../../src/core/builders";
 import { ActionBuilderImpl } from "../../../src/builders/action_builder";
 import { Wallet } from "ethers";
+import { SignatureType } from "../../../src/core/signature";
+import { bytesToBase64 } from "../../../src/utils/base64";
+import { hexToBase64, stringToBytes } from "../../../src/utils/serial";
 
 class TestKwil extends Kwil {
     public constructor() {
         super({ kwilProvider: 'doesnt matter' });
     }
 }
+
+const pubKey = '0x048767310544592e33b2fb5555527f49c0902cf0f472f4c87e65324abb75e7a5e1c035bc1ef5026f363c79588526c341af341a68fc37299183391699ee1864cc75'
 
 describe('buildMsg', () => {
     let actionBuilder: ActionBuilder;
@@ -25,9 +30,9 @@ describe('buildMsg', () => {
         getMock.mockResolvedValueOnce({
             status: 200,
             data: {
-                dataset: {
+                schema: {
                     name: 'testName',
-                    dbid: 'testDbid',
+                    owner: bytesToBase64(stringToBytes('mockOwner')),
                     tables: "someTables",
                     actions: [{
                         name: 'testactionname',
@@ -47,14 +52,20 @@ describe('buildMsg', () => {
         const msg: Message = await actionBuilder
             .name('testactionname')
             .dbid('testDbid')
+            .publicKey(pubKey)
             .signer(wallet)
             .buildMsg();
 
         expect(msg).toBeDefined();
-        expect(msg.payload.length).toBeGreaterThan(1);
-        expect(msg.sender).toBe(wallet.address)
+        // payload should be base64
+        expect(typeof msg.body.payload === 'string').toBe(true);
+
+        //sender should be b64 encoded public key
+        expect(msg.sender).toBe(hexToBase64(pubKey));
+
+        // signature should be defined
         expect(msg.signature).toStrictEqual({
-            signature_type: 2,
+            signature_type: SignatureType.SECP256K1_PERSONAL,
             signature_bytes: expect.any(String)
         })
     });
@@ -74,9 +85,9 @@ describe('buildMsg', () => {
         getMock.mockResolvedValueOnce({
             status: 200,
             data: {
-                dataset: {
+                schema: {
                     name: 'testName',
-                    dbid: 'testDbid',
+                    owner: bytesToBase64(stringToBytes('mockOwner')),
                     tables: "someTables",
                     actions: [{
                         name: 'testactionname',
@@ -96,8 +107,9 @@ describe('buildMsg', () => {
         await expect(actionBuilder
             .name('testactionname')
             .dbid('testDbid')
+            .publicKey(pubKey)
             .signer(wallet)
-            .buildMsg()).rejects.toThrow();
+            .buildMsg()).rejects.toThrowError('Action testactionname is not a view only action. Please use kwil.execute()');
     });
 });
 
@@ -115,14 +127,14 @@ describe('buildMsg', () => {
         getMock.mockResolvedValueOnce({
             status: 200,
             data: {
-                dataset: {
+                schema: {
                     name: 'testName',
-                    dbid: 'testDbid',
+                    owner: bytesToBase64(stringToBytes('mockOwner')),
                     tables: "someTables",
                     actions: [{
                         name: 'testactionname',
                         public: true,
-                        mutability: 'update',
+                        mutability: 'view',
                         auxiliaries: [],
                         inputs: ['1', '2'],
                         statements: ['test']
@@ -138,6 +150,6 @@ describe('buildMsg', () => {
             .name('testactionname')
             .dbid('testDbid')
             .signer(wallet)
-            .buildMsg()).rejects.toThrow();
+            .buildMsg()).rejects.toThrowError('Action testactionname requires inputs. Please provide inputs. With the ActionInput class and .concat method.');
     });
 });
