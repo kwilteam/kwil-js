@@ -94,11 +94,12 @@ const kwilSigner = new KwilSigner(signer, publicKey);
 
 If you wish to sign with something other than an EtherJS signer, you may pass a callback function that accepts and returns a `Uint8Array()` and the enumerator for the signature type used.
 
-Currently, Kwil supports three signature types:
+Currently, Kwil supports two signature types:
+
 | Type  | Enumerator |
 |:----- |:------:|
-| Secp256k1  | 'secp256k1_ep'     |
-| Ed25519    | 'ed25519'     |
+| Secp256k1  | 'secp256k1_ep' |
+| Ed25519    | 'ed25519' |
 
 To use an ed25519 signature:
 
@@ -110,7 +111,7 @@ import { KwilSigner } from '@kwilteam/kwil-js';
 const keys = nacl.sign.keyPair();
 const customSigner = (msg) => nacl.sign.detached(msg, keys.secretKey);
 
-const kwilSigner = new KwilSinger(customSigner, keys.publicKey, 'ed25519');
+const kwilSigner = new KwilSigner(customSigner, keys.publicKey, 'ed25519');
 ```
 
 ## Database Queries
@@ -119,7 +120,7 @@ const kwilSigner = new KwilSinger(customSigner, keys.publicKey, 'ed25519');
 
 Any action that executes a CUD operation must be signed and broadcasted to the network through the `kwil.execute()` method.
 
-`.execute()` takes an object that matches the `ActionBody` interface. Action body has two required fields: `dbid` and `action`. You can also optionally add an `inputs` field if the action requires inputs, and a `description` property to customize the signature message.
+`.execute()` takes an object that matches the `ActionBody` interface. Action body has two required fields: `dbid` and `action`. You can also optionally add an `inputs` field if the action requires inputs, and a `description` field to customize the signature message.
 
 ``` javascript
 import { Utils } from '@kwilteam/kwil-js'
@@ -130,7 +131,7 @@ const input = new Utils.ActionInput()
     .put("input_name_2", "input_value_2")
     .put("input_name_3", "input_value_3")
 
-// retrieve database ID to locate action
+// get database ID
 const dbid = kwil.getDBID("publicKey", "database_name")
 
 const actionBody = {
@@ -145,7 +146,7 @@ const res = await kwil.execute(actionBody, kwilSigner)
 
 /*
     res.data = {
-        tx_hash: "0xhash",
+        tx_hash: "hash",
     }
 */
 ```

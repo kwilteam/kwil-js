@@ -2,7 +2,7 @@
 
 Below is a list of all key changes from the [Kwil v3 SDK](https://www.npmjs.com/package/kwil).
 
-Note that this SDK must be used with a Kwil Daemon that is running the CometBFT Release (September 2023). If you are not using the CometBFT Release, please use [Kwil v3](https://www.npmjs.com/package/kwil).
+Note that this SDK must be used with a Kwil Daemon that is running the CometBFT Release (Kwil Daemon v0.6.0+). If you are not using the CometBFT Release, please use [Kwil v3](https://www.npmjs.com/package/kwil).
 
 ## Breaking Changes
 
@@ -164,7 +164,7 @@ const kwilSigner = new KwilSigner(signer, publicKey);
 
 If you wish to sign with something other than an EtherJS signer, you may pass a callback function that accepts and returns a `Uint8Array()` and the enumerator for the signature type used.
 
-Currently, Kwil supports three signature types:
+Currently, Kwil supports two signature types:
 | Type  | Enumerator |
 |:----- |:------:|
 | Secp256k1  | 'secp256k1_ep'     |
@@ -180,7 +180,7 @@ import { KwilSigner } from '@kwilteam/kwil-js';
 const keys = nacl.sign.keyPair();
 const customSigner = (msg) => nacl.sign.detached(msg, keys.secretKey);
 
-const kwilSigner = new KwilSinger(customSigner, keys.publicKey, 'ed25519');
+const kwilSigner = new KwilSigner(customSigner, keys.publicKey, 'ed25519');
 ```
 
 ### Read-Only Actions / Messages

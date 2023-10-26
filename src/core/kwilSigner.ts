@@ -7,13 +7,13 @@ import { AnySignatureType, SignatureType, getSignatureType } from "./signature";
  */
 export class KwilSigner {
     /** The signer, which can be of type `EthSigner` or `CustomSigner` */
-    public signer: EthSigner | CustomSigner;
+    public readonly signer: EthSigner | CustomSigner;
 
     /** The public key associated with the signer */
-    public publicKey: string | Uint8Array;
+    public readonly publicKey: HexString | Uint8Array;
 
     /** The type of the signature. */
-    public signatureType: AnySignatureType;
+    public readonly signatureType: AnySignatureType;
 
     /**
      * Creates a new instance of KwilSigner using an EthSigner.
@@ -51,4 +51,4 @@ export class KwilSigner {
                 throw new Error("Could not determine signature type from signer. Please pass a signature type to the KwilSigner constructor.");
             }
     }}
-}
+} 

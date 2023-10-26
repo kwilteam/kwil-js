@@ -3,9 +3,14 @@ import {WebKwil} from './client/web/webKwil'
 import { generateDBID } from './utils/dbid'
 import { TxReceipt as _TxReceipt } from './core/tx'
 import { ActionBuilder as _ActionBuilder, DBBuilder as _DBBuilder } from './core/builders'
-import { ActionInput as _ActionInput} from './core/action'
+import { ActionInput as _ActionInput, ActionBody as _ActionBody } from './core/action'
 import { Transaction as _Transaction } from './core/tx'
-import { Database as _Database, Table as _Table, Column as _Column, Attribute as _Attribute, Index as _Index, ActionSchema as _ActionSchema, SelectQuery as _SelectQuery, ForeignKey as _ForeignKey, ForeignKeyAction as _ForeignKeyAction, Extension as _Extension, ExtensionConfig as _ExtensionConfig } from './core/database'
+import { Database as _Database, Table as _Table, Column as _Column, 
+    Attribute as _Attribute, Index as _Index, ActionSchema as _ActionSchema, 
+    SelectQuery as _SelectQuery, ForeignKey as _ForeignKey, ForeignKeyAction as _ForeignKeyAction, 
+    Extension as _Extension, ExtensionConfig as _ExtensionConfig, DeployBody as _DeployBody,
+    DropBody as _DropBody
+} from './core/database'
 import { GenericResponse as _GenericResponse } from './core/resreq'
 import { TxResult as _TxResult, TxInfoReceipt as _TxInfoReceipt } from './core/txQuery'
 import { Account as _Account } from './core/account'
@@ -38,6 +43,9 @@ namespace Types {
     export type TxInfoReceipt = _TxInfoReceipt
     export type Account = _Account
     export type PayloadType = _PayloadType
+    export type DeployBody = _DeployBody
+    export type DropBody = _DropBody
+    export type ActionBody = _ActionBody
 }
 
 const ActionInput = _ActionInput
