@@ -103,6 +103,11 @@ describe("Kwil", () => {
         expect(result.status).toBe(200);
     })
 
+    test('chainInfo should return a status 200', async () => {
+        const result = await kwil.chainInfo();
+        expect(result.status).toBe(200);
+    });
+
     test('select should return status 200', async () => {
         const result = await kwil.selectQuery(dbid, "SELECT * FROM posts LIMIT 5");
         expect(result.status).toBe(200);
@@ -498,8 +503,7 @@ describe("ActionBuilder + ActionInput + Transaction public methods & broadcastin
         expect(actionTx.body.payload).toBeDefined();
         expect(actionTx.body.payload_type).toBeDefined();
         expect(actionTx.body.nonce).toBeGreaterThan(0);
-        expect(actionTx.body.salt).toBeDefined();
-        expect(actionTx.body.salt?.length).toBeGreaterThan(0);
+        expect(actionTx.body.chain_id).toBeDefined();
         expect(actionTx.sender).toBeDefined();
     });
 
@@ -589,8 +593,7 @@ describe("DBBuilder", () => {
         expect(dbTx.body.payload).toBeDefined();
         expect(dbTx.body.payload_type).toBeDefined();
         expect(dbTx.body.nonce).toBeGreaterThan(0);
-        expect(dbTx.body.salt).toBeDefined();
-        expect(dbTx.body.salt?.length).toBeGreaterThan(0);
+        expect(dbTx.body.chain_id).toBeDefined();
         expect(dbTx.sender).toBeDefined();
     });
 
@@ -724,8 +727,7 @@ describe("ActionBuilder to Message", () => {
             .actionBuilder()
             .dbid(dbid)
             .name("read_posts")
-            .description('This is a test action')
-            ;
+            .description('This is a test action');
     })
 
     let message: Message;
@@ -821,8 +823,7 @@ describe("Drop Database", () => {
         expect(dropDbTx.body.payload).toBeDefined();
         expect(dropDbTx.body.payload_type).toBeDefined();
         expect(dropDbTx.body.nonce).toBeGreaterThan(0);
-        expect(dropDbTx.body.salt).toBeDefined();
-        expect(dropDbTx.body.salt?.length).toBeGreaterThan(0);
+        expect(dropDbTx.body.chain_id).toBeDefined();
         expect(dropDbTx.sender).toBeDefined();
     });
 
@@ -963,62 +964,8 @@ describe("Testing custom signers", () => {
         });
         expect(result.status).toBe(200);
     })
-
-    test('ed25519_nr signed txs should broadcast correctly', async () => {
-        const nearSigner = await getNearSigner();
-
-        const customNearSigner = async (msg: Uint8Array): Promise<Uint8Array> => {
-            const sig = await nearSigner.signMessage(msg, 'luke.testnet', 'testnet');
-            return sig.signature;
-        }
-
-        const nearPublicKey = await nearSigner.getPublicKey('luke.testnet', 'testnet');
-
-        const tx = await kwil
-            .actionBuilder()
-            .dbid(dbid)
-            .name("add_post")
-            .signer(customNearSigner, SignatureType.ED25519_NEAR)
-            .publicKey(nearPublicKey.toString())
-            .concat(input)
-            .buildTx();
-
-        const result = await kwil.broadcast(tx);
-
-        expect(result.data).toBeDefined();
-        expect(result.data).toMatchObject<TxReceipt>({
-            tx_hash: expect.any(String),
-        });
-        expect(result.status).toBe(200);
     });
 
-    test('ed25519_nr signed msgs should call correctly', async () => {
-        const nearSigner = await getNearSigner();
-
-        const customNearSigner = async (msg: Uint8Array): Promise<Uint8Array> => {
-            const sig = await nearSigner.signMessage(msg, 'luke.testnet', 'testnet');
-            return sig.signature;
-        }
-
-        const nearPublicKey = await nearSigner.getPublicKey('luke.testnet', 'testnet');
-
-        const msg = await kwil
-            .actionBuilder()
-            .dbid(dbid)
-            .name('view_must_sign')
-            .publicKey(nearPublicKey.toString())
-            .signer(customNearSigner, SignatureType.ED25519_NEAR)
-            .buildMsg();
-
-        const result = await kwil.call(msg);
-
-        expect(result.data).toBeDefined();
-        expect(result.data).toMatchObject<MsgReceipt>({
-            result: expect.any(Array),
-        });
-        expect(result.status).toBe(200);
-    });
-})
 
 describe("Testing simple actions and db deploy / drop (builder pattern alternative)", () => {
     let kSigner = new KwilSigner(wallet, pubKey);

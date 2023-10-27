@@ -1,65 +1,65 @@
-import {Database} from "./database";
-import {Account} from "./account";
-import {BaseTransaction, TxnData } from "./tx";
-import { TxResult } from "./txQuery";
-import { BytesEncodingStatus } from "./enums";
+import { Database } from './database';
+import { Account, ChainInfo } from './network';
+import { BaseTransaction, TxReceipt, TxnData } from './tx';
+import { TxResult } from './txQuery';
+import { BytesEncodingStatus } from './enums';
 
 type SchemaRes = Database & {
-    owner: string;
-}
+  owner: string;
+};
 
 export interface GenericResponse<T> {
-    status: number;
-    data?: T;
+  status: number;
+  data?: T;
 }
 
 export interface GetSchemaResponse {
-    schema: SchemaRes;
+  schema: SchemaRes;
 }
 
 export interface GetAccountResponse {
-    account: Account;
+  account: Account;
 }
 
 export interface ListDatabasesResponse {
-    databases: string[];
+  databases: string[];
 }
 
 export interface EstimateCostReq {
-    tx: TxnData<BytesEncodingStatus.BASE64_ENCODED>;
+  tx: TxnData<BytesEncodingStatus.BASE64_ENCODED>;
 }
 
 export interface EstimateCostRes {
-    price: string;
+  price: string;
 }
 
 export interface BroadcastReq {
-    tx: TxnData<BytesEncodingStatus.BASE64_ENCODED>;
+  tx: TxnData<BytesEncodingStatus.BASE64_ENCODED>;
 }
 
-export interface BroadcastRes {
-    tx_hash: string;
-}
+export interface BroadcastRes extends TxReceipt {}
 
 export interface CallRes {
-    result: string;
+  result: string;
 }
 
 export interface PongRes {
-    message: string;
+  message: string;
 }
 
 export interface SelectRes {
-    result: string
+  result: string;
 }
 
 export interface TxQueryReq {
-    tx_hash: string;
+  tx_hash: string;
 }
 
 export interface TxQueryRes {
-    hash: string;
-    height: number;
-    tx: BaseTransaction<BytesEncodingStatus.BASE64_ENCODED>;
-    tx_result: TxResult;
+  hash: string;
+  height: number;
+  tx: BaseTransaction<BytesEncodingStatus.BASE64_ENCODED>;
+  tx_result: TxResult;
 }
+
+export interface ChainInfoRes extends ChainInfo {}

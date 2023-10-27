@@ -20,7 +20,8 @@ import { WebKwil } from '@kwilteam/kwil-js';
 const provider = new BrowserProvider(window.ethereum)
 
 const kwil = new WebKwil({
-    kwilProvider: "kwil_provider_endpoint"
+    kwilProvider: "kwil_provider_endpoint",
+    chainId: "your_kwil_chain_id"
 });
 ```
 
@@ -36,6 +37,7 @@ const wallet = new Wallet("my_ethereum_private_key")
 
 const kwil = new kwiljs.NodeKwil({
     kwilProvider: "kwil_provider_endpoint",
+    chainId: "your_kwil_chain_id"
 });
 ```
 
@@ -207,7 +209,23 @@ const res = await kwil.selectQuery(dbid, "SELECT * FROM users")
 */
 ```
 
-## Database Info
+## Network Info
+
+### ChainID and Status
+
+To verify that you are using the correct chainID, as well as the latest block height and block hash on your chain, you can call the `.chainInfo()` method.
+
+``` javascript
+const res = await kwil.chainInfo()
+
+/*
+    res.data = {
+        chainId: "your_chain_id",
+        blockHeight: "latest_block_height",
+        blockHash: "latest_block_hash"
+    }
+*/
+```
 
 ### Listing Databases
 

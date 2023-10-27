@@ -11,7 +11,7 @@ import { hexToBase64, stringToBytes, stringToHex } from '../../../src/utils/seri
 
 class TestKwil extends Kwil {
     constructor() {
-        super({kwilProvider: 'doesnt matter' })
+        super({kwilProvider: 'doesnt matter', chainId: 'doesnt matter' })
     }
 }
 
@@ -67,6 +67,14 @@ describe('Transaction Builder', () => {
         });
     });
 
+    describe('chainId', () => {
+        it('should set the chainId and return TxnBuilderImpl', () => {
+            const result = txBuilder.chainId('test');
+            expect(result).toBeInstanceOf(PayloadBuilderImpl);
+            expect((result as any)._chainId).toBe('test');
+        });
+    });
+
     describe('description', () => {
         it('should set the description and return TxnBuilderImpl', () => {
             const result = txBuilder.description('test');
@@ -104,6 +112,7 @@ describe('Transaction Builder', () => {
                 .payloadType(PayloadType.EXECUTE_ACTION)
                 .publicKey(pubKey)
                 .description('test')
+                .chainId('test')
                 .signer(wallet, SignatureType.SECP256K1_PERSONAL)
                 .buildTx();
 
@@ -113,8 +122,9 @@ describe('Transaction Builder', () => {
             expect(result.body.fee).toBe('100000');
             expect(result.body.nonce).toBe(2);
             expect(typeof result.body.payload).toBe('string');
-            expect(typeof result.body.salt).toBe('string');
+            expect(result.body.chain_id).toBe('test');
             expect(result.isSigned()).toBe(true);
+
             expect(result.sender).toBe(hexToBase64(pubKey));
             expect(result.signature.signature_type).toBe('secp256k1_ep');
             expect(typeof result.signature.signature_bytes).toBe('string');

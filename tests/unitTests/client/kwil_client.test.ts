@@ -3,10 +3,10 @@ import { Kwil } from "../../../src/client/kwil";
 import { ActionBuilderImpl } from "../../../src/builders/action_builder";
 import { DBBuilderImpl } from "../../../src/builders/db_builder";
 import { Transaction } from "../../../src/core/tx";
-import { Message } from "../../../src/core/message";
-import { PayloadType, SerializationType } from "../../../src/core/enums";
+import { Message, Msg } from "../../../src/core/message";
+import { BytesEncodingStatus, PayloadType, SerializationType } from "../../../src/core/enums";
 import { SignatureType } from "../../../src/core/signature";
-import { bytesToString, stringToBytes, stringToHex } from "../../../dist/utils/serial";
+import { bytesToString, stringToBytes, stringToHex } from "../../../src/utils/serial";
 import { base64ToBytes, bytesToBase64 } from "../../../src/utils/base64";
 import { Wallet } from "ethers";
 import { recoverSecp256k1PubKey } from "../../../src/utils/keys";
@@ -15,10 +15,12 @@ import { ActionBody, ActionInput } from "../../../src/core/action";
 import { DeployBody } from "../../../src/core/database";
 import compiledKF from '../../test_schema2.json'
 import { DropBody } from "../../../src/core/database";
+import { BaseTransaction, Txn } from "../../../src/core/tx";
+import { BaseMessage } from "../../../dist/core/message";
 
 class TestKwil extends Kwil {
     constructor() {
-        super({kwilProvider: 'doesnt matter'});
+        super({kwilProvider: 'doesnt matter', chainId: 'doesnt matter'});
     }
 }
 
@@ -122,21 +124,18 @@ describe('Kwil', () => {
 
     describe('broadcast', () => {
         it('should broadcast a transaction', async () => {
-            const tx = new Transaction({
-                signature: {
-                    signature_bytes: 'mockSignatureBytes',
-                    signature_type: SignatureType.SECP256K1_PERSONAL
-                },
-                body: {
-                    payload: 'mockPayload',
-                    payload_type: PayloadType.EXECUTE_ACTION,
-                    fee: BigInt(0),
-                    nonce: null,
-                    salt: '',
-                    description: ''
-                },
-                sender: 'mockSender',
-                serialization: SerializationType.SIGNED_MSG_CONCAT
+            const tx = Txn.create<BytesEncodingStatus.BASE64_ENCODED>(tx => {
+                tx.signature.signature_bytes = bytesToBase64(stringToBytes('mockSignatureBytes'));
+                tx.signature.signature_type = SignatureType.SECP256K1_PERSONAL;
+                tx.body.payload = 'mockPayload';
+                tx.body.payload_type = PayloadType.EXECUTE_ACTION;
+                tx.body.fee = '0';
+                tx.body.nonce = 1;
+                tx.body.chain_id = 'test id';
+                tx.sender = 'mockSender';
+                tx.body.description = '';
+                tx.sender = bytesToBase64(stringToBytes('mockSender'));
+                tx.serialization = SerializationType.SIGNED_MSG_CONCAT;
             })
 
             postMock.mockResolvedValue({
@@ -160,7 +159,7 @@ describe('Kwil', () => {
         beforeAll(async () => {
             const wallet = Wallet.createRandom();
             const pubKey = await recoverSecp256k1PubKey(wallet);
-            kSigner = new KwilSigner(pubKey, wallet);
+            kSigner = new KwilSigner(wallet, pubKey);
         })
 
         describe('execute', () => {
@@ -356,15 +355,13 @@ describe('Kwil', () => {
         describe('call', () => {
             describe('with the output of actionBuilder()', () => {
                 it('should send a message to a kwil node (read only operation)', async () => {
-                    const msg = new Message({
-                        body: {
-                            payload: 'mockPayload',
-                            description: ''
-                        },
-                        signature: null,
-                        sender: 'mocksender',
-                        serialization: SerializationType.SIGNED_MSG_CONCAT
+                    const msg = Msg.create(msg => {
+                        msg.body.payload = bytesToBase64(stringToBytes('mockPayload'));
+                        msg.body.description = '';
+                        msg.sender = 'mocksender';
+                        msg.serialization = SerializationType.SIGNED_MSG_CONCAT;
                     })
+                    
                     postMock.mockResolvedValue({
                         status: 200,
                         data: { result: 'W10=' }
@@ -653,5 +650,44 @@ describe('Kwil', () => {
             expect(query.status).toBe(200)
             expect(query.data).toEqual([])
         })
+    })
+
+    describe('chainInfo', () => {
+        it('should return chain info', async () => {
+            getMock.mockResolvedValueOnce({
+                status: 200,
+                data: {
+                    chain_id: 'doesnt matter',
+                    height: '1',
+                    hash: 'doesnt matter',
+                }
+            });
+
+            const result = await kwil.chainInfo();
+            expect(result.status).toBe(200);
+            expect(result.data?.chain_id).toBe('doesnt matter');
+            expect(result.data?.height).toBe('1');
+            expect(result.data?.hash).toBe('doesnt matter');
+        });
+
+        it('should log a warning if the chain id is not the same as the one provided in the constructor', async () => {
+            getMock.mockResolvedValueOnce({
+                status: 200,
+                data: {
+                    chain_id: 'different chain id',
+                    height: '1',
+                    hash: 'doesnt matter',
+                }
+            });
+
+            const consoleSpy = jest.spyOn(console, 'warn');
+
+            const result = await kwil.chainInfo();
+            expect(result.status).toBe(200);
+            expect(result.data?.chain_id).toBe('different chain id');
+            expect(result.data?.height).toBe('1');
+            expect(result.data?.hash).toBe('doesnt matter');
+            expect(consoleSpy).toHaveBeenCalled()
+        });
     })
 });

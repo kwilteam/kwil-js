@@ -61,6 +61,7 @@ export interface ActionObj {
 
 export const kwil = new NodeKwil({
     kwilProvider: process.env.KWIL_PROVIDER || "SHOULD FAIL",
+    chainId: process.env.CHAIN_ID || "SHOULD FAIL",
     timeout: 10000,
     logging: true
 })

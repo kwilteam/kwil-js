@@ -3,7 +3,7 @@ import { Types, Utils } from "../dist";
 import { AmntObject, kwil } from "./testingUtils";
 import { ActionBuilder } from "../dist/core/builders";
 import { ActionBuilderImpl } from "../dist/builders/action_builder";
-import { Transaction, TxReceipt } from "../dist/core/tx";
+import { BaseTransaction, Transaction, TxReceipt } from "../dist/core/tx";
 require('dotenv').config();
 
 const provider = process.env.ETH_PROVIDER === "https://provider.kwil.com" ? new providers.InfuraProvider("goerli") : process.env.ETH_PROVIDER ? new providers.JsonRpcProvider(process.env.ETH_PROVIDER) : new providers.JsonRpcProvider("http://localhost:8545");
@@ -23,6 +23,7 @@ describe("ActionBuilder + Transaction signing works with Ethersv5 Wallet and Sig
             .actionBuilder()
             .dbid(dbid)
             .name("add_post")
+            .chainId(process.env.CHAIN_ID as string)
 
         const count = await kwil.selectQuery(dbid, "SELECT COUNT(*) FROM posts");
         if (count.status == 200 && count.data) {
@@ -71,19 +72,19 @@ describe("ActionBuilder + Transaction signing works with Ethersv5 Wallet and Sig
         actionTx = await actionBuilder.buildTx();
 
         expect(actionTx).toBeDefined();
-        expect(actionTx).toBeInstanceOf(Transaction);
+        expect(actionTx).toBeInstanceOf(BaseTransaction);
         expect(actionTx.isSigned()).toBe(true);
     });
 
     test("All methods and getters on the Transaction class should return the correct values", () => {
         expect(actionTx).toBeDefined();
-        expect(actionTx).toBeInstanceOf(Transaction);
+        expect(actionTx).toBeInstanceOf(BaseTransaction);
         expect(actionTx.isSigned()).toBe(true);
         expect(actionTx.body.payload_type).toBeDefined();
         expect(actionTx.body.payload).toBeDefined();
         expect(actionTx.body.fee).toBeDefined();
         expect(actionTx.body.nonce).toBeGreaterThan(-1);
-        expect(actionTx.body.salt).toBeDefined();
+        expect(actionTx.body.chain_id).toBeDefined();
         expect(actionTx.sender).toBeDefined();
         expect(actionTx.isSigned()).toBe(true);
         expect(actionTx.signature).toBeDefined();
