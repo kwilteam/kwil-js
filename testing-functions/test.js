@@ -27,7 +27,7 @@ async function test() {
     //update to goerli when live
     const provider = new ethers.JsonRpcProvider(process.env.ETH_PROVIDER)
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
-    const txHash = '3b1afbf33ae847f65945b478c347ebdd2b5e8fd6b69fd244a8fd1273cfa03cb4'
+    const txHash = '4357e7174f61db9b79ea35e8090bb350bf474195c78ab3af159241a891bbebe1'
     
     const kwil = new kwiljs.NodeKwil({
         kwilProvider: process.env.KWIL_PROVIDER || "SHOULD FAIL",

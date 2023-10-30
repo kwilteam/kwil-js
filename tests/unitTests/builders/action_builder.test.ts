@@ -3,7 +3,6 @@ import { ActionBuilderImpl } from '../../../src/builders/action_builder';
 import { ActionBuilder } from '../../../src/core/builders';
 import { Kwil } from '../../../src/client/kwil';
 import { Wallet } from 'ethers';
-import { Transaction } from '../../../src/core/tx';
 import { Message } from '../../../src/core/message';
 import { ActionInput } from '../../../src/core/action';
 import { Account } from '../../../src/core/network';
@@ -11,8 +10,6 @@ import { bytesToBase64 } from '../../../src/utils/base64';
 import { hexToBase64, stringToBytes } from '../../../src/utils/serial';
 import nacl from 'tweetnacl';
 import { SignatureType } from '../../../src/core/signature';
-import { BaseTransaction } from '../../../dist/core/tx';
-import { BytesEncodingStatus } from '../../../dist/core/enums';
 
 class TestKwil extends Kwil {
     public constructor() {

@@ -342,9 +342,8 @@ PayloadType: ${tx.body.payload_type}
 PayloadDigest: ${bytesToHex(digest)}
 Fee: ${tx.body.fee}
 Nonce: ${tx.body.nonce}
-Chain ID: ${tx.body.chain_id}
 
-Kwil 🖋
+Kwil Chain ID: ${tx.body.chain_id}
 `;
 
     // sign the above message
@@ -408,8 +407,6 @@ Kwil 🖋
 DBID: ${msg.body.payload?.dbid}
 Action: ${msg.body.payload?.action}
 PayloadDigest: ${bytesToHex(digest)}
-
-Kwil 🖋
 `;
     // sign the above message
     const signedMessage = await executeSign(stringToBytes(signatureMessage), signer, signatureType);
