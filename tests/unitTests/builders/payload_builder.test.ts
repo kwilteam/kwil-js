@@ -81,6 +81,10 @@ describe('Transaction Builder', () => {
             expect(result).toBeInstanceOf(PayloadBuilderImpl);
             expect((result as any)._description).toBe('test');
         });
+
+        it('should throw an error if description is more than 200 chars', () => {
+            expect(() => txBuilder.description('a'.repeat(201))).toThrowError();
+        })
     });
 
     describe('buildTx', () => {

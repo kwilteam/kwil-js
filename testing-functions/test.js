@@ -42,7 +42,7 @@ async function test() {
     const pubByte = hexToBytes(pubKey)
     const dbid = kwil.getDBID(pubByte, "mydb")
     // logger(dbid)
-    broadcast(kwil, testDB, wallet, pubKey)
+    // broadcast(kwil, testDB, wallet, pubKey)
     // await getTxInfo(kwil, txHash)
     // await getSchema(kwil, dbid)
     // getAccount(kwil, pubByte)

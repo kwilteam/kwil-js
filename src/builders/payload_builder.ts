@@ -145,7 +145,11 @@ export class PayloadBuilderImpl implements PayloadBuilder {
     // assign description if it is not null or undefined
     // we do not want to throw an error if null because description is optional. The default value is empty string.
     if (description) {
-      this._description = description;
+      this._description = objects.requireMaxLength(
+        description,
+        200,
+        `signature description cannot be longer than 200 characters. You provided ${description.length} characters.`
+      );
     }
     return this;
   }

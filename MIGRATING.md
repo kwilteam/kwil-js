@@ -200,10 +200,11 @@ const kwilSigner = new KwilSigner(signer, publicKey);
 If you wish to sign with something other than an EtherJS signer, you may pass a callback function that accepts and returns a `Uint8Array()` and the enumerator for the signature type used.
 
 Currently, Kwil supports two signature types:
-| Type  | Enumerator |
-|:----- |:------:|
-| Secp256k1  | 'secp256k1_ep'     |
-| Ed25519    | 'ed25519'     |
+
+| Type      |   Enumerator   | Description |
+| :-------- | :------------: | ----------- |
+| Secp256k1 | 'secp256k1_ep' | The Kwil Signer will use a secp256k1 elliptic curve signature, which is the same signature used in Ethereum's [personal sign](https://eips.ethereum.org/EIPS/eip-191). |
+| Ed25519   |   'ed25519'    | The Kwil Signer will use an ed25519 signature. |
 
 To use an ed25519 signature:
 
