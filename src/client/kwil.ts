@@ -111,6 +111,7 @@ export abstract class Kwil {
    * Returns an instance of ActionBuilder for this client.
    *
    * @returns An ActionBuilder instance. ActionBuilder is used to build action transactions to be broadcasted to the Kwil network.
+   * @deprecated Use `kwil.execute()` or `kwil.call()` instead. See: {@link https://github.com/kwilteam/kwil-js/issues/32}.
    */
 
   public actionBuilder(): NonNil<ActionBuilder> {
@@ -121,6 +122,7 @@ export abstract class Kwil {
    * Returns an instance of DBBuilder for this client.
    *
    * @returns A DBBuilder instance. DBBuilder is used to build new database transactions to be broadcasted to the Kwil network.
+   * @deprecated Use `kwil.deploy()` See: {@link https://github.com/kwilteam/kwil-js/issues/32}.
    */
 
   public dbBuilder(): NonNil<DBBuilder<PayloadType.DEPLOY_DATABASE>> {
@@ -131,6 +133,7 @@ export abstract class Kwil {
    * Returns an instance of Drop Database Builder for this client.
    *
    * @returns A Drop Database Builder instance. Drop Database Builder is used to build drop database transactions to be broadcasted to the Kwil network.
+   * @deprecated Use `kwil.drop()` See: {@link https://github.com/kwilteam/kwil-js/issues/32}.
    */
 
   public dropDbBuilder(): NonNil<DBBuilder<PayloadType.DROP_DATABASE>> {
@@ -142,6 +145,7 @@ export abstract class Kwil {
    *
    * @param tx - The transaction to broadcast. The transaction can be built using the ActionBuilder or DBBuilder.
    * @returns A promise that resolves to the receipt of the transaction. The transaction receipt includes the transaction hash, fee, and body.
+   * @deprecated Use `kwil.execute()` or `kwil.deploy()` instead. See: {@link https://github.com/kwilteam/kwil-js/issues/32}.
    */
 
   public async broadcast(
@@ -255,7 +259,7 @@ export abstract class Kwil {
       return await this.client.call(actionBody);
     }
 
-    let msg = this.actionBuilder()
+    let msg = ActionBuilderImpl.of(this).chainId(this.chainId)
       .dbid(actionBody.dbid)
       .name(actionBody.action)
       .description(actionBody.description || '');

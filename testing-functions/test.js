@@ -35,7 +35,7 @@ async function test() {
         timeout: 10000,
         logging: true,
     })
-
+    
     const pubKey = await recoverPubKey(wallet)
     const kwilSigner = new KwilSigner(wallet, pubKey)
 
