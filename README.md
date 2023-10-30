@@ -98,10 +98,10 @@ If you wish to sign with something other than an EtherJS signer, you may pass a 
 
 Currently, Kwil supports two signature types:
 
-| Type  | Enumerator |
-|:----- |:------:|
-| Secp256k1  | 'secp256k1_ep' |
-| Ed25519    | 'ed25519' |
+| Type      |   Enumerator   | Description |
+| :-------- | :------------: | ----------- |
+| Secp256k1 | 'secp256k1_ep' | The Kwil Signer will use a secp256k1 elliptic curve signature. |
+| Ed25519   |   'ed25519'    | The Kwil Signer will use an ed25519 signature. |
 
 To use an ed25519 signature:
 
@@ -139,7 +139,7 @@ const dbid = kwil.getDBID("publicKey", "database_name")
 const actionBody = {
     dbid,
     action: "your_action_name",
-    inputs: input,
+    inputs: [ input ],
     description: "Click sign to execute the action!"
 }
 
@@ -178,7 +178,7 @@ const dbid = kwil.getDBID("public_key", "database_name")
 const actionBody = {
     dbid,
     action: "your_action_name",
-    inputs: input
+    inputs: [ input ]
 }
 
 // pass action body to execute method

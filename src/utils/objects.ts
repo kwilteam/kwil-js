@@ -57,5 +57,16 @@ export const objects = {
 
         throw new Error("value is not a number, it is a " + typeof value);
     },
+    requireMaxLength: <T>(value: T, maxLength: number, message?: string | ((v: T) => Error)): NonNil<T> => {
+        if (value && value.toString().length > maxLength) {
+            if (typeof message === 'function') {
+                throw message(value);
+            }
+
+            throw new Error(message || `value is longer than ${maxLength} characters`);
+        }
+
+        return value as NonNil<T>;
+    }
 };
 

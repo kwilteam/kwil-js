@@ -332,12 +332,12 @@ describe("ActionBuilder + ActionInput + Transaction public methods & broadcastin
         expect(actionInputArr).toBeDefined();
         expect(actionInputArr).toBeInstanceOf(Array);
         expect(actionInputArr).toHaveLength(2);
-        expect(actionInputArr[0]).toBeInstanceOf(Utils.ActionInput);
+        expect(actionInputArr[0]).toBeInstanceOf(ActionInput);
         expect(actionInputArr[0].get("$id")).toBe(recordCount + 2);
         expect(actionInputArr[0].get("$user")).toBe("Luke");
         expect(actionInputArr[0].get("$title")).toBe("Test Post");
         expect(actionInputArr[0].get("$body")).toBe("This is a test post");
-        expect(actionInputArr[1]).toBeInstanceOf(Utils.ActionInput);
+        expect(actionInputArr[1]).toBeInstanceOf(ActionInput);
         expect(actionInputArr[1].get("$id")).toBe(recordCount + 3);
         expect(actionInputArr[1].get("$user")).toBe("Luke");
         expect(actionInputArr[1].get("$title")).toBe("Test Post");
@@ -355,7 +355,7 @@ describe("ActionBuilder + ActionInput + Transaction public methods & broadcastin
         ]);
 
         expect(staticActionInputFrom).toBeDefined();
-        expect(staticActionInputFrom).toBeInstanceOf(Utils.ActionInput);
+        expect(staticActionInputFrom).toBeInstanceOf(ActionInput);
         expect(staticActionInputFrom.get("$id")).toBe(recordCount + 4);
         expect(staticActionInputFrom.get("$user")).toBe("Luke");
         expect(staticActionInputFrom.get("$title")).toBe("Test Post");
@@ -375,7 +375,7 @@ describe("ActionBuilder + ActionInput + Transaction public methods & broadcastin
         staticActionInputFromObject = Utils.ActionInput.fromObject(obj);
 
         expect(staticActionInputFromObject).toBeDefined();
-        expect(staticActionInputFromObject).toBeInstanceOf(Utils.ActionInput);
+        expect(staticActionInputFromObject).toBeInstanceOf(ActionInput);
         expect(staticActionInputFromObject.get("$id")).toBe(recordCount + 5);
         expect(staticActionInputFromObject.get("$user")).toBe("Luke");
         expect(staticActionInputFromObject.get("$title")).toBe("Test Post");
@@ -402,12 +402,12 @@ describe("ActionBuilder + ActionInput + Transaction public methods & broadcastin
         expect(staticActionInputFromObjects).toBeDefined();
         expect(staticActionInputFromObjects).toBeInstanceOf(Array);
         expect(staticActionInputFromObjects).toHaveLength(2);
-        expect(staticActionInputFromObjects[0]).toBeInstanceOf(Utils.ActionInput);
+        expect(staticActionInputFromObjects[0]).toBeInstanceOf(ActionInput);
         expect(staticActionInputFromObjects[0].get("$id")).toBe(recordCount + 6);
         expect(staticActionInputFromObjects[0].get("$user")).toBe("Luke");
         expect(staticActionInputFromObjects[0].get("$title")).toBe("Test Post");
         expect(staticActionInputFromObjects[0].get("$body")).toBe("This is a test post");
-        expect(staticActionInputFromObjects[1]).toBeInstanceOf(Utils.ActionInput);
+        expect(staticActionInputFromObjects[1]).toBeInstanceOf(ActionInput);
         expect(staticActionInputFromObjects[1].get("$id")).toBe(recordCount + 7);
         expect(staticActionInputFromObjects[1].get("$user")).toBe("Luke");
         expect(staticActionInputFromObjects[1].get("$title")).toBe("Test Post");
@@ -418,7 +418,7 @@ describe("ActionBuilder + ActionInput + Transaction public methods & broadcastin
         const result = Utils.ActionInput.of();
 
         expect(result).toBeDefined();
-        expect(result).toBeInstanceOf(Utils.ActionInput);
+        expect(result).toBeInstanceOf(ActionInput);
         expect(result.get("$id")).toBeUndefined();
         expect(result.get("$user")).toBeUndefined();
         expect(result.get("$title")).toBeUndefined();
@@ -434,7 +434,7 @@ describe("ActionBuilder + ActionInput + Transaction public methods & broadcastin
             .put("$body", "This is a test post");
 
         expect(staticActionInputOf).toBeDefined();
-        expect(staticActionInputOf).toBeInstanceOf(Utils.ActionInput);
+        expect(staticActionInputOf).toBeInstanceOf(ActionInput);
         expect(staticActionInputOf.get("$id")).toBe(recordCount + 8);
         expect(staticActionInputOf.get("$user")).toBe("Luke");
         expect(staticActionInputOf.get("$title")).toBe("Test Post");
@@ -1069,10 +1069,10 @@ describe("Testing simple actions and db deploy / drop (builder pattern alternati
                 dbid,
                 action: "add_post",
                 inputs: [{
-                    "$id": recordCount,
-                    "$user": "Luke",
-                    "$title": "Test Post",
-                    "$body": "This is a test post"
+                    $id: recordCount,
+                    $user: "Luke",
+                    $title: "Test Post",
+                    $body: "This is a test post"
                 }],
                 description: "This is a test action"
             }
