@@ -10,7 +10,7 @@ import { hexToBase64, stringToBytes } from "../../../src/utils/serial";
 
 class TestKwil extends Kwil {
     public constructor() {
-        super({ kwilProvider: 'doesnt matter' });
+        super({ kwilProvider: 'doesnt matter', chainId: 'doesnt matter' });
     }
 }
 
@@ -150,6 +150,6 @@ describe('buildMsg', () => {
             .name('testactionname')
             .dbid('testDbid')
             .signer(wallet)
-            .buildMsg()).rejects.toThrowError('Action testactionname requires inputs. Please provide inputs. With the ActionInput class and .concat method.');
+            .buildMsg()).rejects.toThrowError('No action data has been added to the ActionBuilder.');
     });
 });

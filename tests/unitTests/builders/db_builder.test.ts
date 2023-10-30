@@ -6,10 +6,13 @@ import { Wallet } from "ethers";
 import { Transaction } from "../../../src/core/tx";
 import { PayloadType } from "../../../src/core/enums";
 import { hexToBase64 } from "../../../src/utils/serial";
+import { CompiledKuneiform } from "../../../src/core/payload";
+import { kwilEncode } from "../../../src/utils/rlp";
+import { bytesToBase64 } from "../../../src/utils/base64";
 
 class TestKwil extends Kwil {
     public constructor() {
-        super({ kwilProvider: 'doesnt matter'})
+        super({ kwilProvider: 'doesnt matter', chainId: 'doesnt matter'})
     }
 }
 
@@ -49,9 +52,25 @@ describe('DbBuilder', () => {
         });
     })
 
+    describe('description', () => {
+        it('should set the _description field and return a dbBuilder', () => {
+            const result = dbBuilder.description('test');
+            expect(result).toBe(dbBuilder);
+            expect((dbBuilder as any)._description).toBe('test');
+        })
+    });
+
+    describe('chainId', () => {
+        it('should set the _chainId field and return a dbBuilder', () => {
+            const result = dbBuilder.chainId('test');
+            expect(result).toBe(dbBuilder);
+            expect((dbBuilder as any)._chainId).toBe('test');
+        })
+    });
+
     describe('payload', () => {
         it('should set the _payload field and return a dbBuilder', () => {
-            const payload = { test: 'test' };
+            const payload: CompiledKuneiform = { name: 'test', owner: 'test' };
             const result = dbBuilder.payload(payload);
             expect(result).toBe(dbBuilder);
             expect((dbBuilder as any)._payload).toBe;
@@ -85,20 +104,22 @@ describe('DbBuilder', () => {
             const result: Transaction = await dbBuilder
                 .signer(wallet)
                 .publicKey(pubKey)
-                .payload({ test: 'test' })
+                .payload({ name: 'test', owner: 'test' })
                 .description('test')
+                .chainId('doesnt matter')
                 .buildTx();
 
-            expect(result).toBeInstanceOf(Transaction);
+            const makePayloadEncodable = (input: any) => (DBBuilderImpl.of(mockKwil, PayloadType.DEPLOY_DATABASE) as any).makePayloadEncodable(() => input);
+
             expect(result.body.fee).toBe('100000');
             expect(result.body.payload_type).toBe('deploy_schema');
             expect(result.body.description).toBe('test');
-            expect(typeof result.body.salt).toBe('string');
             expect(result.body.nonce).toBe(Number(mockedAccount.nonce) + 1);
-            expect(result.body.payload).toBe('AAHFgIDAwMA=');
+            expect(result.body.payload).toBe(bytesToBase64(kwilEncode((makePayloadEncodable({ name: 'test', owner: 'test' })))));
             expect(result.sender).toBe('BIdnMQVEWS4zsvtVVVJ/ScCQLPD0cvTIfmUySrt156XhwDW8HvUCbzY8eViFJsNBrzQaaPw3KZGDORaZ7hhkzHU=');
             expect(typeof result.signature.signature_bytes).toBe('string');
             expect(result.signature.signature_type).toBe('secp256k1_ep');
+            expect(result.body.chain_id).toBe('doesnt matter');
         })
     })
 })

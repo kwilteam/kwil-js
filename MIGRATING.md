@@ -6,6 +6,41 @@ Note that this SDK must be used with a Kwil Daemon that is running the CometBFT 
 
 ## Breaking Changes
 
+### Chain ID Configuration
+
+In order to prevent users from accidentally broadcasting transactions to the wrong Kwil chain, the Kwil chain ID must now be specified when initializing the Kwil object.
+
+#### Old Version
+
+```javascript
+const kwil = new WebKwil({
+    provider: 'https://kwil.com',
+});
+```
+
+#### New Version
+
+```javascript
+const kwil = new WebKwil({
+    provider: 'https://kwil.com',
+    chainId: 'your_chain_id'
+});
+```
+
+You can check the chain ID of your Kwil chain by calling `kwil.chainInfo()`.
+
+```javascript
+const res = await kwil.chainInfo()
+
+/*
+    res.data = {
+        chain_id: "your_chain_id",
+        height: "latest_block_height",
+        hash: "latest_block_hash"
+    }
+*/
+```
+
 ### Wallet Address Identifiers -> Public Keys
 
 Because the newest version of Kwil suports both Secp256k1 Signatures and ED25519 Signatures, accounts and databases are now associated with public keys, not just ethereum wallet address.

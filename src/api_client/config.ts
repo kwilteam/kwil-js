@@ -1,6 +1,6 @@
 // config for api
 
-type seconds = number
+type seconds = number;
 
 /**
  * @typedef {Object} Config
@@ -12,12 +12,18 @@ type seconds = number
  * @property {string} [network] - network to use (mainnet, testnet, etc.)
  * @property {number} [cache] - Time to live cache in seconds. Only getSchema requests are cached. Default is 10 minutes.
  */
-export interface Config {
-    kwilProvider: string;
-    timeout?: number;
-    apiKey?: string;
-    logging?: boolean;
-    logger?: Function;
-    network?: string;
-    cache?: seconds;
+export interface ApiConfig {
+  kwilProvider: string;
+  timeout?: number;
+  apiKey?: string;
+  logging?: boolean;
+  logger?: Function;
+  network?: string;
+  cache?: seconds;
 }
+
+export interface NetworkConfig {
+    chainId: string;
+}
+
+export type Config = ApiConfig & NetworkConfig;

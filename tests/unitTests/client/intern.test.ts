@@ -4,7 +4,7 @@ import Client from "../../../src/api_client/client";
 
 class TestKwil extends Kwil {
     constructor() {
-        super({ kwilProvider: 'doesnt matter' })
+        super({ kwilProvider: 'doesnt matter', chainId: 'doesnt matter' })
     }
 }
 

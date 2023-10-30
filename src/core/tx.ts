@@ -27,7 +27,7 @@ interface TxBody<T extends PayloadBytesTypes> {
     // once bytes are set to base64, it means the tx is ready to be sent over GRPC, which means BigInt needs to be converted to string
     fee: Nillable<T extends BytesEncodingStatus.BASE64_ENCODED ? string : BigInt>;
     nonce: number | null;
-    salt: Nillable<T extends BytesEncodingStatus.BASE64_ENCODED ? Base64String : Uint8Array>;
+    chain_id: string;
 }
 
 /**
@@ -59,7 +59,7 @@ export class BaseTransaction<T extends PayloadBytesTypes> implements TxnData<T> 
                 payload_type: PayloadType.INVALID_PAYLOAD_TYPE,
                 fee: null,
                 nonce: null,
-                salt: null,     
+                chain_id: ''
             },
             sender: null,
             serialization: SerializationType.SIGNED_MSG_CONCAT
@@ -113,7 +113,7 @@ export namespace Txn {
                 payload_type: PayloadType.INVALID_PAYLOAD_TYPE,
                 fee: null,
                 nonce: null,
-                salt: null,
+                chain_id: '' 
             },
             sender: null,
             serialization: SerializationType.SIGNED_MSG_CONCAT

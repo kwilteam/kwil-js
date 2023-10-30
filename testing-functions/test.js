@@ -17,6 +17,8 @@ const { KwilSigner } = require("../dist/core/kwilSigner")
 
 require("dotenv").config()
 
+const chainId = process.env.CHAIN_ID || "SHOULD FAIL"
+
 function logger(msg) {
     console.log(util.inspect(msg, false, null, true /* enable colors */))
 }
@@ -29,6 +31,7 @@ async function test() {
     
     const kwil = new kwiljs.NodeKwil({
         kwilProvider: process.env.KWIL_PROVIDER || "SHOULD FAIL",
+        chainId: chainId,
         timeout: 10000,
         logging: true,
     })
@@ -39,12 +42,13 @@ async function test() {
     const pubByte = hexToBytes(pubKey)
     const dbid = kwil.getDBID(pubByte, "mydb")
     // logger(dbid)
-    // broadcast(kwil, testDB, wallet, pubKey)
+    broadcast(kwil, testDB, wallet, pubKey)
     // await getTxInfo(kwil, txHash)
     // await getSchema(kwil, dbid)
     // getAccount(kwil, pubByte)
     // listDatabases(kwil, pubByte)
     // ping(kwil)
+    // chainInfo(kwil)
     // await execSingleAction(kwil, dbid, "add_post", wallet, pubByte)
     // await select(kwil, dbid, "SELECT * FROM posts")
     // select(kwil, dbid, `WITH RECURSIVE 
@@ -87,7 +91,10 @@ async function broadcast(kwil, tx, sig, pK) {
         .payload(ownedTx)
         .signer(sig)
         .publicKey(pK)
+        .chainId(chainId)
         .buildTx()
+
+    console.log(readytx)
 
     const txHash = await kwil.broadcast(readytx)
     logger(txHash)
@@ -101,6 +108,11 @@ async function listDatabases(kwil, owner) {
 async function ping(kwil) {
     const ping = await kwil.ping()
     logger(ping)
+}
+
+async function chainInfo(kwil) {
+    const info = await kwil.chainInfo();
+    logger(info)
 }
 
 async function getAction(kwil) {

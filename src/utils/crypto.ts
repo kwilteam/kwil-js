@@ -44,22 +44,3 @@ export function sha256BytesToBytes(message: Uint8Array): Uint8Array {
     shaObj.update(message);
     return shaObj.getHash('UINT8ARRAY');
 }
-
-export function generateSalt(length: number): Uint8Array {
-    if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
-        // Browser environment with Web Crypto API
-        const salt = new Uint8Array(length);
-        const rand = window.crypto.getRandomValues(salt);
-        return rand;
-    } else if (typeof require !== 'undefined') {
-        // Assume Node.js environment
-        try {
-            const crypto = require('crypto');
-            return crypto.randomBytes(length);
-        } catch (err) {
-            throw new Error('Unable to generate salt in this environment.');
-        }
-    } else {
-        throw new Error('Unsupported environment.');
-    }
-}

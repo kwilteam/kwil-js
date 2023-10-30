@@ -1,8 +1,8 @@
 import { getMock, postMock } from './api-utils';
 import Client from "../../../src/api_client/client";
-import { Transaction } from "../../../src/core/tx";
-import { Message } from '../../../src/core/message';
-import { PayloadType, SerializationType } from '../../../src/core/enums';
+import { Txn } from "../../../src/core/tx";
+import { BaseMessage } from '../../../src/core/message';
+import { BytesEncodingStatus, PayloadType, SerializationType } from '../../../src/core/enums';
 import { SignatureType } from '../../../src/core/signature';
 import { bytesToHex, hexToBytes, stringToBytes } from '../../../dist/utils/serial';
 import { base64ToBytes, bytesToBase64 } from '../../../src/utils/base64';
@@ -119,7 +119,7 @@ describe('Client', () => {
 
     describe('estimateCost', () => {
         it('should estimate cost for a transaction', async () => {
-            const tx = new Transaction();
+            const tx = Txn.create<BytesEncodingStatus.BASE64_ENCODED>(() => {});
             postMock.mockResolvedValue({
                 status: 200,
                 data: { price: 1 }
@@ -131,7 +131,7 @@ describe('Client', () => {
         });
 
         it('should throw error if estimate cost fails', async () => {
-            const tx = new Transaction();
+            const tx = Txn.create<BytesEncodingStatus.BASE64_ENCODED>(() => {});
             const mockRes = {
                 status: 400,
                 data: "Error estimating cost"
@@ -146,27 +146,23 @@ describe('Client', () => {
 
     describe('broadcast', () => {
         it('should throw an error when broadcasting an unsigned transaction', async () => {
-            const tx = new Transaction(); // Assuming this transaction is unsigned by default
+            const tx = Txn.create<BytesEncodingStatus.BASE64_ENCODED>(() => {}); // Assuming this transaction is unsigned by default
             await expect(client.broadcast(tx)).rejects.toThrow('Tx must be signed before broadcasting.');
         });
 
         it('should broadcast a signed transaction', async () => {
-            const tx = new Transaction({
-                signature: {
-                    signature_bytes: 'mockSignatureBytes',
-                    signature_type: SignatureType.SECP256K1_PERSONAL
-                },
-                body: {
-                    payload: 'mockPayload',
-                    payload_type: PayloadType.EXECUTE_ACTION,
-                    fee: BigInt(0),
-                    nonce: null,
-                    salt: '',
-                    description: ''
-                },
-                sender: 'mockSender',
-                serialization: SerializationType.SIGNED_MSG_CONCAT
-            })
+            const tx = Txn.create<BytesEncodingStatus.BASE64_ENCODED>((tx) => {
+                tx.signature.signature_bytes = 'mockSignatureBytes';
+                tx.signature.signature_type = SignatureType.SECP256K1_PERSONAL;
+                tx.body.payload = 'mockPayload';
+                tx.body.payload_type = PayloadType.EXECUTE_ACTION;
+                tx.body.fee = '0';
+                tx.body.nonce = null;
+                tx.body.chain_id = '';
+                tx.body.description = '';
+                tx.sender = 'mockSender';
+                tx.serialization = SerializationType.SIGNED_MSG_CONCAT;
+            });
 
             const hash = bytesToBase64(hexToBytes('mockTxHash'));
 
@@ -181,7 +177,7 @@ describe('Client', () => {
             expect(result.data).toEqual({
                 tx_hash: base64ToHex(hash)
             });
-            expect(postMock).toHaveBeenCalledWith('/api/v1/broadcast', { tx }, undefined);
+            expect(postMock).toHaveBeenCalledWith('/api/v1/broadcast', { tx: tx.txData } , undefined);
         });
     });
 
@@ -207,6 +203,37 @@ describe('Client', () => {
 
             await expect(client.ping()).rejects.toThrow('Error pinging');
             expect(getMock).toHaveBeenCalledWith('/api/v1/ping', undefined);
+        });
+    });
+
+    describe('chainInfo', () => {
+        it('should return chain_id, height, and hash', async () => {
+            getMock.mockResolvedValue({
+                status: 200,
+                data: {
+                    chain_id: 'mockChainId',
+                    height: '1',
+                    hash: 'mockHash'
+                }
+            })
+
+            const result = await client.chainInfo();
+            expect(result.status).toBe(200);
+            expect(result.data?.chain_id).toBeDefined();
+            expect(result.data?.height).toBeDefined();
+            expect(result.data?.hash).toBeDefined();
+        })
+
+        it('should throw error if chain info fails', async () => {
+            const mockRes = {
+                status: 400,
+                data: "Error getting chain info"
+            };
+
+            getMock.mockResolvedValue(mockRes);
+
+            await expect(client.chainInfo()).rejects.toThrow('Error getting chain info');
+            expect(getMock).toHaveBeenCalledWith('/api/v1/chain_info', undefined);
         });
     });
 
@@ -259,7 +286,7 @@ describe('Client', () => {
                         body: {
                             payload: bytesToBase64(mockPayload),
                             payload_type: PayloadType.EXECUTE_ACTION,
-                            fee: 'mockFee',
+                            fee: '1',
                             nonce: 1,
                             salt: bytesToBase64(new Uint8Array())
                         },
@@ -298,7 +325,7 @@ describe('Client', () => {
 
     describe('call', () => {
         it('should send a message to the call endpoint', async () => {
-            const msg = new Message({
+            const msg = new BaseMessage({
                 body: {
                     payload: 'mockPayload',
                     description: ''
@@ -320,7 +347,7 @@ describe('Client', () => {
         });
 
         it('should throw error if call fails', async () => {
-            const msg = new Message({
+            const msg = new BaseMessage({
                 body: {
                     payload: 'mockPayload',
                     description: ''

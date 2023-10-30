@@ -6,15 +6,17 @@ import { Wallet } from 'ethers';
 import { Transaction } from '../../../src/core/tx';
 import { Message } from '../../../src/core/message';
 import { ActionInput } from '../../../src/core/action';
-import { Account } from '../../../src/core/account';
+import { Account } from '../../../src/core/network';
 import { bytesToBase64 } from '../../../src/utils/base64';
 import { hexToBase64, stringToBytes } from '../../../src/utils/serial';
 import nacl from 'tweetnacl';
 import { SignatureType } from '../../../src/core/signature';
+import { BaseTransaction } from '../../../dist/core/tx';
+import { BytesEncodingStatus } from '../../../dist/core/enums';
 
 class TestKwil extends Kwil {
     public constructor() {
-        super({ kwilProvider: 'doesnt matter' });
+        super({ kwilProvider: 'doesnt matter', chainId: 'doesnt_matter' });
     }
 }
 
@@ -82,6 +84,14 @@ describe('ActionBuilder', () => {
             const result = actionBuilder.publicKey(pubKey);
             expect(result).toBe(actionBuilder);
             expect((actionBuilder as any)._publicKey).toBe(pubKey);
+        });
+    });
+
+    describe('chainId', () => {
+        it('should set the _chainId field and return actionBuilder', () => {
+            const result = actionBuilder.chainId('testChainId');
+            expect(result).toBe(actionBuilder);
+            expect((actionBuilder as any)._chainId).toBe('testChainId');
         });
     });
 
@@ -169,10 +179,10 @@ describe('ActionBuilder', () => {
                 .concat(actionInput)
                 .description('test')
                 .publicKey(pubKey)
+                .chainId('testChainId')
                 .buildTx();
 
             expect(result).toBeDefined();
-            expect(result).toBeInstanceOf(Transaction);
             expect(result.body.fee).toBe('100000');
             expect(result.body.description).toBe('test');
             expect(typeof result.signature.signature_bytes).toBe('string');
@@ -181,6 +191,8 @@ describe('ActionBuilder', () => {
             expect(result.sender).toBe(hexToBase64(pubKey));
             expect(result.body.payload_type).toBe('execute_action');
             expect(result.body.nonce).toBe(Number(mockedAccount.nonce) + 1);
+            expect(result.body.chain_id).toBe('testChainId');
+            expect(result.body.description).toBe('test');
             expect(result.serialization).toBe('concat')
         });
 
@@ -279,7 +291,7 @@ describe('buildMsg', () => {
 
         expect(msg).toBeDefined();
         expect(msg.body.payload).toBe("AAHeiHRlc3REYmlkjnRlc3RhY3Rpb25uYW1lxYR0ZXN0");
-        expect(msg.sender).toBe("")
+        expect(msg.sender).toBe(null)
         expect(msg.signature).toBeNull();
     });
 

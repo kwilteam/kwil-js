@@ -1,12 +1,12 @@
 import { SerializationType } from '../../../src/core/enums';
-import { Message, Msg } from '../../../src/core/message';
+import { BaseMessage, Message, Msg } from '../../../src/core/message';
 import { SignatureType } from '../../../src/core/signature';
 
 describe('Message class methods with signature should all work', () => {
     let msg: Message;
 
     test('Message constructor should work', () => {
-        msg = new Message({
+        msg = new BaseMessage({
             body: {
                 description: "description",
                 payload: "payload"
