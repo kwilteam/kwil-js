@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.3.0](https://github.com/kwilteam/kwil-js/compare/v0.2.1...v0.3.0) (2023-10-30)
+
+
+### ⚠ BREAKING CHANGES
+
+* **builders/payload_builder:** Signature descriptions cannot be longer than 200 characters. Any signature
+description that was previously >200 characters will now trigger an error.
+* **client/kwil.ts:** The `kwil.actionBuilder()`, `kwil.dbBuilder()`, `kwil.dropDbBuilder()` and
+`kwil.broadcast()` are deprecated in favor of using `kwil.execute()`, `kwil.deploy()`,
+`kwil.drop()`, and `kwil.call()`. The deprecated methods will be removed in Q1 2024.
+* **client/kwil.ts:** The `WebKwil` and `NodeKwil` classes require an additional `chainId` config string
+to execute database deploys, database drops, or state-changing actions. You can check the chainId
+for your kwilProvider by calling `kwil.chainInfo()`.
+
+### Features
+
+* **builders/payload_builder:** max length to signature descriptions ([#43](https://github.com/kwilteam/kwil-js/issues/43)) ([a331810](https://github.com/kwilteam/kwil-js/commit/a33181042076c9ea4c218e4d95dd03413372cd85)), closes [#26](https://github.com/kwilteam/kwil-js/issues/26)
+* **client/kwil.ts:** require chainID to be configured in Kwil constructor ([#40](https://github.com/kwilteam/kwil-js/issues/40)) ([dff850d](https://github.com/kwilteam/kwil-js/commit/dff850da159957ec348c38489f328347b8a3db67)), closes [#39](https://github.com/kwilteam/kwil-js/issues/39)
+
+
+### Bug Fixes
+
+* **builders/payload_builder:** remove the 🪶  in the Kwil signature ([#44](https://github.com/kwilteam/kwil-js/issues/44)) ([0dfc4a9](https://github.com/kwilteam/kwil-js/commit/0dfc4a9b9db4335deed72529201ae5a90169be70))
+* **client/kwil.ts:** deprecate builders and clean Utils namespace ([#41](https://github.com/kwilteam/kwil-js/issues/41)) ([c9d1130](https://github.com/kwilteam/kwil-js/commit/c9d1130b6919a1c2d8d582a8f5a1d38b764be0f1)), closes [#32](https://github.com/kwilteam/kwil-js/issues/32)
+
 ### [0.2.1](https://github.com/kwilteam/kwil-js/compare/v0.1.1...v0.2.1) (2023-10-09)
 
 
