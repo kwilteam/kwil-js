@@ -1,6 +1,6 @@
 import { NodeKwil } from './client/node/nodeKwil';
 import { WebKwil } from './client/web/webKwil';
-import { generateDBID } from './utils/dbid';
+import { generateDBID as _generateDBID} from './utils/dbid';
 import { TxReceipt as _TxReceipt } from './core/tx';
 import { ActionBuilder as _ActionBuilder, DBBuilder as _DBBuilder } from './core/builders';
 import { ActionInput as _ActionInput, ActionBody as _ActionBody } from './core/action';
@@ -24,7 +24,7 @@ import { GenericResponse as _GenericResponse } from './core/resreq';
 import { TxResult as _TxResult, TxInfoReceipt as _TxInfoReceipt } from './core/txQuery';
 import { Account as _Account } from './core/network';
 import { MsgReceipt as _MsgReceipt, Message as _Message } from './core/message';
-import { recoverSecp256k1PubKey } from './utils/keys';
+import { recoverSecp256k1PubKey as _recoverSecp256k1PubKey } from './utils/keys';
 import { KwilSigner } from './core/kwilSigner';
 import { DeployOrDrop, PayloadType as _PayloadType } from './core/enums';
 
@@ -57,22 +57,22 @@ namespace Types {
   export type ActionBody = _ActionBody;
 }
 
-const ActionInput = _ActionInput;
-
-const Utils = {
+namespace Utils {
   /**
    * `ActionInput` class is a utility class for creating action inputs.
    */
-  ActionInput,
+  export class ActionInput extends _ActionInput {}
+  
   /**
-   * Generates a unique database identifier (DBID) from the provided owner's Ethereum wallet address and a database name.
+   * Generates a unique database identifier (DBID) from the provided owner's public key and a database name.
    */
-  generateDBID,
+  export const generateDBID = _generateDBID;
+  
   /**
    * Recovers the public key from a signature and a message for Secp256k1 Public Keys (EVM Networks).
    * @param signer - The signer for the action. This must be a valid Ethereum signer from Ethers v5 or Ethers v6.
    */
-  recoverSecp256k1PubKey,
-};
+  export const recoverSecp256k1PubKey = _recoverSecp256k1PubKey;
+}
 
 export { NodeKwil, WebKwil, KwilSigner, Types, Utils };

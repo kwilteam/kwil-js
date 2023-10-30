@@ -6,7 +6,8 @@ import compiledKf from "./mydb.json";
 require('dotenv').config()
 
 const kwil = new NodeKwil({
-    kwilProvider: "http://localhost:8080"
+    kwilProvider: "http://localhost:8080",
+    chainId: ""
 })
 
 const provider = new JsonRpcProvider(process.env.ETH_PROVIDER)
@@ -14,7 +15,7 @@ const wallet = new Wallet(process.env.PRIVATE_KEY as string, provider)
 
 async function buildSigner() {
     const pk = await Utils.recoverSecp256k1PubKey(wallet);
-    return new KwilSigner(pk, wallet);
+    return new KwilSigner(wallet, pk);
 }
 
 async function main() {
