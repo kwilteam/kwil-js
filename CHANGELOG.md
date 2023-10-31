@@ -7,20 +7,20 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### ⚠ BREAKING CHANGES
 
-* **builders/payload_builder:** Signature descriptions cannot be longer than 200 characters. Any signature
-description that was previously >200 characters will now trigger an error.
-* **client/kwil.ts:** The `kwil.actionBuilder()`, `kwil.dbBuilder()`, `kwil.dropDbBuilder()` and
-`kwil.broadcast()` are deprecated in favor of using `kwil.execute()`, `kwil.deploy()`,
-`kwil.drop()`, and `kwil.call()`. The deprecated methods will be removed in Q1 2024.
 * **client/kwil.ts:** The `WebKwil` and `NodeKwil` classes require an additional `chainId` config string
 to execute database deploys, database drops, or state-changing actions. You can check the chainId
 for your kwilProvider by calling `kwil.chainInfo()`.
+* **client/kwil.ts:** The `kwil.actionBuilder()`, `kwil.dbBuilder()`, `kwil.dropDbBuilder()` and
+`kwil.broadcast()` are deprecated in favor of using `kwil.execute()`, `kwil.deploy()`,
+`kwil.drop()`, and `kwil.call()`. The deprecated methods will be removed in Q1 2024.
+* **builders/payload_builder:** Signature descriptions cannot be longer than 200 characters. Any signature
+description that was previously >200 characters will now trigger an error.
 
 ### Features
 
 * **builders/payload_builder:** max length to signature descriptions ([#43](https://github.com/kwilteam/kwil-js/issues/43)) ([a331810](https://github.com/kwilteam/kwil-js/commit/a33181042076c9ea4c218e4d95dd03413372cd85)), closes [#26](https://github.com/kwilteam/kwil-js/issues/26)
-* **client/kwil.ts:** require chainID to be configured in Kwil constructor ([#40](https://github.com/kwilteam/kwil-js/issues/40)) ([dff850d](https://github.com/kwilteam/kwil-js/commit/dff850da159957ec348c38489f328347b8a3db67)), closes [#39](https://github.com/kwilteam/kwil-js/issues/39)
-
+* **client/kwil.ts:** require chainID to be configured in Kwil constructor ([#40](https://github.com/kwilteam/kwil-js/issues/40)) ([dff850d](https://github.com/kwilteam/kwil-js/commit/dff850da159957ec348c38489f328347b8a3db67)), closes [#39](https://github.com/kwilteam/kwil-js/issues/39)* 
+* builder pattern alternatives - add `KwilSigner`, `kwil.execute()`, `kwil.call()`, `kwil.deploy()`, `kwil.drop()` ([[#38](https://github.com/kwilteam/kwil-js/issues/38)) ([2d25de9](https://github.com/kwilteam/kwil-js/commit/2d25de9ac423950ca7a33aa1ad0da8aed6642c49))
 
 ### Bug Fixes
 
