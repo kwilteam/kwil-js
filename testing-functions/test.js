@@ -39,6 +39,8 @@ async function test() {
     const pubKey = await recoverPubKey(wallet)
     const kwilSigner = new KwilSigner(wallet, pubKey)
 
+    console.log(await kwil.authenticate(kwilSigner))
+
     const pubByte = hexToBytes(pubKey)
     const dbid = kwil.getDBID(pubByte, "mydb")
     // logger(dbid)
@@ -64,7 +66,7 @@ async function test() {
     //          `)
     // bulkAction(kwil, dbid, "add_post", wallet, pubKey)
     // await testViewWithParam(kwil, dbid, wallet)
-    // await testViewWithSign(kwil, dbid, wallet, pubByte)
+    await testViewWithSign(kwil, dbid, wallet, pubByte)
     // await customSignature(kwil, dbid)
     // await julioSignature(kwil, dbid)
     // await customEd25519(kwil, dbid)

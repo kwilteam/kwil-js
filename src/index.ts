@@ -27,6 +27,7 @@ import { MsgReceipt as _MsgReceipt, Message as _Message } from './core/message';
 import { recoverSecp256k1PubKey as _recoverSecp256k1PubKey } from './utils/keys';
 import { KwilSigner } from './core/kwilSigner';
 import { DeployOrDrop, PayloadType as _PayloadType } from './core/enums';
+import Client from './api_client/client';
 
 namespace Types {
   export type TxReceipt = _TxReceipt;
@@ -75,4 +76,4 @@ namespace Utils {
   export const recoverSecp256k1PubKey = _recoverSecp256k1PubKey;
 }
 
-export { NodeKwil, WebKwil, KwilSigner, Types, Utils };
+export { NodeKwil, WebKwil, KwilSigner, Types, Utils, Client };

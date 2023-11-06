@@ -7,7 +7,7 @@ import { BytesEncodingStatus, PayloadBytesTypes } from "./enums";
 
 export interface Signature<T extends PayloadBytesTypes> {
     signature_bytes: Nillable<T extends BytesEncodingStatus.BASE64_ENCODED ? Base64String : Uint8Array>;
-    signature_type: SignatureType;
+    signature_type: CustomSignatureType;
 }
 
 export enum SignatureType {

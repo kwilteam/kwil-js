@@ -3,6 +3,7 @@ import { Account, ChainInfo } from './network';
 import { BaseTransaction, TxReceipt, TxnData } from './tx';
 import { TxResult } from './txQuery';
 import { BytesEncodingStatus } from './enums';
+import { AuthResponse } from './auth';
 
 type SchemaRes = Database & {
   owner: string;
@@ -60,6 +61,10 @@ export interface TxQueryRes {
   height: number;
   tx: BaseTransaction<BytesEncodingStatus.BASE64_ENCODED>;
   tx_result: TxResult;
+}
+
+export interface GetAuthResponse {
+  result: AuthResponse
 }
 
 export interface ChainInfoRes extends ChainInfo {}

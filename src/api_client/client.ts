@@ -13,6 +13,7 @@ import {
   EstimateCostRes,
   GenericResponse,
   GetAccountResponse,
+  GetAuthResponse,
   GetSchemaResponse,
   ListDatabasesResponse,
   PongRes,
@@ -25,6 +26,8 @@ import { TxInfoReceipt } from '../core/txQuery';
 import { Message, MsgData, MsgReceipt } from '../core/message';
 import { kwilDecode } from '../utils/rlp';
 import { BytesEncodingStatus } from '../core/enums';
+import { HexString } from '../utils/types';
+import { AuthResponse, AuthenticatedBody } from '../core/auth';
 
 export default class Client extends Api {
   constructor(opts: ApiConfig) {
@@ -57,6 +60,18 @@ export default class Client extends Api {
       status: res.status,
       data: schema,
     };
+  }
+
+
+  public async getAuthenticate(owner: HexString): Promise<GenericResponse<AuthResponse>> {
+    const res = await super.get<GetAuthResponse>(`/auth?from=${owner}`);
+    console.log(res)
+    return checkRes(res, (r) => r.result);
+  }
+
+  public async postAuthenticate(body: AuthenticatedBody<BytesEncodingStatus.BASE64_ENCODED>): Promise<GenericResponse<string>> {
+    const res = await super.post<{ result: string }>(`/auth`, body);
+    return checkRes(res, (r) => r.result);
   }
 
   public async getAccount(owner: Uint8Array): Promise<GenericResponse<Account>> {
