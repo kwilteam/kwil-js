@@ -7,7 +7,7 @@ import { sha256BytesToBytes } from '../utils/crypto';
 import { base64ToBytes, bytesToBase64 } from '../utils/base64';
 import { Kwil } from '../client/kwil';
 import { SignerSupplier, PayloadBuilder as PayloadBuilder } from '../core/builders';
-import { unwrap } from '../client/intern';
+import { unwrapEstimate } from '../client/intern';
 import { BytesEncodingStatus, PayloadType, SerializationType } from '../core/enums';
 import { kwilEncode } from '../utils/rlp';
 import { bytesToHex, hexToBytes, stringToBytes } from '../utils/serial';
@@ -161,12 +161,9 @@ export class PayloadBuilderImpl implements PayloadBuilder {
    * @returns {PayloadBuilder} The current `PayloadBuilder` instance for chaining.
    */
   chainId(chainId: string): NonNil<PayloadBuilder> {
-    this._chainId = objects.requireNonNil(
-        chainId,
-        'chain ID is required to build a transaction.'
-    );
+    this._chainId = objects.requireNonNil(chainId, 'chain ID is required to build a transaction.');
     return this;
-  };
+  }
 
   /**
    * Builds the payload for the `kwil.broadcast()` method (i.e. the broadcast GRPC endpoint - see {@link https://github.com/kwilteam/proto/blob/main/kwil/tx/v1/tx.proto})
@@ -196,8 +193,8 @@ export class PayloadBuilderImpl implements PayloadBuilder {
       'signature type is required to build a transaction.'
     );
     const chainId = objects.requireNonNil(
-        this._chainId,
-        'chain ID is required to build a transaction.'
+      this._chainId,
+      'chain ID is required to build a transaction.'
     );
 
     // create transaction payload for estimating cost. Set the Tx bytes type to base64 encoded because we need to make GRPC estimate cost request.
@@ -208,7 +205,7 @@ export class PayloadBuilderImpl implements PayloadBuilder {
     });
 
     // estimate the cost of the transaction with the estimateCost symbol from the client
-    const cost = await unwrap(this.client)(preEstTxn);
+    const cost = await unwrapEstimate(this.client)(preEstTxn);
 
     // retrieve the account for the nonce
     const acct = await this.client.getAccount(publicKey);
@@ -229,7 +226,7 @@ export class PayloadBuilderImpl implements PayloadBuilder {
             'something went wrong retrieving your account nonce.'
           )
         ) + 1;
-        tx.body.chain_id = chainId;
+      tx.body.chain_id = chainId;
     });
 
     // check that a valid signature is used

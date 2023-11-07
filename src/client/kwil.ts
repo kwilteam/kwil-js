@@ -10,7 +10,7 @@ import { base64ToBytes } from '../utils/base64';
 import { DBBuilderImpl } from '../builders/db_builder';
 import { NonNil } from '../utils/types';
 import { ActionBuilder, DBBuilder } from '../core/builders';
-import { wrap } from './intern';
+import { wrapConfig, wrapEstimate } from './intern';
 import { Cache } from '../utils/cache';
 import { TxInfoReceipt } from '../core/txQuery';
 import { BaseMessage, Message, MsgReceipt } from '../core/message';
@@ -47,7 +47,10 @@ export abstract class Kwil {
     this.chainId = opts.chainId;
 
     //create a wrapped symbol of estimateCost method
-    wrap(this, this.client.estimateCost.bind(this.client));
+    wrapEstimate(this, this.client.estimateCost.bind(this.client));
+
+    // create a wrapped symbol of config so it can be accessed by other classes
+    wrapConfig(this, opts);
   }
 
   /**
@@ -126,7 +129,9 @@ export abstract class Kwil {
    */
 
   public dbBuilder(): NonNil<DBBuilder<PayloadType.DEPLOY_DATABASE>> {
-    return DBBuilderImpl.of<PayloadType.DEPLOY_DATABASE>(this, PayloadType.DEPLOY_DATABASE).chainId(this.chainId);
+    return DBBuilderImpl.of<PayloadType.DEPLOY_DATABASE>(this, PayloadType.DEPLOY_DATABASE).chainId(
+      this.chainId
+    );
   }
 
   /**
@@ -137,7 +142,9 @@ export abstract class Kwil {
    */
 
   public dropDbBuilder(): NonNil<DBBuilder<PayloadType.DROP_DATABASE>> {
-    return DBBuilderImpl.of<PayloadType.DROP_DATABASE>(this, PayloadType.DROP_DATABASE).chainId(this.chainId);
+    return DBBuilderImpl.of<PayloadType.DROP_DATABASE>(this, PayloadType.DROP_DATABASE).chainId(
+      this.chainId
+    );
   }
 
   /**
@@ -259,7 +266,8 @@ export abstract class Kwil {
       return await this.client.call(actionBody);
     }
 
-    let msg = ActionBuilderImpl.of(this).chainId(this.chainId)
+    let msg = ActionBuilderImpl.of(this)
+      .chainId(this.chainId)
       .dbid(actionBody.dbid)
       .name(actionBody.action)
       .description(actionBody.description || '');
@@ -338,16 +346,18 @@ export abstract class Kwil {
 
   /**
    * Retrieves the chain id, block height, and latest block hash of the configured network.
-   * 
+   *
    * Will log a warning if the returned chain id does not match the configured chain id.
-   * 
+   *
    * @returns {ChainInfo} - A promise that resolves to the chain info.
    */
   public async chainInfo(): Promise<GenericResponse<ChainInfo>> {
     const info = await this.client.chainInfo();
 
-    if(info.data?.chain_id !== this.chainId) {
-        console.warn(`WARNING: Chain ID mismatch. Expected ${this.chainId}, got ${info.data?.chain_id}`);
+    if (info.data?.chain_id !== this.chainId) {
+      console.warn(
+        `WARNING: Chain ID mismatch. Expected ${this.chainId}, got ${info.data?.chain_id}`
+      );
     }
 
     return info;
