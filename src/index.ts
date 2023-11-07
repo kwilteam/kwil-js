@@ -1,6 +1,6 @@
 import { NodeKwil } from './client/node/nodeKwil';
 import { WebKwil } from './client/web/webKwil';
-import { generateDBID as _generateDBID} from './utils/dbid';
+import { generateDBID as _generateDBID } from './utils/dbid';
 import { TxReceipt as _TxReceipt } from './core/tx';
 import { ActionBuilder as _ActionBuilder, DBBuilder as _DBBuilder } from './core/builders';
 import { ActionInput as _ActionInput, ActionBody as _ActionBody } from './core/action';
@@ -62,12 +62,12 @@ namespace Utils {
    * `ActionInput` class is a utility class for creating action inputs.
    */
   export class ActionInput extends _ActionInput {}
-  
+
   /**
    * Generates a unique database identifier (DBID) from the provided owner's public key and a database name.
    */
   export const generateDBID = _generateDBID;
-  
+
   /**
    * Recovers the public key from a signature and a message for Secp256k1 Public Keys (EVM Networks).
    * @param signer - The signer for the action. This must be a valid Ethereum signer from Ethers v5 or Ethers v6.
