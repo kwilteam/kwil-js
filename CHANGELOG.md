@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.3.1](https://github.com/kwilteam/kwil-js/compare/v0.3.0...v0.3.1) (2023-11-07)
+
+
+### Bug Fixes
+
+* **client/kwil.ts:** add wrapped config property to kwil class ([020af2b](https://github.com/kwilteam/kwil-js/commit/020af2bc1d5a372ded7cdacebd887fc780034c6f))
+
 ## [0.3.0](https://github.com/kwilteam/kwil-js/compare/v0.2.1...v0.3.0) (2023-10-30)
 
 
