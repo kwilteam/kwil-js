@@ -74,7 +74,8 @@ type CompiledIndex = Omit<Index, 'type'> & {
     type: string;
 }
 
-type CompiledAction = Omit<ActionSchema, 'auxiliaries' | 'inputs'> & {
+type CompiledAction = Omit<ActionSchema, 'auxiliaries' | 'inputs' | 'annotations'> & {
+    annotations: ReadonlyArray<string> | null;
     auxiliaries: ReadonlyArray<string> | null;
     inputs: ReadonlyArray<string> | null;
 }

@@ -7,8 +7,8 @@ import { sha256BytesToBytes } from '../utils/crypto';
 import { base64ToBytes, bytesToBase64 } from '../utils/base64';
 import { Kwil } from '../client/kwil';
 import { SignerSupplier, PayloadBuilder as PayloadBuilder } from '../core/builders';
-import { unwrapEstimate } from '../client/intern';
-import { BytesEncodingStatus, PayloadType, SerializationType } from '../core/enums';
+import { unwrap } from '../client/intern';
+import { BytesEncodingStatus, EnvironmentType, PayloadType, SerializationType } from '../core/enums';
 import { kwilEncode } from '../utils/rlp';
 import { bytesToHex, hexToBytes, stringToBytes } from '../utils/serial';
 import { AnySignatureType, SignatureType, executeSign } from '../core/signature';
@@ -20,8 +20,8 @@ import { AllPayloads, UnencodedActionPayload } from '../core/payload';
  * PayloadBuilderImpl is the default implementation of PayloadBuilder. It allows for building transaction and call payloads that can be sent over GRPC.
  * See the proto files for more information on the structure of the payloads. {@link https://github.com/kwilteam/proto/tree/main/kwil/tx/v1}
  */
-export class PayloadBuilderImpl implements PayloadBuilder {
-  private readonly client: Kwil;
+export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBuilder {
+  private readonly client: Kwil<T>;
   private _payloadType: Nillable<PayloadType> = null;
   private _payload: Nillable<() => NonNil<AllPayloads>> = null;
   private _signer: Nillable<SignerSupplier> = null;
@@ -36,7 +36,7 @@ export class PayloadBuilderImpl implements PayloadBuilder {
    * @param {Kwil} client - The Kwil client, used to call higher level methods on the Kwil class.
    * @returns {PayloadBuilderImpl} - A new `PayloadBuilder` instance.
    */
-  private constructor(client: Kwil) {
+  private constructor(client: Kwil<T>) {
     this.client = objects.requireNonNil(
       client,
       'client is required for TxnBuilder. Please pass a valid Kwil client. This is an internal error, please create an issue.'
@@ -49,7 +49,7 @@ export class PayloadBuilderImpl implements PayloadBuilder {
    * @param {Kwil} client - The Kwil client, used to call higher level methods on the Kwil class.
    * @returns {PayloadBuilder} - A new `PayloadBuilder` instance.
    */
-  public static of(client: NonNil<Kwil>): NonNil<PayloadBuilder> {
+  public static of<T extends EnvironmentType>(client: NonNil<Kwil<T>>): NonNil<PayloadBuilder> {
     return new PayloadBuilderImpl(client);
   }
 
@@ -205,7 +205,7 @@ export class PayloadBuilderImpl implements PayloadBuilder {
     });
 
     // estimate the cost of the transaction with the estimateCost symbol from the client
-    const cost = await unwrapEstimate(this.client)(preEstTxn);
+    const cost = await unwrap(this.client)(preEstTxn);
 
     // retrieve the account for the nonce
     const acct = await this.client.getAccount(publicKey);

@@ -1,5 +1,6 @@
-import { KwilSigner, WebKwil } from "@lukelamey/kwil-js"
+import { KwilSigner, WebKwil } from "../../../src/"
 
 export async function kwilAuthenticate(kwil: WebKwil, signer: KwilSigner): Promise<void> {
-    await kwil.authenticate(signer);
+    const res = await kwil.authenticate(signer);
+    console.log(res)
 }

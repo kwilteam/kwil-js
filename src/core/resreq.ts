@@ -2,8 +2,8 @@ import { Database } from './database';
 import { Account, ChainInfo } from './network';
 import { BaseTransaction, TxReceipt, TxnData } from './tx';
 import { TxResult } from './txQuery';
-import { BytesEncodingStatus } from './enums';
-import { AuthResponse } from './auth';
+import { BytesEncodingStatus, EnvironmentType } from './enums';
+import { AuthInfo } from './auth';
 
 type SchemaRes = Database & {
   owner: string;
@@ -64,7 +64,11 @@ export interface TxQueryRes {
 }
 
 export interface GetAuthResponse {
-  result: AuthResponse
+  result: AuthInfo;
+}
+
+export interface PostAuthResponse{
+  result: string;
 }
 
 export interface ChainInfoRes extends ChainInfo {}

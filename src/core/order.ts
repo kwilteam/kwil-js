@@ -47,6 +47,7 @@ export function enforceDatabaseOrder(db: NonNil<Database>): NonNil<Database> {
         actions: db.actions && db.actions.length > 0 ? db.actions?.map(action => {
             return {
                 name: action.name,
+                annotations: action.annotations,
                 inputs: action.inputs,
                 mutability: action.mutability,
                 auxiliaries: action.auxiliaries,

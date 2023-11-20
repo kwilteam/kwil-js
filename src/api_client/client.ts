@@ -17,6 +17,7 @@ import {
   GetSchemaResponse,
   ListDatabasesResponse,
   PongRes,
+  PostAuthResponse,
   SelectRes,
   TxQueryReq,
   TxQueryRes,
@@ -25,13 +26,13 @@ import { base64UrlEncode, bytesToHex, hexToBytes } from '../utils/serial';
 import { TxInfoReceipt } from '../core/txQuery';
 import { Message, MsgData, MsgReceipt } from '../core/message';
 import { kwilDecode } from '../utils/rlp';
-import { BytesEncodingStatus } from '../core/enums';
+import { BytesEncodingStatus, EnvironmentType } from '../core/enums';
 import { HexString } from '../utils/types';
-import { AuthResponse, AuthenticatedBody } from '../core/auth';
+import { AuthInfo, AuthSuccess, AuthenticatedBody } from '../core/auth';
 
 export default class Client extends Api {
-  constructor(opts: ApiConfig) {
-    super(opts.kwilProvider, opts);
+  constructor(opts: ApiConfig, cookie?: string) {
+    super(opts.kwilProvider, opts, cookie);
   }
 
   public async getSchema(dbid: string): Promise<GenericResponse<Database>> {
@@ -62,16 +63,39 @@ export default class Client extends Api {
     };
   }
 
-
-  public async getAuthenticate(owner: HexString): Promise<GenericResponse<AuthResponse>> {
-    const res = await super.get<GetAuthResponse>(`/auth?from=${owner}`);
-    console.log(res)
+  public async getAuthenticate(): Promise<GenericResponse<AuthInfo>> {
+    const res = await super.get<GetAuthResponse>(`/auth`);
     return checkRes(res, (r) => r.result);
   }
 
-  public async postAuthenticate(body: AuthenticatedBody<BytesEncodingStatus.BASE64_ENCODED>): Promise<GenericResponse<string>> {
-    const res = await super.post<{ result: string }>(`/auth`, body);
-    return checkRes(res, (r) => r.result);
+  public async postAuthenticate<T extends EnvironmentType>(body: AuthenticatedBody<BytesEncodingStatus.BASE64_ENCODED>): Promise<GenericResponse<AuthSuccess<T>>> {
+    const res = await super.post<PostAuthResponse>(`/auth`, body);
+    checkRes(res);
+
+    if(typeof window === 'undefined') {
+      const cookie = res.headers['set-cookie'];
+      if(!cookie) {
+        throw new Error('No cookie receiveed from gateway. An error occured with authentication.');
+      }
+  
+      // if we are in nodejs, we need to return the cookie
+      return {
+        status: res.status,
+        // @ts-ignore
+        data: {
+          result: res.data.result,
+          cookie: cookie[0],
+        },
+      }
+    }
+
+    // if we are in the browser, we don't need to return the cookie
+    return {
+      status: res.status,
+      data: {
+        result: res.data.result,
+      },
+    }
   }
 
   public async getAccount(owner: Uint8Array): Promise<GenericResponse<Account>> {

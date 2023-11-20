@@ -52,4 +52,9 @@ export enum BytesEncodingStatus {
     UINT8_ENCODED = 'uint8_encoded'
 }
 
+export enum EnvironmentType {
+    BROWSER = 'browser',
+    NODE = 'node'
+}
+
 export type PayloadBytesTypes = BytesEncodingStatus.BASE64_ENCODED | BytesEncodingStatus.UINT8_ENCODED;

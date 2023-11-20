@@ -6,7 +6,7 @@ import { ActionBuilder, SignerSupplier, PayloadBuilder } from '../core/builders'
 import { PayloadBuilderImpl } from './payload_builder';
 import { ActionInput } from '../core/action';
 import { ActionSchema } from '../core/database';
-import { PayloadType, ValueType } from '../core/enums';
+import { EnvironmentType, PayloadType, ValueType } from '../core/enums';
 import { AnySignatureType, SignatureType, getSignatureType } from '../core/signature';
 import { UnencodedActionPayload } from '../core/payload';
 import { Message } from '../core/message';
@@ -24,8 +24,8 @@ const TXN_BUILD_IN_PROGRESS: ActionInput[] = [];
  * It helps in building and transactions to execute database actions on the Kwil network.
  */
 
-export class ActionBuilderImpl implements ActionBuilder {
-  private readonly client: Kwil;
+export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuilder {
+  private readonly client: Kwil<T>;
   private _signer: Nillable<SignerSupplier> = null;
   private _publicKey: Nillable<HexString | Uint8Array> = null;
   private _actions: ActionInput[] = [];
@@ -41,7 +41,7 @@ export class ActionBuilderImpl implements ActionBuilder {
    * @param {Kwil} client - The Kwil client, used to call higher level methods on the Kwil class.
    * @returns {ActionBuilder} A new `ActionBuilder` instance.
    */
-  private constructor(client: Kwil) {
+  private constructor(client: Kwil<T>) {
     this.client = objects.requireNonNil(
       client,
       'client cannot be null or undefined. Please pass a valid Kwil client. This is an internal error, please create an issue.'
@@ -54,7 +54,7 @@ export class ActionBuilderImpl implements ActionBuilder {
    * @param {Kwil} client - The Kwil client, used to call higher level methods on the Kwil class.
    * @returns {ActionBuilder} A new `ActionBuilder` instance.
    */
-  public static of(client: NonNil<Kwil>): NonNil<ActionBuilder> {
+  public static of<T extends EnvironmentType>(client: NonNil<Kwil<T>>): NonNil<ActionBuilder> {
     return new ActionBuilderImpl(client);
   }
 

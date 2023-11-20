@@ -7,7 +7,7 @@ export async function testViewWithSign(kwil: WebKwil, dbid: string, signer: Sign
         .dbid(dbid)
         .name('view_must_sign')
         .description('Sign this message to authenticate and get your data!')
-        .signer(signer)
+        // .signer(signer)
         .publicKey(pubkey)
         .buildMsg()
 

@@ -112,6 +112,9 @@
     },
     {
       "name": "view_must_sign",
+      "annotations": [
+        "kgw(athn='true')"
+      ],
       "inputs": null,
       "public": true,
       "mutability": "view",
