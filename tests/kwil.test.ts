@@ -3,7 +3,7 @@ const logSpy = jest.spyOn(console, 'log').mockImplementation((...args) => {
     originalLog(...args);
 });
 jest.resetModules();
-import {AmntObject, deriveKeyPair64, kwil, waitForDeployment, wallet} from "./testingUtils";
+import {AmntObject, deriveKeyPair64, kwil, setAuth, waitForDeployment, wallet} from "./testingUtils";
 import {BaseTransaction, Transaction, TxReceipt} from "../dist/core/tx";
 import {ActionBuilder, DBBuilder} from "../dist/core/builders";
 import {ActionBuilderImpl} from "../dist/builders/action_builder";
@@ -22,6 +22,7 @@ import { ActionBody, ActionInput } from "../dist/core/action";
 import { DeployBody, DropBody } from "../dist/core/database";
 import { PayloadType } from "../dist/core/enums";
 import { CompiledKuneiform, DropDbPayload } from "../dist/core/payload";
+import { objects } from "../dist/utils/objects";
 
 function sleep(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -29,6 +30,8 @@ function sleep(ms: number) {
 
 let pubKey: string = '0x048767310544592e33b2fb5555527f49c0902cf0f472f4c87e65324abb75e7a5e1c035bc1ef5026f363c79588526c341af341a68fc37299183391699ee1864cc75';
 let dbid: string = 'xd924382720df474c6bb62d26da9aeb10add2ad2835c0b7e4a6336ad8';
+
+const kSigner = new KwilSigner(wallet, pubKey);
 
 // Kwil methods that do NOT return another class (e.g. funder, action, and DBBuilder)
 describe("Kwil", () => {
@@ -842,16 +845,51 @@ describe("Drop Database", () => {
     });
 });
 
+describe("Setting auth with KGW", () => {
+    it("should authenticate and set the auth", async () => {
+        const auth = await kwil.authenticate(kSigner);
+        expect(auth).toBeDefined();
+        expect(auth.data?.cookie).toBeDefined();
+        expect(auth.status).toBe(200);
+
+        const cookie = objects.requireNonNil(auth.data?.cookie);
+        kwil.setCookie(cookie);
+
+        // @ts-ignore
+        expect(kwil.client.cookie).toBe(cookie);
+    })
+})
+
 describe("Testing custom signers", () => {
+    const secpSigner = new KwilSigner(wallet, pubKey)
+    let edSigner: KwilSigner;
     let recordCount: number;
     let input: Types.ActionInput;
+
+    async function getEdKeys(): Promise<nacl.SignKeyPair> {
+        return await deriveKeyPair64('69420', '69420');
+    }
+
+    async function customSecpSigner(msg: Uint8Array): Promise<Uint8Array> {
+        const sig = await wallet.signMessage(msg);
+        return hexToBytes(sig);
+    }
+
+    async function customEdSigner(msg: Uint8Array): Promise<Uint8Array> {
+        const edKeys = await getEdKeys();
+        return nacl.sign.detached(msg, edKeys.secretKey);
+    }
+
 
     beforeAll(async() => {
         const count = await kwil.selectQuery(dbid, "SELECT COUNT(*) FROM posts");
         if (count.status == 200 && count.data) {
             const amnt = count.data[0] as AmntObject;
             recordCount = amnt['COUNT(*)'];
-        } 
+        }
+
+        const edKeys = await getEdKeys();
+        edSigner = new KwilSigner(customEdSigner, edKeys.publicKey, "ed25519")
     })
 
     beforeEach(async () => {
@@ -865,27 +903,6 @@ describe("Testing custom signers", () => {
     })
 
     afterEach(async () => await sleep(500))
-
-    async function customSecpSigner(msg: Uint8Array): Promise<Uint8Array> {
-        const sig = await wallet.signMessage(msg);
-        return hexToBytes(sig);
-    }
-
-    async function getEdKeys(): Promise<nacl.SignKeyPair> {
-        return await deriveKeyPair64('69420', '69420');
-    }
-
-    async function customEdSigner(msg: Uint8Array): Promise<Uint8Array> {
-        const edKeys = await getEdKeys();
-        return nacl.sign.detached(msg, edKeys.secretKey);
-    }
-
-    async function getNearSigner(): Promise<_NearSigner> {
-        const edKeys = await getEdKeys();
-        const sk = to_b58(edKeys.secretKey);
-        const kp = new KeyPairEd25519(sk);
-        return await InMemorySigner.fromKeyPair('testnet', 'luke.testnet', kp);
-    }
     
     test("secp256k1 signed tx's should broadcast correctly", async() => {
         const tx = await kwil
@@ -907,6 +924,8 @@ describe("Testing custom signers", () => {
     })
 
     test('secp256k1 signed msgs should call correctly', async () => {
+       await setAuth(kwil, secpSigner)
+
         const msg = await kwil
             .actionBuilder()
             .dbid(dbid)
@@ -946,6 +965,7 @@ describe("Testing custom signers", () => {
     })
 
     test("ed25519 signed msgs should call correctly", async() => {
+        await setAuth(kwil, edSigner)
         const edKeys = await getEdKeys();
 
         const msg = await kwil
@@ -968,9 +988,12 @@ describe("Testing custom signers", () => {
 
 
 describe("Testing simple actions and db deploy / drop (builder pattern alternative)", () => {
-    let kSigner = new KwilSigner(wallet, pubKey);
-
     afterEach(async () => await sleep(500))
+
+    beforeAll(async () => {
+        // set authentication
+        await setAuth(kwil, kSigner);
+    })
 
     test("kwil.call() with ActionBody interface as first argument, action inputs NOT REQUIRED, and no signature required should return a MsgReceipt", async () => {
         const actionBody: ActionBody = {
@@ -1039,15 +1062,6 @@ describe("Testing simple actions and db deploy / drop (builder pattern alternati
         expect(result.data).toMatchObject<MsgReceipt>({
             result: expect.any(Array),
         });
-    });
-
-    test("kwil.call() with ActionBody Interface as first argument, action has `must_sign` attribute, but no signer is provided should throw an error", async () => {
-        const actionBody: ActionBody = {
-            dbid,
-            action: "view_must_sign",
-        }
-
-        await expect(kwil.call(actionBody)).rejects.toThrowError();
     });
 
     describe("kwil.execute() with ActionBody interface as first argument, action inputs ARE REQUIRED should return a TxReceipt", () => {

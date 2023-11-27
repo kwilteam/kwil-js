@@ -113,7 +113,7 @@
     {
       "name": "view_must_sign",
       "annotations": [
-        "kgw(athn='true')"
+        "kgw(authn='true')"
       ],
       "inputs": null,
       "public": true,
