@@ -251,40 +251,28 @@ export abstract class Kwil<T extends EnvironmentType> {
    * @returns A promise that resolves to the authentication success or failure.
    */
   public async authenticate(signer: KwilSigner): Promise<GenericResponse<AuthSuccess<T>>> {
-    if (signer.signatureType === SignatureType.SECP256K1_PERSONAL) {
-      const ethPk = bytesToEthHex(signer.publicKey);
-      const ethAddress = computeAddress(ethPk);
+    const authParam = await this.client.getAuthenticate();
 
-      const authParam = await this.client.getAuthenticate();
+    const authProperties = objects.requireNonNil(
+      authParam.data,
+      'something went wrong retrieving auth info from KGW'
+    );
 
-      const authProperties = objects.requireNonNil(
-        authParam.data,
-        'something went wrong retrieving auth info from KGW'
-      );
+    const msg = composeAuthMsg(authProperties, this.kwilProvider, '1', this.chainId);
 
-      const msg = composeAuthMsg(authProperties, this.kwilProvider, '1', this.chainId);
+    const signature = await executeSign(stringToBytes(msg), signer.signer, signer.signatureType); 
 
-      console.log(
-        'MESSAGE TO SIGN: ',
-        msg
-      )
+    const authBody = {
+      nonce: authProperties.nonce,
+      sender: bytesToBase64(signer.publicKey),
+      signature: {
+        signature_bytes: bytesToBase64(signature),
+        signature_type: signer.signatureType,
+      },
+    };
+    const res = await this.client.postAuthenticate(authBody);
 
-      const signature = await executeSign(stringToBytes(msg), signer.signer, signer.signatureType); 
-
-      const authBody = {
-        nonce: authProperties.nonce,
-        sender: bytesToBase64(signer.publicKey),
-        signature: {
-          signature_bytes: bytesToBase64(signature),
-          signature_type: signer.signatureType,
-        },
-      };
-      const res = await this.client.postAuthenticate(authBody);
-
-      return res;
-    }
-
-    throw new Error('Only Ethereum signers are supported at this time');
+    return res;
   }
 
   /**

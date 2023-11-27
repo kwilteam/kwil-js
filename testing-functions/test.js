@@ -43,7 +43,7 @@ async function test() {
     const dbid = kwil.getDBID(pubByte, "mydb")
     
     // logger(dbid)
-    // await authenticate(kwil, kwilSigner)
+    await authenticate(kwil, kwilSigner)
     // broadcast(kwil, testDB, wallet, pubKey)
     // await getTxInfo(kwil, txHash)
     // await getSchema(kwil, dbid)
