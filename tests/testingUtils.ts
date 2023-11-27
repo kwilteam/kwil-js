@@ -1,8 +1,9 @@
 import { Contract, JsonRpcProvider, JsonRpcSigner, Wallet } from "ethers";
 import {Kwil} from "../dist/client/kwil";
-import { NodeKwil, Utils } from "../dist";
+import { KwilSigner, NodeKwil, Utils } from "../dist";
 import scrypt from 'scrypt-js';
 import nacl from 'tweetnacl';
+import { objects } from "../dist/utils/objects";
 require('dotenv').config();
 
 const provider = new JsonRpcProvider(process.env.ETH_PROVIDER)
@@ -98,3 +99,9 @@ export const deriveKeyPair64 = async (password: string, humanId: string) => {
 
     return nacl.sign.keyPair.fromSeed(derivedKey);
 };
+
+export async function setAuth(kwil: NodeKwil, signer: KwilSigner): Promise<void> {
+    const auth = await kwil.authenticate(signer);
+    const cookie = objects.requireNonNil(auth.data?.cookie);
+    kwil.setCookie(cookie);
+}

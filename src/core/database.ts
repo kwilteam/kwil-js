@@ -57,6 +57,7 @@ export interface ForeignKeyAction {
 
 export interface ActionSchema {
     name: string;
+    annotations: ReadonlyArray<string>;
     inputs: ReadonlyArray<string>;
     mutability: string;
     auxiliaries: ReadonlyArray<string>;

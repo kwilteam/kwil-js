@@ -2,18 +2,17 @@ import { Base64String, HexString, Nillable } from "../utils/types";
 import { EthSigner, SignerSupplier } from "./builders";
 import { Wallet as Walletv5, Signer as Signerv5 } from "ethers5";
 import { Wallet as Walletv6 } from "ethers";
-import { hexToBytes } from "../utils/serial";
+import { bytesToHex, hexToBytes } from "../utils/serial";
 import { BytesEncodingStatus, PayloadBytesTypes } from "./enums";
 
 export interface Signature<T extends PayloadBytesTypes> {
     signature_bytes: Nillable<T extends BytesEncodingStatus.BASE64_ENCODED ? Base64String : Uint8Array>;
-    signature_type: SignatureType;
+    signature_type: CustomSignatureType;
 }
 
 export enum SignatureType {
     SIGNATURE_TYPE_INVALID = 'invalid',
 	SECP256K1_PERSONAL = 'secp256k1_ep',
-    ED25519_NEAR = 'ed25519_nr',
     ED25519 = 'ed25519'
 }
 

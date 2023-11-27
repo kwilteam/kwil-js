@@ -6,26 +6,31 @@ import { Database, DeployBody, DropBody, SelectQuery } from '../core/database';
 import { BaseTransaction, TxReceipt } from '../core/tx';
 import { Account, ChainInfo } from '../core/network';
 import { ActionBuilderImpl } from '../builders/action_builder';
-import { base64ToBytes } from '../utils/base64';
+import { base64ToBytes, bytesToBase64 } from '../utils/base64';
 import { DBBuilderImpl } from '../builders/db_builder';
 import { NonNil } from '../utils/types';
 import { ActionBuilder, DBBuilder } from '../core/builders';
-import { wrapConfig, wrapEstimate } from './intern';
 import { Cache } from '../utils/cache';
 import { TxInfoReceipt } from '../core/txQuery';
 import { BaseMessage, Message, MsgReceipt } from '../core/message';
-import { BytesEncodingStatus, PayloadType } from '../core/enums';
-import { hexToBytes } from '../utils/serial';
+import { BytesEncodingStatus, EnvironmentType, PayloadType } from '../core/enums';
+import { bytesToEthHex, hexToBytes, stringToBytes } from '../utils/serial';
 import { isNearPubKey, nearB58ToHex } from '../utils/keys';
 import { ActionBody, ActionInput, Entries, resolveActionInputs } from '../core/action';
 import { KwilSigner } from '../core/kwilSigner';
+import { objects } from '../utils/objects';
+import { SignatureType, executeSign } from '../core/signature';
+import { computeAddress } from 'ethers';
+import { AuthSuccess, composeAuthMsg } from '../core/auth';
+import { wrap } from './intern';
 
 /**
  * The main class for interacting with the Kwil network.
  */
 
-export abstract class Kwil {
-  private readonly client: Client;
+export abstract class Kwil<T extends EnvironmentType> {
+  protected client: Client;
+  private readonly kwilProvider: string;
   private readonly chainId: string;
   //cache schemas
   private schemas: Cache<GenericResponse<Database>>;
@@ -34,7 +39,6 @@ export abstract class Kwil {
     this.client = new Client({
       kwilProvider: opts.kwilProvider,
       apiKey: opts.apiKey,
-      network: opts.network,
       timeout: opts.timeout,
       logging: opts.logging,
       logger: opts.logger,
@@ -46,11 +50,11 @@ export abstract class Kwil {
     // set chainId
     this.chainId = opts.chainId;
 
-    //create a wrapped symbol of estimateCost method
-    wrapEstimate(this, this.client.estimateCost.bind(this.client));
+    // set kwilProvider
+    this.kwilProvider = opts.kwilProvider;
 
-    // create a wrapped symbol of config so it can be accessed by other classes
-    wrapConfig(this, opts);
+    //create a wrapped symbol of estimateCost method
+    wrap(this, this.client.estimateCost.bind(this.client));
   }
 
   /**
@@ -129,7 +133,7 @@ export abstract class Kwil {
    */
 
   public dbBuilder(): NonNil<DBBuilder<PayloadType.DEPLOY_DATABASE>> {
-    return DBBuilderImpl.of<PayloadType.DEPLOY_DATABASE>(this, PayloadType.DEPLOY_DATABASE).chainId(
+    return DBBuilderImpl.of<PayloadType.DEPLOY_DATABASE, T>(this, PayloadType.DEPLOY_DATABASE).chainId(
       this.chainId
     );
   }
@@ -142,7 +146,7 @@ export abstract class Kwil {
    */
 
   public dropDbBuilder(): NonNil<DBBuilder<PayloadType.DROP_DATABASE>> {
-    return DBBuilderImpl.of<PayloadType.DROP_DATABASE>(this, PayloadType.DROP_DATABASE).chainId(
+    return DBBuilderImpl.of<PayloadType.DROP_DATABASE, T>(this, PayloadType.DROP_DATABASE).chainId(
       this.chainId
     );
   }
@@ -172,7 +176,7 @@ export abstract class Kwil {
     actionBody: ActionBody,
     kwilSigner: KwilSigner
   ): Promise<GenericResponse<TxReceipt>> {
-    let tx = ActionBuilderImpl.of(this)
+    let tx = ActionBuilderImpl.of<T>(this)
       .dbid(actionBody.dbid)
       .name(actionBody.action)
       .description(actionBody.description || '')
@@ -202,7 +206,7 @@ export abstract class Kwil {
     deployBody: DeployBody,
     kwilSigner: KwilSigner
   ): Promise<GenericResponse<TxReceipt>> {
-    const tx = await DBBuilderImpl.of<PayloadType.DEPLOY_DATABASE>(
+    const tx = await DBBuilderImpl.of<PayloadType.DEPLOY_DATABASE, T>(
       this,
       PayloadType.DEPLOY_DATABASE
     )
@@ -227,7 +231,7 @@ export abstract class Kwil {
     dropBody: DropBody,
     kwilSigner: KwilSigner
   ): Promise<GenericResponse<TxReceipt>> {
-    const tx = await DBBuilderImpl.of<PayloadType.DROP_DATABASE>(this, PayloadType.DROP_DATABASE)
+    const tx = await DBBuilderImpl.of<PayloadType.DROP_DATABASE, T>(this, PayloadType.DROP_DATABASE)
       .description(dropBody.description || '')
       .payload({ dbid: dropBody.dbid })
       .publicKey(kwilSigner.publicKey)
@@ -236,6 +240,39 @@ export abstract class Kwil {
       .buildTx();
 
     return await this.client.broadcast(tx);
+  }
+
+  /**
+   * Authenticates a user with the Kwil Gateway (KGW). This is required to execute mustsign view actions.
+   * 
+   * This method should only be used if your Kwil Network is using the Kwil Gateway. 
+   * 
+   * @param {KwilSigner} signer - The signer for the authentication.
+   * @returns A promise that resolves to the authentication success or failure.
+   */
+  public async authenticate(signer: KwilSigner): Promise<GenericResponse<AuthSuccess<T>>> {
+    const authParam = await this.client.getAuthenticate();
+
+    const authProperties = objects.requireNonNil(
+      authParam.data,
+      'something went wrong retrieving auth info from KGW'
+    );
+
+    const msg = composeAuthMsg(authProperties, this.kwilProvider, '1', this.chainId);
+
+    const signature = await executeSign(stringToBytes(msg), signer.signer, signer.signatureType); 
+
+    const authBody = {
+      nonce: authProperties.nonce,
+      sender: bytesToBase64(signer.publicKey),
+      signature: {
+        signature_bytes: bytesToBase64(signature),
+        signature_type: signer.signatureType,
+      },
+    };
+    const res = await this.client.postAuthenticate(authBody);
+
+    return res;
   }
 
   /**
@@ -266,7 +303,7 @@ export abstract class Kwil {
       return await this.client.call(actionBody);
     }
 
-    let msg = ActionBuilderImpl.of(this)
+    let msg = ActionBuilderImpl.of<T>(this)
       .chainId(this.chainId)
       .dbid(actionBody.dbid)
       .name(actionBody.action)

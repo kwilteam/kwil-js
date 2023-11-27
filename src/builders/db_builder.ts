@@ -4,7 +4,7 @@ import { objects } from '../utils/objects';
 import { Kwil } from '../client/kwil';
 import { PayloadBuilderImpl } from './payload_builder';
 import { DBBuilder, SignerSupplier } from '../core/builders';
-import { AttributeType, DataType, DeployOrDrop, IndexType, PayloadType } from '../core/enums';
+import { AttributeType, DataType, DeployOrDrop, EnvironmentType, IndexType, PayloadType } from '../core/enums';
 import { Database } from '../core/database';
 import { enforceDatabaseOrder } from '../core/order';
 import { AnySignatureType, SignatureType, getSignatureType } from '../core/signature';
@@ -15,8 +15,8 @@ import { CompiledKuneiform, DbPayloadType, DropDbPayload } from '../core/payload
  * It creates a transaction to deploy a new database on the Kwil network.
  */
 
-export class DBBuilderImpl<T extends DeployOrDrop> implements DBBuilder<T> {
-  private readonly client: Kwil;
+export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType> implements DBBuilder<T> {
+  private readonly client: Kwil<U>;
   private _payload: Nillable<() => NonNil<CompiledKuneiform | DropDbPayload>> = null;
   private _signer: Nillable<SignerSupplier> = null;
   private _signatureType: Nillable<AnySignatureType>;
@@ -32,7 +32,7 @@ export class DBBuilderImpl<T extends DeployOrDrop> implements DBBuilder<T> {
    * @param {DeployOrDrop} payloadType - The payload type for the database transaction. This should be `PayloadType.DEPLOY_DATABASE` or `PayloadType.DROP_DATABASE`.
    * @returns {DBBuilder} A new `DBBuilderImpl` instance.
    */
-  private constructor(client: Kwil, payloadType: DeployOrDrop) {
+  private constructor(client: Kwil<U>, payloadType: DeployOrDrop) {
     this.client = client;
     this._payloadType = payloadType;
   }
@@ -44,12 +44,12 @@ export class DBBuilderImpl<T extends DeployOrDrop> implements DBBuilder<T> {
    * @param {PayloadType} payloadType - The payload type for the database transaction. This should be `PayloadType.DEPLOY_DATABASE` or `PayloadType.DROP_DATABASE`.
    * @returns {DBBuilder} A new `DBBuilderImpl` instance.
    */
-  public static of<T extends DeployOrDrop>(
-    client: NonNil<Kwil>,
+  public static of<T extends DeployOrDrop, U extends EnvironmentType>(
+    client: NonNil<Kwil<U>>,
     payloadType: NonNil<DeployOrDrop>
   ): NonNil<DBBuilder<T>> {
     // throw runtime error if client or payloadType is null
-    return new DBBuilderImpl<T>(
+    return new DBBuilderImpl<T, U>(
       objects.requireNonNil(
         client,
         'client is required for DbBuilder. Please pass a valid Kwil client. This is an internal error, please create an issue.'
@@ -343,6 +343,10 @@ export class DBBuilderImpl<T extends DeployOrDrop> implements DBBuilder<T> {
       db.actions.forEach((action) => {
         if (!action.name) {
           action.name = '';
+        }
+
+        if(!action.annotations) {
+          action.annotations = [];
         }
 
         if (!action.inputs) {

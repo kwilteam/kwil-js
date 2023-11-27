@@ -1,3 +1,4 @@
+import { hexToBytes } from "../utils/serial";
 import { HexString } from "../utils/types";
 import { CustomSigner, EthSigner, SignerSupplier } from "./builders";
 import { AnySignatureType, SignatureType, getSignatureType } from "./signature";
@@ -10,7 +11,7 @@ export class KwilSigner {
     public readonly signer: EthSigner | CustomSigner;
 
     /** The public key associated with the signer */
-    public readonly publicKey: HexString | Uint8Array;
+    public readonly publicKey: Uint8Array;
 
     /** The type of the signature. */
     public readonly signatureType: AnySignatureType;
@@ -42,7 +43,11 @@ export class KwilSigner {
      */
     constructor(signer: SignerSupplier, publicKey: HexString | Uint8Array, signatureType?: AnySignatureType) {
         this.signer = signer;
-        this.publicKey = publicKey;
+        if(typeof publicKey === "string") {
+            this.publicKey = hexToBytes(publicKey)
+        } else {
+            this.publicKey = publicKey;
+        }
         if (signatureType) {
             this.signatureType = signatureType;
         } else {

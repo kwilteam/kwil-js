@@ -27,7 +27,7 @@ async function test() {
     //update to goerli when live
     const provider = new ethers.JsonRpcProvider(process.env.ETH_PROVIDER)
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
-    const txHash = '4357e7174f61db9b79ea35e8090bb350bf474195c78ab3af159241a891bbebe1'
+    const txHash = 'cc15becdccc22a999536aea6a3a9cddc151551bf2a44fdcbd220bc9c6f36dcdd'
     
     const kwil = new kwiljs.NodeKwil({
         kwilProvider: process.env.KWIL_PROVIDER || "SHOULD FAIL",
@@ -41,8 +41,10 @@ async function test() {
 
     const pubByte = hexToBytes(pubKey)
     const dbid = kwil.getDBID(pubByte, "mydb")
+    
     // logger(dbid)
-    // broadcast(kwil, testDB, wallet, pubKey)
+    // await authenticate(kwil, kwilSigner)
+    broadcast(kwil, testDB, wallet, pubKey)
     // await getTxInfo(kwil, txHash)
     // await getSchema(kwil, dbid)
     // getAccount(kwil, pubByte)
@@ -72,6 +74,16 @@ async function test() {
 }
 
 test()
+
+async function authenticate(kwil, signer) {
+    const res = await kwil.authenticate(signer)
+    logger(res)
+    if(!res.data.cookie) {
+        throw new Error("Authentication failed")
+    }
+    kwil.setCookie(res.data.cookie)
+    logger(kwil.client)
+}
 
 async function getSchema(kwil, d) {
     const schema = await kwil.getSchema(d)

@@ -16,11 +16,13 @@ export abstract class Api {
   //private readonly METHOD_GET = 'GET';
   //private readonly METHOD_POST = 'POST';
   private readonly host: string;
+  private readonly cookie?: string;
 
   public config!: ApiConfig;
-  protected constructor(host: string, opts: ApiConfig) {
+  protected constructor(host: string, opts: ApiConfig, cookie?: string) {
     this.config = this.mergeDefaults(opts);
     this.host = host;
+    this.cookie = cookie;
   }
 
   private mergeDefaults(opts: ApiConfig): ApiConfig {
@@ -30,7 +32,6 @@ export abstract class Api {
       apiKey: opts.apiKey || '',
       logging: opts.logging || false,
       logger: opts.logger || console.log,
-      network: opts.network,
       cache: opts.cache || 10 * 60,
     };
   }
@@ -71,16 +72,17 @@ export abstract class Api {
    * a request to the network.
    */
   protected request(): AxiosInstance {
-    const headers: any = {
-      'X-Api-Key': this.config.apiKey,
-    };
-    if (this.config.network) {
-      headers['x-network'] = this.config.network;
+    let headers: any = {}
+
+    if (this.cookie) {
+      headers.Cookie = this.cookie;
     }
+
     let instance = Axios.create({
       baseURL: this.host,
       timeout: this.config.timeout,
       maxContentLength: 1024 * 1024 * 512,
+      withCredentials: true,
       headers,
     });
 
