@@ -14,7 +14,7 @@ import { Cache } from '../utils/cache';
 import { TxInfoReceipt } from '../core/txQuery';
 import { BaseMessage, Message, MsgReceipt } from '../core/message';
 import { BytesEncodingStatus, EnvironmentType, PayloadType } from '../core/enums';
-import { bytesToEthHex, hexToBytes, stringToBytes } from '../utils/serial';
+import { bytesToEthHex, bytesToHex, hexToBytes, stringToBytes } from '../utils/serial';
 import { isNearPubKey, nearB58ToHex } from '../utils/keys';
 import { ActionBody, ActionInput, Entries, resolveActionInputs } from '../core/action';
 import { KwilSigner } from '../core/kwilSigner';
@@ -57,9 +57,9 @@ export abstract class Kwil<T extends EnvironmentType> {
   }
 
   /**
-   * Generates a unique database identifier (DBID) from the provided owner's public key and a database name.
+   * Generates a unique database identifier (DBID) from the provided owner's identifier (e.g. wallet address, public key, etc.) and a database name.
    *
-   * @param owner - The owner's public key (Ethereum or NEAR Protocol). Ethereum keys can be passed as a hex string (0x123...) or as bytes (Uint8Array). NEAR protocol public keys can be passed as the base58 encoded public key (with "ed25519:" prefix), a hex string, or bytes (Uint8Array).
+   * @param owner - The owner's identifier (e.g wallet address, public key, etc.). Ethereum addresses can be passed as a hex string (0x123...) or as bytes (Uint8Array). NEAR protocol public keys can be passed as the base58 encoded public key (with "ed25519:" prefix), a hex string, or bytes (Uint8Array).
    * @param name - The name of the database. This should be a unique name to identify the database.
    * @returns A string that represents the unique identifier for the database.
    */
@@ -258,10 +258,18 @@ export abstract class Kwil<T extends EnvironmentType> {
       'something went wrong retrieving auth info from KGW'
     );
 
+
     const msg = composeAuthMsg(authProperties, this.kwilProvider, '1', this.chainId);
+
+    console.log('MESSAGE ===', bytesToBase64(stringToBytes(msg)))
+    
 
     const signature = await executeSign(stringToBytes(msg), signer.signer, signer.signatureType);
 
+    console.log('hex identifier', bytesToHex(signer.identifier))
+    console.log('base64 identifier', bytesToBase64(signer.identifier))
+    console.log('signature', signature)
+    console.log('identifier', signer.identifier)
     const authBody = {
       nonce: authProperties.nonce,
       sender: bytesToBase64(signer.identifier),
@@ -270,6 +278,8 @@ export abstract class Kwil<T extends EnvironmentType> {
         signature_type: signer.signatureType,
       },
     };
+
+    console.log(authBody)
     const res = await this.client.postAuthenticate(authBody);
 
     return res;

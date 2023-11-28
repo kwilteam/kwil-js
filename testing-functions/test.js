@@ -28,7 +28,7 @@ async function test() {
     //update to goerli when live
     const provider = new ethers.JsonRpcProvider(process.env.ETH_PROVIDER)
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
-    const txHash = 'cc15becdccc22a999536aea6a3a9cddc151551bf2a44fdcbd220bc9c6f36dcdd'
+    const txHash = 'cc411eda91ea6be102ad5940be84e6c0fe587a7e6980287090e42324485b359f'
     const address = await wallet.getAddress()
 
     const kwil = new kwiljs.NodeKwil({
@@ -39,41 +39,32 @@ async function test() {
     })
 
     const pubKey = await recoverPubKey(wallet)
-    const kwilSigner = new KwilSigner(wallet, pubKey)
-
+    const kwilSigner = new KwilSigner(wallet, address)
     
     const pubByte = hexToBytes(pubKey)
-    const dbid = kwil.getDBID(pubByte, "mydb")
-    
+    console.log(pubByte)
+    const dbid = kwil.getDBID(address, "mydb")
+    console.log(dbid)
     // logger(dbid)
     // await authenticate(kwil, kwilSigner)
     broadcast(kwil, testDB, wallet, address)
     // await getTxInfo(kwil, txHash)
     // await getSchema(kwil, dbid)
-    // getAccount(kwil, addressBytes)
-    // listDatabases(kwil, pubByte)
+    // getAccount(kwil, address)
+    // listDatabases(kwil, address)
     // ping(kwil)
     // chainInfo(kwil)
-    // await execSingleAction(kwil, dbid, "add_post", wallet, pubByte)
+    // await execSingleAction(kwil, dbid, "add_post", wallet, address)
+    // await execSingleActionKwilSigner(kwil, dbid, "add_post", kwilSigner)
     // await select(kwil, dbid, "SELECT * FROM posts")
-    // select(kwil, dbid, `WITH RECURSIVE 
-    //                          cnt(x) AS (
-    //                          SELECT 1
-    //                          UNION ALL
-    //                          SELECT x+1 FROM cnt
-    //                          LIMIT (SELECT MAX(id) FROM posts)
-    //                      )
-    //                      SELECT x 
-    //                      FROM cnt
-    //                      WHERE x NOT IN (SELECT id FROM posts) AND x <= 135;
-    //          `)
-    // bulkAction(kwil, dbid, "add_post", wallet, pubKey)
+    // bulkAction(kwil, dbid, "add_post", wallet, address)
     // await testViewWithParam(kwil, dbid, wallet)
     // await testViewWithSign(kwil, dbid, wallet, pubByte)
+    // await testViewWithEdSigner(kwil, dbid)
     // await customSignature(kwil, dbid)
     // await julioSignature(kwil, dbid)
     // await customEd25519(kwil, dbid)
-    // await dropDb(kwil, dbid, wallet, pubByte)
+    // await dropDb(kwil, dbid, wallet, address)
 }
 
 test()
@@ -159,6 +150,30 @@ async function execSingleAction(kwil, dbid, action, w, pubKey) {
         .buildTx();
 
     const res = await kwil.broadcast(act)
+
+    logger(res)
+}
+
+async function execSingleActionKwilSigner(kwil, dbid, action, kSigner) {
+    const query = await kwil.selectQuery(dbid, "SELECT COUNT(*) FROM posts");
+
+    const count = query.data[0][`COUNT(*)`]
+
+    const Input = kwiljs.Utils.ActionInput
+        .of()
+        .put("$id", count + 1)
+        .put("$user", "Luke")
+        .put("$title", "Hello")
+        .put("$body", "Hello World")
+
+    const body = {
+        dbid,
+        action,
+        inputs: [Input],
+        description: 'This is my friendly description!',
+    }
+
+    const res = await kwil.execute(body, kSigner)
 
     logger(res)
 }
@@ -274,6 +289,29 @@ async function testViewWithSign(kwil, dbid, wallet, pubKey) {
     logger(res.data.result)
 }
 
+async function testViewWithEdSigner(kwil, dbid) {
+    const key = await deriveKeyPair64("password", "humanId")
+
+    const signCallback = (msg) => nacl.sign.detached(msg, key.secretKey)
+
+    console.log(key.publicKey)
+
+    await auth(kwil, signCallback, key.publicKey, 'ed25519')
+    const msg = await kwil
+        .actionBuilder()
+        .dbid(dbid)
+        .name('view_must_sign')
+        .publicKey(key.publicKey)
+        .description('This is my friendly description!')
+        .signer(signCallback, 'ed25519')
+        .buildMsg()
+
+    logger(msg)
+    const res = await kwil.call(msg);
+
+    logger(res.data.result)
+}
+
 async function recoverPubKey(signer) {
     return await kwiljs.Utils.recoverSecp256k1PubKey(signer)
 }
@@ -375,4 +413,16 @@ async function customEd25519(kwil, dbid) {
     const res = await kwil.broadcast(tx);
 
     logger(res)
+}
+
+async function auth(kwil, signer, ident, type) {
+    const ksigner = new KwilSigner(signer, ident, type)
+    const res = await kwil.authenticate(ksigner)
+    logger(res);
+    const cookie = res.data.cookie;
+    if (!cookie) {
+        throw new Error("Authentication failed")
+    }
+
+    kwil.setCookie(cookie)
 }
