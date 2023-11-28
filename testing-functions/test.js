@@ -10,6 +10,7 @@ const util = require("util")
 const near = require('near-api-js')
 const { from_b58 } = require('../dist/utils/base58')
 const { bytesToHex, hexToBytes } = require('../dist/utils/serial')
+const { bytesToBase64 } = require('../dist/utils/base64')
 const scrypt = require("scrypt-js")
 const nacl = require("tweetnacl")
 const { sha256BytesToBytes } = require("../dist/utils/crypto")
@@ -28,7 +29,8 @@ async function test() {
     const provider = new ethers.JsonRpcProvider(process.env.ETH_PROVIDER)
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
     const txHash = 'cc15becdccc22a999536aea6a3a9cddc151551bf2a44fdcbd220bc9c6f36dcdd'
-    
+    const address = await wallet.getAddress()
+
     const kwil = new kwiljs.NodeKwil({
         kwilProvider: process.env.KWIL_PROVIDER || "SHOULD FAIL",
         chainId: chainId,
@@ -39,15 +41,16 @@ async function test() {
     const pubKey = await recoverPubKey(wallet)
     const kwilSigner = new KwilSigner(wallet, pubKey)
 
+    
     const pubByte = hexToBytes(pubKey)
     const dbid = kwil.getDBID(pubByte, "mydb")
     
     // logger(dbid)
     // await authenticate(kwil, kwilSigner)
-    broadcast(kwil, testDB, wallet, pubKey)
+    broadcast(kwil, testDB, wallet, address)
     // await getTxInfo(kwil, txHash)
     // await getSchema(kwil, dbid)
-    // getAccount(kwil, pubByte)
+    // getAccount(kwil, addressBytes)
     // listDatabases(kwil, pubByte)
     // ping(kwil)
     // chainInfo(kwil)

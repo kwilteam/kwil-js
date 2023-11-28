@@ -38,13 +38,13 @@ export interface PayloadBuilder {
   signer(signer: SignerSupplier, sigType: AnySignatureType): NonNil<PayloadBuilder>;
 
   /**
-   * Specify the public key for the payload signer.
+   * Specifies the identifier (e.g. wallet, public key, etc) for the payload signer.
    *
-   * @param {HexString | Uint8Array} publicKey - The public key to be used to sign the transaction. This can be a hex string or a Uint8Array.
+   * @param {HexString | Uint8Array} identifier - The identifier to be used to sign the transaction. This can be a hex string or a Uint8Array.
    * @returns {PayloadBuilder} - The current `PayloadBuilder` instance for chaining.
-   * @throws {Error} - If the public key is null or undefined.
+   * @throws {Error} - If the identifier is null or undefined.
    */
-  publicKey(publicKey: HexString | Uint8Array): NonNil<PayloadBuilder>;
+  publicKey(identifier: HexString | Uint8Array): NonNil<PayloadBuilder>;
 
   /**
    * Set the description to be included in the payload signature.
@@ -137,13 +137,13 @@ export interface DBBuilder<T extends DeployOrDrop> {
   payload(payload: DbPayloadType<T>): NonNil<DBBuilder<T>>;
 
   /**
-   * Specifies the public key for the database deployment / drop.
+   * Specifies the identifier (e.g. wallet, public key, etc) for the database deployment / drop.
    *
-   * @param {HexString | Uint8Array} publicKey - The public key for the database deployment / drop.
+   * @param {string | Uint8Array} identifier - The identifier for the database deployment / drop.
    * @returns {DBBuilder} The current `DBBuilder` instance for chaining.
-   * @throws Will throw an error if the public key is null or undefined.
+   * @throws Will throw an error if the identifier is null or undefined.
    */
-  publicKey(publicKey: HexString | Uint8Array): NonNil<DBBuilder<T>>;
+  publicKey(identifier: HexString | Uint8Array): NonNil<DBBuilder<T>>;
 
   /**
    * Specifies the chain ID for the network being used.
@@ -244,14 +244,14 @@ export interface ActionBuilder {
   signer(signer: SignerSupplier, signatureType?: AnySignatureType): NonNil<ActionBuilder>;
 
   /**
-   * Specifies the public key of the wallet signing for the database operation.
+   * Specifies the identifier (e.g. wallet, public key, etc) of the signer for the action.
    *
-   * @param {HexString | Uint8Array} publicKey - The public key of the wallet signing for the database operation.
+   * @param {HexString | Uint8Array} identifier - The identifier of the wallet signing for the database operation.
    * @returns {ActionBuilder} The current `ActionBuilder` instance for chaining.
    * @throws Will throw an error if the value is specified while the action is being built.
-   * @throws Will throw an error if the public key is null or undefined.
+   * @throws Will throw an error if the identifier is null or undefined.
    */
-  publicKey(publicKey: HexString | Uint8Array): NonNil<ActionBuilder>;
+  publicKey(identifier: HexString | Uint8Array): NonNil<ActionBuilder>;
 
   /**
    * Specifies the description to be included in the message that is signed.

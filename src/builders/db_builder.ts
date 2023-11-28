@@ -21,7 +21,7 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType> im
   private _signer: Nillable<SignerSupplier> = null;
   private _signatureType: Nillable<AnySignatureType>;
   private _payloadType: Nillable<PayloadType> = null;
-  private _publicKey: Nillable<string | Uint8Array> = null;
+  private _identifier: Nillable<string | Uint8Array> = null;
   private _chainId: Nillable<string> = null;
   private _description: Nillable<string> = null;
 
@@ -119,17 +119,17 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType> im
   }
 
   /**
-   * Specifies the public key for the database deployment / drop.
+   * Specifies the identifier (e.g. wallet, public key, etc) for the database deployment / drop.
    *
-   * @param {string | Uint8Array} publicKey - The public key for the database deployment / drop.
+   * @param {string | Uint8Array} identifier - The identifier for the database deployment / drop.
    * @returns {DBBuilder} The current `DBBuilder` instance for chaining.
-   * @throws Will throw an error if the public key is null or undefined.
+   * @throws Will throw an error if the identifier is null or undefined.
    */
-  publicKey(publicKey: string | Uint8Array): NonNil<DBBuilder<T>> {
-    // throw runtime error if public key is null
-    this._publicKey = objects.requireNonNil(
-      publicKey,
-      'public key is required for DbBuilder. Please pass a valid public key.'
+  publicKey(identifier: string | Uint8Array): NonNil<DBBuilder<T>> {
+    // throw runtime error if identifier is null
+    this._identifier = objects.requireNonNil(
+      identifier,
+      'identifier is required for DbBuilder. Please pass a valid identifier to the .publicKey() method.'
     );
     return this;
   }
@@ -197,9 +197,9 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType> im
       this._signer,
       'signer cannot be null or undefined. please specify a signer.'
     );
-    const publicKey = objects.requireNonNil(
-      this._publicKey,
-      'public key cannot be null or undefined. please specify a public key.'
+    const identifier = objects.requireNonNil(
+      this._identifier,
+      'identifier cannot be null or undefined. please specify a identifier.'
     );
     const chainId = objects.requireNonNil(
       this._chainId,
@@ -214,7 +214,7 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType> im
       .payloadType(payloadType)
       .payload(cleanedPayload)
       .signer(signer, signatureType)
-      .publicKey(publicKey)
+      .publicKey(identifier)
       .chainId(chainId)
       .description(this._description);
     return tx.buildTx();

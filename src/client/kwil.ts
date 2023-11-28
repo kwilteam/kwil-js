@@ -19,8 +19,7 @@ import { isNearPubKey, nearB58ToHex } from '../utils/keys';
 import { ActionBody, ActionInput, Entries, resolveActionInputs } from '../core/action';
 import { KwilSigner } from '../core/kwilSigner';
 import { objects } from '../utils/objects';
-import { SignatureType, executeSign } from '../core/signature';
-import { computeAddress } from 'ethers';
+import { executeSign } from '../core/signature';
 import { AuthSuccess, composeAuthMsg } from '../core/auth';
 import { wrap } from './intern';
 
@@ -97,7 +96,7 @@ export abstract class Kwil<T extends EnvironmentType> {
   /**
    * Retrieves an account using the owner's Ethereum wallet address.
    *
-   * @param owner - The owner's public key (Ethereum or NEAR Protocol). Ethereum keys can be passed as a hex string (0x123...) or as bytes (Uint8Array). NEAR protocol public keys can be passed as the base58 encoded public key (with "ed25519:" prefix), a hex string, or bytes (Uint8Array).
+   * @param owner - The owner's identifier (e.g. Ethereum wallet address or NEAR public key). Ethereum addresses can be passed as a hex string (0x123...) or as bytes (Uint8Array). NEAR protocol public keys can be passed as the base58 encoded public key (with "ed25519:" prefix), a hex string, or bytes (Uint8Array).
    * @returns A promise that resolves to an Account object. The account object includes the owner's public key, balance, and nonce.
    */
 
@@ -133,9 +132,10 @@ export abstract class Kwil<T extends EnvironmentType> {
    */
 
   public dbBuilder(): NonNil<DBBuilder<PayloadType.DEPLOY_DATABASE>> {
-    return DBBuilderImpl.of<PayloadType.DEPLOY_DATABASE, T>(this, PayloadType.DEPLOY_DATABASE).chainId(
-      this.chainId
-    );
+    return DBBuilderImpl.of<PayloadType.DEPLOY_DATABASE, T>(
+      this,
+      PayloadType.DEPLOY_DATABASE
+    ).chainId(this.chainId);
   }
 
   /**
@@ -180,7 +180,7 @@ export abstract class Kwil<T extends EnvironmentType> {
       .dbid(actionBody.dbid)
       .name(actionBody.action)
       .description(actionBody.description || '')
-      .publicKey(kwilSigner.publicKey)
+      .publicKey(kwilSigner.identifier)
       .chainId(this.chainId)
       .signer(kwilSigner.signer, kwilSigner.signatureType);
 
@@ -212,7 +212,7 @@ export abstract class Kwil<T extends EnvironmentType> {
     )
       .description(deployBody.description || '')
       .payload(deployBody.schema)
-      .publicKey(kwilSigner.publicKey)
+      .publicKey(kwilSigner.identifier)
       .signer(kwilSigner.signer, kwilSigner.signatureType)
       .chainId(this.chainId)
       .buildTx();
@@ -234,7 +234,7 @@ export abstract class Kwil<T extends EnvironmentType> {
     const tx = await DBBuilderImpl.of<PayloadType.DROP_DATABASE, T>(this, PayloadType.DROP_DATABASE)
       .description(dropBody.description || '')
       .payload({ dbid: dropBody.dbid })
-      .publicKey(kwilSigner.publicKey)
+      .publicKey(kwilSigner.identifier)
       .signer(kwilSigner.signer, kwilSigner.signatureType)
       .chainId(this.chainId)
       .buildTx();
@@ -244,9 +244,9 @@ export abstract class Kwil<T extends EnvironmentType> {
 
   /**
    * Authenticates a user with the Kwil Gateway (KGW). This is required to execute mustsign view actions.
-   * 
-   * This method should only be used if your Kwil Network is using the Kwil Gateway. 
-   * 
+   *
+   * This method should only be used if your Kwil Network is using the Kwil Gateway.
+   *
    * @param {KwilSigner} signer - The signer for the authentication.
    * @returns A promise that resolves to the authentication success or failure.
    */
@@ -260,11 +260,11 @@ export abstract class Kwil<T extends EnvironmentType> {
 
     const msg = composeAuthMsg(authProperties, this.kwilProvider, '1', this.chainId);
 
-    const signature = await executeSign(stringToBytes(msg), signer.signer, signer.signatureType); 
+    const signature = await executeSign(stringToBytes(msg), signer.signer, signer.signatureType);
 
     const authBody = {
       nonce: authProperties.nonce,
-      sender: bytesToBase64(signer.publicKey),
+      sender: bytesToBase64(signer.identifier),
       signature: {
         signature_bytes: bytesToBase64(signature),
         signature_type: signer.signatureType,
@@ -319,7 +319,9 @@ export abstract class Kwil<T extends EnvironmentType> {
     }
 
     if (kwilSigner) {
-      msg = msg.signer(kwilSigner.signer, kwilSigner.signatureType).publicKey(kwilSigner.publicKey);
+      msg = msg
+        .signer(kwilSigner.signer, kwilSigner.signatureType)
+        .publicKey(kwilSigner.identifier);
     }
 
     const message = await msg.buildMsg();

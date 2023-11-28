@@ -52,8 +52,10 @@ export function isEthersSigner(signer: SignerSupplier): boolean {
 
 export async function executeSign(msg: Uint8Array , signer: SignerSupplier, signatureType: AnySignatureType): Promise<Uint8Array> {
     if(isEthersSigner(signer) && signatureType === SignatureType.SECP256K1_PERSONAL) {
-        const hexSig =  await ethSign(msg, signer as EthSigner);
-        return hexToBytes(hexSig);
+        const hexSig = await ethSign(msg, signer as EthSigner);
+        let sigBytes = hexToBytes(hexSig);
+
+        return sigBytes;
     }
 
     if(!isEthersSigner(signer) && signatureType !== SignatureType.SIGNATURE_TYPE_INVALID) {

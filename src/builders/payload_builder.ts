@@ -25,7 +25,7 @@ export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBui
   private _payloadType: Nillable<PayloadType> = null;
   private _payload: Nillable<() => NonNil<AllPayloads>> = null;
   private _signer: Nillable<SignerSupplier> = null;
-  private _publicKey: Nillable<Uint8Array> = null;
+  private _identifier: Nillable<Uint8Array> = null;
   private _signatureType: Nillable<AnySignatureType> = null;
   private _chainId: Nillable<string> = null;
   private _description: NonNil<string> = '';
@@ -109,28 +109,28 @@ export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBui
   }
 
   /**
-   * Specify the public key for the payload signer.
+   * Specifies the identifier (e.g. wallet, public key, etc) for the payload signer.
    *
-   * @param {HexString | Uint8Array} publicKey - The public key to be used to sign the transaction. This can be a hex string or a Uint8Array.
+   * @param {HexString | Uint8Array} identifier - The identifier to be used to sign the transaction. This can be a hex string or a Uint8Array.
    * @returns {PayloadBuilder} - The current `PayloadBuilder` instance for chaining.
-   * @throws {Error} - If the public key is null or undefined.
+   * @throws {Error} - If the identifier is null or undefined.
    */
-  publicKey(publicKey: Nillable<HexString | Uint8Array>): NonNil<PayloadBuilder> {
+  publicKey(identifier: Nillable<HexString | Uint8Array>): NonNil<PayloadBuilder> {
     // throw runtime error if public key is null or undefined
-    let key = objects.requireNonNil(publicKey, 'public key is required to build a transaction.');
+    let id = objects.requireNonNil(identifier, 'public key is required to build a transaction.');
 
     // if near is string, convert to hex
-    if (typeof key === 'string') {
+    if (typeof id === 'string') {
       // accept near keys in their native format: ed25519:<base-58>
-      if (isNearPubKey(key)) {
-        key = nearB58ToHex(key);
+      if (isNearPubKey(id)) {
+        id = nearB58ToHex(id);
       }
 
       // convert hex string to bytes
-      key = hexToBytes(key);
+      id = hexToBytes(id);
     }
 
-    this._publicKey = key;
+    this._identifier = id;
 
     return this;
   }
@@ -184,8 +184,8 @@ export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBui
       this._payloadType,
       'payload type is required to build a transaction.'
     );
-    const publicKey = objects.requireNonNil(
-      this._publicKey,
+    const identifier = objects.requireNonNil(
+      this._identifier,
       'public key is required to build a transaction. Please chain the .publicKey() method to your builder.'
     );
     const signatureType = objects.requireNonNil(
@@ -208,7 +208,7 @@ export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBui
     const cost = await unwrap(this.client)(preEstTxn);
 
     // retrieve the account for the nonce
-    const acct = await this.client.getAccount(publicKey);
+    const acct = await this.client.getAccount(identifier);
 
     // add the nonce and fee to the transaction. Set the tx bytes back to uint8 so we can do the signature.
     const postEstTxn = Txn.copy<BytesEncodingStatus.UINT8_ENCODED>(preEstTxn, (tx) => {
@@ -237,7 +237,7 @@ export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBui
     return PayloadBuilderImpl.signTx(
       postEstTxn,
       signer,
-      publicKey,
+      identifier,
       signatureType,
       this._description
     );
@@ -261,8 +261,8 @@ export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBui
     // if a signer has been provided, execute a signed `view` action
     if (this._signer) {
       // ensure required fields are provided in the builder
-      const publicKey = objects.requireNonNil(
-        this._publicKey,
+      const identifier = objects.requireNonNil(
+        this._identifier,
         'public key is required to build a message that uses a signer.'
       );
       const signatureType = objects.requireNonNil(
@@ -279,7 +279,7 @@ export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBui
       return await PayloadBuilderImpl.signMsg(
         msg,
         this._signer,
-        publicKey,
+        identifier,
         signatureType,
         this._description
       );
@@ -316,7 +316,7 @@ export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBui
    *
    * @param {BaseTransaction} tx - The transaction to sign. See {@link BaseTransaction} for more information.
    * @param {SignerSupplier} signer - The signer to be used to sign the transaction.
-   * @param {Uint8Array} pubKey - The public key for the signature, represented as bytes.
+   * @param {Uint8Array} identifier - The identifier (e.g. wallet address, public key, etc) for the signature, represented as bytes.
    * @param {AnySignatureType} signatureType - The signature type being used. See {@link SignatureType} for more information.
    * @param {string} description - The description to be included in the signature.
    * @returns {BaseTransaction} - A promise that resolves to the signed transaction.
@@ -325,7 +325,7 @@ export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBui
   private static async signTx(
     tx: BaseTransaction<BytesEncodingStatus.UINT8_ENCODED>,
     signer: SignerSupplier,
-    pubKey: Uint8Array,
+    identifier: Uint8Array,
     signatureType: AnySignatureType,
     description: string
   ): Promise<Transaction> {
@@ -362,7 +362,7 @@ Kwil Chain ID: ${tx.body.chain_id}
         chain_id: newTx.body.chain_id,
       };
       // bytes must be base64 encoded for transport over GRPC
-      newTx.sender = bytesToBase64(pubKey);
+      newTx.sender = bytesToBase64(identifier);
       newTx.serialization = SerializationType.SIGNED_MSG_CONCAT;
     });
   }
@@ -372,7 +372,7 @@ Kwil Chain ID: ${tx.body.chain_id}
    *
    * @param {Message} msg - The message to sign. See {@link Message} for more information.
    * @param {SignerSupplier} signer - The signer to be used to sign the message.
-   * @param {Uint8Array} pubKey - The public key for the signature, represented as bytes.
+   * @param {Uint8Array} identifier - The identifier (e.g. wallet address, public key, etc) for the signature, represented as bytes.
    * @param {AnySignatureType} signatureType - The signature type being used. See {@link SignatureType} for more information.
    * @param {string} description - The description to be included in the signature.
    * @returns Message - A promise that resolves to the signed message.
@@ -381,7 +381,7 @@ Kwil Chain ID: ${tx.body.chain_id}
   private static async signMsg(
     msg: BaseMessage<BytesEncodingStatus.UINT8_ENCODED>,
     signer: SignerSupplier,
-    pubKey: Uint8Array,
+    identifier: Uint8Array,
     signatureType: AnySignatureType,
     description: string
   ): Promise<Message> {
@@ -419,7 +419,7 @@ PayloadDigest: ${bytesToHex(digest)}
         signature_type: signatureType.toString() as SignatureType,
       };
       // bytes must be base64 encoded for transport over GRPC
-      msg.sender = bytesToBase64(pubKey);
+      msg.sender = bytesToBase64(identifier);
       msg.serialization = SerializationType.SIGNED_MSG_CONCAT;
     });
   }
