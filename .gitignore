@@ -11,3 +11,4 @@ yarn.lock
 /pkg
 testapp/node_modules
 /.husky
+.DS_Store

@@ -2,7 +2,7 @@ import { strings } from "../utils/strings";
 import { Base64String, Nillable, NonNil } from "../utils/types";
 import { BytesEncodingStatus, PayloadBytesTypes, PayloadType, SerializationType } from "./enums";
 import { UnencodedActionPayload } from "./payload";
-import { Signature } from "./signature";
+import { AnySignatureType, Signature, SignatureType } from "./signature";
 
 /**
  * `MsgReceipt` is the interface for a payload structure for a response from the Kwil `call` GRPC endpoint {@link https://github.com/kwilteam/proto/blob/main/kwil/tx/v1/call.proto}.
@@ -16,14 +16,13 @@ export interface MsgReceipt {
  */
 export interface MsgData<T extends PayloadBytesTypes> {
     body: MsgBody<T>;
-    signature: Nillable<Signature<T>>;
+    auth_type: AnySignatureType;
     sender: Nillable<T extends BytesEncodingStatus.BASE64_ENCODED ? Base64String : Uint8Array>;
-    serialization: SerializationType;
 }
 
 interface MsgBody<T extends PayloadBytesTypes> {
-    payload: Nillable<T extends BytesEncodingStatus.BASE64_ENCODED ? Base64String : UnencodedActionPayload<PayloadType.CALL_ACTION>>;
     description: string;
+    payload: Nillable<T extends BytesEncodingStatus.BASE64_ENCODED ? Base64String : UnencodedActionPayload<PayloadType.CALL_ACTION>>;
 }
 
 /**
@@ -51,34 +50,21 @@ export class BaseMessage<T extends PayloadBytesTypes> implements MsgData<T> {
                 payload: null,
                 description: ""
             },
-            signature: null,
+            auth_type: SignatureType.SECP256K1_PERSONAL,
             sender: null,
-            serialization: SerializationType.SIGNED_MSG_CONCAT
         };
-    }
-
-    public isSigned(): boolean {
-        return !strings.isNilOrEmpty(this.signature?.signature_bytes as string);
     }
 
     public get body(): Readonly<MsgBody<T>> {
         return this.data.body;
     }
 
-    public get signature(): Readonly<Signature<T> | null> {
-        if(!this.data.signature) {
-            return null
-        }
-
-        return this.data.signature;
+    public get auth_type(): AnySignatureType {
+        return this.data.auth_type;
     }
 
     public get sender(): Nillable<T extends BytesEncodingStatus.BASE64_ENCODED ? Base64String : Uint8Array> {
         return this.data.sender;
-    }
-
-    public get serialization(): SerializationType {
-        return this.data.serialization;
     }
 }
 
@@ -99,9 +85,8 @@ export namespace Msg {
                 payload: null,
                 description: ""
             },
-            signature: null,
+            auth_type: SignatureType.SECP256K1_PERSONAL,
             sender: null,
-            serialization: SerializationType.SIGNED_MSG_CONCAT
         }
 
         // Pass the 'msg' object to the 'configure' function allowing external modification of its propoerties before instantiation of BaseMessage.
@@ -124,9 +109,8 @@ export namespace Msg {
         return Msg.create((msg: MsgData<PayloadBytesTypes>) => {
             // copy all fields from source to msg
             msg.body = source.body;
-            msg.signature = source.signature;
+            msg.auth_type = source.auth_type;
             msg.sender = source.sender;
-            msg.serialization = source.serialization;
 
             // Pass the 'msg' object to the 'configure' function allowing external modification of its propoerties before instantiation of BaseMessage.
             configure(msg);

@@ -405,22 +405,15 @@ DBID: ${msg.body.payload?.dbid}
 Action: ${msg.body.payload?.action}
 PayloadDigest: ${bytesToHex(digest)}
 `;
-    // sign the above message
-    const signedMessage = await executeSign(stringToBytes(signatureMessage), signer, signatureType);
 
     // copy the message and add the signature, with bytes set to base64 for transport over GRPC
     return Msg.copy<BytesEncodingStatus.BASE64_ENCODED>(msg, (msg) => {
       // bytes must be base64 encoded for transport over GRPC
       msg.body.payload = bytesToBase64(encodedPayload);
       msg.body.description = description;
-      msg.signature = {
-        // bytes must be base64 encoded for transport over GRPC
-        signature_bytes: bytesToBase64(signedMessage),
-        signature_type: signatureType.toString() as SignatureType,
-      };
+      msg.auth_type = signatureType;
       // bytes must be base64 encoded for transport over GRPC
       msg.sender = bytesToBase64(identifier);
-      msg.serialization = SerializationType.SIGNED_MSG_CONCAT;
     });
   }
 }
