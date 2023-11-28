@@ -28,6 +28,7 @@ export function nearB58ToHex(b58: string): string {
  * @param signer - An ethereum signer from Ethers v5 or Ethers v6.
  * @param message - The message to sign. Defaults to 'Sign this message to recover your public key.'.
  * @returns A promise that resolves to the recovered public key.
+ * @deprecated No longer supported. Ethereum accounts are now identified by their address. (will be removed in v0.5.0)
  */
 
 export async function recoverSecp256k1PubKey(signer: EthSigner, message: string = 'Sign this message to recover your public key.'): Promise<string> {

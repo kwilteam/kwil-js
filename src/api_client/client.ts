@@ -105,13 +105,13 @@ export default class Client extends Api {
 
     let acct: Account = {
       balance: '',
-      public_key: new Uint8Array(),
+      identifier: new Uint8Array(),
       nonce: '',
     };
 
     if (res.data) {
       acct.balance = res.data.account.balance;
-      acct.public_key = base64ToBytes(res.data.account.public_key as string);
+      acct.identifier = base64ToBytes(res.data.account.identifier as string);
       acct.nonce = res.data.account.nonce;
     }
 

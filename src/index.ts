@@ -72,6 +72,7 @@ namespace Utils {
   /**
    * Recovers the public key from a signature and a message for Secp256k1 Public Keys (EVM Networks).
    * @param signer - The signer for the action. This must be a valid Ethereum signer from Ethers v5 or Ethers v6.
+   * @deprecated No longer supported. Ethereum accounts are now identified by their address. (will be removed in v0.5.0)
    */
   export const recoverSecp256k1PubKey = _recoverSecp256k1PubKey;
 }

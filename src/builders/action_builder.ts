@@ -27,7 +27,7 @@ const TXN_BUILD_IN_PROGRESS: ActionInput[] = [];
 export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuilder {
   private readonly client: Kwil<T>;
   private _signer: Nillable<SignerSupplier> = null;
-  private _publicKey: Nillable<HexString | Uint8Array> = null;
+  private _identifier: Nillable<HexString | Uint8Array> = null;
   private _actions: ActionInput[] = [];
   private _signatureType: Nillable<AnySignatureType>;
   private _name: Nillable<string>;
@@ -139,18 +139,18 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
   }
 
   /**
-   * Specifies the public key of the wallet signing for the database operation.
+   * Specifies the identifier (e.g. wallet, public key, etc) of the signer for the action.
    *
-   * @param {HexString | Uint8Array} publicKey - The public key of the wallet signing for the database operation.
+   * @param {HexString | Uint8Array} identifier - The identifier of the wallet signing for the database operation.
    * @returns {ActionBuilder} The current `ActionBuilder` instance for chaining.
    * @throws Will throw an error if the value is specified while the action is being built.
-   * @throws Will throw an error if the public key is null or undefined.
+   * @throws Will throw an error if the identifier is null or undefined.
    */
-  publicKey(publicKey: HexString | Uint8Array): NonNil<ActionBuilder> {
+  publicKey(identifier: HexString | Uint8Array): NonNil<ActionBuilder> {
     this.assertNotBuilding();
 
-    // throw runtime error if public key is null or undefined
-    this._publicKey = objects.requireNonNil(publicKey, 'public key cannot be null or undefined.');
+    // throw runtime error if identifier is null or undefined
+    this._identifier = objects.requireNonNil(identifier, 'identifier cannot be null or undefined. Please pass a valid identifier to the .publicKey() method.');
     return this;
   }
 
@@ -283,10 +283,10 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
       'chain ID is required to build a transaction.'
     );
 
-    // resolve the public key and throw a runtime error if it is null or undefined
-    const publicKey = await Promisy.resolveOrReject(
-      this._publicKey,
-      'public key is required to build a transaction.'
+    // resolve the identifier and throw a runtime error if it is null or undefined
+    const identifier = await Promisy.resolveOrReject(
+      this._identifier,
+      'identifier is required to build a transaction.'
     );
 
     // resolve the signature type and throw a runtime error if it is null or undefined
@@ -314,7 +314,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
       .signer(signer, signatureType)
       .description(this._description)
       .chainId(chainId)
-      .publicKey(publicKey);
+      .publicKey(identifier);
 
     return tx.buildTx();
   }
@@ -355,11 +355,11 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
 
     let msg: PayloadBuilder = PayloadBuilderImpl.of(this.client).payload(payload);
 
-    // if a signer is specified, add the signer, signature type, public key, and description to the message
+    // if a signer is specified, add the signer, signature type, identifier, and description to the message
     if (signer) {
-      const publicKey = await Promisy.resolveOrReject(this._publicKey);
+      const identifier = await Promisy.resolveOrReject(this._identifier);
       const signatureType = await Promisy.resolveOrReject(this._signatureType);
-      msg = msg.signer(signer, signatureType).publicKey(publicKey).description(this._description);
+      msg = msg.signer(signer, signatureType).publicKey(identifier).description(this._description);
     }
 
     return await msg.buildMsg();
