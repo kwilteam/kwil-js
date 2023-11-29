@@ -3,19 +3,19 @@ import { KwilSigner, NodeKwil, Utils } from "../dist/index";
 import { ActionBody } from "../dist/core/action";
 import { DeployBody, DropBody } from "../dist/core/database";
 import compiledKf from "./mydb.json";
+import { TransferBody } from "../dist/funder/funding_types";
 require('dotenv').config()
 
 const kwil = new NodeKwil({
-    kwilProvider: "http://localhost:8080",
-    chainId: ""
+    kwilProvider: process.env.KWIL_PROVIDER as string,
+    chainId: process.env.CHAIN_ID as string,
 })
 
 const provider = new JsonRpcProvider(process.env.ETH_PROVIDER)
 const wallet = new Wallet(process.env.PRIVATE_KEY as string, provider)
 
 async function buildSigner() {
-    const pk = await Utils.recoverSecp256k1PubKey(wallet);
-    return new KwilSigner(wallet, pk);
+    return new KwilSigner(wallet, await wallet.getAddress());
 }
 
 async function main() {
@@ -35,13 +35,13 @@ async function main() {
     }
 
     // execute
-    await kwil.execute(actionBody, signer);
+    // await kwil.execute(actionBody, signer);
 
     //call with signer
-    await kwil.call(actionBody, signer);
+    // await kwil.call(actionBody, signer);
 
     //call without signer
-    await kwil.call(actionBody);
+    // await kwil.call(actionBody);
 
     // deploy database
     const deployBody: DeployBody = {
@@ -50,7 +50,7 @@ async function main() {
     }
 
     // deploy
-    await kwil.deploy(deployBody, signer);
+    // await kwil.deploy(deployBody, signer);
     
     // drop database
     const dropBody: DropBody = {
@@ -59,7 +59,16 @@ async function main() {
     }
 
     // drop
-    await kwil.drop(dropBody, signer);
+    // await kwil.drop(dropBody, signer);
+
+    const funderTest: TransferBody = {
+        to: "0xdB8C53Cd9be615934da491A7476f3f3288d98fEb",
+        amount: BigInt(1 * 10 ** 18),
+    }
+
+    // transfer
+    const res = await kwil.funder.transfer(funderTest, signer);
+    console.log(res);
 }
 
 main()

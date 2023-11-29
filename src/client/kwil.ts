@@ -22,6 +22,7 @@ import { objects } from '../utils/objects';
 import { executeSign } from '../core/signature';
 import { AuthSuccess, composeAuthMsg } from '../core/auth';
 import { wrap } from './intern';
+import { Funder } from '../funder/funder';
 
 /**
  * The main class for interacting with the Kwil network.
@@ -33,6 +34,7 @@ export abstract class Kwil<T extends EnvironmentType> {
   private readonly chainId: string;
   //cache schemas
   private schemas: Cache<GenericResponse<Database>>;
+  public funder: Funder<T>;
 
   protected constructor(opts: Config) {
     this.client = new Client({
@@ -51,6 +53,9 @@ export abstract class Kwil<T extends EnvironmentType> {
 
     // set kwilProvider
     this.kwilProvider = opts.kwilProvider;
+
+    // create funder
+    this.funder = new Funder<T>(this, this.client, this.chainId);
 
     //create a wrapped symbol of estimateCost method
     wrap(this, this.client.estimateCost.bind(this.client));

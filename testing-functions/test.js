@@ -9,7 +9,7 @@ const fractalDb = require("./fractal_db.json")
 const util = require("util")
 const near = require('near-api-js')
 const { from_b58 } = require('../dist/utils/base58')
-const { bytesToHex, hexToBytes } = require('../dist/utils/serial')
+const { bytesToHex, hexToBytes, stringToBytes } = require('../dist/utils/serial')
 const { bytesToBase64 } = require('../dist/utils/base64')
 const scrypt = require("scrypt-js")
 const nacl = require("tweetnacl")
@@ -28,7 +28,7 @@ async function test() {
     //update to goerli when live
     const provider = new ethers.JsonRpcProvider(process.env.ETH_PROVIDER)
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
-    const txHash = 'cc411eda91ea6be102ad5940be84e6c0fe587a7e6980287090e42324485b359f'
+    const txHash = 'c4212cf5d26bc7f0df9ac92fc213e18ae0ca7552f7f2fb8849ee06450f4f8873'
     const address = await wallet.getAddress()
 
     const kwil = new kwiljs.NodeKwil({
@@ -47,10 +47,10 @@ async function test() {
     console.log(dbid)
     // logger(dbid)
     // await authenticate(kwil, kwilSigner)
-    broadcast(kwil, testDB, wallet, address)
+    // broadcast(kwil, testDB, wallet, address)
     // await getTxInfo(kwil, txHash)
     // await getSchema(kwil, dbid)
-    // getAccount(kwil, address)
+    getAccount(kwil, "0x1e59ce931B4CFea3fe4B875411e280e173cB7A9C")
     // listDatabases(kwil, address)
     // ping(kwil)
     // chainInfo(kwil)

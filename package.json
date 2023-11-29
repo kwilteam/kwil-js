@@ -1,6 +1,6 @@
 {
-  "name": "@kwilteam/kwil-js",
-  "version": "0.3.2",
+  "name": "@lukelamey/kwil-js",
+  "version": "0.3.15",
   "description": "",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
