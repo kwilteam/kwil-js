@@ -1,6 +1,6 @@
-import { NonNil } from "../utils/types";
+import { HexString, NonNil } from "../utils/types";
 import { ActionSchema, Attribute, Column, Extension, Index, Table, Database } from "./database";
-import { DeployOrDrop, PayloadType, ValueType } from "./enums";
+import { BytesEncodingStatus, DeployOrDrop, PayloadType, ValueType } from "./enums";
 
 /**
  * `AllPayloads` is the union of all payload types.
@@ -55,6 +55,17 @@ export interface CompiledKuneiform {
     actions?: Partial<CompiledAction>[];
     extensions?: Partial<Extension>[];
 };
+
+/**
+ * `TransferPayload` is the payload for transferring funds.
+ * The generic allows the Builder to be typed to the correct payload type.
+ * The `to` field is typed to either a Uint8Array or a base64 string depending on the encoding status.
+ * The `amount` field is typed to a string because it is a decimal value.
+ */
+export interface TransferPayload<T extends BytesEncodingStatus> {
+    to: T extends BytesEncodingStatus.BASE64_ENCODED ? string : Uint8Array;
+    amount: string;
+}
 
 type CompiledTable = Omit<Table, 'columns' | 'indexes'> & {
     columns: ReadonlyArray<Partial<CompiledColumn>>;

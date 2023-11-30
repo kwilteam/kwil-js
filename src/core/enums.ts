@@ -35,6 +35,7 @@ export enum PayloadType {
     DROP_DATABASE = 'drop_schema',
     EXECUTE_ACTION = 'execute_action',
     CALL_ACTION = 'call_action',
+    TRANSFER = 'transfer',
 }
 
 export type DeployOrDrop = PayloadType.DEPLOY_DATABASE | PayloadType.DROP_DATABASE;

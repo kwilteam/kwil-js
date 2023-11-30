@@ -43,29 +43,22 @@ const kwil = new kwiljs.NodeKwil({
 
 ## Identifiers
 
-### Public Keys
+### Account Identifiers
 
-In Kwil, accounts are identified by a public key. Kwil supports Secp256k1 Public Keys (e.g. EVM networks such as Ethereum) and ED25519 Public Keys (e.g Near Protocol).
+In Kwil, accounts are identified by the signer that they use. Kwil natively supports two types of signers: Secp256k1 (EVM) and Ed25519.
 
-Note that a Secp256k1 public key is different than an Ethereum address. You can use a utility function to recover the public key for an Ethereum Signer. You can optionally customize the signing message for the public key recovery.
-
-```javascript
-import { Utils } from '@kwilteam/kwil-js'
-
-const signer = await provider.getSigner(); // can use wallet if NodeJS
-const publicKey = await Utils.recoverSecp256k1PubKey(signer, 'Welcome to our app! Sign this message to reveal your public key.'); 
-```
+Secp256k1 signers use Ethereum wallet address as identifiers. Ed25519 signers use the public key as identifiers.
 
 ### Database Identifiers (DBID)
 
 In Kwil, databases are identified by a 'database identifier', which is a hex encoded SHA224 Hash of the database name and public key, prepended with an `x`.
 
-The public key can be passed as a hex-encoded string, or as Bytes (Uint8Array).
+The account identifier can be passed as a hex-encoded string, or as Bytes (Uint8Array).
 
-To get the DBID for a public key and database name, you can use the following helper method:
+To get the DBID for an account identifier and database name, you can use the following helper method:
 
 ```javascript
-const dbid = kwil.getDBID('public_key', 'database_name')
+const dbid = kwil.getDBID('account_identifier', 'database_name')
 ```
 
 ## Signers
@@ -74,7 +67,7 @@ Certain operations in Kwil require signature authentication from the user (e.g. 
 
 To manage signing, Kwil-JS uses a `KwilSigner` class. Out of the box, Kwil-Js supports signers from [EthersJS](https://github.com/ethers-io/ethers.js) (v5 and v6). You can also pass a signing callback function (see below).
 
-The public key can be passed as a hex string or as bytes.
+The account identifier can be passed as a hex string or as bytes.
 
 ```javascript
 import { Utils, KwilSigner } from '@kwilteam/kwil-js';
@@ -84,11 +77,11 @@ import { BrowserProvider } from 'ethers';
 const provider = new BrowserProvider(window.ethereum)
 const signer = await provider.getSigner();
 
-// get secp256k1 public key
-const publicKey = await Utils.recoverSecp256k1PubKey(signer);
+// get ethereum address
+const identifier = await signer.getAddress();
 
 // create kwil signer
-const kwilSigner = new KwilSigner(signer, publicKey);
+const kwilSigner = new KwilSigner(signer, identifier);
 
 ```
 
@@ -98,10 +91,10 @@ If you wish to sign with something other than an EtherJS signer, you may pass a 
 
 Currently, Kwil supports two signature types:
 
-| Type      |   Enumerator   | Description |
-| :-------- | :------------: | ----------- |
-| Secp256k1 | 'secp256k1_ep' | The Kwil Signer will use a secp256k1 elliptic curve signature. |
-| Ed25519   |   'ed25519'    | The Kwil Signer will use an ed25519 signature. |
+| Type      |   Enumerator   |   Identifier   | Description |
+| :-------- | :------------: | ----------- | ----------- |
+| Secp256k1 | 'secp256k1_ep' | Ethereum Wallet Address | The Kwil Signer will use a secp256k1 elliptic curve signature. |
+| Ed25519   |   'ed25519'    | ED25519 Public Keys | The Kwil Signer will use an ed25519 signature. |
 
 To use an ed25519 signature:
 
@@ -112,8 +105,9 @@ import { KwilSigner } from '@kwilteam/kwil-js';
 // create keypair and signer
 const keys = nacl.sign.keyPair();
 const customSigner = (msg) => nacl.sign.detached(msg, keys.secretKey);
+const identifier = keys.publicKey;
 
-const kwilSigner = new KwilSigner(customSigner, keys.publicKey, 'ed25519');
+const kwilSigner = new KwilSigner(customSigner, identifier, 'ed25519');
 ```
 
 ## Database Queries
@@ -192,8 +186,6 @@ const res = await kwil.call(actionBody)
 
 ```
 
-`View` actions may also require a signer, depending on if the original actions were deployed with a `mustsign` attribute. You can check if an action requires a signature by calling `kwil.getSchema()`. If the action requires signing, you can also pass a `KwilSigner` as the second argument to `kwi.call()`.
-
 #### Select Query
 
 You may also query any of the database data by calling the `kwil.selectQuery()` method. Note that this can only be used for read-only queries
@@ -231,10 +223,10 @@ const res = await kwil.chainInfo()
 
 With the initialized Kwil object (either WebKwil or NodeKwil), you can query the Kwil provider for information about the network.
 
-To list the databases that belong to a public key:
+To list the databases that belong to an Ethereum wallet address:
 
 ``` javascript
-const res = await kwil.listDatabases("public_key")
+const res = await kwil.listDatabases("wallet_address")
 // res.data = ["db1", "db2", "db3"]
 ```
 
@@ -243,7 +235,7 @@ const res = await kwil.listDatabases("public_key")
 You can retrieve database information by calling `.getSchema()` and passing the dbid. Note that the database owner is returned as a Uint8Array.
 
 ``` javascript
-const dbid = kwil.getDBID("public_key", "database_name")
+const dbid = kwil.getDBID("owner_wallet_address", "database_name")
 const schema = await kwil.getSchema(dbid)
 
 /*
@@ -266,7 +258,7 @@ const res = await kwil.getAccount("public_key")
 
 /*
     res.data = {
-        address: "public_key",
+        identifier: Uint8Array,
         balance: "some_balance",
         nonce: "some_nonce"
     }
@@ -275,7 +267,7 @@ const res = await kwil.getAccount("public_key")
 
 ### Database Building
 
-Although you can deploy new databases with the JS-SDK, we strongly recommend using the Kwil [Kuneiform IDE](https://ide.kwil.com) to manage the entire database deployment process.
+Although you can deploy new databases with the JS-SDK, we strongly recommend using the Kwil [Kuneiform IDE](https://ide.kwil.com) or [Kwil CLI](https://github.com/kwilteam/binary-releases/releases) to manage the entire database deployment process.
 
 To deploy a new database, first define your syntax in the Kuneiform IDE. You can learn more about the syntax rules [here](https://docs.kwil.com/intro-to-kwil/welcome-to-kwil).
 
@@ -301,8 +293,7 @@ const res = await kwil.deploy(deployBody, kwilSigner);
     res = {
         status: 200,
         data: {
-            tx_hash: "0xsome_hash",
-            fee: "fee_amount"
+            tx_hash: "0xsome_hash"
         }
     }
 */
