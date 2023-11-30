@@ -50,7 +50,7 @@ async function test() {
     // broadcast(kwil, testDB, wallet, address)
     // await getTxInfo(kwil, txHash)
     // await getSchema(kwil, dbid)
-    getAccount(kwil, "0x1e59ce931B4CFea3fe4B875411e280e173cB7A9C")
+    getAccount(kwil, address)
     // listDatabases(kwil, address)
     // ping(kwil)
     // chainInfo(kwil)

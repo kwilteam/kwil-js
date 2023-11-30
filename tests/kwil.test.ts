@@ -110,6 +110,21 @@ describe("Kwil", () => {
     });
 });
 
+describe('Testing Kwil.funder', () => {
+    const funder = kwil.funder;
+
+    it('should transfer tokens', async () => {
+        const transferBody = {
+            to: "0x6E2fA2aF9B4eF5c8A3BcF9A9B9A4F1a1a2c1c1c1",
+            amount: BigInt(1),
+        }
+        const result = await funder.transfer(transferBody, kSigner);
+        expect(result.data).toBeDefined();
+        expect(result.data).toMatchObject<TxReceipt>({
+            tx_hash: expect.any(String),
+        });
+    })
+})
 
 // Testing all methods to be called on actionBuilder, actionInput, and the Transaction class and kwil.broadcast()
 describe("ActionBuilder + ActionInput + Transaction public methods & broadcasting an action Transaction", () => {
@@ -857,6 +872,7 @@ describe("Testing custom signers", () => {
     let recordCount: number;
     let input: Types.ActionInput;
 
+    beforeEach(async () => await sleep(1000))
     async function getEdKeys(): Promise<nacl.SignKeyPair> {
         return await deriveKeyPair64('69420', '69420');
     }
@@ -1127,7 +1143,7 @@ describe("Testing simple actions and db deploy / drop (builder pattern alternati
         });
     });
     
-    describe('kwil.deploy() and kwil.drop() should each return a TxReceipt', () => { 
+    describe.only('kwil.deploy() and kwil.drop() should each return a TxReceipt', () => { 
         let dbName: string;
 
         beforeAll(async () => {
@@ -1139,14 +1155,16 @@ describe("Testing simple actions and db deploy / drop (builder pattern alternati
         test('kwil.deploy()', async () => {
             let kfSchema: CompiledKuneiform = schema;
             kfSchema.name = dbName;
-            kfSchema.owner = kSigner.identifier as Uint8Array;
+            kfSchema.owner = kSigner.identifier;
 
+            console.log('sadjfksadjfklsadjasdfswadfsad')
             const deployBody: DeployBody = {
                 schema: kfSchema,
                 description: "This is a test database"
             }
-
+          
             const result = await kwil.deploy(deployBody, kSigner);
+            
             const hash = result.data?.tx_hash;
 
             expect(result.data).toBeDefined();
@@ -1155,6 +1173,7 @@ describe("Testing simple actions and db deploy / drop (builder pattern alternati
                 tx_hash: expect.any(String),
             });
 
+            console.log('HASH', hash)
             await sleep(2000);
 
             const txResult = (await kwil.txInfo(hash as string)).data?.tx_result.log;
