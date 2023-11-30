@@ -333,7 +333,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
     // throw a runtime error if more than one set of inputs is trying to be executed. Call does not allow bulk execution.
     if (preparedActions && preparedActions.length > 1) {
       throw new Error(
-        'Cannot pass an array of actions inputs to a message. Please pass a single action input object.'
+        'Cannot pass more than one input to the call endpoint. Please pass only one input and try again.'
       );
     }
 
