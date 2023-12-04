@@ -60,7 +60,7 @@ To get the DBID for an account identifier and database name, you can use the fol
 ```javascript
 import { Utils } from "@kwilteam/kwil-js";
 
-const dbid = Utils.getDBID('account_identifier', 'database_name')
+const dbid = Utils.generateDBID('account_identifier', 'database_name')
 ```
 
 ## Signers
@@ -190,7 +190,7 @@ const res = await kwil.call(actionBody)
 
 ```
 
-If the view action uses a `@caller` contextual variable, you should also pass the `kwilSigner` to the `kwil.call()` method. This will allow the view action to access the caller's account identifier. Note that the user does not need to sign anything for view actions.
+If the view action uses a `@caller` contextual variable, you should also pass the `kwilSigner` to the `kwil.call()` method. This will allow the view action to access the caller's account identifier. Note that the user does not need to sign for view actions.
 
 ```javascript
 await kwil.call(actionBody, kwilSigner)
@@ -229,7 +229,7 @@ const res = await kwil.chainInfo()
 */
 ```
 
-### Listing Databases
+### List Databases
 
 To list the databases that belong to a user:
 
