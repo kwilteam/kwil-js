@@ -45,7 +45,7 @@ const kwil = new kwiljs.NodeKwil({
 
 ### Account Identifiers
 
-In Kwil, accounts are identified by the signer that they use. Kwil natively supports two types of signers: Secp256k1 (EVM) and ED25519.
+In Kwil, accounts are identified by the signer(s) that are used on the Kwil Network. Kwil natively supports two types of signers: Secp256k1 (EVM) and ED25519.
 
 Secp256k1 signers use **Ethereum wallet addresses** as identifiers. ED25519 signers use the **ED25519 public key** as identifiers.
 
@@ -58,7 +58,9 @@ The account identifier can be passed as a hex-encoded string, or as Bytes (Uint8
 To get the DBID for an account identifier and database name, you can use the following helper method:
 
 ```javascript
-const dbid = kwil.getDBID('account_identifier', 'database_name')
+import { Utils } from "@kwilteam/kwil-js";
+
+const dbid = Utils.getDBID('account_identifier', 'database_name')
 ```
 
 ## Signers
@@ -128,7 +130,7 @@ const input = new Utils.ActionInput()
     .put("input_name_3", "input_value_3")
 
 // get database ID
-const dbid = kwil.getDBID("publicKey", "database_name")
+const dbid = kwil.getDBID("account_identifier", "database_name")
 
 const actionBody = {
     dbid,
@@ -155,7 +157,7 @@ To read data on Kwil, you can (1) call a `view` action or (2) query with the `.s
 
 `View` actions are read-only actions that can be used to query data without having to wait for a transaction to be mined on Kwil.
 
-Note that only one `input` is allowed for `view` actions.
+Only one `input` is allowed for `view` actions.
 
 To execute a `view` action, pass an `ActionBody` object to the `kwil.call()` method.
 
@@ -169,7 +171,7 @@ const input = new Utils.ActionInput()
     .put("input_name_3", "input_value_3")
 
 // retrieve database ID to locate action
-const dbid = kwil.getDBID("public_key", "database_name")
+const dbid = kwil.getDBID("account_identifier", "database_name")
 
 const actionBody = {
     dbid,
@@ -188,12 +190,18 @@ const res = await kwil.call(actionBody)
 
 ```
 
+If the view action uses a `@caller` contextual variable, you should also pass the `kwilSigner` to the `kwil.call()` method. This will allow the view action to access the caller's account identifier. Note that the user does not need to sign anything for view actions.
+
+```javascript
+await kwil.call(actionBody, kwilSigner)
+```
+
 #### Select Query
 
 You may also query any of the database data by calling the `kwil.selectQuery()` method. Note that this can only be used for read-only queries
 
 ``` javascript
-const dbid = kwil.getDBID("public_key", "database_name")
+const dbid = kwil.getDBID("account_identifier", "database_name")
 const res = await kwil.selectQuery(dbid, "SELECT * FROM users")
 
 /*
@@ -254,7 +262,7 @@ const schema = await kwil.getSchema(dbid)
 You can get the remaining balance of an account and the account's nonce by using the `.getAccount()` method. `.getAccount()` takes an account identifier, either in hex format or bytes (Uint8Array).
 
 ``` javascript
-const res = await kwil.getAccount("public_key")
+const res = await kwil.getAccount("account_identifier")
 
 /*
     res.data = {
@@ -263,6 +271,47 @@ const res = await kwil.getAccount("public_key")
         nonce: "some_nonce"
     }
 */
+```
+
+## Kwil Gateway Authentication
+
+Kwil Gateway is an optional service on Kwil networks that allows for authenticating users with their signatures for read queries. If your Kwil network used a Kwil Gateway, you can use the `kwil.authenticate()` method to authenticate users. Note the additional step of passing the cookie back to the kwil class in NodeJS.
+
+### Web
+
+```javascript
+// pass the kwilSigner to the authenticate method
+const res = await kwil.authenticate(kwilSigner);
+
+/*
+    res = {
+        status: 200,
+        data: {
+            result: "success"
+        }
+    }
+*/
+```
+
+### NodeJS
+
+``` javascript
+// pass the kwilSigner to the authenticate method
+const res = await kwil.authenticate(kwilSigner);
+
+/*
+    res = {
+        status: 200,
+        data: {
+            result: "success",
+            cookie: "some_cookie"
+        },
+        
+    }
+*/
+
+// pass the cookie to the kwil class
+kwil.setCookie(res.data.cookie)
 ```
 
 ## Database Building

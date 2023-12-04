@@ -276,9 +276,8 @@ export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBui
       }
 
       // sign the message
-      return await PayloadBuilderImpl.signMsg(
+      return await PayloadBuilderImpl.authMsg(
         msg,
-        this._signer,
         identifier,
         signatureType,
         this._description
@@ -368,43 +367,25 @@ Kwil Chain ID: ${tx.body.chain_id}
   }
 
   /**
-   * Signs the payload of a `view action` / call request to the call GRPC endpoint.
+   * Adds the caller's sender address to the message.
    *
    * @param {Message} msg - The message to sign. See {@link Message} for more information.
-   * @param {SignerSupplier} signer - The signer to be used to sign the message.
    * @param {Uint8Array} identifier - The identifier (e.g. wallet address, public key, etc) for the signature, represented as bytes.
    * @param {AnySignatureType} signatureType - The signature type being used. See {@link SignatureType} for more information.
    * @param {string} description - The description to be included in the signature.
    * @returns Message - A promise that resolves to the signed message.
    * @throws {Error} - If the the signer is not an Ethers Signer or a function that accepts and returns a Uint8Array.
    */
-  private static async signMsg(
+  private static async authMsg(
     msg: BaseMessage<BytesEncodingStatus.UINT8_ENCODED>,
-    signer: SignerSupplier,
     identifier: Uint8Array,
     signatureType: AnySignatureType,
     description: string
   ): Promise<Message> {
-    // ensure that the payload is not already base64 encoded
-    if (typeof msg.body.payload === 'string') {
-      throw new Error('Payload must be an object to sign a message.');
-    }
-
     // rlp encode the payload
     const encodedPayload = kwilEncode(
       msg.body.payload as UnencodedActionPayload<PayloadType.CALL_ACTION>
     );
-
-    // create the digest, which is the first bytes of the sha256 hash of the rlp-encoded payload
-    const digest = sha256BytesToBytes(encodedPayload).subarray(0, 20);
-
-    // create the signature message
-    const signatureMessage = `${description}
-
-DBID: ${msg.body.payload?.dbid}
-Action: ${msg.body.payload?.action}
-PayloadDigest: ${bytesToHex(digest)}
-`;
 
     // copy the message and add the signature, with bytes set to base64 for transport over GRPC
     return Msg.copy<BytesEncodingStatus.BASE64_ENCODED>(msg, (msg) => {

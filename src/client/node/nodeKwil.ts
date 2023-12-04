@@ -7,7 +7,7 @@ import { GenericResponse } from '../../core/resreq';
 import { Kwil } from '../kwil';
 
 export class NodeKwil extends Kwil<EnvironmentType.NODE> {
-  config: Config;
+  private config: Config;
 
   constructor(opts: Config) {
     super(opts);

@@ -294,7 +294,7 @@ export abstract class Kwil<T extends EnvironmentType> {
    * Calls a Kwil node. This can be used to execute read-only ('view') actions on Kwil.
    *
    * @param actionBody - The body of the action to send. This should use the `ActionBody` interface.
-   * @param kwilSigner (optional) - The signer for the action call, if required. Signers are only required for actions with a `must_sign` attribute. You can check the attributes on an action by calling `kwil.getSchema(dbid)`.
+   * @param kwilSigner (optional) - If the action uses a `@caller` contextual variable, the kwilSigner should be passed to provide the caller's identifier. No signature is required.
    * @returns A promise that resolves to the receipt of the message.
    */
   public async call(

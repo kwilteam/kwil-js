@@ -1,8 +1,8 @@
 # Migrating from Kwil SDK v3
 
-Below is a list of all key changes from the [Kwil v3 SDK](https://www.npmjs.com/package/kwil).
+Below is a list of all key changes from the [Kwil v3 SDK / old Kwil SDK](https://www.npmjs.com/package/kwil).
 
-Note that this SDK must be used with a Kwil Daemon that is running the CometBFT Release (Kwil Daemon v0.6.0+). If you are not using the CometBFT Release, please use [Kwil v3](https://www.npmjs.com/package/kwil).
+Note that this SDK must be used with a Kwil Node v0.6.0 and above. If you are not using a Kwil Node on v0.6.0 or above, please use the [old Kwil SDK](https://www.npmjs.com/package/kwil).
 
 ## Breaking Changes
 
@@ -14,7 +14,7 @@ In order to prevent users from accidentally broadcasting transactions to the wro
 
 ```javascript
 const kwil = new WebKwil({
-    provider: 'https://kwil.com',
+    provider: 'https://some_kwil_provider',
 });
 ```
 
@@ -22,7 +22,7 @@ const kwil = new WebKwil({
 
 ```javascript
 const kwil = new WebKwil({
-    provider: 'https://kwil.com',
+    provider: 'https://some_kwil_provider',
     chainId: 'your_chain_id'
 });
 ```
@@ -41,39 +41,18 @@ const res = await kwil.chainInfo()
 */
 ```
 
-### Wallet Address Identifiers -> Public Keys
+### Account Identifiers Determined by Signers
 
-Because the newest version of Kwil suports both Secp256k1 Signatures and ED25519 Signatures, accounts and databases are now associated with public keys, not just ethereum wallet address.
+In the old version, accounts were only identified by Ethereum Wallets. Now, Kwil Networks support pluggable authentication/signers, meaning that the signer determines the appropriate account identifier.
 
-#### Old Version
+Out of the box, Kwil supports Secp256k1 (Ethereum) and Ed25519 signatures. Their corresponding identifiers are below:
 
-```javascript
-const dbid = kwil.generateDBID('0x_walletaddress', 'dbName')
-```
+| Type      |   Identifier   | Description |
+| :-------- | :------------: | ----------- |
+| Secp256k1 | Ethereum Wallet Address | The Kwil Signer will use a secp256k1 elliptic curve signature, which is the same signature used in Ethereum's [personal sign](https://eips.ethereum.org/EIPS/eip-191). |
+| ED25519   | ED25519 Public Key | The Kwil Signer will use an ED25519 signature. |
 
-#### New version
-
-```javascript
-const dbid = kwil.generateDBID('public_key', 'dbName')
-```
-
-Note that an Ethereum wallet address is not a a Secp256k1 Public Key. To recover a Secp256k1 public key from an Ethereum signer, you can use the following helper method. You can optionally customize the message that the user signs when recovering the public key:
-
-```javascript
-import { Utils } from '@kwilteam/kwil-js'
-import { BrowserProvider } from 'ethers'
-
-const provider = new BrowserProvider(window.ethereum);
-const signer = await provider.getSigner();
-
-const publicKey = await Utils.recoverSecp256k1PubKey(signer, 'Welcome to our app! Sign this message to reveal your public key.');
-```
-
-### Get Account Identified by Public Key, Public Keys Returned as Bytes
-
-In the old version, accounts were identified by Ethereum Wallets. Now, they are identified by public keys (Secp256k1 or ED25519). Public keys can be represented by a Hex string or bytes (Uint8Array). If using a NEAR public key, you may also pass the Base58 encoded public key with the "ed25519:" prefix.
-
-When returned from the server, public keys will always be represented as a Uint8Array.
+When returned from the server, identifiers will always be represented as a Uint8Array.
 
 #### Old Version
 
@@ -92,11 +71,11 @@ const res = await kwil.getAccount('wallet_address');
 #### New Version
 
 ```javascript
-const res = await kwil.getAccount('public_key');
+const res = await kwil.getAccount('account_identifier');
 
 /*
     res.data = {
-        public_key: Uint8Array(),
+        identifier: Uint8Array(),
         balance: '###',
         nonce: '###'
     }
@@ -108,7 +87,7 @@ const res = await kwil.getAccount('public_key');
 
 The previous version of Kwil used an `ActionBuilder()` class to build and sign transactions. `ActionBuilder()` has been moved internally. Actions can now be executed by using the `kwil.execute()` method, passing an object that matches the `ActionBody` interface and a [KwilSigner](#kwil-signer-class--ed25519-signatures) (see more below).
 
-You can also customize the signature message that appears in metamask by adding a `decscription` field to the action body.
+You can also customize the signature message that appears in MetaMask by adding a `decscription` field to the action body.
 
 #### Old Version
 
@@ -135,7 +114,7 @@ const actionBody = {
 const res = await kwil.execute(actionBody, kwilSigner);
 ```
 
-### Data Returned From Broadcast
+### Data Returned From Transactions
 
 In the old version, the information returned from the broadcast endpoint would indicate whether a transaction was successful or not.
 
@@ -158,16 +137,25 @@ const res = await kwil.broadcast(tx);
 #### New Version
 
 ```javascript
-const res = await kwil.broadcast(tx);
+const res = await kwil.execute(actionBody, kwilSigner);
 
 /*
     res.data = {
         tx_hash: ...,
     }
 */
+
+const success = await kwil.txInfo(res.data?.tx_hash);
+
+/*
+    success.data = {
+        hash: 'tx_hash',
+        height: 'block height of tx on kwil chain'
+        tx: Transaction (i.e. the transaction that was sent)
+        tx_result: TxResult (gas fee, success message, failure message, etc.)
+    }
+*/
 ```
-
-
 
 ### Snake case for data returned from server
 
@@ -182,18 +170,18 @@ In the old version, the Kwil SDK used EtherJS signers for signing transactions. 
 The `KwilSigner` still natively supports `EthersJS` signers. You can also pass a signing callback function (see below) and specifiyng the signature type.
 
 ```javascript
-import { Utils, KwilSigner } from '@kwilteam/kwil-js';
+import { KwilSigner } from '@kwilteam/kwil-js';
 import { BrowserProvider } from 'ethers';
 
 // get ethers signer
 const provider = new BrowserProvider(window.ethereum)
 const signer = await provider.getSigner();
 
-// get secp256k1 public key
-const publicKey = await Utils.recoverSecp256k1PubKey(signer);
+// get wallet address
+const address = await signer.getAddress();
 
 // create kwil signer
-const kwilSigner = new KwilSigner(signer, publicKey);
+const kwilSigner = new KwilSigner(signer, address);
 
 ```
 
@@ -201,10 +189,10 @@ If you wish to sign with something other than an EtherJS signer, you may pass a 
 
 Currently, Kwil supports two signature types:
 
-| Type      |   Enumerator   | Description |
-| :-------- | :------------: | ----------- |
-| Secp256k1 | 'secp256k1_ep' | The Kwil Signer will use a secp256k1 elliptic curve signature, which is the same signature used in Ethereum's [personal sign](https://eips.ethereum.org/EIPS/eip-191). |
-| Ed25519   |   'ed25519'    | The Kwil Signer will use an ed25519 signature. |
+| Type      |   Identifier   |   Enumerator   | Description |
+| :-------- | :------------: | ----------- | ----------- |
+| Secp256k1 | Ethereum Wallet Address | 'secp256k1_ep' | The Kwil Signer will use a secp256k1 elliptic curve signature, which is the same signature used in Ethereum's [personal sign](https://eips.ethereum.org/EIPS/eip-191). |
+| ED25519   | ED25519 Public Key |   'ed25519'    | The Kwil Signer will use an ED25519 signature. |signature.   |
 
 To use an ed25519 signature:
 
@@ -225,13 +213,13 @@ Any action with `mutability` set to `view` should be called by passing an `Actio
 
 You can check if an action is a `view` action by calling `kwil.getSchema()`.
 
-Note that view actions should be read-only. The advantage to using `view` actions is that you do not have to wait for a transaction to be mined on the network; you can view the result of your read-only query instantly.
+Note that view actions should be read-only, and only accept **one input**. The advantage to using `view` actions is that you do not have to wait for a transaction to be mined on the network; you can view the result of your read-only query instantly.
 
 ```javascript
 const actionBody = {
     dbid: 'some_dbid',
     action: 'action_name',
-    inputs: [ 'inputs', 'inputs' ]
+    inputs: [ 'inputs' ]
 }
 
 const res = await kwil.call(actionBody);
@@ -243,7 +231,11 @@ const res = await kwil.call(actionBody);
 */
 ```
 
-If a `view` action has a `mustsign` auxiliary, you can also pass a `KwilSigner` as a second argument to the `kwil.call()` method.
+If the view action uses a `@caller` contextual variable, you should also pass the `kwilSigner` to the `kwil.call()` method. This will allow the view action to access the caller's account identifier. Note that the user does not need to sign anything for view actions.
+
+```javascript
+await kwil.call(actionBody, kwilSigner)
+```
 
 ### TxInfo Endpoint
 

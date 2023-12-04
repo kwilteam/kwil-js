@@ -29,7 +29,7 @@ async function test() {
     const provider = new ethers.JsonRpcProvider(process.env.ETH_PROVIDER)
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
     const txHash = 'c4212cf5d26bc7f0df9ac92fc213e18ae0ca7552f7f2fb8849ee06450f4f8873'
-    const address = await wallet.getAddress()
+    const address = await wallet.address
 
     const kwil = new kwiljs.NodeKwil({
         kwilProvider: process.env.KWIL_PROVIDER || "SHOULD FAIL",
@@ -42,15 +42,14 @@ async function test() {
     const kwilSigner = new KwilSigner(wallet, address)
     
     const pubByte = hexToBytes(pubKey)
-    console.log(pubByte)
     const dbid = kwil.getDBID(address, "mydb")
     console.log(dbid)
     // logger(dbid)
     // await authenticate(kwil, kwilSigner)
-    // broadcast(kwil, testDB, wallet, address)
+    broadcast(kwil, testDB, wallet, address)
     // await getTxInfo(kwil, txHash)
     // await getSchema(kwil, dbid)
-    getAccount(kwil, address)
+    // getAccount(kwil, address)
     // listDatabases(kwil, address)
     // ping(kwil)
     // chainInfo(kwil)
