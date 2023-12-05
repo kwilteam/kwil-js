@@ -134,6 +134,44 @@ const res = await kwil.broadcast(tx);
 */
 ```
 
+### List Databases now returns array of `DatasetInfo` objects
+
+In the old version, the `kwil.listDatabases()` method returned an array of database name strings. Now, the `kwil.listDatabases()` method returns an array of `DatasetInfo` objects, which contains the database name, database ID, and database owner.
+
+Additionally, you can now leave the first parameter of `kwil.listDatabases()` empty to list all databases on the Kwil network.
+
+#### Old Version
+
+```javascript
+const res = await kwil.listDatabases();
+
+/*
+    res.data = [ 'db1', 'db2', ... ]
+*/
+```
+
+#### New Version
+
+```javascript
+const res = await kwil.listDatabases();
+
+/*
+    res.data = [
+        {
+            name: 'db1',
+            id: 'db1_id',
+            owner: Uint8Array()
+        },
+        {
+            name: 'db2',
+            id: 'db2_id',
+            owner: Uint8Array()
+        },
+        ...
+    ]
+*/
+```
+
 #### New Version
 
 ```javascript
