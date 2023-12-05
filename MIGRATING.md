@@ -133,6 +133,28 @@ const res = await kwil.broadcast(tx);
     }
 */
 ```
+#### New Version
+
+```javascript
+const res = await kwil.execute(actionBody, kwilSigner);
+
+/*
+    res.data = {
+        tx_hash: ...,
+    }
+*/
+
+const success = await kwil.txInfo(res.data?.tx_hash);
+
+/*
+    success.data = {
+        hash: 'tx_hash',
+        height: 'block height of tx on kwil chain'
+        tx: Transaction (i.e. the transaction that was sent)
+        tx_result: TxResult (gas fee, success message, failure message, etc.)
+    }
+*/
+```
 
 ### List Databases now returns array of `DatasetInfo` objects
 
@@ -169,29 +191,6 @@ const res = await kwil.listDatabases();
         },
         ...
     ]
-*/
-```
-
-#### New Version
-
-```javascript
-const res = await kwil.execute(actionBody, kwilSigner);
-
-/*
-    res.data = {
-        tx_hash: ...,
-    }
-*/
-
-const success = await kwil.txInfo(res.data?.tx_hash);
-
-/*
-    success.data = {
-        hash: 'tx_hash',
-        height: 'block height of tx on kwil chain'
-        tx: Transaction (i.e. the transaction that was sent)
-        tx_result: TxResult (gas fee, success message, failure message, etc.)
-    }
 */
 ```
 
