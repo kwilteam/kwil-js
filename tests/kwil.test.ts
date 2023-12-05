@@ -1143,7 +1143,7 @@ describe("Testing simple actions and db deploy / drop (builder pattern alternati
         });
     });
     
-    describe.only('kwil.deploy() and kwil.drop() should each return a TxReceipt', () => { 
+    describe('kwil.deploy() and kwil.drop() should each return a TxReceipt', () => { 
         let dbName: string;
 
         beforeAll(async () => {
