@@ -410,7 +410,7 @@ export abstract class Kwil<T extends EnvironmentType> {
 
     if (info.data?.chain_id !== this.chainId) {
       console.warn(
-        `WARNING: Chain ID mismatch. Expected ${this.chainId}, got ${info.data?.chain_id}`
+        `WARNING: Chain ID mismatch. Expected ${info.data?.chain_id}, got ${this.chainId}`
       );
     }
 
