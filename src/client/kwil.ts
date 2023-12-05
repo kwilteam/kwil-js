@@ -4,7 +4,7 @@ import { ApiConfig, Config } from '../api_client/config';
 import { GenericResponse } from '../core/resreq';
 import { Database, DeployBody, DropBody, SelectQuery } from '../core/database';
 import { BaseTransaction, TxReceipt } from '../core/tx';
-import { Account, ChainInfo } from '../core/network';
+import { Account, ChainInfo, DatasetInfo } from '../core/network';
 import { ActionBuilderImpl } from '../builders/action_builder';
 import { base64ToBytes, bytesToBase64 } from '../utils/base64';
 import { DBBuilderImpl } from '../builders/db_builder';
@@ -347,11 +347,11 @@ export abstract class Kwil<T extends EnvironmentType> {
   /**
    * Lists all databases owned by a particular owner.
    *
-   * @param owner - The owner's public key (Ethereum or NEAR Protocol). Ethereum keys can be passed as a hex string (0x123...) or as bytes (Uint8Array). NEAR protocol public keys can be passed as the base58 encoded public key (with "ed25519:" prefix), a hex string, or bytes (Uint8Array).
+   * @param owner (optional) - Lists the databases on a network. Can pass and owner identifier to see all the databases deployed by a specific account, or leave empty to see al the databases deployed on the network. The owner's public key (Ethereum or NEAR Protocol). Ethereum keys can be passed as a hex string (0x123...) or as bytes (Uint8Array).
    * @returns A promise that resolves to a list of database names.
    */
 
-  public async listDatabases(owner: string | Uint8Array): Promise<GenericResponse<string[]>> {
+  public async listDatabases(owner?: string | Uint8Array): Promise<GenericResponse<DatasetInfo[]>> {
     if (typeof owner === 'string') {
       if (isNearPubKey(owner)) {
         owner = nearB58ToHex(owner);

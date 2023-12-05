@@ -23,6 +23,9 @@ import { DeployBody, DropBody } from "../dist/core/database";
 import { PayloadType } from "../dist/core/enums";
 import { CompiledKuneiform, DropDbPayload } from "../dist/core/payload";
 import { objects } from "../dist/utils/objects";
+import { DatasetInfo } from "../dist/core/network";
+
+const kgwIsOn = false;
 
 function sleep(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -538,7 +541,7 @@ describe("DBBuilder", () => {
 
     beforeAll(async () => {
         const dbAmount = await kwil.listDatabases(address);
-        const count = dbAmount.data as string[];
+        const count = dbAmount.data as DatasetInfo[];
         db.name = `test_db_${count.length + 1}`;
         newDbName = db.name;
     });
@@ -612,7 +615,7 @@ describe("DBBuilder", () => {
         expect(result.data).toMatchObject<TxReceipt>({
             tx_hash: expect.any(String),
         });
-
+        console.log('result', result)
         if(result.data) {
             txHash = result.data.tx_hash;
         }
@@ -631,7 +634,7 @@ describe("Testing case insentivity on test_db", () => {
 
     beforeAll(async () => {
         const dbAmount = await kwil.listDatabases(address);
-        const count = dbAmount.data as string[];
+        const count = dbAmount.data as DatasetInfo[];
         dbid = kwil.getDBID(address, newDbName);
         console.log('DBID', dbid)
         console.log('TXHASH', txHash)
@@ -764,12 +767,12 @@ describe("Drop Database", () => {
     let dropDb: DBBuilder<PayloadType.DROP_DATABASE>;
     let dbName: string;
 
-    beforeEach(async () => await sleep(2000))
+    beforeEach(async () => await sleep(3000))
 
     beforeAll(async () => {
         // retrieve latest database name
         const dbAmount = await kwil.listDatabases(address);
-        const count = dbAmount.data as string[];
+        const count = dbAmount.data as DatasetInfo[];
         dbName = `test_DB_${count.length}`;
         const dbid = kwil.getDBID(address, dbName);
         payload.dbid = dbid; 
@@ -853,6 +856,8 @@ describe("Drop Database", () => {
 
 describe("Setting auth with KGW", () => {
     it("should authenticate and set the auth", async () => {
+        if (!kgwIsOn) return;
+
         const auth = await kwil.authenticate(kSigner);
         expect(auth).toBeDefined();
         expect(auth.data?.cookie).toBeDefined();
@@ -909,7 +914,7 @@ describe("Testing custom signers", () => {
         recordCount = recordCount++;
     })
 
-    afterEach(async () => await sleep(2000))
+    afterEach(async () => await sleep(3000))
     
     test("secp256k1 signed tx's should broadcast correctly", async() => {
         const tx = await kwil
@@ -931,7 +936,9 @@ describe("Testing custom signers", () => {
     })
 
     test('secp256k1 signed msgs should call correctly', async () => {
-       await setAuth(kwil, secpSigner)
+        if(kgwIsOn) {
+            await setAuth(kwil, kSigner);
+        }
 
         const msg = await kwil
             .actionBuilder()
@@ -972,7 +979,9 @@ describe("Testing custom signers", () => {
     })
 
     test("ed25519 signed msgs should call correctly", async() => {
-        await setAuth(kwil, edSigner)
+        if (kgwIsOn) {
+            await setAuth(kwil, kSigner);
+        }
         const edKeys = await getEdKeys();
 
         const msg = await kwil
@@ -995,11 +1004,13 @@ describe("Testing custom signers", () => {
 
 
 describe("Testing simple actions and db deploy / drop (builder pattern alternative)", () => {
-    afterEach(async () => await sleep(2000))
+    afterEach(async () => await sleep(3000))
 
     beforeAll(async () => {
         // set authentication
-        await setAuth(kwil, kSigner);
+        if(kgwIsOn) {
+            await setAuth(kwil, kSigner);
+        }
     })
 
     test("kwil.call() with ActionBody interface as first argument, action inputs NOT REQUIRED, and no signature required should return a MsgReceipt", async () => {
@@ -1107,7 +1118,7 @@ describe("Testing simple actions and db deploy / drop (builder pattern alternati
                 tx_hash: expect.any(String),
             });
 
-            await sleep(2000);
+            await sleep(3000);
             const txResult = (await kwil.txInfo(hash as string)).data?.tx_result.log;
             expect(txResult).toBe('success');
         });
@@ -1137,7 +1148,7 @@ describe("Testing simple actions and db deploy / drop (builder pattern alternati
                 tx_hash: expect.any(String),
             });
 
-            await sleep(2000);
+            await sleep(3000);
             const txResult = (await kwil.txInfo(hash as string)).data?.tx_result.log;
             expect(txResult).toBe('success');
         });
@@ -1148,7 +1159,7 @@ describe("Testing simple actions and db deploy / drop (builder pattern alternati
 
         beforeAll(async () => {
             const dbAmount = await kwil.listDatabases(kSigner.identifier);
-            const count = dbAmount.data as string[];
+            const count = dbAmount.data as DatasetInfo[];
             dbName = `test_db_${count.length + 1}`;
         })
 
@@ -1174,7 +1185,7 @@ describe("Testing simple actions and db deploy / drop (builder pattern alternati
             });
 
             console.log('HASH', hash)
-            await sleep(2000);
+            await sleep(3000);
 
             const txResult = (await kwil.txInfo(hash as string)).data?.tx_result.log;
             expect(txResult).toBe('success');
@@ -1196,7 +1207,7 @@ describe("Testing simple actions and db deploy / drop (builder pattern alternati
                 tx_hash: expect.any(String),
             });
 
-            await sleep(2000);
+            await sleep(3000);
 
             const txResult = (await kwil.txInfo(hash as string)).data?.tx_result.log;
             expect(txResult).toBe('success');

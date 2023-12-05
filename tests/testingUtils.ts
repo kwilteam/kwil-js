@@ -83,6 +83,8 @@ export function waitForDeployment(hash: string): Promise<boolean> {
             } catch (err) {
                 console.error("SDK Error:", err); // optionally log the error
                 // Instead of rejecting, retry
+                const errMsg = hash === undefined ? "hash is undefined. please restart the test" : hash + "- this should pass eventually";
+                console.log(`Retrying after 500ms. Hash: ${errMsg}`);
                 resolve(await waitForDeployment(hash));
             }
         }, 500);

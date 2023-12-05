@@ -28,8 +28,13 @@ async function test() {
     //update to goerli when live
     const provider = new ethers.JsonRpcProvider(process.env.ETH_PROVIDER)
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
-    const txHash = 'c4212cf5d26bc7f0df9ac92fc213e18ae0ca7552f7f2fb8849ee06450f4f8873'
+    const txHash = '66a459b7a1152b55665cf0faf9fee433fe7d5207c94be2add594c45156f11588'
     const address = await wallet.address
+
+    const getEdKeys = async () => {
+        const key = await deriveKeyPair64("password", "humanId")
+        return key
+    }
 
     const kwil = new kwiljs.NodeKwil({
         kwilProvider: process.env.KWIL_PROVIDER || "SHOULD FAIL",
@@ -43,14 +48,14 @@ async function test() {
     
     const pubByte = hexToBytes(pubKey)
     const dbid = kwil.getDBID(address, "mydb")
-    console.log(dbid)
     // logger(dbid)
     // await authenticate(kwil, kwilSigner)
-    broadcast(kwil, testDB, wallet, address)
+    // broadcast(kwil, testDB, wallet, address)
+    // broadcastEd25519(kwil, simpleDb)
     // await getTxInfo(kwil, txHash)
     // await getSchema(kwil, dbid)
     // getAccount(kwil, address)
-    // listDatabases(kwil, address)
+    listDatabases(kwil)
     // ping(kwil)
     // chainInfo(kwil)
     // await execSingleAction(kwil, dbid, "add_post", wallet, address)
@@ -309,6 +314,20 @@ async function testViewWithEdSigner(kwil, dbid) {
     const res = await kwil.call(msg);
 
     logger(res.data.result)
+}
+
+async function broadcastEd25519(kwil, db) {
+    const key = await deriveKeyPair64("password", "humanId")
+
+    const signCallback = (msg) => nacl.sign.detached(msg, key.secretKey)
+
+    const signer = new KwilSigner(signCallback, key.publicKey, 'ed25519')
+
+    const res = await kwil.deploy({
+        schema: db
+    }, signer)
+
+    logger(res)
 }
 
 async function recoverPubKey(signer) {

@@ -1,5 +1,5 @@
 import { base64ToBytes, bytesToBase64 } from '../utils/base64';
-import { Account, ChainInfo } from '../core/network';
+import { Account, ChainInfo, DatasetInfo } from '../core/network';
 import { Database, SelectQuery } from '../core/database';
 import { Transaction, TxReceipt } from '../core/tx';
 import { Api } from './api';
@@ -27,8 +27,8 @@ import { TxInfoReceipt } from '../core/txQuery';
 import { Message, MsgData, MsgReceipt } from '../core/message';
 import { kwilDecode } from '../utils/rlp';
 import { BytesEncodingStatus, EnvironmentType } from '../core/enums';
-import { HexString } from '../utils/types';
 import { AuthInfo, AuthSuccess, AuthenticatedBody } from '../core/auth';
+import { AxiosResponse } from 'axios';
 
 export default class Client extends Api {
   constructor(opts: ApiConfig, cookie?: string) {
@@ -121,10 +121,29 @@ export default class Client extends Api {
     };
   }
 
-  public async listDatabases(owner: Uint8Array): Promise<GenericResponse<string[]>> {
-    const urlSafeB64 = base64UrlEncode(bytesToBase64(owner));
+  public async listDatabases(owner?: Uint8Array): Promise<GenericResponse<DatasetInfo[]>> {
+    let urlSafeB64 = '';
+
+    if(owner) {
+      urlSafeB64 = base64UrlEncode(bytesToBase64(owner));
+    }
+    
     const res = await super.get<ListDatabasesResponse>(`/api/v1/${urlSafeB64}/databases`);
-    return checkRes(res, (r) => r.databases);
+    
+    //convert base64 identifiers to Uint8Array
+    const convertedRes: AxiosResponse<{databases: DatasetInfo[]}> = {
+      ...res,
+      data: {
+        databases: res.data.databases.map((db) => {
+          return {
+            ...db,
+            owner: base64ToBytes(db.owner),
+          }
+        })
+      },
+    }
+
+    return checkRes(convertedRes, (r) => r.databases);
   }
 
   public async estimateCost(tx: Transaction): Promise<GenericResponse<string>> {

@@ -231,10 +231,10 @@ const res = await kwil.chainInfo()
 
 ### List Databases
 
-To list the databases that belong to a user:
+To see databases that are deployed on the Kwil network, you can call the `.listDatabases()` method. You can optionally pass an account identifier to see only the databases that the account owns.
 
 ``` javascript
-const res = await kwil.listDatabases("account_identifier")
+const res = await kwil.listDatabases("account_identifier (optional)")
 // res.data = ["db1", "db2", "db3"]
 ```
 

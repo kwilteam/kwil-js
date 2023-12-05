@@ -22,7 +22,7 @@ import {
 } from './core/database';
 import { GenericResponse as _GenericResponse } from './core/resreq';
 import { TxResult as _TxResult, TxInfoReceipt as _TxInfoReceipt } from './core/txQuery';
-import { Account as _Account } from './core/network';
+import { Account as _Account, DatasetInfo as _DatasetInfo } from './core/network';
 import { MsgReceipt as _MsgReceipt, Message as _Message } from './core/message';
 import { recoverSecp256k1PubKey as _recoverSecp256k1PubKey } from './utils/keys';
 import { KwilSigner } from './core/kwilSigner';
@@ -56,6 +56,7 @@ namespace Types {
   export type DeployBody = _DeployBody;
   export type DropBody = _DropBody;
   export type ActionBody = _ActionBody;
+  export type DatasetInfo = _DatasetInfo;
 }
 
 namespace Utils {
@@ -72,7 +73,7 @@ namespace Utils {
   /**
    * Recovers the public key from a signature and a message for Secp256k1 Public Keys (EVM Networks).
    * @param signer - The signer for the action. This must be a valid Ethereum signer from Ethers v5 or Ethers v6.
-   * @deprecated No longer supported. Ethereum accounts are now identified by their address. (will be removed in v0.5.0)
+   * @deprecated No longer supported. Ethereum accounts are now identified by their address. (will be removed in kwil-js v0.5.0)
    */
   export const recoverSecp256k1PubKey = _recoverSecp256k1PubKey;
 }

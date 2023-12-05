@@ -21,7 +21,6 @@ export interface MsgData<T extends PayloadBytesTypes> {
 }
 
 interface MsgBody<T extends PayloadBytesTypes> {
-    description: string;
     payload: Nillable<T extends BytesEncodingStatus.BASE64_ENCODED ? Base64String : UnencodedActionPayload<PayloadType.CALL_ACTION>>;
 }
 
@@ -47,8 +46,7 @@ export class BaseMessage<T extends PayloadBytesTypes> implements MsgData<T> {
         // create a basic template of msg. Null values are used to be compatible with both types in PayloadBytesTypes.
         this.data = data || {
             body: {
-                payload: null,
-                description: ""
+                payload: null
             },
             auth_type: SignatureType.SECP256K1_PERSONAL,
             sender: null,
