@@ -8,7 +8,12 @@ import { base64ToBytes, bytesToBase64 } from '../utils/base64';
 import { Kwil } from '../client/kwil';
 import { SignerSupplier, PayloadBuilder as PayloadBuilder } from '../core/builders';
 import { unwrap } from '../client/intern';
-import { BytesEncodingStatus, EnvironmentType, PayloadType, SerializationType } from '../core/enums';
+import {
+  BytesEncodingStatus,
+  EnvironmentType,
+  PayloadType,
+  SerializationType,
+} from '../core/enums';
 import { kwilEncode } from '../utils/rlp';
 import { bytesToHex, hexToBytes, stringToBytes } from '../utils/serial';
 import { AnySignatureType, SignatureType, executeSign } from '../core/signature';
@@ -276,12 +281,7 @@ export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBui
       }
 
       // sign the message
-      return await PayloadBuilderImpl.authMsg(
-        msg,
-        identifier,
-        signatureType,
-        this._description
-      );
+      return await PayloadBuilderImpl.authMsg(msg, identifier, signatureType);
     }
 
     // return the unsigned message, with the payload base64 encoded
@@ -379,8 +379,7 @@ Kwil Chain ID: ${tx.body.chain_id}
   private static async authMsg(
     msg: BaseMessage<BytesEncodingStatus.UINT8_ENCODED>,
     identifier: Uint8Array,
-    signatureType: AnySignatureType,
-    description: string
+    signatureType: AnySignatureType
   ): Promise<Message> {
     // rlp encode the payload
     const encodedPayload = kwilEncode(
@@ -391,7 +390,6 @@ Kwil Chain ID: ${tx.body.chain_id}
     return Msg.copy<BytesEncodingStatus.BASE64_ENCODED>(msg, (msg) => {
       // bytes must be base64 encoded for transport over GRPC
       msg.body.payload = bytesToBase64(encodedPayload);
-      msg.body.description = description;
       msg.auth_type = signatureType;
       // bytes must be base64 encoded for transport over GRPC
       msg.sender = bytesToBase64(identifier);

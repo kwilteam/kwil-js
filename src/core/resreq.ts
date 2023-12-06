@@ -1,5 +1,5 @@
 import { Database } from './database';
-import { Account, ChainInfo } from './network';
+import { Account, ChainInfo, DatasetInfoServer } from './network';
 import { BaseTransaction, TxReceipt, TxnData } from './tx';
 import { TxResult } from './txQuery';
 import { BytesEncodingStatus, EnvironmentType } from './enums';
@@ -23,7 +23,7 @@ export interface GetAccountResponse {
 }
 
 export interface ListDatabasesResponse {
-  databases: string[];
+  databases: DatasetInfoServer[];
 }
 
 export interface EstimateCostReq {
