@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.4.0](https://github.com/kwilteam/kwil-js/compare/v0.3.2...v0.4.0) (2023-12-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* **client:** The kwil.listDatabases() method now returns an array of db-objects (owner,
+identifier, dbid). Previously, only the db name would be returned when an owner's address was passed
+to `listDatabases()`.
+* KwilSigners using Secp256k1 / EtherJS signers should now pass the Ethereum wallet
+address as the identifier, rather than the public key.
+
+### Features
+
+* change ethereum identifier to wallet address ([54b2aa1](https://github.com/kwilteam/kwil-js/commit/54b2aa18091cb718c60168e4be94b4529562a415))
+* **kwil.ts:** add authenticate method ([ad97043](https://github.com/kwilteam/kwil-js/commit/ad9704335e17310423109e50b68ed5cde2a13116))
+* **kwil/funder:** added funder property to kwil class ([e50d14d](https://github.com/kwilteam/kwil-js/commit/e50d14da8f61ea8119e4f3a2043a2ee9939a6705))
+
+
+* **client:** change list database return ([a96046a](https://github.com/kwilteam/kwil-js/commit/a96046a4a2ba78de8a4f6610068254423d162ec1)), closes [/github.com/kwilteam/proto/pull/26#event-11158139032](https://github.com/kwilteam//github.com/kwilteam/proto/pull/26/issues/event-11158139032)
+
 ### [0.3.2](https://github.com/kwilteam/kwil-js/compare/v0.3.1...v0.3.2) (2023-11-07)
 
 ### [0.3.1](https://github.com/kwilteam/kwil-js/compare/v0.3.0...v0.3.1) (2023-11-07)
