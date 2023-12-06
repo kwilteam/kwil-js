@@ -28,7 +28,7 @@ async function test() {
     //update to goerli when live
     const provider = new ethers.JsonRpcProvider(process.env.ETH_PROVIDER)
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
-    const txHash = '66a459b7a1152b55665cf0faf9fee433fe7d5207c94be2add594c45156f11588'
+    const txHash = 'fb07af19fdf04d3693216ad9d9699d9f4a72f387882ebd3ef82e69dbfed219ea'
     const address = await wallet.address
 
     const getEdKeys = async () => {
@@ -50,9 +50,9 @@ async function test() {
     const dbid = kwil.getDBID(address, "mydb")
     // logger(dbid)
     // await authenticate(kwil, kwilSigner)
-    broadcast(kwil, testDB, wallet, address)
+    // broadcast(kwil, testDB, wallet, address)
     // broadcastEd25519(kwil, simpleDb)
-    // await getTxInfo(kwil, txHash)
+    await getTxInfo(kwil, txHash)
     // await getSchema(kwil, dbid)
     // getAccount(kwil, address)
     // listDatabases(kwil)

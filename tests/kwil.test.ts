@@ -618,6 +618,7 @@ describe("DBBuilder", () => {
         console.log('result', result)
         if(result.data) {
             txHash = result.data.tx_hash;
+            await waitForDeployment(txHash);
         }
     });
 });
@@ -637,8 +638,6 @@ describe("Testing case insentivity on test_db", () => {
         const count = dbAmount.data as DatasetInfo[];
         dbid = kwil.getDBID(address, newDbName);
         console.log('DBID', dbid)
-        console.log('TXHASH', txHash)
-        await waitForDeployment(txHash);
     }, 20000);
 
     test("createUserTest action should execute", async () => {
