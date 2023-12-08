@@ -72,8 +72,8 @@ export interface Extension {
 }
 
 export interface ExtensionConfig {
-    Argument: string;
-    Value: string;
+    argument: string;
+    value: string;
 }
 
 export interface SelectQuery {

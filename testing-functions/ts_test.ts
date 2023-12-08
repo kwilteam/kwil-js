@@ -2,7 +2,7 @@ import { Wallet, JsonRpcProvider } from "ethers";
 import { KwilSigner, NodeKwil, Utils } from "../dist/index";
 import { ActionBody } from "../dist/core/action";
 import { DeployBody, DropBody } from "../dist/core/database";
-import compiledKf from "./mydb.json";
+import compiledKf from "./math.kf.json";
 import { TransferBody } from "../dist/funder/funding_types";
 require('dotenv').config()
 

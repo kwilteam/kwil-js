@@ -1,0 +1,133 @@
+{
+  "owner": "",
+  "name": "testmath",
+  "tables": [
+    {
+      "name": "records",
+      "columns": [
+        {
+          "name": "id",
+          "type": "int",
+          "attributes": [
+            {
+              "type": "primary_key"
+            },
+            {
+              "type": "not_null"
+            }
+          ]
+        },
+        {
+          "name": "operationType",
+          "type": "text",
+          "attributes": [
+            {
+              "type": "not_null"
+            }
+          ]
+        },
+        {
+          "name": "param1",
+          "type": "int",
+          "attributes": [
+            {
+              "type": "not_null"
+            }
+          ]
+        },
+        {
+          "name": "param2",
+          "type": "int",
+          "attributes": [
+            {
+              "type": "not_null"
+            }
+          ]
+        },
+        {
+          "name": "finalResponse",
+          "type": "int",
+          "attributes": [
+            {
+              "type": "not_null"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "name": "addOp",
+      "inputs": [
+        "$id",
+        "$v1",
+        "$v2"
+      ],
+      "public": true,
+      "mutability": "update",
+      "auxiliaries": null,
+      "statements": [
+        "$result=math.add($v1,$v2);",
+        "INSERT INTO records\n    VALUES (\n        $id,\n        'add',\n        $v1,\n        $v2,\n        $result\n    );"
+      ]
+    },
+    {
+      "name": "divOp",
+      "inputs": [
+        "$id",
+        "$v1",
+        "$v2"
+      ],
+      "public": true,
+      "mutability": "update",
+      "auxiliaries": null,
+      "statements": [
+        "$result=math.divide($v1,$v2);",
+        "INSERT INTO records\n    VALUES (\n        $id,\n        'divide',\n        $v1,\n        $v2,\n        $result\n    );"
+      ]
+    },
+    {
+      "name": "multOp",
+      "inputs": [
+        "$id",
+        "$v1",
+        "$v2"
+      ],
+      "public": true,
+      "mutability": "update",
+      "auxiliaries": null,
+      "statements": [
+        "$result=math.multiple($v1,$v2);",
+        "INSERT INTO records\n    VALUES (\n        $id,\n        'multiply',\n        $v1,\n        $v2,\n        $result\n    );"
+      ]
+    },
+    {
+      "name": "subOp",
+      "inputs": [
+        "$id",
+        "$v1",
+        "$v2"
+      ],
+      "public": true,
+      "mutability": "update",
+      "auxiliaries": null,
+      "statements": [
+        "$result=math.subtract($v1,$v2);",
+        "INSERT INTO records\n    VALUES (\n        $id,\n        'subtract',\n        $v1,\n        $v2,\n        $result\n    );"
+      ]
+    }
+  ],
+  "extensions": [
+    {
+      "name": "math",
+      "config": [
+        {
+          "argument": "round",
+          "value": "'up'"
+        }
+      ],
+      "alias": "math"
+    }
+  ]
+}
