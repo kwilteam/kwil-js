@@ -390,12 +390,12 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType> im
 
         extension.config &&
           extension.config.forEach((config) => {
-            if (!config.Argument) {
-              config.Argument = '';
+            if (!config.argument) {
+              config.argument = '';
             }
 
-            if (!config.Value) {
-              config.Value = '';
+            if (!config.value) {
+              config.value = '';
             }
           });
       });

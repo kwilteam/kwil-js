@@ -60,8 +60,8 @@ export function enforceDatabaseOrder(db: NonNil<Database>): NonNil<Database> {
                 name: extension.name,
                 config: extension.config && extension.config.length > 0 ? extension.config?.map(config => {
                     return {
-                        Argument: config.Argument,
-                        Value: config.Value,
+                        argument: config.argument,
+                        value: config.value,
                     }
                 }): [],
                 alias: extension.alias,
