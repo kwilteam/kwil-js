@@ -63,7 +63,7 @@ async function test() {
     // await select(kwil, dbid, "SELECT * FROM posts")
     // bulkAction(kwil, dbid, "add_post", wallet, address)
     // await testViewWithParam(kwil, dbid, wallet)
-    // await testViewWithSign(kwil, dbid, kwilSigner)
+    await testViewWithSign(kwil, dbid, kwilSigner)
     // await testViewWithEdSigner(kwil, dbid)
     // await customSignature(kwil, dbid)
     // await julioSignature(kwil, dbid)

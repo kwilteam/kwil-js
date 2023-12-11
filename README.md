@@ -187,7 +187,6 @@ const res = await kwil.call(actionBody)
         result: [ query results ],
     }
 */
-
 ```
 
 If the view action uses a `@caller` contextual variable, you should also pass the `kwilSigner` to the `kwil.call()` method. This will allow the view action to access the caller's account identifier. Note that the user does not need to sign for view actions.
@@ -349,41 +348,16 @@ const res = await kwil.deploy(deployBody, kwilSigner);
 
 ## Kwil Gateway Authentication
 
-Kwil Gateway is an optional service on Kwil networks that allows for authenticating users with their signatures for read queries. If your Kwil network used a Kwil Gateway, you can use the `kwil.authenticate()` method to authenticate users. Note the additional step of passing the cookie back to the kwil class in NodeJS.
+Kwil Gateway is an optional service on Kwil networks that allows for authenticating users with their signatures for read queries / view actions. If your Kwil network used a Kwil Gateway, you should pass a `KwilSigner` to the `kwil.call()` method. If the user is not authenticated, the user will be prompted to sign a message to authenticate, and the SDK will automatically include the authentication cookie in each subsequent request.
 
-### Web
 
-``` javascript
-// pass the kwilSigner to the authenticate method
-const res = await kwil.authenticate(kwilSigner);
-
-/*
-    res = {
-        status: 200,
-        data: {
-            result: "success"
-        }
-    }
-*/
-```
-
-### NodeJS
-
-``` javascript
-// pass the kwilSigner to the authenticate method
-const res = await kwil.authenticate(kwilSigner);
+```javascript
+// pass KwilSigner to the call method
+const res = await kwil.call(actionBody, kwilSigner);
 
 /*
-    res = {
-        status: 200,
-        data: {
-            result: "success",
-            cookie: "some_cookie"
-        },
-        
+    res.data = {
+        result: [ query results ],
     }
 */
-
-// pass the cookie to the kwil class
-kwil.setCookie(res.data.cookie)
 ```
