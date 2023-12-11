@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.5.0](https://github.com/kwilteam/kwil-js/compare/v0.4.1...v0.5.0) (2023-12-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* Remove the `kwil.authenticate()` and `kwil.setCookie()` methods, as those methods
+are now handled internally by the `kwil.call()` method.
+
+### Features
+
+* make kwil.call() auto authenticate, when required ([e591eb9](https://github.com/kwilteam/kwil-js/commit/e591eb9c4e37395f3f5e206ed9740e2894c34084))
+
 ### [0.4.1](https://github.com/kwilteam/kwil-js/compare/v0.4.0...v0.4.1) (2023-12-08)
 
 
