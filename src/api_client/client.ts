@@ -240,7 +240,11 @@ export default class Client extends Api {
     };
 
     const res = await super.post<CallRes>(`/api/v1/call`, req);
-    checkRes(res);
+
+    // if we get a 401, we need to return the response so we can try to authenticate
+    if(res.status !== 401) {
+      checkRes(res);
+    }
 
     let result: any = null;
 

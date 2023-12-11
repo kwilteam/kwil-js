@@ -101,9 +101,3 @@ export const deriveKeyPair64 = async (password: string, humanId: string) => {
 
     return nacl.sign.keyPair.fromSeed(derivedKey);
 };
-
-export async function setAuth(kwil: NodeKwil, signer: KwilSigner): Promise<void> {
-    const auth = await kwil.authenticate(signer);
-    const cookie = objects.requireNonNil(auth.data?.cookie);
-    kwil.setCookie(cookie);
-}
