@@ -28,7 +28,7 @@ async function test() {
     //update to goerli when live
     const provider = new ethers.JsonRpcProvider(process.env.ETH_PROVIDER)
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
-    const txHash = 'fb07af19fdf04d3693216ad9d9699d9f4a72f387882ebd3ef82e69dbfed219ea'
+    const txHash = 'c0b758cf6385b19549ee522acd5d662d5db1974d3e8269d5e6870374f8d32bff'
     const address = await wallet.address
 
     const getEdKeys = async () => {
@@ -48,9 +48,9 @@ async function test() {
     
     const pubByte = hexToBytes(pubKey)
     const dbid = kwil.getDBID(address, "mydb")
-    // logger(dbid)
+    logger(dbid)
     // await authenticate(kwil, kwilSigner)
-    broadcast(kwil, testDB, wallet, address)
+    // broadcast(kwil, testDB, wallet, address)
     // broadcastEd25519(kwil, simpleDb)
     // await getTxInfo(kwil, txHash)
     // await getSchema(kwil, dbid)
@@ -63,7 +63,7 @@ async function test() {
     // await select(kwil, dbid, "SELECT * FROM posts")
     // bulkAction(kwil, dbid, "add_post", wallet, address)
     // await testViewWithParam(kwil, dbid, wallet)
-    // await testViewWithSign(kwil, dbid, wallet, pubByte)
+    // await testViewWithSign(kwil, dbid, kwilSigner)
     // await testViewWithEdSigner(kwil, dbid)
     // await customSignature(kwil, dbid)
     // await julioSignature(kwil, dbid)
@@ -277,20 +277,16 @@ async function testViewWithParam(kwil, dbid, wallet) {
     logger(res.data.result)
 }
 
-async function testViewWithSign(kwil, dbid, wallet, pubKey) {
-    const msg = await kwil
-        .actionBuilder()
-        .dbid(dbid)
-        .name('view_must_sign')
-        .publicKey(pubKey)
-        .description('This is my friendly description!')
-        .signer(wallet)
-        .buildMsg()
+async function testViewWithSign(kwil, dbid, signer) {
+    const body = {
+        action: "view_must_sign",
+        dbid,
+        inputs: []
+    }
 
-    logger(msg)
-    const res = await kwil.call(msg);
+    const res = await kwil.call(body, signer)
 
-    logger(res.data.result)
+    logger(res)
 }
 
 async function testViewWithEdSigner(kwil, dbid) {

@@ -3,7 +3,7 @@ const logSpy = jest.spyOn(console, 'log').mockImplementation((...args) => {
     originalLog(...args);
 });
 jest.resetModules();
-import {AmntObject, deriveKeyPair64, kwil, setAuth, waitForDeployment, wallet} from "./testingUtils";
+import {AmntObject, deriveKeyPair64, kwil, waitForDeployment, wallet} from "./testingUtils";
 import {BaseTransaction, Transaction, TxReceipt} from "../dist/core/tx";
 import {ActionBuilder, DBBuilder} from "../dist/core/builders";
 import {ActionBuilderImpl} from "../dist/builders/action_builder";
@@ -853,23 +853,6 @@ describe("Drop Database", () => {
     });
 });
 
-describe("Setting auth with KGW", () => {
-    it("should authenticate and set the auth", async () => {
-        if (!kgwIsOn) return;
-
-        const auth = await kwil.authenticate(kSigner);
-        expect(auth).toBeDefined();
-        expect(auth.data?.cookie).toBeDefined();
-        expect(auth.status).toBe(200);
-
-        const cookie = objects.requireNonNil(auth.data?.cookie);
-        kwil.setCookie(cookie);
-
-        // @ts-ignore
-        expect(kwil.client.cookie).toBe(cookie);
-    })
-})
-
 describe("Testing custom signers", () => {
     const secpSigner = new KwilSigner(wallet, address)
     let edSigner: KwilSigner;
@@ -935,19 +918,12 @@ describe("Testing custom signers", () => {
     })
 
     test('secp256k1 signed msgs should call correctly', async () => {
-        if(kgwIsOn) {
-            await setAuth(kwil, kSigner);
+        const payload: ActionBody = {
+            dbid,
+            action: "view_must_sign",
         }
 
-        const msg = await kwil
-            .actionBuilder()
-            .dbid(dbid)
-            .name('view_must_sign')
-            .publicKey(address)
-            .signer(customSecpSigner, SignatureType.SECP256K1_PERSONAL)
-            .buildMsg();
-
-        const result = await kwil.call(msg);
+        const result = await kwil.call(payload, secpSigner)
 
         expect(result.data).toBeDefined();
         expect(result.data).toMatchObject<MsgReceipt>({
@@ -978,20 +954,14 @@ describe("Testing custom signers", () => {
     })
 
     test("ed25519 signed msgs should call correctly", async() => {
-        if (kgwIsOn) {
-            await setAuth(kwil, kSigner);
-        }
         const edKeys = await getEdKeys();
 
-        const msg = await kwil
-            .actionBuilder()
-            .dbid(dbid)
-            .name('view_must_sign')
-            .publicKey(edKeys.publicKey)
-            .signer(customEdSigner, SignatureType.ED25519)
-            .buildMsg();
-
-        const result = await kwil.call(msg);
+        const payload: ActionBody = {
+            dbid,
+            action: "view_must_sign",
+        }
+        
+        const result = await kwil.call(payload, edSigner);
 
         expect(result.data).toBeDefined();
         expect(result.data).toMatchObject<MsgReceipt>({
@@ -1007,9 +977,7 @@ describe("Testing simple actions and db deploy / drop (builder pattern alternati
 
     beforeAll(async () => {
         // set authentication
-        if(kgwIsOn) {
-            await setAuth(kwil, kSigner);
-        }
+        
     })
 
     test("kwil.call() with ActionBody interface as first argument, action inputs NOT REQUIRED, and no signature required should return a MsgReceipt", async () => {

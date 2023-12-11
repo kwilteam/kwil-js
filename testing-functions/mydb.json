@@ -118,9 +118,7 @@
       "inputs": null,
       "public": true,
       "mutability": "view",
-      "auxiliaries": [
-        "mustsign"
-      ],
+      "auxiliaries": null,
       "statements": [
         "SELECT * from posts;"
       ]

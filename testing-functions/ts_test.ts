@@ -9,6 +9,7 @@ require('dotenv').config()
 const kwil = new NodeKwil({
     kwilProvider: process.env.KWIL_PROVIDER as string,
     chainId: process.env.CHAIN_ID as string,
+    logging: true,
 })
 
 const provider = new JsonRpcProvider(process.env.ETH_PROVIDER)
@@ -23,8 +24,8 @@ async function main() {
 
     // actions
     const actionBody: ActionBody = {
-        dbid: 'xd924382720df474c6bb62d26da9aeb10add2ad2835c0b7e4a6336ad8',
-        action: 'add_post',
+        dbid: kwil.getDBID(signer.identifier, 'mydb'),
+        action: 'view_must_sign',
         inputs: [{
             "$id": 69,
             "$user": "Luke",
@@ -38,7 +39,8 @@ async function main() {
     // await kwil.execute(actionBody, signer);
 
     //call with signer
-    // await kwil.call(actionBody, signer);
+    const callRes = await kwil.call(actionBody, signer);
+    console.log(callRes);
 
     //call without signer
     // await kwil.call(actionBody);
@@ -67,8 +69,8 @@ async function main() {
     }
 
     // transfer
-    const res = await kwil.funder.transfer(funderTest, signer);
-    console.log(res);
+    // const res = await kwil.funder.transfer(funderTest, signer);
+    // console.log(res);
 }
 
 main()

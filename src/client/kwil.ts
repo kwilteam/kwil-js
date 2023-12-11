@@ -1,6 +1,6 @@
 import { generateDBID } from '../utils/dbid';
 import Client from '../api_client/client';
-import { ApiConfig, Config } from '../api_client/config';
+import { Config } from '../api_client/config';
 import { GenericResponse } from '../core/resreq';
 import { Database, DeployBody, DropBody, SelectQuery } from '../core/database';
 import { BaseTransaction, TxReceipt } from '../core/tx';
@@ -14,7 +14,7 @@ import { Cache } from '../utils/cache';
 import { TxInfoReceipt } from '../core/txQuery';
 import { BaseMessage, Message, MsgReceipt } from '../core/message';
 import { BytesEncodingStatus, EnvironmentType, PayloadType } from '../core/enums';
-import { bytesToEthHex, bytesToHex, hexToBytes, stringToBytes } from '../utils/serial';
+import { hexToBytes, stringToBytes } from '../utils/serial';
 import { isNearPubKey, nearB58ToHex } from '../utils/keys';
 import { ActionBody, ActionInput, Entries, resolveActionInputs } from '../core/action';
 import { KwilSigner } from '../core/kwilSigner';
@@ -31,7 +31,7 @@ import { Funder } from '../funder/funder';
 export abstract class Kwil<T extends EnvironmentType> {
   protected client: Client;
   private readonly kwilProvider: string;
-  private readonly chainId: string;
+  protected readonly chainId: string;
   //cache schemas
   private schemas: Cache<GenericResponse<Database>>;
   public funder: Funder<T>;
@@ -248,103 +248,6 @@ export abstract class Kwil<T extends EnvironmentType> {
   }
 
   /**
-   * Authenticates a user with the Kwil Gateway (KGW). This is required to execute mustsign view actions.
-   *
-   * This method should only be used if your Kwil Network is using the Kwil Gateway.
-   *
-   * @param {KwilSigner} signer - The signer for the authentication.
-   * @returns A promise that resolves to the authentication success or failure.
-   */
-  public async authenticate(signer: KwilSigner): Promise<GenericResponse<AuthSuccess<T>>> {
-    const authParam = await this.client.getAuthenticate();
-
-    const authProperties = objects.requireNonNil(
-      authParam.data,
-      'something went wrong retrieving auth info from KGW'
-    );
-
-
-    const msg = composeAuthMsg(authProperties, this.kwilProvider, '1', this.chainId);
-
-    console.log('MESSAGE ===', bytesToBase64(stringToBytes(msg)))
-    
-
-    const signature = await executeSign(stringToBytes(msg), signer.signer, signer.signatureType);
-
-    console.log('hex identifier', bytesToHex(signer.identifier))
-    console.log('base64 identifier', bytesToBase64(signer.identifier))
-    console.log('signature', signature)
-    console.log('identifier', signer.identifier)
-    const authBody = {
-      nonce: authProperties.nonce,
-      sender: bytesToBase64(signer.identifier),
-      signature: {
-        signature_bytes: bytesToBase64(signature),
-        signature_type: signer.signatureType,
-      },
-    };
-
-    console.log(authBody)
-    const res = await this.client.postAuthenticate(authBody);
-
-    return res;
-  }
-
-  /**
-   * Calls a Kwil node. This can be used to execute read-only ('view') actions on Kwil.
-   *
-   * @param actionBody - The body of the action to send. This should use the `ActionBody` interface.
-   * @param kwilSigner (optional) - If the action uses a `@caller` contextual variable, the kwilSigner should be passed to provide the caller's identifier. No signature is required.
-   * @returns A promise that resolves to the receipt of the message.
-   */
-  public async call(
-    actionBody: ActionBody,
-    kwilSigner?: KwilSigner
-  ): Promise<GenericResponse<MsgReceipt>>;
-
-  /**
-   * Calls a Kwil node. This can be used to execute read-only ('view') actions on Kwil.
-   *
-   * @param actionBody - The message to send. The message can be built using the ActionBuilder class.
-   * @returns A promise that resolves to the receipt of the message.
-   */
-  public async call(actionBody: Message): Promise<GenericResponse<MsgReceipt>>;
-
-  public async call(
-    actionBody: Message | ActionBody,
-    kwilSigner?: KwilSigner
-  ): Promise<GenericResponse<MsgReceipt>> {
-    if (actionBody instanceof BaseMessage) {
-      return await this.client.call(actionBody);
-    }
-
-    let msg = ActionBuilderImpl.of<T>(this)
-      .chainId(this.chainId)
-      .dbid(actionBody.dbid)
-      .name(actionBody.action)
-      .description(actionBody.description || '');
-
-    if (actionBody.inputs) {
-      const inputs =
-        actionBody.inputs[0] instanceof ActionInput
-          ? (actionBody.inputs as ActionInput[])
-          : new ActionInput().putFromObjects(actionBody.inputs as Entries[]);
-
-      msg = msg.concat(inputs);
-    }
-
-    if (kwilSigner) {
-      msg = msg
-        .signer(kwilSigner.signer, kwilSigner.signatureType)
-        .publicKey(kwilSigner.identifier);
-    }
-
-    const message = await msg.buildMsg();
-
-    return await this.client.call(message);
-  }
-
-  /**
    * Lists all databases owned by a particular owner.
    *
    * @param owner (optional) - Lists the databases on a network. Can pass and owner identifier to see all the databases deployed by a specific account, or leave empty to see al the databases deployed on the network. The owner's public key (Ethereum or NEAR Protocol). Ethereum keys can be passed as a hex string (0x123...) or as bytes (Uint8Array).
@@ -424,5 +327,39 @@ export abstract class Kwil<T extends EnvironmentType> {
    */
   public async ping(): Promise<GenericResponse<string>> {
     return await this.client.ping();
+  }
+
+   /**
+   * Authenticates a user with the Kwil Gateway (KGW). This is required to execute mustsign view actions.
+   *
+   * This method should only be used if your Kwil Network is using the Kwil Gateway.
+   *
+   * @param {KwilSigner} signer - The signer for the authentication.
+   * @returns A promise that resolves to the authentication success or failure.
+   */
+   protected async authenticate(signer: KwilSigner): Promise<GenericResponse<AuthSuccess<T>>> {
+    const authParam = await this.client.getAuthenticate();
+
+    const authProperties = objects.requireNonNil(
+      authParam.data,
+      'something went wrong retrieving auth info from KGW'
+    );
+
+    const msg = composeAuthMsg(authProperties, this.kwilProvider, '1', this.chainId);
+
+    const signature = await executeSign(stringToBytes(msg), signer.signer, signer.signatureType);
+
+    const authBody = {
+      nonce: authProperties.nonce,
+      sender: bytesToBase64(signer.identifier),
+      signature: {
+        signature_bytes: bytesToBase64(signature),
+        signature_type: signer.signatureType,
+      },
+    };
+
+    const res = await this.client.postAuthenticate(authBody);
+
+    return res;
   }
 }
