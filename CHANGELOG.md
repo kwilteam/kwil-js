@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.5.1](https://github.com/kwilteam/kwil-js/compare/v0.5.0...v0.5.1) (2023-12-13)
+
+
+### Bug Fixes
+
+* **rlp:** fix bug where boolean false was not rlp encoded correctly ([8da5a42](https://github.com/kwilteam/kwil-js/commit/8da5a4248fb4dd78cfecc53e7082f97a68c2c69a))
+
 ## [0.5.0](https://github.com/kwilteam/kwil-js/compare/v0.4.1...v0.5.0) (2023-12-11)
 
 
