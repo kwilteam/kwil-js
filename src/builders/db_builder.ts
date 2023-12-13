@@ -24,6 +24,7 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType> im
   private _identifier: Nillable<string | Uint8Array> = null;
   private _chainId: Nillable<string> = null;
   private _description: Nillable<string> = null;
+  private _nonce: Nillable<number> = null;
 
   /**
    * Initializes a new `DBBuilderImpl` instance.
@@ -162,6 +163,17 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType> im
   }
 
   /**
+   * Specifies the nonce for the database deployment / drop. This is optional, and if not specified, the nonce will be retrieved from the Kwil network.
+   * 
+   * @param {number} nonce - The nonce for the database deployment / drop.
+   * @returns {DBBuilder} The current `DBBuilder` instance for chaining.
+   */
+  nonce(nonce: number): NonNil<DBBuilder<T>> {
+    this._nonce = nonce;
+    return this;
+  }
+
+  /**
    * Builds a Transaction. This will call the kwil network to retrieve the nonce for the signer.
    *
    * @returns {Promise<Transaction>} - A promise that resolves to a `Transaction` object. The `Transaction` object can be broadcasted to the Kwil network using `kwil.broadcast(tx)`.
@@ -210,13 +222,17 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType> im
       'signature type cannot be null or undefined. please specify a signature type.'
     );
 
-    const tx = PayloadBuilderImpl.of(this.client)
+    let tx = PayloadBuilderImpl.of(this.client)
       .payloadType(payloadType)
       .payload(cleanedPayload)
       .signer(signer, signatureType)
       .publicKey(identifier)
       .chainId(chainId)
       .description(this._description);
+
+    if (this._nonce) {
+      tx = tx.nonce(this._nonce);
+    }
     return tx.buildTx();
   }
 

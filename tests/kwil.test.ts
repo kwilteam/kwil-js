@@ -971,7 +971,6 @@ describe("Testing custom signers", () => {
     })
     });
 
-
 describe("Testing simple actions and db deploy / drop (builder pattern alternative)", () => {
     afterEach(async () => await sleep(3000))
 
@@ -1119,6 +1118,57 @@ describe("Testing simple actions and db deploy / drop (builder pattern alternati
             const txResult = (await kwil.txInfo(hash as string)).data?.tx_result.log;
             expect(txResult).toBe('success');
         });
+
+        it("should allow for setting a manual nonce", async () => {
+            const acct = await kwil.getAccount(address);
+            const nonce = Number(acct.data?.nonce);
+            if(!nonce) throw new Error("No nonce found");
+            const actionBody: ActionBody = {
+                dbid,
+                action: "add_post",
+                inputs: [{
+                    $id: recordCount,
+                    $user: "Luke",
+                    $title: "Test Post",
+                    $body: "This is a test post"
+                }],
+                description: "This is a test action",
+                nonce: nonce + 1
+            }
+
+            const result = await kwil.execute(actionBody, kSigner);
+            const hash = result.data?.tx_hash;
+
+            expect(result.data).toBeDefined();
+            expect(result.status).toBe(200);
+            expect(result.data).toMatchObject<TxReceipt>({
+                tx_hash: expect.any(String),
+            });
+
+            await sleep(3000);
+            const txResult = (await kwil.txInfo(hash as string)).data?.tx_result.log;
+            expect(txResult).toBe('success');
+        })
+
+        it('should error if nonce is incorrect', async () => {
+            const acct = await kwil.getAccount(address);
+            const nonce = Number(acct.data?.nonce);
+            if(!nonce) throw new Error("No nonce found");
+            const actionBody: ActionBody = {
+                dbid,
+                action: "add_post",
+                inputs: [{
+                    $id: recordCount,
+                    $user: "Luke",
+                    $title: "Test Post",
+                    $body: "This is a test post"
+                }],
+                description: "This is a test action",
+                nonce: nonce - 1
+            }
+
+            await expect(kwil.execute(actionBody, kSigner)).rejects.toThrowError();
+        })
     });
     
     describe('kwil.deploy() and kwil.drop() should each return a TxReceipt', () => { 

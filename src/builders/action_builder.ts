@@ -34,6 +34,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
   private _dbid: Nillable<string>;
   private _chainId: Nillable<string>;
   private _description: Nillable<string> = null;
+  private _nonce: Nillable<number> = null;
 
   /**
    * Initializes a new `ActionBuilder` instance.
@@ -215,6 +216,17 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
   }
 
   /**
+   * Specifies the nonce for the transaction. If this is not specified, the nonce will be retrieved from the Kwil network.
+   *
+   * @param {number} nonce - The nonce for the transaction.
+   * @returns {ActionBuilder} The current `ActionBuilder` instance for chaining.
+   */
+  nonce(nonce: number): NonNil<ActionBuilder> {
+    this._nonce = nonce;
+    return this;
+  }
+
+  /**
    * Builds a transaction. This will call the kwil network to retrieve the schema and the signer's account.
    *
    * @returns {Promise<Transaction>} - A promise that resolves to a Transaction object. This transaction can be broadcasted to the Kwil network with the `kwil.broadcast()` api.
@@ -308,7 +320,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
     };
 
     // build the transaction
-    const tx = PayloadBuilderImpl.of(this.client)
+    let tx = PayloadBuilderImpl.of(this.client)
       .payloadType(PayloadType.EXECUTE_ACTION)
       .payload(payload)
       .signer(signer, signatureType)
@@ -316,6 +328,10 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
       .chainId(chainId)
       .publicKey(identifier);
 
+    if(this._nonce) {
+      tx = tx.nonce(this._nonce);
+    }
+    
     return tx.buildTx();
   }
 

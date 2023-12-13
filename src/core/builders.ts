@@ -72,6 +72,14 @@ export interface PayloadBuilder {
   chainId(chainId: string): NonNil<PayloadBuilder>;
 
   /**
+   * Specifies the nonce for the transaction. If this is not specified, the nonce will be retrieved from the Kwil network.
+   *
+   * @param {number} nonce - The nonce for the transaction.
+   * @returns {PayloadBuilder} The current `PayloadBuilder` instance for chaining.
+   */
+  nonce(nonce: number): NonNil<PayloadBuilder>;
+
+  /**
    * Builds the payload for the `kwil.broadcast()` method (i.e. the broadcast GRPC endpoint - see {@link https://github.com/kwilteam/proto/blob/main/kwil/tx/v1/broadcast.proto})
    *
    * @returns {BaseTransaction} - A promise that resolves to the signed transaction.
@@ -161,6 +169,14 @@ export interface DBBuilder<T extends DeployOrDrop> {
    * @throws Will throw an error if the description is null or undefined.
    */
   description(description: string): NonNil<DBBuilder<T>>;
+
+  /**
+   * Specifies the nonce for the transaction. If this is not specified, the nonce will be retrieved from the Kwil network.
+   *
+   * @param {number} nonce - The nonce for the transaction.
+   * @returns {DBBuilder} The current `DBBuilder` instance for chaining.
+   */
+  nonce(nonce: number): NonNil<DBBuilder<T>>;
 
   /**
    * Builds a Transaction. This will call the kwil network to retrieve the nonce for the signer.
@@ -270,6 +286,14 @@ export interface ActionBuilder {
    * @returns {ActionBuilder} The current `ActionBuilder` instance for chaining.
    */
   chainId(chainId: string): NonNil<ActionBuilder>;
+
+  /**
+   * Specifies the nonce for the transaction. If this is not specified, the nonce will be retrieved from the Kwil network.
+   *
+   * @param {number} nonce - The nonce for the transaction.
+   * @returns {ActionBuilder} The current `ActionBuilder` instance for chaining.
+   */
+  nonce(nonce: number): NonNil<ActionBuilder>;
 
   /**
    * Builds a transaction. This will call the kwil network to retrieve the schema and the signer's account.
