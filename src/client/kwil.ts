@@ -191,8 +191,11 @@ export abstract class Kwil<T extends EnvironmentType> {
 
     if (actionBody.inputs) {
       const inputs = resolveActionInputs(actionBody.inputs);
-
       tx = tx.concat(inputs);
+    }
+
+    if (actionBody.nonce) {
+      tx = tx.nonce(actionBody.nonce);
     }
 
     const transaction = await tx.buildTx();
@@ -211,18 +214,20 @@ export abstract class Kwil<T extends EnvironmentType> {
     deployBody: DeployBody,
     kwilSigner: KwilSigner
   ): Promise<GenericResponse<TxReceipt>> {
-    const tx = await DBBuilderImpl.of<PayloadType.DEPLOY_DATABASE, T>(
-      this,
-      PayloadType.DEPLOY_DATABASE
-    )
+    let tx = DBBuilderImpl.of<PayloadType.DEPLOY_DATABASE, T>(this, PayloadType.DEPLOY_DATABASE)
       .description(deployBody.description || '')
       .payload(deployBody.schema)
       .publicKey(kwilSigner.identifier)
       .signer(kwilSigner.signer, kwilSigner.signatureType)
-      .chainId(this.chainId)
-      .buildTx();
+      .chainId(this.chainId);
 
-    return await this.client.broadcast(tx);
+    if (deployBody.nonce) {
+      tx = tx.nonce(deployBody.nonce);
+    }
+
+    const transaction = await tx.buildTx();
+
+    return await this.client.broadcast(transaction);
   }
 
   /**
@@ -236,15 +241,20 @@ export abstract class Kwil<T extends EnvironmentType> {
     dropBody: DropBody,
     kwilSigner: KwilSigner
   ): Promise<GenericResponse<TxReceipt>> {
-    const tx = await DBBuilderImpl.of<PayloadType.DROP_DATABASE, T>(this, PayloadType.DROP_DATABASE)
+    let tx = DBBuilderImpl.of<PayloadType.DROP_DATABASE, T>(this, PayloadType.DROP_DATABASE)
       .description(dropBody.description || '')
       .payload({ dbid: dropBody.dbid })
       .publicKey(kwilSigner.identifier)
       .signer(kwilSigner.signer, kwilSigner.signatureType)
       .chainId(this.chainId)
-      .buildTx();
 
-    return await this.client.broadcast(tx);
+      if(dropBody.nonce) {
+        tx = tx.nonce(dropBody.nonce);
+      }
+
+      const transaction = await tx.buildTx();
+
+    return await this.client.broadcast(transaction);
   }
 
   /**
@@ -329,7 +339,7 @@ export abstract class Kwil<T extends EnvironmentType> {
     return await this.client.ping();
   }
 
-   /**
+  /**
    * Authenticates a user with the Kwil Gateway (KGW). This is required to execute mustsign view actions.
    *
    * This method should only be used if your Kwil Network is using the Kwil Gateway.
@@ -337,7 +347,7 @@ export abstract class Kwil<T extends EnvironmentType> {
    * @param {KwilSigner} signer - The signer for the authentication.
    * @returns A promise that resolves to the authentication success or failure.
    */
-   protected async authenticate(signer: KwilSigner): Promise<GenericResponse<AuthSuccess<T>>> {
+  protected async authenticate(signer: KwilSigner): Promise<GenericResponse<AuthSuccess<T>>> {
     const authParam = await this.client.getAuthenticate();
 
     const authProperties = objects.requireNonNil(

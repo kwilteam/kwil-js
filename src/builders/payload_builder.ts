@@ -34,6 +34,7 @@ export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBui
   private _signatureType: Nillable<AnySignatureType> = null;
   private _chainId: Nillable<string> = null;
   private _description: NonNil<string> = '';
+  private _nonce: Nillable<number> = null;
 
   /**
    * Initializes a new `PayloadBuilder` instance.
@@ -171,6 +172,17 @@ export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBui
   }
 
   /**
+   * Specifies the nonce for the transaction. If none is provided, the SDK will retrieve the account nonce from the network.
+   *
+   * @param {number} nonce - The nonce for the transaction.
+   * @returns {PayloadBuilder} The current `PayloadBuilder` instance for chaining.
+   */
+  nonce(nonce: number): NonNil<PayloadBuilder> {
+    this._nonce = objects.requireNonNil(nonce, 'nonce cannot be null if provided.');
+    return this;
+  }
+
+  /**
    * Builds the payload for the `kwil.broadcast()` method (i.e. the broadcast GRPC endpoint - see {@link https://github.com/kwilteam/proto/blob/main/kwil/tx/v1/tx.proto})
    *
    * @returns {BaseTransaction} - A promise that resolves to the signed transaction.
@@ -212,8 +224,18 @@ export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBui
     // estimate the cost of the transaction with the estimateCost symbol from the client
     const cost = await unwrap(this.client)(preEstTxn);
 
-    // retrieve the account for the nonce
-    const acct = await this.client.getAccount(identifier);
+    // retrieve the account for the nonce, if none is provided
+    let nonce = this._nonce;
+
+    if(!this._nonce) {
+      const acct = await this.client.getAccount(identifier);
+      nonce = Number(
+        objects.requireNonNil(
+          acct.data?.nonce,
+          'something went wrong retrieving your account nonce.'
+        )
+      ) + 1;
+    };
 
     // add the nonce and fee to the transaction. Set the tx bytes back to uint8 so we can do the signature.
     const postEstTxn = Txn.copy<BytesEncodingStatus.UINT8_ENCODED>(preEstTxn, (tx) => {
@@ -224,13 +246,7 @@ export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBui
           'something went wrong estimating the cost of your transaction.'
         )
       );
-      tx.body.nonce =
-        Number(
-          objects.requireNonNil(
-            acct.data?.nonce,
-            'something went wrong retrieving your account nonce.'
-          )
-        ) + 1;
+      tx.body.nonce = objects.requireNonNil(nonce, 'something went wrong retrieving your account nonce.')
       tx.body.chain_id = chainId;
     });
 
