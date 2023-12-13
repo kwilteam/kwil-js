@@ -377,7 +377,7 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType> im
           action.auxiliaries = [];
         }
 
-        if (!action.public) {
+        if ((action.public === undefined )|| (action.public === null)) {
           action.public = true;
         }
 
