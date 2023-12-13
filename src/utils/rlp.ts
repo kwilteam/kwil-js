@@ -33,7 +33,7 @@ function inputToHex(val: string | number | BigInt | Uint8Array | Boolean | null 
     } else if (val instanceof Uint8Array) {
         return bytesToEthHex(val);
     } else if (typeof val === 'boolean') {
-        return val ? "0x01" : "0x00";
+        return val ? "0x01" : "0x";
     } else if (val === null || val === undefined) {
         return bytesToEthHex(new Uint8Array(0));
     } else {
