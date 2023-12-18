@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.5.2](https://github.com/kwilteam/kwil-js/compare/v0.5.0...v0.5.2) (2023-12-18)
+
+
+### Features
+
+* add unconfirmed nonce ([cc52f2d](https://github.com/kwilteam/kwil-js/commit/cc52f2d1247ae892c22af1c383c89ee10d044fc7)), closes [#51](https://github.com/kwilteam/kwil-js/issues/51)
+* allow for manually setting nonce ([976f610](https://github.com/kwilteam/kwil-js/commit/976f610f53111908179fcdd32c328b3ba7737dda)), closes [#57](https://github.com/kwilteam/kwil-js/issues/57)
+
+
+### Bug Fixes
+
+* **rlp:** fix bug where boolean false was not rlp encoded correctly ([7435691](https://github.com/kwilteam/kwil-js/commit/74356915f2187f7e1513fad351653a62ff903917))
+
 ### [0.5.1](https://github.com/kwilteam/kwil-js/compare/v0.5.0...v0.5.1) (2023-12-13)
 
 
