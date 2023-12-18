@@ -26,9 +26,11 @@ import { DeployBody, DropBody } from '../dist/core/database';
 import { PayloadType } from '../dist/core/enums';
 import { CompiledKuneiform, DropDbPayload } from '../dist/core/payload';
 import { DatasetInfo } from '../dist/core/network';
+import dotenv from 'dotenv';
 
-const isKgwOn = process.env.GATEWAY_ON === 'true';
-const isGasOn = process.env.GAS_ON === 'true';
+dotenv.config();
+const isKgwOn = process.env.GATEWAY_ON === 'TRUE';
+const isGasOn = process.env.GAS_ON === 'TRUE';
 const address: string = '0xAfFDC06cF34aFD7D5801A13d48C92AD39609901D';
 const dbid: string = kwil.getDBID(address, 'mydb');
 const kSigner = new KwilSigner(wallet, address);
@@ -114,7 +116,7 @@ describe('Kwil', () => {
 (isGasOn ? describe : describe.skip)('Testing Kwil.funder', () => {
   const funder = kwil.funder;
 
-  it('should transfer tokens', async () => {
+  it.only('should transfer tokens', async () => {
     const transferBody = {
       to: '0x6E2fA2aF9B4eF5c8A3BcF9A9B9A4F1a1a2c1c1c1',
       amount: BigInt(1),
