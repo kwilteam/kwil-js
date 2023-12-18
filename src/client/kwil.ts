@@ -40,7 +40,6 @@ export abstract class Kwil<T extends EnvironmentType> {
     this.client = new Client({
       kwilProvider: opts.kwilProvider,
       unconfirmedNonce: opts.unconfirmedNonce,
-      apiKey: opts.apiKey,
       timeout: opts.timeout,
       logging: opts.logging,
       logger: opts.logger,
