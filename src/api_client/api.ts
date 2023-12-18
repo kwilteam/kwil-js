@@ -29,7 +29,6 @@ export abstract class Api {
     return {
       kwilProvider: opts.kwilProvider || 'https://provider.kwil.com', // these aren't actually used here but are required by the interface
       timeout: opts.timeout || 10000,
-      apiKey: opts.apiKey || '',
       logging: opts.logging || false,
       logger: opts.logger || console.log,
       cache: opts.cache || 10 * 60,

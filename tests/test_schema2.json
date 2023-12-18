@@ -33,12 +33,7 @@
           },
           {
             "name": "wallet",
-            "type": "text",
-            "attributes": [
-              {
-                "type": "unique"
-              }
-            ]
+            "type": "text"
           }
         ]
       },

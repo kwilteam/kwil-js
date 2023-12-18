@@ -28,7 +28,7 @@ async function test() {
     //update to goerli when live
     const provider = new ethers.JsonRpcProvider(process.env.ETH_PROVIDER)
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
-    const txHash = 'c0b758cf6385b19549ee522acd5d662d5db1974d3e8269d5e6870374f8d32bff'
+    const txHash = '04677335c200633fef0ba65de24609450124a2bc5ca2451245ffb00efccb54c8'
     const address = await wallet.address
 
     const getEdKeys = async () => {

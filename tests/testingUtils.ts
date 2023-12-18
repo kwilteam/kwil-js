@@ -1,17 +1,60 @@
 import { Contract, JsonRpcProvider, JsonRpcSigner, Wallet } from "ethers";
 import {Kwil} from "../dist/client/kwil";
-import { KwilSigner, NodeKwil, Utils } from "../dist";
+import { KwilSigner, NodeKwil } from "../dist";
 import scrypt from 'scrypt-js';
 import nacl from 'tweetnacl';
 import { objects } from "../dist/utils/objects";
+import mydb from '../testing-functions/mydb.json';
+import { DeployBody } from "../dist/core/database";
+import { CompiledKuneiform } from "../dist/core/payload";
+import { GenericResponse } from "../dist/core/resreq";
+import { TxReceipt } from "../dist/core/tx";
+import { DatasetInfo } from "../dist/core/network";
+import { TxInfoReceipt } from "../dist/core/txQuery";
 require('dotenv').config();
 
 const provider = new JsonRpcProvider(process.env.ETH_PROVIDER)
 export const wallet = new Wallet(process.env.PRIVATE_KEY as string, provider);
 
-export async function waitForConfirmations(txHash: string, numConfirmations: number) {
-    await provider.waitForTransaction(txHash, numConfirmations);
+export async function isTestDbDeployed(address: string | Uint8Array): Promise<boolean> {
+    const res = await kwil.listDatabases(address);
+    const dbList = res.data;
+    if(!dbList) return false;
+    for(const db of dbList) {
+        if(db.name === 'mydb') return true;
+    }
+    return false;
 }
+
+export async function deployTestDb(signer: KwilSigner): Promise<void> {
+    const body: DeployBody = {
+        schema: mydb,
+    }
+    const res = await kwil.deploy(body, signer);
+    const hash = res.data?.tx_hash;
+    if(!hash) throw new Error('No tx hash returned from Kwil Network');
+    await waitForDeployment(hash);
+}
+
+export async function deployIfNoTestDb(signer: KwilSigner): Promise<void> {
+    const isDeployed = await isTestDbDeployed(signer.identifier);
+    if(!isDeployed) await deployTestDb(signer);
+}
+
+export async function deployTempSchema(schema: CompiledKuneiform, signer: KwilSigner): Promise<GenericResponse<TxReceipt>> {
+    const dbAmount = await kwil.listDatabases(signer.identifier);
+    const count = dbAmount.data as DatasetInfo[];
+    schema.name = `test_db_${count.length + 1}`;
+    const payload: DeployBody = {
+        schema,
+    }
+    const res = await kwil.deploy(payload, signer);
+    const hash = res.data?.tx_hash;
+    if(!hash) throw new Error("No hash returned from deploy");
+    await waitForDeployment(hash);
+    return res;
+}
+
 
 export interface ActionObj {
     dbid: string;
@@ -64,31 +107,59 @@ export const kwil = new NodeKwil({
     kwilProvider: process.env.KWIL_PROVIDER || "SHOULD FAIL",
     chainId: process.env.CHAIN_ID || "SHOULD FAIL",
     timeout: 10000,
-    logging: true
+    logging: true,
+    unconfirmedNonce: true,
 })
 
+let txQueryTries: number = 0;
 
-export function waitForDeployment(hash: string): Promise<boolean> {
-    return new Promise(async (resolve) => {
-        setTimeout(async () => {
-            try {
-                const txQuery = await kwil.txInfo(hash);
+export async function waitForDeployment(hash?: string): Promise<void> {
+    if(!hash) throw new Error('No hash provided to waitForDeployment');
 
-                if (txQuery.status === 200 && txQuery.data?.tx_result.log === 'success') {
-                    resolve(true);
-                } else {
-                    // Retry after 500ms if it's not a success
-                    resolve(await waitForDeployment(hash));
-                }
-            } catch (err) {
-                console.error("SDK Error:", err); // optionally log the error
-                // Instead of rejecting, retry
-                const errMsg = hash === undefined ? "hash is undefined. please restart the test" : hash + "- this should pass eventually";
-                console.log(`Retrying after 500ms. Hash: ${errMsg}`);
-                resolve(await waitForDeployment(hash));
-            }
-        }, 500);
-    });
+    // checks status of tx
+    let txQuery: GenericResponse<TxInfoReceipt>;
+    try {
+        txQuery = await kwil.txInfo(hash);
+    } catch (error) {
+        let e = (error as object).toString();
+        console.log(e);
+        if (e.includes('transaction not found')) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+            return waitForDeployment(hash);
+        }
+        throw new Error(`Error querying transaction: ${error}`);
+    }
+    
+
+    // retrieve the log from the tx
+    const log = txQuery.data?.tx_result.log;
+    if(log === null) {
+        throw new Error('Cannot retrieve log from test Kwil Network - please reach out in the Kwil Discord');
+    }
+
+    // if tx is successful, resolve
+    if(txQuery.status === 200 && log === 'success') {
+        txQueryTries = 0;
+        return; // Resolves the promise
+    } 
+
+    // if log is empty string, it means tx is still pending
+    if(txQuery.status === 200 && log == "") {
+        if(txQueryTries > 30) {
+            txQueryTries = 0;
+            throw new Error(`Transaction timed out - ${JSON.stringify(bigIntoToString(txQuery))}`);
+        }
+        txQueryTries++;
+        // Wait for a bit before the next check
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return waitForDeployment(hash);
+    }
+
+    // if log is not empty string and not success, reject
+    if(txQuery.status === 200 && log !== 'success') {
+        txQueryTries = 0;
+        throw new Error(`Transaction failed with log: ${log}`);
+    }
 }
 
 export const deriveKeyPair64 = async (password: string, humanId: string) => {
@@ -101,3 +172,14 @@ export const deriveKeyPair64 = async (password: string, humanId: string) => {
 
     return nacl.sign.keyPair.fromSeed(derivedKey);
 };
+
+// recursively convert bigint to string
+function bigIntoToString(obj: any): any {
+    if(typeof obj === 'bigint') return obj.toString();
+    if(typeof obj === 'object') {
+        for(const key in obj) {
+            obj[key] = bigIntoToString(obj[key]);
+        }
+    }
+    return obj;
+}

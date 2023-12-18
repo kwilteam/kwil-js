@@ -31,8 +31,11 @@ import { AuthInfo, AuthSuccess, AuthenticatedBody } from '../core/auth';
 import { AxiosResponse } from 'axios';
 
 export default class Client extends Api {
+  private unconfirmedNonce: boolean;
+
   constructor(opts: ApiConfig, cookie?: string) {
     super(opts.kwilProvider, opts, cookie);
+    this.unconfirmedNonce = opts.unconfirmedNonce || false;
   }
 
   public async getSchema(dbid: string): Promise<GenericResponse<Database>> {
@@ -100,7 +103,8 @@ export default class Client extends Api {
 
   public async getAccount(owner: Uint8Array): Promise<GenericResponse<Account>> {
     const urlSafeB64 = base64UrlEncode(bytesToBase64(owner));
-    const res = await super.get<GetAccountResponse>(`/api/v1/accounts/${urlSafeB64}`);
+    const unconfirmedNonce = this.unconfirmedNonce ? '?status=1' : '';
+    const res = await super.get<GetAccountResponse>(`/api/v1/accounts/${urlSafeB64}` + unconfirmedNonce);
     checkRes(res);
 
     let acct: Account = {
