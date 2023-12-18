@@ -10,6 +10,8 @@ npm i @kwilteam/kwil-js
 
 ## Initialization
 
+Configure your `NodeKwil` or `WebKwil` class by providing the required configurations and any [optional configurations](https://docs.kwil.com/docs/sdks/js-ts/overview#optional-configuration).
+
 ### Web
 
 ```javascript

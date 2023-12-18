@@ -2,7 +2,7 @@ import { AttributeType, DataType, IndexType } from "./enums";
 import { CompiledKuneiform } from "./payload";
 
 /**
- * `DeployBody` is the interface for deploying a database with the `kwil.deploy()` method.
+ * @typedef {Object} DeployBody is the interface for deploying a database with the `kwil.deploy()` method.
  * 
  * @property {CompiledKuneiform} schema - The compiled Kuneiform schema to deploy.
  * @property {string?} description (optional) - The description of the database.
@@ -15,7 +15,7 @@ export interface DeployBody {
 };
 
 /**
- * `DropBody` is the interface for dropping a database with the `kwil.drop()` method.
+ * @typedef {Object} DropBody is the interface for dropping a database with the `kwil.drop()` method.
  * 
  * @property {string} dbid - The database ID of the database to drop.
  * @property {string?} description (optional) - The description of the database.

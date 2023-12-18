@@ -10,7 +10,7 @@ export type Entries = { [key: string]: ValueType };
 export type Predicate = (k: [key: string, v: ValueType]) => boolean;
 
 /**
- * `ActionBody` Interface is for executing actions via the `kwil.execution()` method.
+ * @typedef {Object} ActionBody is the interface for executing an action with the `kwil.execute()` method or calling an action with the `kwil.call()` method.
  *
  * @param {string} dbid - The database ID of the record on which to execute the action.
  * @param {string} action - The name of the action to execute.
