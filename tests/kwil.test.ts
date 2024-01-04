@@ -116,7 +116,7 @@ describe('Kwil', () => {
 (isGasOn ? describe : describe.skip)('Testing Kwil.funder', () => {
   const funder = kwil.funder;
 
-  it.only('should transfer tokens', async () => {
+  it('should transfer tokens', async () => {
     const transferBody = {
       to: '0x6E2fA2aF9B4eF5c8A3BcF9A9B9A4F1a1a2c1c1c1',
       amount: BigInt(1),

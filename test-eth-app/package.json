@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@kwilteam/kwil-js": "^0.5.2",
     "@lukelamey/kwil-js": "^0.3.11",
     "ethers": "^6.8.1",
     "ethers5": "npm:ethers@^5.7.2",

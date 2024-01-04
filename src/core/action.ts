@@ -60,6 +60,7 @@ export class ActionInput implements Iterable<EntryType> {
    */
 
   public put<T extends ValueType>(key: string, value: T): ActionInput {
+    key = lowercaseKey(key);
     this.map[assertKey(key)] = value;
     return this;
   }
@@ -72,6 +73,7 @@ export class ActionInput implements Iterable<EntryType> {
    * @returns The current `ActionInput` instance for chaining.
    */
   public putIfAbsent<T extends ValueType>(key: string, value: T): ActionInput {
+    key = lowercaseKey(key);
     if (!this.containsKey(key)) {
       this.map[key] = value;
     }
@@ -87,6 +89,7 @@ export class ActionInput implements Iterable<EntryType> {
    */
 
   public replace<T extends ValueType>(key: string, value: T): ActionInput {
+    key = lowercaseKey(key);
     if (this.containsKey(key)) {
       this.map[key] = value;
     }
@@ -101,6 +104,7 @@ export class ActionInput implements Iterable<EntryType> {
    */
 
   public get<T extends ValueType>(key: string): T {
+    key = lowercaseKey(key);
     return this.map[assertKey(key)] as T;
   }
 
@@ -113,6 +117,7 @@ export class ActionInput implements Iterable<EntryType> {
    */
 
   public getOrDefault<T extends ValueType>(key: string, defaultValue: T): T {
+    key = lowercaseKey(key);
     return (this.map[assertKey(key)] ?? defaultValue) as T;
   }
 
@@ -124,6 +129,7 @@ export class ActionInput implements Iterable<EntryType> {
    */
 
   public containsKey(key: string): boolean {
+    key = lowercaseKey(key);
     return this.map.hasOwnProperty(assertKey(key));
   }
 
@@ -135,6 +141,7 @@ export class ActionInput implements Iterable<EntryType> {
    */
 
   public remove(key: string): boolean {
+    key = lowercaseKey(key);
     return delete this.map[key];
   }
 
@@ -177,7 +184,8 @@ export class ActionInput implements Iterable<EntryType> {
    */
 
   public putFromObject<T extends {}>(obj: T): ActionInput {
-    for (const [key, value] of Object.entries(objects.requireNonNil(obj))) {
+    for (let [key, value] of Object.entries(objects.requireNonNil(obj))) {
+      key = lowercaseKey(key);
       this.map[assertKey(key)] = value as ValueType;
     }
     return this;
@@ -191,7 +199,8 @@ export class ActionInput implements Iterable<EntryType> {
    */
 
   public putFromObjectIfAbsent<T extends {}>(obj: T): ActionInput {
-    for (const [key, value] of Object.entries(objects.requireNonNil(obj))) {
+    for (let [key, value] of Object.entries(objects.requireNonNil(obj))) {
+      key = lowercaseKey(key);
       if (!this.containsKey(key)) {
         this.map[assertKey(key)] = value as ValueType;
       }
@@ -207,7 +216,8 @@ export class ActionInput implements Iterable<EntryType> {
    */
 
   public replaceFromObject<T extends {}>(obj: T): ActionInput {
-    for (const [key, value] of Object.entries(objects.requireNonNil(obj))) {
+    for (let [key, value] of Object.entries(objects.requireNonNil(obj))) {
+      key = lowercaseKey(key);
       if (this.containsKey(key)) {
         this.map[assertKey(key)] = value as ValueType;
       }
@@ -249,7 +259,8 @@ export class ActionInput implements Iterable<EntryType> {
 
   public static from(entries: Iterable<EntryType>): ActionInput {
     const action = ActionInput.of();
-    for (const [key, value] of objects.requireNonNil(entries)) {
+    for (let [key, value] of objects.requireNonNil(entries)) {
+      key = lowercaseKey(key);
       action.map[assertKey(key)] = value;
     }
     return action;
@@ -264,7 +275,8 @@ export class ActionInput implements Iterable<EntryType> {
 
   public static fromObject<T extends {}>(obj: T): ActionInput {
     const action = ActionInput.of();
-    for (const [key, value] of Object.entries(objects.requireNonNil(obj))) {
+    for (let [key, value] of Object.entries(objects.requireNonNil(obj))) {
+      key = lowercaseKey(key);
       action.map[assertKey(key)] = value as ValueType;
     }
     return action;
@@ -296,4 +308,8 @@ export class ActionInput implements Iterable<EntryType> {
 
 function assertKey(key: string): string {
   return objects.requireNonNil(key, 'key cannot be nil');
+}
+
+function lowercaseKey(key: string): string {
+  return key.toLowerCase();
 }

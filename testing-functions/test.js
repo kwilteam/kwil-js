@@ -28,7 +28,7 @@ async function test() {
     //update to goerli when live
     const provider = new ethers.JsonRpcProvider(process.env.ETH_PROVIDER)
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
-    const txHash = '04677335c200633fef0ba65de24609450124a2bc5ca2451245ffb00efccb54c8'
+    const txHash = 'b1ac84b20a99b7ad42435d653e4ed21c4cfa86c88b929e385f33664314ab5bec'
     const address = await wallet.address
 
     const getEdKeys = async () => {
@@ -47,12 +47,12 @@ async function test() {
     const kwilSigner = new KwilSigner(wallet, address)
     
     const pubByte = hexToBytes(pubKey)
-    const dbid = kwil.getDBID(address, "mydb")
+    const dbid = kwil.getDBID(address, "fractal_marketplace")
     logger(dbid)
     // await authenticate(kwil, kwilSigner)
-    broadcast(kwil, testDB, wallet, address)
+    // broadcast(kwil, testDB, wallet, address)
     // broadcastEd25519(kwil, simpleDb)
-    // await getTxInfo(kwil, txHash)
+    await getTxInfo(kwil, txHash)
     // await getSchema(kwil, dbid)
     // getAccount(kwil, address)
     // listDatabases(kwil)
