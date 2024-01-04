@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.5.3](https://github.com/kwilteam/kwil-js/compare/v0.5.2...v0.5.3) (2024-01-04)
+
+
+### Bug Fixes
+
+* rlp encoding zero and case sensitivity for action input names ([f2c71e8](https://github.com/kwilteam/kwil-js/commit/f2c71e8b1881f4e398718ab3582d3883ede69d1a))
+
 ### [0.5.2](https://github.com/kwilteam/kwil-js/compare/v0.5.0...v0.5.2) (2023-12-18)
 
 
