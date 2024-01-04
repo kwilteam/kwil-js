@@ -503,7 +503,9 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
         preparedActions.push(
           actionSchema.inputs.map((i) => {
             const val = copy.get(i);
-            if (val) {
+
+            // because all values are technically strings under the kwildb hood, we need to convert all values that will resolve to a string to a string.
+            if (val?.toString()) {
               return val.toString();
             }
             return val;
