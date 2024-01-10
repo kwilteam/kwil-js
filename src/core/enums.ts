@@ -59,3 +59,9 @@ export enum EnvironmentType {
 }
 
 export type PayloadBytesTypes = BytesEncodingStatus.BASE64_ENCODED | BytesEncodingStatus.UINT8_ENCODED;
+
+export enum BroadcastSyncType {
+    ASYNC = 0,
+    SYNC = 1,
+    COMMIT = 2
+}

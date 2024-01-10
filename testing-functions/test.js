@@ -47,12 +47,12 @@ async function test() {
     const kwilSigner = new KwilSigner(wallet, address)
     
     const pubByte = hexToBytes(pubKey)
-    const dbid = kwil.getDBID(address, "fractal_marketplace")
+    const dbid = kwil.getDBID(address, "mydb")
     logger(dbid)
     // await authenticate(kwil, kwilSigner)
     // broadcast(kwil, testDB, wallet, address)
     // broadcastEd25519(kwil, simpleDb)
-    await getTxInfo(kwil, txHash)
+    // await getTxInfo(kwil, txHash)
     // await getSchema(kwil, dbid)
     // getAccount(kwil, address)
     // listDatabases(kwil)
@@ -69,6 +69,7 @@ async function test() {
     // await julioSignature(kwil, dbid)
     // await customEd25519(kwil, dbid)
     // await dropDb(kwil, dbid, wallet, address)
+    // await transfer(kwil, "0xAfFDC06cF34aFD7D5801A13d48C92AD39609901D", 100, kwilSigner)
 }
 
 test()
@@ -138,7 +139,7 @@ async function execSingleAction(kwil, dbid, action, w, pubKey) {
     const Input = kwiljs.Utils.ActionInput
 
     const solo = Input.of()
-        .put("$id", count + 1)
+        .put("$id", count)
         .put("$user", "Luke")
         .put("$title", "Hello") 
         .put("$body", "Hello World")
@@ -153,14 +154,15 @@ async function execSingleAction(kwil, dbid, action, w, pubKey) {
         .signer(w)
         .buildTx();
 
-    const res = await kwil.broadcast(act)
+    const startTime = Date.now()
+
+    const res = await kwil.broadcast(act, 2)
 
     logger(res)
 }
 
 async function execSingleActionKwilSigner(kwil, dbid, action, kSigner) {
     const query = await kwil.selectQuery(dbid, "SELECT COUNT(*) FROM posts");
-
     const count = query.data[0][`COUNT(*)`]
 
     const Input = kwiljs.Utils.ActionInput
@@ -177,7 +179,10 @@ async function execSingleActionKwilSigner(kwil, dbid, action, kSigner) {
         description: 'This is my friendly description!',
     }
 
-    const res = await kwil.execute(body, kSigner)
+    const startTime = Date.now()
+    const res = await kwil.execute(body, kSigner, true)
+    const endTime = Date.now()
+    console.log(`Time: ${endTime - startTime}ms`)
 
     logger(res)
 }
@@ -439,4 +444,14 @@ async function auth(kwil, signer, ident, type) {
     }
 
     kwil.setCookie(cookie)
+}
+
+async function transfer(kwil, to, tokenAmnt, signer) {
+    const payload = {
+        to,
+        amount: BigInt(tokenAmnt * 10 ** 18)
+    }
+
+    const res = await kwil.funder.transfer(payload, signer)
+    logger(res)
 }

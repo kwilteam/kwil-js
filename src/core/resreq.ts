@@ -2,7 +2,7 @@ import { Database } from './database';
 import { Account, ChainInfo, DatasetInfoServer } from './network';
 import { BaseTransaction, TxReceipt, TxnData } from './tx';
 import { TxResult } from './txQuery';
-import { BytesEncodingStatus, EnvironmentType } from './enums';
+import { BroadcastSyncType, BytesEncodingStatus, EnvironmentType } from './enums';
 import { AuthInfo } from './auth';
 
 type SchemaRes = Database & {
@@ -36,6 +36,7 @@ export interface EstimateCostRes {
 
 export interface BroadcastReq {
   tx: TxnData<BytesEncodingStatus.BASE64_ENCODED>;
+  sync?: BroadcastSyncType;
 }
 
 export interface BroadcastRes extends TxReceipt {}

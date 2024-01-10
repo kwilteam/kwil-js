@@ -27,6 +27,7 @@ import { PayloadType } from '../dist/core/enums';
 import { CompiledKuneiform, DropDbPayload } from '../dist/core/payload';
 import { DatasetInfo } from '../dist/core/network';
 import dotenv from 'dotenv';
+import { TransferBody } from '../dist/funder/funding_types';
 
 dotenv.config();
 const isKgwOn = process.env.GATEWAY_ON === 'TRUE';
@@ -1028,6 +1029,115 @@ describe('Testing simple actions and db deploy / drop (builder pattern alternati
   });
 });
 
+describe('Synchronous transactions', () => {
+  const kwilSigner = new KwilSigner(wallet, address);
+
+  it('should return the a tx_hash when the action execute is successful', async () => {
+    const recordCount = await kwil.selectQuery(dbid, 'SELECT COUNT(*) FROM posts');
+    if (!recordCount.status || !recordCount.data) throw new Error('No posts found');
+    const amnt = recordCount.data[0] as AmntObject;
+    const count = amnt['COUNT(*)'] + 1;
+
+    const actionBody: ActionBody = {
+      dbid,
+      action: 'add_post',
+      inputs: [
+        {
+          $id: count,
+          $user: 'Luke',
+          $title: 'Test Post',
+          $body: 'This is a test post',
+        },
+      ],
+      description: 'This is a test action',
+    };
+
+    const result = await kwil.execute(actionBody, kwilSigner, true);
+
+    expect(result.data).toBeDefined();
+    expect(result.status).toBe(200);
+    expect(result.data).toMatchObject<TxReceipt>({
+      tx_hash: expect.any(String),
+    });
+  }, 10000);
+
+  it('should return a tx_hash when the db deploy is successful', async () => {
+    const dbAmount = await kwil.listDatabases(kSigner.identifier);
+    const count = dbAmount.data as DatasetInfo[];
+    let kfSchema: CompiledKuneiform = schema;
+    kfSchema.name = `test_db_${count.length + 1}`;
+
+    const deployBody: DeployBody = {
+      schema: kfSchema,
+      description: 'This is a test database',
+    };
+
+    const result = await kwil.deploy(deployBody, kSigner, true);
+
+    expect(result.data).toBeDefined();
+    expect(result.status).toBe(200);
+    expect(result.data).toMatchObject<TxReceipt>({
+      tx_hash: expect.any(String),
+    });
+  }, 10000);
+
+  it('should return a tx_hash when the db drop is successful', async () => {
+    const dbList = await kwil.listDatabases(kSigner.identifier);
+    const dbName = `test_db_${dbList.data?.length}`;
+    const dbidToDrop = kwil.getDBID(kSigner.identifier, dbName);
+
+    const dropBody: DropBody = {
+      dbid: dbidToDrop,
+      description: 'This is a test database',
+    };
+
+    const result = await kwil.drop(dropBody, kSigner, true);
+
+    expect(result.data).toBeDefined();
+    expect(result.status).toBe(200);
+    expect(result.data).toMatchObject<TxReceipt>({
+      tx_hash: expect.any(String),
+    });
+  }, 10000);
+
+  (isGasOn ? it : it.skip)('should return a tx_hash when a transfer is successful', async () => {
+    const payload: TransferBody = {
+      to: 'abc123',
+      amount: BigInt(1),
+    }
+    const result = await kwil.funder.transfer(payload, kSigner, true);
+
+    expect(result.data).toBeDefined();
+    expect(result.status).toBe(200);
+    expect(result.data).toMatchObject<TxReceipt>({
+      tx_hash: expect.any(String),
+    });
+  }, 10000);
+
+  it('should throw an error when the tx fails', async () => {
+    const recordCount = await kwil.selectQuery(dbid, 'SELECT COUNT(*) FROM posts');
+    if (!recordCount.status || !recordCount.data) throw new Error('No posts found');
+    const amnt = recordCount.data[0] as AmntObject;
+    const count = amnt['COUNT(*)'];
+
+    const actionBody: ActionBody = {
+      dbid,
+      action: 'add_post',
+      inputs: [
+        {
+          $id: count,
+          $user: 'Luke',
+          $title: 'Test Post',
+          $body: 'This is a test post',
+        },
+      ],
+      description: 'This is a test action',
+    };
+
+    await expect(kwil.execute(actionBody, kwilSigner, true)).rejects.toThrowError();
+  }, 10000);
+})
+
 describe('unconfirmedNonce', () => {
   const kwilSigner = new KwilSigner(wallet, address);
 
@@ -1051,9 +1161,10 @@ describe('unconfirmedNonce', () => {
     };
     const initAccount = await kwil.getAccount(address);
     const initialNonce = Number(initAccount.data?.nonce);
-    await kwil.execute(actionBody, kwilSigner);
+    const res = await kwil.execute(actionBody, kwilSigner);
     const account = await kwil.getAccount(address);
     const nonce = Number(account.data?.nonce);
     expect(nonce).toBe(initialNonce + 1);
+    setTimeout(async () => {}, 2000);
   });
 });
