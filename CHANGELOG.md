@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.5.4](https://github.com/kwilteam/kwil-js/compare/v0.5.3...v0.5.4) (2024-01-10)
+
+
+### Features
+
+* add sync flag to transactions ([0e18f06](https://github.com/kwilteam/kwil-js/commit/0e18f066b4f7be249f081d794d03462c258edd3b)), closes [#62](https://github.com/kwilteam/kwil-js/issues/62)
+
 ### [0.5.3](https://github.com/kwilteam/kwil-js/compare/v0.5.2...v0.5.3) (2024-01-04)
 
 
