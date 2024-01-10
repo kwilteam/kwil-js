@@ -13,7 +13,7 @@ import { ActionBuilder, DBBuilder } from '../core/builders';
 import { Cache } from '../utils/cache';
 import { TxInfoReceipt } from '../core/txQuery';
 import { BaseMessage, Message, MsgReceipt } from '../core/message';
-import { BytesEncodingStatus, EnvironmentType, PayloadType } from '../core/enums';
+import { BroadcastSyncType, BytesEncodingStatus, EnvironmentType, PayloadType } from '../core/enums';
 import { hexToBytes, stringToBytes } from '../utils/serial';
 import { isNearPubKey, nearB58ToHex } from '../utils/keys';
 import { ActionBody, ActionInput, Entries, resolveActionInputs } from '../core/action';
@@ -165,9 +165,10 @@ export abstract class Kwil<T extends EnvironmentType> {
    */
 
   public async broadcast(
-    tx: BaseTransaction<BytesEncodingStatus.BASE64_ENCODED>
+    tx: BaseTransaction<BytesEncodingStatus.BASE64_ENCODED>,
+    sync?: BroadcastSyncType
   ): Promise<GenericResponse<TxReceipt>> {
-    return await this.client.broadcast(tx);
+    return await this.client.broadcast(tx, sync);
   }
 
   /**
@@ -175,11 +176,13 @@ export abstract class Kwil<T extends EnvironmentType> {
    *
    * @param actionBody - The body of the action to send. This should use the `ActionBody` interface.
    * @param kwilSigner - The signer for the action transactions.
+   * @param synchronous - (optional) If true, the broadcast will wait for the transaction to be mined before returning. If false, the broadcast will return the transaction hash immediately, regardless of if the transaction is successful. Defaults to false.
    * @returns A promise that resolves to the receipt of the transaction.
    */
   public async execute(
     actionBody: ActionBody,
-    kwilSigner: KwilSigner
+    kwilSigner: KwilSigner,
+    synchronous?: boolean
   ): Promise<GenericResponse<TxReceipt>> {
     let tx = ActionBuilderImpl.of<T>(this)
       .dbid(actionBody.dbid)
@@ -200,7 +203,7 @@ export abstract class Kwil<T extends EnvironmentType> {
 
     const transaction = await tx.buildTx();
 
-    return await this.client.broadcast(transaction);
+    return await this.client.broadcast(transaction, synchronous ? BroadcastSyncType.COMMIT : undefined);
   }
 
   /**
@@ -208,11 +211,13 @@ export abstract class Kwil<T extends EnvironmentType> {
    *
    * @param deployBody - The body of the database to deploy. This should use the `DeployBody` interface.
    * @param kwilSigner - The signer for the database deployment.
+   * @param synchronous - (optional) If true, the broadcast will wait for the transaction to be mined before returning. If false, the broadcast will return the transaction hash immediately, regardless of if the transaction is successful. Defaults to false.
    * @returns A promise that resolves to the receipt of the transaction.
    */
   public async deploy(
     deployBody: DeployBody,
-    kwilSigner: KwilSigner
+    kwilSigner: KwilSigner,
+    synchronous?: boolean
   ): Promise<GenericResponse<TxReceipt>> {
     let tx = DBBuilderImpl.of<PayloadType.DEPLOY_DATABASE, T>(this, PayloadType.DEPLOY_DATABASE)
       .description(deployBody.description || '')
@@ -227,7 +232,7 @@ export abstract class Kwil<T extends EnvironmentType> {
 
     const transaction = await tx.buildTx();
 
-    return await this.client.broadcast(transaction);
+    return await this.client.broadcast(transaction, synchronous ? BroadcastSyncType.COMMIT : undefined);
   }
 
   /**
@@ -235,11 +240,13 @@ export abstract class Kwil<T extends EnvironmentType> {
    *
    * @param dropBody - The body of the database to drop. This should use the `DropBody` interface.
    * @param kwilSigner - The signer for the database drop.
+   * @param synchronous - (optional) If true, the broadcast will wait for the transaction to be mined before returning. If false, the broadcast will return the transaction hash immediately, regardless of if the transaction is successful. Defaults to false.
    * @returns A promise that resolves to the receipt of the transaction.
    */
   public async drop(
     dropBody: DropBody,
-    kwilSigner: KwilSigner
+    kwilSigner: KwilSigner,
+    synchronous?: boolean
   ): Promise<GenericResponse<TxReceipt>> {
     let tx = DBBuilderImpl.of<PayloadType.DROP_DATABASE, T>(this, PayloadType.DROP_DATABASE)
       .description(dropBody.description || '')
@@ -254,7 +261,7 @@ export abstract class Kwil<T extends EnvironmentType> {
 
       const transaction = await tx.buildTx();
 
-    return await this.client.broadcast(transaction);
+    return await this.client.broadcast(transaction, synchronous ? BroadcastSyncType.COMMIT : undefined);
   }
 
   /**

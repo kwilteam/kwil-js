@@ -26,7 +26,7 @@ import { base64UrlEncode, bytesToHex, hexToBytes } from '../utils/serial';
 import { TxInfoReceipt } from '../core/txQuery';
 import { Message, MsgData, MsgReceipt } from '../core/message';
 import { kwilDecode } from '../utils/rlp';
-import { BytesEncodingStatus, EnvironmentType } from '../core/enums';
+import { BroadcastSyncType, BytesEncodingStatus, EnvironmentType } from '../core/enums';
 import { AuthInfo, AuthSuccess, AuthenticatedBody } from '../core/auth';
 import { AxiosResponse } from 'axios';
 
@@ -157,12 +157,16 @@ export default class Client extends Api {
     return checkRes(res, (r) => r.price);
   }
 
-  public async broadcast(tx: Transaction): Promise<GenericResponse<TxReceipt>> {
+  public async broadcast(tx: Transaction, broadcastSync?: BroadcastSyncType): Promise<GenericResponse<TxReceipt>> {
     if (!tx.isSigned()) {
       throw new Error('Tx must be signed before broadcasting.');
     }
 
-    let req: BroadcastReq = { tx: tx.txData };
+    const req: BroadcastReq = { 
+      tx: tx.txData,
+      ...(broadcastSync !== (null || undefined) ? { sync: broadcastSync } : {}),
+    };
+
     const res = await super.post<BroadcastRes>(`/api/v1/broadcast`, req);
     checkRes(res);
 
