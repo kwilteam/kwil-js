@@ -1,4 +1,4 @@
-# Kwil-JS
+# Kwil
 
 Kwil-JS is a JavaScript/Typescript SDK for building browser and NodeJS applications to interact with Kwil networks.
 
