@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.5.6](https://github.com/kwilteam/kwil-js/compare/v0.5.5...v0.5.6) (2024-01-18)
+
+
+### Bug Fixes
+
+* **payload_builder.ts:** set fee to 0 when estimating cost ([23e78ad](https://github.com/kwilteam/kwil-js/commit/23e78adde464b265495f5d0d2532915e56de1ede)), closes [/github.com/kwilteam/kwil-db/commit/fa0ceaea5cd8141d643fac66bc7f8f9e3754d7b1#diff-29b727c2a7cdca0ced9103a0a61a8e9bfde5911470a028b553e77d7e1d05b7d7](https://github.com/kwilteam//github.com/kwilteam/kwil-db/commit/fa0ceaea5cd8141d643fac66bc7f8f9e3754d7b1/issues/diff-29b727c2a7cdca0ced9103a0a61a8e9bfde5911470a028b553e77d7e1d05b7d7)
+
 ### [0.5.5](https://github.com/kwilteam/kwil-js/compare/v0.5.4...v0.5.5) (2024-01-16)
 
 ### [0.5.4](https://github.com/kwilteam/kwil-js/compare/v0.5.3...v0.5.4) (2024-01-10)
