@@ -219,6 +219,8 @@ export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBui
       // rlp encode the payload and convert to base64
       tx.body.payload = bytesToBase64(kwilEncode(resolvedPayload));
       tx.body.payload_type = payloadType;
+      // set the fee to 0 for estimating cost
+      tx.body.fee = "0"
     });
 
     // estimate the cost of the transaction with the estimateCost symbol from the client

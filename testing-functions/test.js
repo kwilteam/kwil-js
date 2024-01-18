@@ -15,6 +15,7 @@ const scrypt = require("scrypt-js")
 const nacl = require("tweetnacl")
 const { sha256BytesToBytes } = require("../dist/utils/crypto")
 const { KwilSigner } = require("../dist/core/kwilSigner")
+const { ActionInput } = require("../dist/core/action")
 
 require("dotenv").config()
 
@@ -50,7 +51,7 @@ async function test() {
     const dbid = kwil.getDBID(address, "mydb")
     logger(dbid)
     // await authenticate(kwil, kwilSigner)
-    // broadcast(kwil, testDB, wallet, address)
+    broadcast(kwil, testDB, wallet, address)
     // broadcastEd25519(kwil, simpleDb)
     // await getTxInfo(kwil, txHash)
     // await getSchema(kwil, dbid)
@@ -70,6 +71,7 @@ async function test() {
     // await customEd25519(kwil, dbid)
     // await dropDb(kwil, dbid, wallet, address)
     // await transfer(kwil, "0xAfFDC06cF34aFD7D5801A13d48C92AD39609901D", 100, kwilSigner)
+    // bulkActionInput(kwil, kwilSigner)
 }
 
 test()
@@ -199,19 +201,19 @@ async function configObj(kwil, dbid) {
 
     const bulkActions = [
         {
-            "$id": 129,
+            "$id": count + 1,
             "$user": "Luke",
             "$title": "Hello",
             "$body": "Hello World",
         },
         {
-            "$id": 130,
+            "$id": count + 2,
             "$user": "Luke",
             "$title": "Hello",
             "$body": "Hello World 2",
         },
         {
-            "$id": 131,
+            "$id": count + 3,
             "$user": "Luke",
             "$title": "Hello",
             "$body": "Hello World 3",
@@ -453,5 +455,35 @@ async function transfer(kwil, to, tokenAmnt, signer) {
     }
 
     const res = await kwil.funder.transfer(payload, signer)
+    logger(res)
+}
+
+async function bulkActionInput(kwil, signer) {
+    const dbid = kwil.getDBID(signer.identifier, "mydb")
+    const query = await kwil.selectQuery(dbid, "SELECT COUNT(*) FROM posts");
+    const count = query.data[0][`COUNT(*)`]
+
+    let inputs = []
+
+    for (let i = 0; i < 100; i++) {
+        inputs.push(ActionInput.fromObject({
+            $id: count + i,
+            $user: "Luke",
+            $title: "Hello",
+            $body: "Hello World"
+        }))
+    }
+
+    console.log(inputs)
+
+    const body = {
+        dbid,
+        action: "add_post",
+        inputs,
+        description: 'This is my friendly description!',
+    }
+
+    const res = await kwil.execute(body, signer);
+
     logger(res)
 }
