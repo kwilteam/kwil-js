@@ -1,7 +1,7 @@
-import { WebKwil, Utils } from "@lukelamey/kwil-js";
+import { WebKwil, Utils, KwilSigner } from "../../../../src/index";
 import { Signer } from "ethers";
 
-export async function executeAction(kwil: WebKwil, dbid: string, action: string, signer: Signer, pubKey: string): Promise<void> {
+export async function executeAction(kwil: WebKwil, dbid: string, action: string, signer: KwilSigner): Promise<void> {
     const query = await kwil.selectQuery(dbid, "SELECT COUNT(*) FROM posts");
     console.log(query)
     //@ts-ignore
@@ -14,16 +14,12 @@ export async function executeAction(kwil: WebKwil, dbid: string, action: string,
         .put("$title", "Hello")
         .put("$body", "Hello World")
 
-        const tx = await kwil
-        .actionBuilder()
-        .dbid(dbid)
-        .name(action)
-        .concat(actionInput)
-        .publicKey(pubKey)
-        .signer(signer)
-        .description('This is a custom message!')
-        .buildTx();
+    const res = await kwil.execute({
+        dbid,
+        action,
+        inputs: [ actionInput ],
+        description: "This is a test action!"
+    }, signer)
 
-        const res = await kwil.broadcast(tx)
-        console.log(res)
+    console.log(res)
 }

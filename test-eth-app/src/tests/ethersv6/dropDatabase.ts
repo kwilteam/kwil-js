@@ -1,4 +1,4 @@
-import { WebKwil } from '@lukelamey/kwil-js'
+import { WebKwil } from '../../../../src/index'
 import { Signer } from 'ethers'
 
 export async function dropDatabase(kwil: WebKwil, dbid: string, pubKey: string, signer: Signer) {

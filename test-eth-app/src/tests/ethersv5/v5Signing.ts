@@ -1,5 +1,5 @@
 import { providers } from "ethers5";
-import { Types, Utils } from "@lukelamey/kwil-js"
+import { Types, Utils } from "../../../../src/index"
 import { kwil } from "../testUtils";
 
 interface AmntObject {

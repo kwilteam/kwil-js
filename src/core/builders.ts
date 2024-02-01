@@ -1,14 +1,15 @@
 import { HexString, Nillable, NonNil, Promisy } from '../utils/types';
-import { BaseTransaction, Transaction } from './tx';
-import { ethers, Signer as _Signer, JsonRpcSigner } from 'ethers';
+import { Transaction } from './tx';
 import { ActionInput } from './action';
-import { Wallet as Walletv5, Signer as Signerv5 } from 'ethers5';
 import { DeployOrDrop, PayloadType } from './enums';
 import { Message } from './message';
 import { AnySignatureType } from './signature';
 import { DbPayloadType } from './payload';
 
-export type EthSigner = NonNil<_Signer | JsonRpcSigner | ethers.Wallet | Walletv5 | Signerv5>;
+// Eth Signer is any class with a signMessage() method. This is supported by Ethers v5 and Ethers v6.
+export type EthSigner = {
+  signMessage: (message: string | Uint8Array) => Promise<string>;
+};
 
 export type CustomSigner = NonNil<(message: Uint8Array, ...args: any[]) => Promise<Uint8Array>>;
 export type SignerSupplier = Promisy<EthSigner | CustomSigner>;
