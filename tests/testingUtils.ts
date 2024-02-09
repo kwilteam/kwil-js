@@ -87,7 +87,7 @@ export interface FunderObj {
 }
 
 export interface AmntObject {
-    "COUNT(*)": number;
+    "count": number;
 }
 
 export interface schemaObj {

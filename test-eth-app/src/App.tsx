@@ -10,6 +10,7 @@ import { testViewWithParam } from './tests/testViewWithParam';
 import { testViewWithSign } from './tests/ethersv6/testViewWithSign';
 import { dropDatabase } from './tests/ethersv6/dropDatabase';
 import { JsonRpcSigner } from 'ethers';
+import { bytesToHex } from '@kwilteam/kwil-js/dist/utils/serial';
 
 declare global {
   interface Window {
