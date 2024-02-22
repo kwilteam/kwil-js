@@ -1,8 +1,6 @@
 import { Base64String, HexString, Nillable } from "../utils/types";
 import { EthSigner, SignerSupplier } from "./builders";
-import { Wallet as Walletv5, Signer as Signerv5 } from "ethers5";
-import { Wallet as Walletv6 } from "ethers";
-import { bytesToHex, hexToBytes } from "../utils/serial";
+import { hexToBytes } from "../utils/serial";
 import { BytesEncodingStatus, PayloadBytesTypes } from "./enums";
 
 export interface Signature<T extends PayloadBytesTypes> {
@@ -32,19 +30,10 @@ async function ethSign(message: Uint8Array, signer: EthSigner): Promise<HexStrin
     return await signer.signMessage(message);
 }
 
-export function isV5Signer(obj: any): obj is Signerv5 {
-    return obj
-        && typeof obj.getChainId === 'function'
-}
-
-export function isV6Signer(obj: any): boolean {
-    return obj
-        && typeof obj.address === 'string'
-}
 
 export function isEthersSigner(signer: SignerSupplier): boolean {
-    if(signer instanceof Walletv6 || signer instanceof Walletv5 || signer instanceof Signerv5 || isV6Signer(signer)) {
-        return true
+    if(typeof signer === 'object' && signer !== null && 'signMessage' in signer && typeof signer.signMessage === 'function') {
+        return true;
     }
 
     return false

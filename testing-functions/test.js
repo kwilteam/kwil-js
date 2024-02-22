@@ -9,7 +9,7 @@ const fractalDb = require("./fractal_db.json")
 const util = require("util")
 const near = require('near-api-js')
 const { from_b58 } = require('../dist/utils/base58')
-const { bytesToHex, hexToBytes, stringToBytes } = require('../dist/utils/serial')
+const { bytesToHex, hexToBytes, stringToBytes, bytesToEthHex } = require('../dist/utils/serial')
 const { bytesToBase64 } = require('../dist/utils/base64')
 const scrypt = require("scrypt-js")
 const nacl = require("tweetnacl")
@@ -51,7 +51,7 @@ async function test() {
     const dbid = kwil.getDBID(address, "mydb")
     logger(dbid)
     // await authenticate(kwil, kwilSigner)
-    broadcast(kwil, testDB, wallet, address)
+    // broadcast(kwil, testDB, wallet, address)
     // broadcastEd25519(kwil, simpleDb)
     // await getTxInfo(kwil, txHash)
     // await getSchema(kwil, dbid)
@@ -64,6 +64,7 @@ async function test() {
     // await select(kwil, dbid, "SELECT * FROM posts")
     // bulkAction(kwil, dbid, "add_post", wallet, address)
     // await testViewWithParam(kwil, dbid, wallet)
+    // await testReadPost(kwil, dbid)
     // await testViewWithSign(kwil, dbid, kwilSigner)
     // await testViewWithEdSigner(kwil, dbid)
     // await customSignature(kwil, dbid)
@@ -87,13 +88,17 @@ async function authenticate(kwil, signer) {
 }
 
 async function getSchema(kwil, d) {
-    const schema = await kwil.getSchema(d)
-    logger(schema.data)
+    const res = await kwil.getSchema(d)
+    const schema = res.data
+    const owner = bytesToHex(schema.owner)
+    logger(owner)
 }
 
 async function getAccount(kwil, owner) {
     const account = await kwil.getAccount(owner)
-    logger(account)
+    const uint8 = account.data.identifier;
+    const hex = bytesToEthHex(uint8)
+    logger(hex)
 }
 
 async function broadcast(kwil, tx, sig, pK) {
@@ -136,7 +141,7 @@ async function getAction(kwil) {
 async function execSingleAction(kwil, dbid, action, w, pubKey) {
     const query = await kwil.selectQuery(dbid, "SELECT COUNT(*) FROM posts");
 
-    const count = query.data[0][`COUNT(*)`]
+    const count = query.data[0][`count`]
 
     const Input = kwiljs.Utils.ActionInput
 
@@ -282,6 +287,17 @@ async function testViewWithParam(kwil, dbid, wallet) {
     const res = await kwil.call(msg);
 
     logger(res.data.result)
+}
+
+async function testReadPost(kwil, dbid) {
+    const body = {
+        action: "read_posts",
+        dbid,
+    }
+
+    const res = await kwil.call(body)
+
+    logger(res)
 }
 
 async function testViewWithSign(kwil, dbid, signer) {

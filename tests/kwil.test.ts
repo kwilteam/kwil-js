@@ -141,7 +141,7 @@ describe('ActionBuilder + ActionInput + Transaction public methods & broadcastin
     const count = await kwil.selectQuery(dbid, 'SELECT COUNT(*) FROM posts');
     if (count.status == 200 && count.data) {
       const amnt = count.data[0] as AmntObject;
-      recordCount = amnt['COUNT(*)'];
+      recordCount = amnt['count'];
     }
 
     actionInput = new Utils.ActionInput();
@@ -515,7 +515,7 @@ describe('Testing case insentivity on test_db', () => {
         `Something went wrong with the select query in Testing case insentivity on test_db. Count = ${count}`
       );
     const amount = count?.data[0] as AmntObject;
-    const amnt = amount['COUNT(*)'];
+    const amnt = amount['count'];
 
     return Utils.ActionInput.of()
       .put('$id', amnt + 1)
@@ -704,7 +704,7 @@ describe('Testing custom signers', () => {
     const count = await kwil.selectQuery(dbid, 'SELECT COUNT(*) FROM posts');
     if (count.status == 200 && count.data) {
       const amnt = count.data[0] as AmntObject;
-      recordCount = amnt['COUNT(*)'];
+      recordCount = amnt['count'];
     } else {
         throw new Error('Something went wrong checking how many records on users table in the Testing custom signers section')
     }
@@ -863,7 +863,7 @@ describe('Testing simple actions and db deploy / drop (builder pattern alternati
       const count = await kwil.selectQuery(dbid, 'SELECT COUNT(*) FROM posts');
       if (count.status == 200 && count.data) {
         const amnt = count.data[0] as AmntObject;
-        recordCount = amnt['COUNT(*)'] + 1;
+        recordCount = amnt['count'] + 1;
       }
     });
 
@@ -1036,7 +1036,7 @@ describe('Synchronous transactions', () => {
     const recordCount = await kwil.selectQuery(dbid, 'SELECT COUNT(*) FROM posts');
     if (!recordCount.status || !recordCount.data) throw new Error('No posts found');
     const amnt = recordCount.data[0] as AmntObject;
-    const count = amnt['COUNT(*)'] + 1;
+    const count = amnt['count'] + 1;
 
     const actionBody: ActionBody = {
       dbid,
@@ -1118,7 +1118,7 @@ describe('Synchronous transactions', () => {
     const recordCount = await kwil.selectQuery(dbid, 'SELECT COUNT(*) FROM posts');
     if (!recordCount.status || !recordCount.data) throw new Error('No posts found');
     const amnt = recordCount.data[0] as AmntObject;
-    const count = amnt['COUNT(*)'];
+    const count = amnt['count'];
 
     const actionBody: ActionBody = {
       dbid,
@@ -1145,7 +1145,7 @@ describe('unconfirmedNonce', () => {
     const posts = await kwil.selectQuery(dbid, 'SELECT COUNT(*) FROM posts');
     if (!posts.status || !posts.data) throw new Error('No posts found');
     const amnt = posts.data[0] as AmntObject;
-    const recordCount = amnt['COUNT(*)'] + 1;
+    const recordCount = amnt['count'] + 1;
     const actionBody: ActionBody = {
       dbid,
       action: 'add_post',
