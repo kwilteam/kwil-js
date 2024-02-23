@@ -1,0 +1,47 @@
+{
+  "owner": "",
+  "name": "nil_error",
+  "tables": [
+    {
+      "name": "nil_table",
+      "columns": [
+        {
+          "name": "id",
+          "type": "int",
+          "attributes": [
+            {
+              "type": "primary_key"
+            },
+            {
+              "type": "not_null"
+            }
+          ]
+        },
+        {
+          "name": "null_column",
+          "type": "text",
+          "attributes": [
+            {
+              "type": "unique"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "name": "insert_record",
+      "inputs": [
+        "$id",
+        "$msg"
+      ],
+      "public": true,
+      "mutability": "update",
+      "auxiliaries": null,
+      "statements": [
+        "INSERT INTO nil_table (id, null_column)\n  VALUES ($id, $msg);"
+      ]
+    }
+  ]
+}

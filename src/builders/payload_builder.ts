@@ -214,6 +214,8 @@ export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBui
       'chain ID is required to build a transaction.'
     );
 
+    console.log('resolvedPayload', resolvedPayload)
+
     // create transaction payload for estimating cost. Set the Tx bytes type to base64 encoded because we need to make GRPC estimate cost request.
     const preEstTxn = Txn.create<BytesEncodingStatus.BASE64_ENCODED>((tx) => {
       // rlp encode the payload and convert to base64

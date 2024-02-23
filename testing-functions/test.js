@@ -4,8 +4,6 @@
 const kwiljs = require("../dist/index")
 const ethers = require("ethers")
 const testDB = require("./mydb.json")
-const simpleDb = require("./test_schema_simple.json")
-const fractalDb = require("./fractal_db.json")
 const util = require("util")
 const near = require('near-api-js')
 const { from_b58 } = require('../dist/utils/base58')
@@ -48,8 +46,8 @@ async function test() {
     
     const dbid = kwil.getDBID(address, "mydb")
     // await authenticate(kwil, kwilSigner)
-    broadcast(kwil, testDB, kwilSigner)
-    // broadcastEd25519(kwil, simpleDb)
+    // broadcast(kwil, testDB, wallet, address)
+    // broadcastEd25519(kwil, testDB)
     // await getTxInfo(kwil, txHash)
     // await getSchema(kwil, dbid)
     // getAccount(kwil, address)
@@ -87,8 +85,7 @@ async function authenticate(kwil, signer) {
 async function getSchema(kwil, d) {
     const res = await kwil.getSchema(d)
     const schema = res.data
-    const owner = bytesToHex(schema.owner)
-    logger(owner)
+    logger(schema)
 }
 
 async function getAccount(kwil, owner) {
@@ -143,7 +140,7 @@ async function execSingleAction(kwil, dbid, action, w, pubKey) {
     const Input = kwiljs.Utils.ActionInput
 
     const solo = Input.of()
-        .put("$id", count)
+        .put("$id", count + 1)
         .put("$user", "Luke")
         .put("$title", "Hello") 
         .put("$body", "Hello World")
@@ -167,7 +164,7 @@ async function execSingleAction(kwil, dbid, action, w, pubKey) {
 
 async function execSingleActionKwilSigner(kwil, dbid, action, kSigner) {
     const query = await kwil.selectQuery(dbid, "SELECT COUNT(*) FROM posts");
-    const count = query.data[0][`COUNT(*)`]
+    const count = query.data[0][`count`]
 
     const Input = kwiljs.Utils.ActionInput
         .of()
@@ -199,7 +196,7 @@ async function select(kwil, dbid, query) {
 async function configObj(kwil, dbid) {
     const query = await kwil.selectQuery(dbid, "SELECT COUNT(*) FROM posts");
 
-    const count = query.data[0][`COUNT(*)`]
+    const count = query.data[0][`count`]
 
     const bulkActions = [
         {
@@ -242,7 +239,7 @@ async function bulkAction(kwil, dbid, action, w, pubKey) {
         .signer(w)
         .buildTx()
 
-    const res = await kwil.broadcast(tx)
+    const res = await kwil.broadcast(tx, 2)
 
     logger(res)
 }

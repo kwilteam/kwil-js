@@ -16,6 +16,7 @@ interface CheckSchema {
   name: string;
   actionSchema: ActionSchema;
   preparedActions: ValueType[][] | [];
+  nilArgs: boolean[][] | [];
 }
 
 const TXN_BUILD_IN_PROGRESS: ActionInput[] = [];
@@ -281,7 +282,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
    */
   private async dobuildTx(actions: ActionInput[]): Promise<Transaction> {
     // retrieve the schema and run validations
-    const { dbid, name, preparedActions, actionSchema } = await this.checkSchema(actions);
+    const { dbid, name, preparedActions, actionSchema, nilArgs } = await this.checkSchema(actions);
 
     // throw runtime error if signer is null or undefined
     const signer = objects.requireNonNil(
@@ -317,6 +318,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
       dbid: dbid,
       action: name,
       arguments: preparedActions,
+      nilArgs: nilArgs,
     };
 
     // build the transaction
@@ -344,7 +346,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
    */
   private async doBuildMsg(action: ActionInput[]): Promise<Message> {
     // retrieve the schema and run validations
-    const { dbid, name, preparedActions, actionSchema } = await this.checkSchema(action);
+    const { dbid, name, preparedActions, actionSchema, nilArgs } = await this.checkSchema(action);
 
     // throw a runtime error if more than one set of inputs is trying to be executed. Call does not allow bulk execution.
     if (preparedActions && preparedActions.length > 1) {
@@ -367,6 +369,8 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
       action: name,
       // if there are prepared actions, then the first element in the array is the action inputs.
       arguments: preparedActions.length > 0 ? preparedActions[0] : [],
+      // if there are nilArgs, then the first element in the array is the nilArgs.
+      nilArgs: nilArgs.length > 0 ? nilArgs[0] : [],
     };
 
     let msg: PayloadBuilder = PayloadBuilderImpl.of(this.client).payload(payload);
@@ -419,11 +423,18 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
     if (actions) {
       // ensure that no action inputs or values are missing
       const preparedActions = this.prepareActions(actions, actionSchema, name);
+      const nilArgs = preparedActions.map((a1) => {
+        return a1.map((a2) => {
+          return a2 === null || a2 === undefined;
+        });
+      })
+
       return {
         dbid: dbid,
         name: name,
         actionSchema: actionSchema,
         preparedActions: preparedActions,
+        nilArgs: nilArgs,
       };
     } else {
       return {
@@ -431,6 +442,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
         name: name,
         actionSchema: actionSchema,
         preparedActions: [],
+        nilArgs: [],
       };
     }
   }
