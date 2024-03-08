@@ -1,4 +1,4 @@
-export type ValueType = string | number | null;
+export type ValueType = string | number | null | undefined;
 
 export enum DataType {
     NULL = "",

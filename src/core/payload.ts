@@ -17,6 +17,7 @@ export type UnencodedActionPayload<T extends PayloadType.CALL_ACTION | PayloadTy
     dbid: string;
     action: string;
     arguments: ActionValueType<T> | [];
+    nilArgs: NilArgValueType<T> | [];
 }
 
 /**
@@ -28,6 +29,17 @@ export type UnencodedActionPayload<T extends PayloadType.CALL_ACTION | PayloadTy
 type ActionValueType<T extends PayloadType.CALL_ACTION | PayloadType.EXECUTE_ACTION> = T extends PayloadType.EXECUTE_ACTION ?
     ValueType[][] :
     ValueType[];
+
+/**
+ * `NilArgValueType` is the type of the `nilArgs` field in the `UnencodedActionPayload` type.
+ * The generic allows the UnencodedActionPayload to be typed to the correct payload type.
+ * Update actions can have nested `boolean` arrays because the allow bulk actions.
+ * View actions can only have a single `boolean` array because they only allow single actions.
+ * The `NilArgValueType` is used to indicate whether the action has nil arguments, and the location of the nil arguments.
+ */
+type NilArgValueType<T extends PayloadType.CALL_ACTION | PayloadType.EXECUTE_ACTION> = T extends PayloadType.EXECUTE_ACTION ?
+    boolean[][] :
+    boolean[];
 
 /**
  * `DBPayloadType` is the the payload type for deploying and dropping databases.

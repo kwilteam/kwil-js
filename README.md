@@ -2,6 +2,15 @@
 
 Kwil-JS is a JavaScript/Typescript SDK for building browser and NodeJS applications to interact with Kwil networks.
 
+## Versioning
+
+Make sure to use the correct version of the Kwil-JS SDK for the version of the Kwil daemon you are using:
+
+| Kwil Daemon Version | Kwil-JS Version |
+| :------------------: | :-------------: |
+| v.0.7 only           | v0.6             |
+| v0.6 & v0.7          | v0.5             |
+
 ## Installation
 
 ```bash
