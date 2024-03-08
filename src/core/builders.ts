@@ -11,7 +11,7 @@ export type EthSigner = {
   signMessage: (message: string | Uint8Array) => Promise<string>;
 };
 
-export type CustomSigner = NonNil<(message: Uint8Array, ...args: any[]) => Promise<Uint8Array>>;
+export type CustomSigner = NonNil<(message: Uint8Array) => Promise<Uint8Array>>;
 export type SignerSupplier = Promisy<EthSigner | CustomSigner>;
 
 /**

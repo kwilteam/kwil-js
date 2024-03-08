@@ -50,16 +50,25 @@ export class KwilSigner {
     identifier: HexString | Uint8Array,
     signatureType?: AnySignatureType
   ) {
+    // set signer
     this.signer = signer;
+
+    // set identifier as bytes
     if (typeof identifier === 'string') {
       this.identifier = hexToBytes(identifier);
     } else {
       this.identifier = identifier;
     }
+
+    // set signature type, if supplied
     if (signatureType) {
       this.signatureType = signatureType;
     } else {
+
+      // infer signature type from signer
       this.signatureType = getSignatureType(signer);
+
+      // throw error if signature type could not be determined
       if (this.signatureType === SignatureType.SIGNATURE_TYPE_INVALID) {
         throw new Error(
           'Could not determine signature type from signer. Please pass a signature type to the KwilSigner constructor.'

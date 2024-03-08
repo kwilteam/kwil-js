@@ -44,14 +44,11 @@ async function test() {
         logging: true,
     })
 
-    const pubKey = await recoverPubKey(wallet)
     const kwilSigner = new KwilSigner(wallet, address)
     
-    const pubByte = hexToBytes(pubKey)
     const dbid = kwil.getDBID(address, "mydb")
-    logger(dbid)
     // await authenticate(kwil, kwilSigner)
-    // broadcast(kwil, testDB, wallet, address)
+    broadcast(kwil, testDB, kwilSigner)
     // broadcastEd25519(kwil, simpleDb)
     // await getTxInfo(kwil, txHash)
     // await getSchema(kwil, dbid)
@@ -101,20 +98,20 @@ async function getAccount(kwil, owner) {
     logger(hex)
 }
 
-async function broadcast(kwil, tx, sig, pK) {
+async function broadcast(kwil, tx, kwilSigner) {
     let ownedTx = tx
-    ownedTx.owner = pK
-    const readytx = await kwil
-        .dbBuilder()
-        .payload(ownedTx)
-        .signer(sig)
-        .publicKey(pK)
-        .chainId(chainId)
-        .buildTx()
+    ownedTx.owner = kwilSigner.identifier
 
-    console.log(readytx)
+    const payload = {
+        schema: ownedTx
+    }
 
-    const txHash = await kwil.broadcast(readytx)
+    const txHash = await kwil.deploy(
+        payload,
+        kwilSigner,
+        true
+    )
+  
     logger(txHash)
 }
 
