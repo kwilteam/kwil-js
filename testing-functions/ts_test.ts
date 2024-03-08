@@ -46,23 +46,23 @@ async function main() {
   };
 
   // execute
-  await kwil.execute(actionBody, signer);
+  // await kwil.execute(actionBody, signer);
 
   //call with signer
-  const callRes = await kwil.call(actionBody, signer);
-  console.log(callRes);
+  // const callRes = await kwil.call(actionBody, signer);
+  // console.log(callRes);
 
   //call without signer
   // await kwil.call(actionBody);
 
   // deploy database
   const deployBody: DeployBody = {
-    schema: compiledKf,
+    schema: nilKf,
     description: 'My first database',
   };
 
   // deploy
-  // await kwil.deploy(deployBody, signer);
+  // await kwil.deploy(deployBody, signer, true);
 
   // drop database
   const dropBody: DropBody = {
@@ -101,7 +101,7 @@ async function nilTest() {
 
   let oneHundredInputs: any[] = [];
 
-  for (let i = 1; i < 100001; i++) {
+  for (let i = 1; i < 1000; i++) {
     oneHundredInputs.push({
       // random 10000000000000 digit number
       $id: Math.floor(Math.random() * 10000000000000),
@@ -115,7 +115,8 @@ async function nilTest() {
       action: 'insert_record',
       inputs: oneHundredInputs,
     },
-    signer
+    signer,
+    true
   );
 
   console.log(res);
