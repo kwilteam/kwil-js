@@ -1165,6 +1165,5 @@ describe('unconfirmedNonce', () => {
     const account = await kwil.getAccount(address);
     const nonce = Number(account.data?.nonce);
     expect(nonce).toBe(initialNonce + 1);
-    setTimeout(async () => {}, 2000);
   });
 });
