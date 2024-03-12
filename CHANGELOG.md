@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.6.0](https://github.com/kwilteam/kwil-js/compare/v0.5.6...v0.6.0) (2024-03-12)
+
+
+### ⚠ BREAKING CHANGES
+
+* **payload_builder:** No kwil-js API changes; however, the internal payload structure has changed. This
+means that from this commit on, kwil-js should only be used with kwil daemon v0.7 and above.
+* Custom signers must match the signature `(msg: Uint8Array) => Promise<Uint8Array>`.
+The variadic arguments were removed.
+
+### Bug Fixes
+
+* **core/builders:** loosen type definition for eth signer ([b0421b1](https://github.com/kwilteam/kwil-js/commit/b0421b1de1a58ddec1f7c2e73b6ee0d6b40a71ba)), closes [#20](https://github.com/kwilteam/kwil-js/issues/20)
+* **payload_builder:** fix nil bug error ([b944654](https://github.com/kwilteam/kwil-js/commit/b944654bb2b72d751b80f02a057460bf93378c40))
+* remove variadic args from CustomSigner ([f016cba](https://github.com/kwilteam/kwil-js/commit/f016cba6bf4d2d2933fad59f34a8d97fae41f5fb))
+
 ### [0.5.6](https://github.com/kwilteam/kwil-js/compare/v0.5.5...v0.5.6) (2024-01-18)
 
 
