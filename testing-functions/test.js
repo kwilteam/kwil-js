@@ -46,7 +46,7 @@ async function test() {
     
     const dbid = kwil.getDBID(address, "mydb")
     // await authenticate(kwil, kwilSigner)
-    // broadcast(kwil, testDB, wallet, address)
+    // broadcast(kwil, testDB, kwilSigner)
     // broadcastEd25519(kwil, testDB)
     // await getTxInfo(kwil, txHash)
     // await getSchema(kwil, dbid)
@@ -66,7 +66,7 @@ async function test() {
     // await julioSignature(kwil, dbid)
     // await customEd25519(kwil, dbid)
     // await dropDb(kwil, dbid, wallet, address)
-    // await transfer(kwil, "0xAfFDC06cF34aFD7D5801A13d48C92AD39609901D", 100, kwilSigner)
+    await transfer(kwil, "0xAfFDC06cF34aFD7D5801A13d48C92AD39609901D", 20, kwilSigner)
     // bulkActionInput(kwil, kwilSigner)
 }
 
