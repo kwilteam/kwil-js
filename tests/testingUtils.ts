@@ -1,9 +1,7 @@
 import { Contract, JsonRpcProvider, JsonRpcSigner, Wallet } from "ethers";
-import {Kwil} from "../dist/client/kwil";
 import { KwilSigner, NodeKwil } from "../dist";
 import scrypt from 'scrypt-js';
 import nacl from 'tweetnacl';
-import { objects } from "../dist/utils/objects";
 import mydb from '../testing-functions/mydb.json';
 import { DeployBody } from "../dist/core/database";
 import { CompiledKuneiform } from "../dist/core/payload";
@@ -30,10 +28,9 @@ export async function deployTestDb(signer: KwilSigner): Promise<void> {
     const body: DeployBody = {
         schema: mydb,
     }
-    const res = await kwil.deploy(body, signer);
+    const res = await kwil.deploy(body, signer, true);
     const hash = res.data?.tx_hash;
     if(!hash) throw new Error('No tx hash returned from Kwil Network');
-    await waitForDeployment(hash);
 }
 
 export async function deployIfNoTestDb(signer: KwilSigner): Promise<void> {
@@ -48,11 +45,16 @@ export async function deployTempSchema(schema: CompiledKuneiform, signer: KwilSi
     const payload: DeployBody = {
         schema,
     }
-    const res = await kwil.deploy(payload, signer);
+    const res = await kwil.deploy(payload, signer, true);
     const hash = res.data?.tx_hash;
     if(!hash) throw new Error("No hash returned from deploy");
-    await waitForDeployment(hash);
     return res;
+}
+
+export async function dropTestDb(dbid: string, signer: KwilSigner): Promise<void> {
+    await kwil.drop({
+        dbid,
+    }, signer, true);
 }
 
 
