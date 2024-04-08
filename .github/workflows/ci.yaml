@@ -79,5 +79,5 @@ jobs:
       - name: Cleanup Docker
         if: always()
         run: |
-          docker compose -f /tmp/kwil-db/deployments/compose/kwil down
+          docker compose -f /tmp/kwil-db/deployments/compose/kwil/docker-compose.yml down
           docker system prune -af
