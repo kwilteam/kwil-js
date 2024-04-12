@@ -1,7 +1,7 @@
 import Client from '../api_client/client';
 import { GenericResponse } from '../core/resreq';
 import { KwilSigner } from '../core/kwilSigner';
-import { AuthSuccess, AuthenticatedBody, LogoutResponse, composeAuthMsg } from '../core/auth';
+import { AuthSuccess, AuthenticatedBody, LogoutResponse, composeAuthMsg, removeTrailingSlash, verifyAuthProperties } from '../core/auth';
 import { BytesEncodingStatus, EnvironmentType } from '../core/enums';
 import { objects } from '../utils/objects';
 import { executeSign } from '../core/signature';
@@ -20,7 +20,7 @@ export class Auth<T extends EnvironmentType> {
   }
 
   /**
-   * Authenticates a user with the Kwil Gateway (KGW). This is required to execute mustsign view actions.
+   * Authenticates a user with the Kwil Gateway (KGW). This is required to execute view actions with the `@kgw(authn='true')` annotation.
    *
    * This method should only be used if your Kwil Network is using the Kwil Gateway.
    *
@@ -35,7 +35,12 @@ export class Auth<T extends EnvironmentType> {
       'something went wrong retrieving auth info from KGW'
     );
 
-    const msg = composeAuthMsg(authProperties, this.kwilProvider, '1', this.chainId);
+    const domain = removeTrailingSlash(this.kwilProvider);
+    const version = '1';
+
+    verifyAuthProperties(authProperties, domain, version, this.chainId);
+
+    const msg = composeAuthMsg(authProperties, domain, version, this.chainId);
 
     const signature = await executeSign(stringToBytes(msg), signer.signer, signer.signatureType);
 

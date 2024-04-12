@@ -1,5 +1,5 @@
 import { AbstractSigner, BrowserProvider } from "ethers";
-import { WebKwil, Utils, KwilSigner } from '@lukelamey/kwil-js'
+import { WebKwil, Utils, KwilSigner } from '../../../../src'
 // import { isEthersSigner } from 'luke-dev/dist/utils/keys'
 import db from '../mydb.json'
 import { Wallet as Walletv6 } from "ethers";
