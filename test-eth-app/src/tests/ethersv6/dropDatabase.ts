@@ -1,19 +1,10 @@
-import { WebKwil } from '@lukelamey/kwil-js'
-import { Signer } from 'ethers'
+import { KwilSigner, WebKwil } from '@lukelamey/kwil-js'
 
-export async function dropDatabase(kwil: WebKwil, dbid: string, pubKey: string, signer: Signer) {
-    const tx = await kwil
-        .dropDbBuilder()
-        .signer(signer)
-        .publicKey(pubKey)
-        .description('This transaction will drop the database!')
-        .payload({
-            dbid
-        })
-        .buildTx()
-
-    console.log('tx', tx)
-
-    const res = await kwil.broadcast(tx)
+export async function dropDatabase(kwil: WebKwil, dbid: string, signer: KwilSigner) {
+    const res = await kwil.drop({
+        dbid,
+        description: 'This transaction will drop the database!'
+    }, signer, true)
+    
     console.log(res)
 }

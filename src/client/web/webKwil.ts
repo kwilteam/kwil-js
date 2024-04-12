@@ -1,7 +1,6 @@
 import { Config } from '../../api_client/config';
 import { ActionBuilderImpl } from '../../builders/action_builder';
 import { ActionBody, ActionInput, Entries } from '../../core/action';
-import { AuthSuccess } from '../../core/auth';
 import { EnvironmentType } from '../../core/enums';
 import { KwilSigner } from '../../core/kwilSigner';
 import { BaseMessage, Message, MsgReceipt } from '../../core/message';
@@ -18,7 +17,7 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
    * If the action requires authentication in the Kwil Gateway, the kwilSigner should be passed. If the user is not authenticated, the user will be prompted to authenticate.
    *
    * @param {ActionBody} actionBody - The body of the action to send. This should use the `ActionBody` interface.
-   * @param {KwilSigner} kwilSigner (optional) - Caller should be passed if the action requires authentication OR if the action uses a `@caller` contextual variable. If `@caller` is used and authentication is not required, the user will not be prompted to authenticate; however, the user's identifier will be passed as the sender.
+   * @param {KwilSigner} kwilSigner (optional) - KwilSigner should be passed if the action requires authentication OR if the action uses a `@caller` contextual variable. If `@caller` is used and authentication is not required, the user will not be prompted to authenticate; however, the user's identifier will be passed as the sender.
    * @returns A promise that resolves to the receipt of the message.
    */
   public async call(
@@ -66,9 +65,10 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
 
     let res = await this.client.call(message);
 
+    // if we get a 401 and autoAuthenticate is true, try to authenticate and call again
     if(res.status === 401) {
       if (kwilSigner) {
-        const authRes = await this.authenticate(kwilSigner);
+        const authRes = await this.auth.authenticate(kwilSigner);
         if(authRes.status === 200) {
           res = await this.client.call(message);
         }

@@ -1,5 +1,5 @@
 import { AbstractSigner, BrowserProvider } from "ethers";
-import { WebKwil, Utils } from '@lukelamey/kwil-js'
+import { WebKwil, Utils, KwilSigner } from '@lukelamey/kwil-js'
 // import { isEthersSigner } from 'luke-dev/dist/utils/keys'
 import db from '../mydb.json'
 import { Wallet as Walletv6 } from "ethers";
@@ -19,17 +19,13 @@ export function isEthersSigner(signer: any): boolean {
     return false
 }
 
-export async function deployDb(signer: Signer, pubkey: string) : Promise<void> {
-    const tx = await kwil
-        .dbBuilder()
-        .payload(db)
-        .publicKey(pubkey)
-        .signer(signer)
-        .description('This is a custom message!')
-        .buildTx()
+export async function deployDb(signer: KwilSigner) : Promise<void> {
+    const res = await kwil.deploy({
+        schema: db,
+        description: 'This is a test deployment',
+    }, signer, true)
 
-    const rec = await kwil.broadcast(tx)
-    console.log(rec)
+    console.log(res)
     // console.log(await kwil.listDatabases(pubkey))
     // console.log(await kwil.ping())
 }

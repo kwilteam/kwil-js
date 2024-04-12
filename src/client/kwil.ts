@@ -6,23 +6,25 @@ import { Database, DeployBody, DropBody, SelectQuery } from '../core/database';
 import { BaseTransaction, TxReceipt } from '../core/tx';
 import { Account, ChainInfo, DatasetInfo } from '../core/network';
 import { ActionBuilderImpl } from '../builders/action_builder';
-import { base64ToBytes, bytesToBase64 } from '../utils/base64';
+import { base64ToBytes } from '../utils/base64';
 import { DBBuilderImpl } from '../builders/db_builder';
 import { NonNil } from '../utils/types';
 import { ActionBuilder, DBBuilder } from '../core/builders';
 import { Cache } from '../utils/cache';
 import { TxInfoReceipt } from '../core/txQuery';
-import { BaseMessage, Message, MsgReceipt } from '../core/message';
-import { BroadcastSyncType, BytesEncodingStatus, EnvironmentType, PayloadType } from '../core/enums';
-import { hexToBytes, stringToBytes } from '../utils/serial';
+import {
+  BroadcastSyncType,
+  BytesEncodingStatus,
+  EnvironmentType,
+  PayloadType,
+} from '../core/enums';
+import { hexToBytes } from '../utils/serial';
 import { isNearPubKey, nearB58ToHex } from '../utils/keys';
-import { ActionBody, ActionInput, Entries, resolveActionInputs } from '../core/action';
+import { ActionBody, resolveActionInputs } from '../core/action';
 import { KwilSigner } from '../core/kwilSigner';
-import { objects } from '../utils/objects';
-import { executeSign } from '../core/signature';
-import { AuthSuccess, composeAuthMsg } from '../core/auth';
 import { wrap } from './intern';
 import { Funder } from '../funder/funder';
+import { Auth } from '../auth/auth';
 
 /**
  * The main class for interacting with the Kwil network.
@@ -35,6 +37,7 @@ export abstract class Kwil<T extends EnvironmentType> {
   //cache schemas
   private schemas: Cache<GenericResponse<Database>>;
   public funder: Funder<T>;
+  public auth: Auth<T>;
 
   protected constructor(opts: Config) {
     this.client = new Client({
@@ -56,6 +59,9 @@ export abstract class Kwil<T extends EnvironmentType> {
 
     // create funder
     this.funder = new Funder<T>(this, this.client, this.chainId);
+
+    // create authenticate
+    this.auth = new Auth<T>(this.client, this.kwilProvider, this.chainId);
 
     //create a wrapped symbol of estimateCost method
     wrap(this, this.client.estimateCost.bind(this.client));
@@ -203,7 +209,10 @@ export abstract class Kwil<T extends EnvironmentType> {
 
     const transaction = await tx.buildTx();
 
-    return await this.client.broadcast(transaction, synchronous ? BroadcastSyncType.COMMIT : undefined);
+    return await this.client.broadcast(
+      transaction,
+      synchronous ? BroadcastSyncType.COMMIT : undefined
+    );
   }
 
   /**
@@ -232,7 +241,10 @@ export abstract class Kwil<T extends EnvironmentType> {
 
     const transaction = await tx.buildTx();
 
-    return await this.client.broadcast(transaction, synchronous ? BroadcastSyncType.COMMIT : undefined);
+    return await this.client.broadcast(
+      transaction,
+      synchronous ? BroadcastSyncType.COMMIT : undefined
+    );
   }
 
   /**
@@ -253,15 +265,18 @@ export abstract class Kwil<T extends EnvironmentType> {
       .payload({ dbid: dropBody.dbid })
       .publicKey(kwilSigner.identifier)
       .signer(kwilSigner.signer, kwilSigner.signatureType)
-      .chainId(this.chainId)
+      .chainId(this.chainId);
 
-      if(dropBody.nonce) {
-        tx = tx.nonce(dropBody.nonce);
-      }
+    if (dropBody.nonce) {
+      tx = tx.nonce(dropBody.nonce);
+    }
 
-      const transaction = await tx.buildTx();
+    const transaction = await tx.buildTx();
 
-    return await this.client.broadcast(transaction, synchronous ? BroadcastSyncType.COMMIT : undefined);
+    return await this.client.broadcast(
+      transaction,
+      synchronous ? BroadcastSyncType.COMMIT : undefined
+    );
   }
 
   /**
@@ -344,39 +359,5 @@ export abstract class Kwil<T extends EnvironmentType> {
    */
   public async ping(): Promise<GenericResponse<string>> {
     return await this.client.ping();
-  }
-
-  /**
-   * Authenticates a user with the Kwil Gateway (KGW). This is required to execute mustsign view actions.
-   *
-   * This method should only be used if your Kwil Network is using the Kwil Gateway.
-   *
-   * @param {KwilSigner} signer - The signer for the authentication.
-   * @returns A promise that resolves to the authentication success or failure.
-   */
-  protected async authenticate(signer: KwilSigner): Promise<GenericResponse<AuthSuccess<T>>> {
-    const authParam = await this.client.getAuthenticate();
-
-    const authProperties = objects.requireNonNil(
-      authParam.data,
-      'something went wrong retrieving auth info from KGW'
-    );
-
-    const msg = composeAuthMsg(authProperties, this.kwilProvider, '1', this.chainId);
-
-    const signature = await executeSign(stringToBytes(msg), signer.signer, signer.signatureType);
-
-    const authBody = {
-      nonce: authProperties.nonce,
-      sender: bytesToBase64(signer.identifier),
-      signature: {
-        signature_bytes: bytesToBase64(signature),
-        signature_type: signer.signatureType,
-      },
-    };
-
-    const res = await this.client.postAuthenticate(authBody);
-
-    return res;
   }
 }

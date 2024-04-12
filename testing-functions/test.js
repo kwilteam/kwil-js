@@ -44,14 +44,12 @@ async function test() {
         logging: true,
     })
 
-    const pubKey = await recoverPubKey(wallet)
     const kwilSigner = new KwilSigner(wallet, address)
     
-    const pubByte = hexToBytes(pubKey)
     const dbid = kwil.getDBID(address, "mydb")
     logger(dbid)
     // await authenticate(kwil, kwilSigner)
-    broadcast(kwil, testDB, wallet, address)
+    // broadcast(kwil, testDB, wallet, address)
     // broadcastEd25519(kwil, simpleDb)
     // await getTxInfo(kwil, txHash)
     // await getSchema(kwil, dbid)
@@ -64,7 +62,7 @@ async function test() {
     // await select(kwil, dbid, "SELECT * FROM posts")
     // bulkAction(kwil, dbid, "add_post", wallet, address)
     // await testViewWithParam(kwil, dbid, wallet)
-    // await testViewWithSign(kwil, dbid, kwilSigner)
+    await testViewWithSign(kwil, dbid, kwilSigner)
     // await testViewWithEdSigner(kwil, dbid)
     // await customSignature(kwil, dbid)
     // await julioSignature(kwil, dbid)
