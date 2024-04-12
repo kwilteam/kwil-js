@@ -28,6 +28,17 @@ interface NodeAuthSuccess {
   cookie?: string;
 }
 
+export type LogoutResponse<T extends EnvironmentType> = T extends EnvironmentType.BROWSER ? LogoutResponseWeb : LogoutResponseNode;
+
+interface LogoutResponseWeb {
+  result: string;
+}
+
+interface LogoutResponseNode {
+  result: string;
+  cookie?: string;
+}
+
 export function composeAuthMsg(
   authParam: AuthInfo,
   domain: string,

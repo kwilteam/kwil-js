@@ -19,8 +19,10 @@ import { MsgReceipt } from '../dist/core/message';
 import nacl from 'tweetnacl';
 import { Signer as _NearSigner } from 'near-api-js';
 import { ActionBody, ActionInput } from '../dist/core/action';
-import { DropBody } from '../dist/core/database';
+import { DeployBody, DropBody } from '../dist/core/database';
+import { EnvironmentType } from '../dist/core/enums';
 import dotenv from 'dotenv';
+import { LogoutResponse } from '../dist/core/auth';
 
 dotenv.config();
 const isKgwOn = process.env.GATEWAY_ON === 'TRUE';
@@ -342,6 +344,17 @@ describe('Testing case insentivity on test_db', () => {
     expect(result.data).toBeDefined();
     expect(result.data).toMatchObject<MsgReceipt>({
       result: expect.any(Array),
+    });
+  });
+
+  it('should return an expired cookie when logging out', async () => {
+    const result = await kwil.auth.logout();
+
+    expect(result.status).toBe(200);
+    expect(result.data).toBeDefined();
+    expect(result.data).toMatchObject<LogoutResponse<EnvironmentType.NODE>>({
+      result: 'ok',
+      cookie: expect.any(String),
     });
   });
 });

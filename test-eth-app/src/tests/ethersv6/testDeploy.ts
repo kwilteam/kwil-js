@@ -1,11 +1,11 @@
 import { AbstractSigner, BrowserProvider } from "ethers";
+import { WebKwil, Utils, KwilSigner } from '@lukelamey/kwil-js'
 // import { isEthersSigner } from 'luke-dev/dist/utils/keys'
 import db from '../mydb.json'
 import { Wallet as Walletv6 } from "ethers";
 import { Wallet as Walletv5, Signer as Signerv5 } from "ethers5";
 import { kwil } from "../testUtils";
-import { Signer } from "ethers";
-import { KwilSigner } from "../../../../src";
+
 
 export function isV6Signer(obj: any): boolean {
     return obj instanceof AbstractSigner
@@ -20,11 +20,12 @@ export function isEthersSigner(signer: any): boolean {
 }
 
 export async function deployDb(signer: KwilSigner) : Promise<void> {
-    const tx = await kwil.deploy({
-        schema: db
-    }, signer)
+    const res = await kwil.deploy({
+        schema: db,
+        description: 'This is a test deployment',
+    }, signer, true)
 
-    console.log(tx)
+    console.log(res)
     // console.log(await kwil.listDatabases(pubkey))
     // console.log(await kwil.ping())
 }

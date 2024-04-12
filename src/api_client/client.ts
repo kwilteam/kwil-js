@@ -27,7 +27,7 @@ import { TxInfoReceipt } from '../core/txQuery';
 import { Message, MsgData, MsgReceipt } from '../core/message';
 import { kwilDecode } from '../utils/rlp';
 import { BroadcastSyncType, BytesEncodingStatus, EnvironmentType } from '../core/enums';
-import { AuthInfo, AuthSuccess, AuthenticatedBody } from '../core/auth';
+import { AuthInfo, AuthSuccess, AuthenticatedBody, LogoutResponse } from '../core/auth';
 import { AxiosResponse } from 'axios';
 
 export default class Client extends Api {
@@ -82,6 +82,36 @@ export default class Client extends Api {
       }
   
       // if we are in nodejs, we need to return the cookie
+      return {
+        status: res.status,
+        // @ts-ignore
+        data: {
+          result: res.data.result,
+          cookie: cookie[0],
+        },
+      }
+    }
+
+    // if we are in the browser, we don't need to return the cookie
+    return {
+      status: res.status,
+      data: {
+        result: res.data.result,
+      },
+    }
+  }
+
+  public async logout<T extends EnvironmentType>(): Promise<GenericResponse<LogoutResponse<T>>> {
+    const res = await super.get<LogoutResponse<T>>(`/logout`);
+    checkRes(res);
+
+    // if we are in nodejs, we need to return the cookie
+    if(typeof window === 'undefined') {
+      const cookie = res.headers['set-cookie'];
+      if(!cookie) {
+        throw new Error('No cookie receiveed from gateway. An error occured with authentication.');
+      }
+  
       return {
         status: res.status,
         // @ts-ignore
