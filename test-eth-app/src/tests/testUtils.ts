@@ -1,8 +1,8 @@
-import { WebKwil } from "@lukelamey/kwil-js";
+import { WebKwil } from "../../../src";
 
 export const kwil = new WebKwil({
-    kwilProvider: "http://localhost:8090",
-    chainId: "kwil-chain-FrsMSg82",
+    kwilProvider: "https://kgw-dev.kwil.com",
+    chainId: "kwil-chain-9",
     logging: true,
     timeout: 10000
 })

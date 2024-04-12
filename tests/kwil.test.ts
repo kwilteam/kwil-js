@@ -19,7 +19,7 @@ import { MsgReceipt } from '../dist/core/message';
 import nacl from 'tweetnacl';
 import { Signer as _NearSigner } from 'near-api-js';
 import { ActionBody, ActionInput } from '../dist/core/action';
-import { DeployBody, DropBody } from '../dist/core/database';
+import { DropBody } from '../dist/core/database';
 import { EnvironmentType } from '../dist/core/enums';
 import dotenv from 'dotenv';
 import { LogoutResponse } from '../dist/core/auth';
@@ -323,7 +323,7 @@ describe('Testing case insentivity on test_db', () => {
   }, 10000);
 });
 
-(isKgwOn ? describe.skip : describe)('Testing authentication', () => {
+(isKgwOn ? describe: describe.skip)('Testing authentication', () => {
   beforeAll(async () => {
     await deployIfNoTestDb(kSigner);
   }, 10000);

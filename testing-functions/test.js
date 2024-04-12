@@ -44,6 +44,7 @@ async function test() {
 
     const kwilSigner = new KwilSigner(wallet, address)
     
+    console.log(await kwil.auth.authenticate(kwilSigner))
     const dbid = kwil.getDBID(address, "mydb")
     // await authenticate(kwil, kwilSigner)
     // broadcast(kwil, testDB, kwilSigner)
