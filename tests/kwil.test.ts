@@ -636,7 +636,7 @@ describe('Calling Actions', () => {
   });
 });
 
-(isKgwOn ? describe.skip : describe)('Testing authentication', () => {
+(isKgwOn ? describe : describe.skip)('Testing authentication', () => {
   it('should authenticate and return data automatically', async () => {
     const body: ActionBody = {
       action: 'view_must_sign',
