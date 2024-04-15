@@ -323,7 +323,7 @@ describe('Testing case insentivity on test_db', () => {
   }, 10000);
 });
 
-(isKgwOn ? describe: describe.skip)('Testing authentication', () => {
+(isKgwOn ? describe : describe.skip)('Testing authentication', () => {
   beforeAll(async () => {
     await deployIfNoTestDb(kSigner);
   }, 10000);

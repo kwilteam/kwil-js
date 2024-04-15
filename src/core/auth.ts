@@ -79,13 +79,13 @@ export function verifyAuthProperties(
   version: string,
   chainId: string,
 ): void {
-  if (authParm.domain !== domain) {
+  if (authParm.domain && authParm.domain!== domain) {
     throw new Error(`Domain mismatch: ${authParm.domain} !== ${domain}`);
   }
-  if (authParm.version !== version) {
+  if (authParm.version && authParm.version !== version) {
     throw new Error(`Version mismatch: ${authParm.version} !== ${version}`);
   }
-  if (authParm.chain_id !== chainId) {
+  if (authParm.chain_id && authParm.chain_id !== chainId) {
     throw new Error(`Chain ID mismatch: ${authParm.chain_id} !== ${chainId}`);
   }
 }
