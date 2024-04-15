@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.6.1](https://github.com/kwilteam/kwil-js/compare/v0.6.0...v0.6.1) (2024-04-15)
+
+
+### Features
+
+* **client:** add auth logout method ([dc7095d](https://github.com/kwilteam/kwil-js/commit/dc7095db87c75151923da9ce586479e243c5f9d5))
+
 ## [0.6.0](https://github.com/kwilteam/kwil-js/compare/v0.5.6...v0.6.0) (2024-03-12)
 
 
