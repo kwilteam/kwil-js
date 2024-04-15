@@ -15,6 +15,10 @@ export interface AuthInfo {
   statement: string;
   issue_at: string;
   expiration_time: string;
+  chain_id: string;
+  domain: string;
+  version: string;
+  uri: string;
 }
 
 export type AuthSuccess<T extends EnvironmentType> = T extends EnvironmentType.BROWSER ? BrowserAuthSuccess : NodeAuthSuccess; 
@@ -24,6 +28,17 @@ interface BrowserAuthSuccess {
 }
 
 interface NodeAuthSuccess {
+  result: string;
+  cookie?: string;
+}
+
+export type LogoutResponse<T extends EnvironmentType> = T extends EnvironmentType.BROWSER ? LogoutResponseWeb : LogoutResponseNode;
+
+interface LogoutResponseWeb {
+  result: string;
+}
+
+interface LogoutResponseNode {
   result: string;
   cookie?: string;
 }
@@ -49,4 +64,28 @@ export function composeAuthMsg(
   msg += `Issue At: ${authParam.issue_at}\n`;
   msg += `Expiration Time: ${authParam.expiration_time}\n`;
   return msg;
+}
+
+export function removeTrailingSlash(url: string): string {
+  if (url.endsWith('/')) {
+    return url.slice(0, -1);
+  }
+  return url;
+}
+
+export function verifyAuthProperties(
+  authParm: AuthInfo,
+  domain: string,
+  version: string,
+  chainId: string,
+): void {
+  if (authParm.domain && authParm.domain!== domain) {
+    throw new Error(`Domain mismatch: ${authParm.domain} !== ${domain}`);
+  }
+  if (authParm.version && authParm.version !== version) {
+    throw new Error(`Version mismatch: ${authParm.version} !== ${version}`);
+  }
+  if (authParm.chain_id && authParm.chain_id !== chainId) {
+    throw new Error(`Chain ID mismatch: ${authParm.chain_id} !== ${chainId}`);
+  }
 }

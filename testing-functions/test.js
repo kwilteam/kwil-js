@@ -44,6 +44,7 @@ async function test() {
 
     const kwilSigner = new KwilSigner(wallet, address)
     
+    // console.log(await kwil.auth.authenticate(kwilSigner))
     const dbid = kwil.getDBID(address, "mydb")
     // await authenticate(kwil, kwilSigner)
     // broadcast(kwil, testDB, kwilSigner)
@@ -51,7 +52,7 @@ async function test() {
     // await getTxInfo(kwil, txHash)
     // await getSchema(kwil, dbid)
     // getAccount(kwil, address)
-    listDatabases(kwil)
+    // listDatabases(kwil)
     // ping(kwil)
     // chainInfo(kwil)
     // await execSingleAction(kwil, dbid, "add_post", wallet, address)
@@ -66,7 +67,7 @@ async function test() {
     // await julioSignature(kwil, dbid)
     // await customEd25519(kwil, dbid)
     // await dropDb(kwil, dbid, wallet, address)
-    // await transfer(kwil, "0xAfFDC06cF34aFD7D5801A13d48C92AD39609901D", 20, kwilSigner)
+    await transfer(kwil, "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf", 20, kwilSigner)
     // bulkActionInput(kwil, kwilSigner)
 }
 

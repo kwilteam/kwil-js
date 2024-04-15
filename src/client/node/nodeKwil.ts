@@ -19,8 +19,8 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
    * Calls a Kwil node. This can be used to execute read-only ('view') actions on Kwil.
    * If the action requires authentication in the Kwil Gateway, the kwilSigner should be passed. If the user is not authenticated, the user will be prompted to authenticate.
    *
-   * @param actionBody - The body of the action to send. This should use the `ActionBody` interface.
-   * @param kwilSigner (optional) - Caller should be passed if the action requires authentication OR if the action uses a `@caller` contextual variable. If `@caller` is used and authentication is not required, the user will not be prompted to authenticate; however, the user's identifier will be passed as the sender.
+   * @param {ActionBody} actionBody - The body of the action to send. This should use the `ActionBody` interface.
+   * @param {KwilSigner} kwilSigner (optional) - KwilSigner should be passed if the action requires authentication OR if the action uses a `@caller` contextual variable. If `@caller` is used and authentication is not required, the user will not be prompted to authenticate; however, the user's identifier will be passed as the sender.
    * @returns A promise that resolves to the receipt of the message.
    */
   public async call(
@@ -68,11 +68,15 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
 
     let res = await this.client.call(message);
 
+    // if we get a 401, we need to return the response so we can try to authenticate
     if(res.status === 401) {
       if (kwilSigner) {
-        const authRes = await this.authenticate(kwilSigner);
+        const authRes = await this.auth.authenticate(kwilSigner);
         if(authRes.status === 200) {
+          // create a new client with the new cookie
           this.client = new Client(this.config, authRes.data?.cookie);
+
+          // call the message again
           res = await this.client.call(message);
         }
       } else {

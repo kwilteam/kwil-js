@@ -1,4 +1,4 @@
-import { WebKwil, Utils, KwilSigner } from "../../../../src/index";
+import { WebKwil, Utils, KwilSigner } from "@lukelamey/kwil-js";
 import { Signer } from "ethers";
 
 export async function executeAction(kwil: WebKwil, dbid: string, action: string, signer: KwilSigner): Promise<void> {
@@ -17,9 +17,9 @@ export async function executeAction(kwil: WebKwil, dbid: string, action: string,
     const res = await kwil.execute({
         dbid,
         action,
-        inputs: [ actionInput ],
-        description: "This is a test action!"
-    }, signer)
+        inputs: [actionInput],
+        description: 'This is a test action',
+    }, signer, true)
 
     console.log(res)
 }

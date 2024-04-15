@@ -6,11 +6,11 @@ import { NodeGlobalsPolyfillPlugin } from "@esbuild-plugins/node-globals-polyfil
 import { NodeModulesPolyfillPlugin } from "@esbuild-plugins/node-modules-polyfill";
 // You don't need to add this to deps, it's included by @esbuild-plugins/node-modules-polyfill
 import rollupNodePolyFill from "rollup-plugin-node-polyfills";
-
+import mkcert from 'vite-plugin-mkcert';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), mkcert()],
   resolve: {
     alias: {
         // This Rollup aliases are extracted from @esbuild-plugins/node-modules-polyfill,
