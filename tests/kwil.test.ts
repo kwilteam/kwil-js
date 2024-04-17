@@ -23,6 +23,7 @@ import { DropBody } from '../dist/core/database';
 import { EnvironmentType } from '../dist/core/enums';
 import dotenv from 'dotenv';
 import { LogoutResponse } from '../dist/core/auth';
+import { Wallet } from 'ethers';
 
 dotenv.config();
 const isKgwOn = process.env.GATEWAY_ON === 'TRUE';
@@ -348,7 +349,13 @@ describe('Testing case insentivity on test_db', () => {
   });
 
   it('should return an expired cookie when logging out', async () => {
+    //@ts-ignore
+    const preCookier = kwil.client.cookie;
+
     const result = await kwil.auth.logout();
+
+    //@ts-ignore
+    const postCookie = kwil.client.cookie;
 
     expect(result.status).toBe(200);
     expect(result.data).toBeDefined();
@@ -356,6 +363,30 @@ describe('Testing case insentivity on test_db', () => {
       result: 'ok',
       cookie: expect.any(String),
     });
+    expect(preCookier).not.toBe(postCookie);
+  });
+
+  interface ViewCaller {
+    caller: string;
+  }
+
+  it('should allow a new signer after logging out', async () => {
+    const newWallet = Wallet.createRandom();
+
+    const newSigner = new KwilSigner(newWallet, newWallet.address);
+
+    const body: ActionBody = {
+      action: 'view_caller',
+      dbid,
+    };
+
+    const result = await kwil.call(body, newSigner);
+
+    const returnedCaller = result.data?.result?.[0] as ViewCaller | undefined;
+
+    expect(result.status).toBe(200);
+    expect(result.data).toBeDefined();
+    expect(returnedCaller?.caller).toBe(newWallet.address);
   });
 });
 

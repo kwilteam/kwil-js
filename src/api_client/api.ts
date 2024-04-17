@@ -16,7 +16,7 @@ export abstract class Api {
   //private readonly METHOD_GET = 'GET';
   //private readonly METHOD_POST = 'POST';
   private readonly host: string;
-  private readonly cookie?: string;
+  protected cookie?: string;
 
   public config!: ApiConfig;
   protected constructor(host: string, opts: ApiConfig, cookie?: string) {

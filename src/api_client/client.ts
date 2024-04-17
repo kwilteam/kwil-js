@@ -111,6 +111,9 @@ export default class Client extends Api {
       if(!cookie) {
         throw new Error('No cookie receiveed from gateway. An error occured with authentication.');
       }
+
+      // remove the cookie
+      this.cookie = undefined;
   
       return {
         status: res.status,
@@ -122,7 +125,7 @@ export default class Client extends Api {
       }
     }
 
-    // if we are in the browser, we don't need to return the cookie
+    // if we are in the browser, we don't need to return the cookie - the browser will handle it
     return {
       status: res.status,
       data: {

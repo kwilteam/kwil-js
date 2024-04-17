@@ -1,5 +1,6 @@
 import Client from '../../api_client/client';
 import { Config } from '../../api_client/config';
+import { Auth } from '../../auth/auth';
 import { ActionBuilderImpl } from '../../builders/action_builder';
 import { ActionBody, ActionInput, Entries } from '../../core/action';
 import { EnvironmentType } from '../../core/enums';
@@ -66,6 +67,7 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
 
     const message = await msg.buildMsg();
 
+    console.log(this.client)
     let res = await this.client.call(message);
 
     // if we get a 401, we need to return the response so we can try to authenticate
@@ -73,8 +75,12 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
       if (kwilSigner) {
         const authRes = await this.auth.authenticate(kwilSigner);
         if(authRes.status === 200) {
+
           // create a new client with the new cookie
           this.client = new Client(this.config, authRes.data?.cookie);
+          
+          // create a new auth object with the new client
+          this.auth = new Auth(this.client, this.config.kwilProvider, this.config.chainId);
 
           // call the message again
           res = await this.client.call(message);
