@@ -1,6 +1,6 @@
 import { strings } from "../utils/strings";
 import { Base64String, Nillable, NonNil } from "../utils/types";
-import { BytesEncodingStatus, PayloadBytesTypes, PayloadType, SerializationType } from "./enums";
+import { BytesEncodingStatus, PayloadBytesTypes, PayloadType } from "./enums";
 import { UnencodedActionPayload } from "./payload";
 import { AnySignatureType, Signature, SignatureType } from "./signature";
 

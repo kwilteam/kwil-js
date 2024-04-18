@@ -46,7 +46,6 @@ async function test() {
 
     const kwilSigner = new KwilSigner(wallet, address)
     
-    // console.log(await kwil.auth.authenticate(kwilSigner))
     const dbid = kwil.getDBID(address, "mydb")
     logger(dbid)
     // await authenticate(kwil, kwilSigner)
@@ -78,11 +77,6 @@ test()
 async function authenticate(kwil, signer) {
     const res = await kwil.authenticate(signer)
     logger(res)
-    if(!res.data.cookie) {
-        throw new Error("Authentication failed")
-    }
-    kwil.setCookie(res.data.cookie)
-    logger(kwil.client)
 }
 
 async function getSchema(kwil, d) {
@@ -300,22 +294,17 @@ async function testViewWithEdSigner(kwil, dbid) {
 
     const signCallback = (msg) => nacl.sign.detached(msg, key.secretKey)
 
-    console.log(key.publicKey)
+    const kwilSigner = new KwilSigner(signCallback, key.publicKey, 'ed25519')
 
-    await auth(kwil, signCallback, key.publicKey, 'ed25519')
-    const msg = await kwil
-        .actionBuilder()
-        .dbid(dbid)
-        .name('view_must_sign')
-        .publicKey(key.publicKey)
-        .description('This is my friendly description!')
-        .signer(signCallback, 'ed25519')
-        .buildMsg()
+    const body = {
+        action: "view_must_sign",
+        dbid,
+    }
 
-    logger(msg)
-    const res = await kwil.call(msg);
 
-    logger(res.data.result)
+    const res = await kwil.call(body, kwilSigner);
+
+    logger(res)
 }
 
 async function broadcastEd25519(kwil, db) {
@@ -433,18 +422,6 @@ async function customEd25519(kwil, dbid) {
     const res = await kwil.broadcast(tx);
 
     logger(res)
-}
-
-async function auth(kwil, signer, ident, type) {
-    const ksigner = new KwilSigner(signer, ident, type)
-    const res = await kwil.authenticate(ksigner)
-    logger(res);
-    const cookie = res.data.cookie;
-    if (!cookie) {
-        throw new Error("Authentication failed")
-    }
-
-    kwil.setCookie(cookie)
 }
 
 async function transfer(kwil, to, tokenAmnt, signer) {

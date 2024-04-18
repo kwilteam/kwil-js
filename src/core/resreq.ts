@@ -2,7 +2,7 @@ import { Database } from './database';
 import { Account, ChainInfo, DatasetInfoServer } from './network';
 import { BaseTransaction, TxReceipt, TxnData } from './tx';
 import { TxResult } from './txQuery';
-import { BroadcastSyncType, BytesEncodingStatus, EnvironmentType } from './enums';
+import { BroadcastSyncType, BytesEncodingStatus } from './enums';
 import { AuthInfo } from './auth';
 
 type SchemaRes = Database & {

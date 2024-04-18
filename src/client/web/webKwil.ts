@@ -8,8 +8,12 @@ import { GenericResponse } from '../../core/resreq';
 import { Kwil } from '../kwil';
 
 export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
+  private readonly autoAuthenticate: boolean;
+
   constructor(opts: Config) {
     super(opts);
+
+    this.autoAuthenticate = opts.autoAuthenticate !== undefined ? opts.autoAuthenticate : true;
   }
 
   /**
@@ -38,7 +42,7 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
     kwilSigner?: KwilSigner
   ): Promise<GenericResponse<MsgReceipt>> {
     if (actionBody instanceof BaseMessage) {
-      return await this.client.call(actionBody);
+      return await this.callClient(actionBody);
     }
 
     let msg = ActionBuilderImpl.of<EnvironmentType.BROWSER>(this)
@@ -63,14 +67,14 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
 
     const message = await msg.buildMsg();
 
-    let res = await this.client.call(message);
+    let res = await this.callClient(message);
 
     // if we get a 401 and autoAuthenticate is true, try to authenticate and call again
-    if(res.status === 401) {
+    if(this.autoAuthenticate && res.status === 401) {
       if (kwilSigner) {
         const authRes = await this.auth.authenticate(kwilSigner);
         if(authRes.status === 200) {
-          res = await this.client.call(message);
+          res = await this.callClient(message);
         }
       } else {
         throw new Error('Action requires authentication. Pass a KwilSigner to authenticate.')

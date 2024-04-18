@@ -1,6 +1,6 @@
 // network.ts contains interfaces for network-related data structures.
 
-import { Base64String, HexString } from "../utils/types";
+import { Base64String } from "../utils/types";
 import { BytesEncodingStatus } from "./enums";
 
 export interface Account {
@@ -13,6 +13,10 @@ export interface ChainInfo {
     chain_id: string;
     height: string;
     hash: string;
+}
+
+export interface ChainInfoOpts {
+    disableWarning?: boolean;
 }
 
 export type DatasetInfo = DatasetInfoBase<BytesEncodingStatus.HEX_ENCODED>;

@@ -3,7 +3,7 @@ import { Account, ChainInfo, DatasetInfo } from '../core/network';
 import { Database, SelectQuery } from '../core/database';
 import { Transaction, TxReceipt } from '../core/tx';
 import { Api } from './api';
-import { ApiConfig } from './config';
+import { ClientConfig } from './config';
 import {
   BroadcastReq,
   BroadcastRes,
@@ -33,12 +33,12 @@ import { AxiosResponse } from 'axios';
 export default class Client extends Api {
   private unconfirmedNonce: boolean;
 
-  constructor(opts: ApiConfig, cookie?: string) {
-    super(opts.kwilProvider, opts, cookie);
+  constructor(opts: ClientConfig) {
+    super(opts);
     this.unconfirmedNonce = opts.unconfirmedNonce || false;
   }
 
-  public async getSchema(dbid: string): Promise<GenericResponse<Database>> {
+  protected async getSchemaClient(dbid: string): Promise<GenericResponse<Database>> {
     const res = await super.get<GetSchemaResponse>(`/api/v1/databases/${dbid}/schema`);
     checkRes(res);
 
@@ -66,21 +66,23 @@ export default class Client extends Api {
     };
   }
 
-  public async getAuthenticate(): Promise<GenericResponse<AuthInfo>> {
+  protected async getAuthenticateClient(): Promise<GenericResponse<AuthInfo>> {
     const res = await super.get<GetAuthResponse>(`/auth`);
     return checkRes(res, (r) => r.result);
   }
 
-  public async postAuthenticate<T extends EnvironmentType>(body: AuthenticatedBody<BytesEncodingStatus.BASE64_ENCODED>): Promise<GenericResponse<AuthSuccess<T>>> {
+  protected async postAuthenticateClient<T extends EnvironmentType>(
+    body: AuthenticatedBody<BytesEncodingStatus.BASE64_ENCODED>
+  ): Promise<GenericResponse<AuthSuccess<T>>> {
     const res = await super.post<PostAuthResponse>(`/auth`, body);
     checkRes(res);
 
-    if(typeof window === 'undefined') {
+    if (typeof window === 'undefined') {
       const cookie = res.headers['set-cookie'];
-      if(!cookie) {
+      if (!cookie) {
         throw new Error('No cookie receiveed from gateway. An error occured with authentication.');
       }
-  
+
       // if we are in nodejs, we need to return the cookie
       return {
         status: res.status,
@@ -89,7 +91,7 @@ export default class Client extends Api {
           result: res.data.result,
           cookie: cookie[0],
         },
-      }
+      };
     }
 
     // if we are in the browser, we don't need to return the cookie
@@ -98,20 +100,25 @@ export default class Client extends Api {
       data: {
         result: res.data.result,
       },
-    }
+    };
   }
 
-  public async logout<T extends EnvironmentType>(): Promise<GenericResponse<LogoutResponse<T>>> {
+  protected async logoutClient<T extends EnvironmentType>(): Promise<
+    GenericResponse<LogoutResponse<T>>
+  > {
     const res = await super.get<LogoutResponse<T>>(`/logout`);
     checkRes(res);
 
+    // remove the cookie
+    this.cookie = undefined;
+
     // if we are in nodejs, we need to return the cookie
-    if(typeof window === 'undefined') {
+    if (typeof window === 'undefined') {
       const cookie = res.headers['set-cookie'];
-      if(!cookie) {
+      if (!cookie) {
         throw new Error('No cookie receiveed from gateway. An error occured with authentication.');
       }
-  
+
       return {
         status: res.status,
         // @ts-ignore
@@ -119,22 +126,24 @@ export default class Client extends Api {
           result: res.data.result,
           cookie: cookie[0],
         },
-      }
+      };
     }
 
-    // if we are in the browser, we don't need to return the cookie
+    // if we are in the browser, we don't need to return the cookie - the browser will handle it
     return {
       status: res.status,
       data: {
         result: res.data.result,
       },
-    }
+    };
   }
 
-  public async getAccount(owner: Uint8Array): Promise<GenericResponse<Account>> {
+  protected async getAccountClient(owner: Uint8Array): Promise<GenericResponse<Account>> {
     const urlSafeB64 = base64UrlEncode(bytesToBase64(owner));
     const unconfirmedNonce = this.unconfirmedNonce ? '?status=1' : '';
-    const res = await super.get<GetAccountResponse>(`/api/v1/accounts/${urlSafeB64}` + unconfirmedNonce);
+    const res = await super.get<GetAccountResponse>(
+      `/api/v1/accounts/${urlSafeB64}` + unconfirmedNonce
+    );
     checkRes(res);
 
     let acct: Account = {
@@ -155,44 +164,47 @@ export default class Client extends Api {
     };
   }
 
-  public async listDatabases(owner?: Uint8Array): Promise<GenericResponse<DatasetInfo[]>> {
+  protected async listDatabasesClient(owner?: Uint8Array): Promise<GenericResponse<DatasetInfo[]>> {
     let urlSafeB64 = '';
 
-    if(owner) {
+    if (owner) {
       urlSafeB64 = base64UrlEncode(bytesToBase64(owner));
     }
-    
+
     const res = await super.get<ListDatabasesResponse>(`/api/v1/${urlSafeB64}/databases`);
-    
+
     //convert base64 identifiers to Uint8Array
-    const convertedRes: AxiosResponse<{databases: DatasetInfo[]}> = {
+    const convertedRes: AxiosResponse<{ databases: DatasetInfo[] }> = {
       ...res,
       data: {
         databases: res.data.databases.map((db) => {
           return {
             ...db,
             owner: base64ToBytes(db.owner),
-          }
-        })
+          };
+        }),
       },
-    }
+    };
 
     return checkRes(convertedRes, (r) => r.databases);
   }
 
-  public async estimateCost(tx: Transaction): Promise<GenericResponse<string>> {
+  protected async estimateCostClient(tx: Transaction): Promise<GenericResponse<string>> {
     let req: EstimateCostReq = { tx: tx.txData };
 
     const res = await super.post<EstimateCostRes>(`/api/v1/estimate_price`, req);
     return checkRes(res, (r) => r.price);
   }
 
-  public async broadcast(tx: Transaction, broadcastSync?: BroadcastSyncType): Promise<GenericResponse<TxReceipt>> {
+  protected async broadcastClient(
+    tx: Transaction,
+    broadcastSync?: BroadcastSyncType
+  ): Promise<GenericResponse<TxReceipt>> {
     if (!tx.isSigned()) {
       throw new Error('Tx must be signed before broadcasting.');
     }
 
-    const req: BroadcastReq = { 
+    const req: BroadcastReq = {
       tx: tx.txData,
       ...(broadcastSync !== (null || undefined) ? { sync: broadcastSync } : {}),
     };
@@ -216,22 +228,22 @@ export default class Client extends Api {
     };
   }
 
-  public async ping(): Promise<GenericResponse<string>> {
+  protected async pingClient(): Promise<GenericResponse<string>> {
     const res = await super.get<PongRes>(`/api/v1/ping`);
     return checkRes(res, (r) => r.message);
   }
 
-  public async chainInfo(): Promise<GenericResponse<ChainInfo>> {
+  protected async chainInfoClient(): Promise<GenericResponse<ChainInfo>> {
     const res = await super.get<ChainInfoRes>(`/api/v1/chain_info`);
     return checkRes(res, (r) => r);
   }
 
-  public async selectQuery(query: SelectQuery): Promise<GenericResponse<string>> {
+  protected async selectQueryClient(query: SelectQuery): Promise<GenericResponse<string>> {
     const res = await super.post<SelectRes>(`/api/v1/query`, query);
     return checkRes(res, (r) => r.result);
   }
 
-  public async txInfo(tx_hash: string): Promise<GenericResponse<TxInfoReceipt>> {
+  protected async txInfoClient(tx_hash: string): Promise<GenericResponse<TxInfoReceipt>> {
     tx_hash = bytesToBase64(hexToBytes(tx_hash));
     const req: TxQueryReq = { tx_hash };
 
@@ -270,7 +282,7 @@ export default class Client extends Api {
     };
   }
 
-  public async call(msg: Message): Promise<GenericResponse<MsgReceipt>> {
+  protected async callClient(msg: Message): Promise<GenericResponse<MsgReceipt>> {
     let req: MsgData<BytesEncodingStatus.BASE64_ENCODED> = {
       body: msg.body,
       auth_type: msg.auth_type,
@@ -280,7 +292,7 @@ export default class Client extends Api {
     const res = await super.post<CallRes>(`/api/v1/call`, req);
 
     // if we get a 401, we need to return the response so we can try to authenticate
-    if(res.status !== 401) {
+    if (res.status !== 401) {
       checkRes(res);
     }
 

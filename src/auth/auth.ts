@@ -1,20 +1,35 @@
-import Client from '../api_client/client';
 import { GenericResponse } from '../core/resreq';
 import { KwilSigner } from '../core/kwilSigner';
-import { AuthSuccess, AuthenticatedBody, LogoutResponse, composeAuthMsg, removeTrailingSlash, verifyAuthProperties } from '../core/auth';
+import {
+  AuthInfo,
+  AuthSuccess,
+  AuthenticatedBody,
+  LogoutResponse,
+  composeAuthMsg,
+  removeTrailingSlash,
+  verifyAuthProperties,
+} from '../core/auth';
 import { BytesEncodingStatus, EnvironmentType } from '../core/enums';
 import { objects } from '../utils/objects';
 import { executeSign } from '../core/signature';
 import { stringToBytes } from '../utils/serial';
 import { bytesToBase64 } from '../utils/base64';
 
+interface AuthClient {
+  getAuthenticateClient(): Promise<GenericResponse<AuthInfo>>;
+  postAuthenticateClient<T extends EnvironmentType>(
+    body: AuthenticatedBody<BytesEncodingStatus.BASE64_ENCODED>
+  ): Promise<GenericResponse<AuthSuccess<T>>>;
+  logoutClient<T extends EnvironmentType>(): Promise<GenericResponse<LogoutResponse<T>>>;
+}
+
 export class Auth<T extends EnvironmentType> {
-  private client: Client;
+  private authClient: AuthClient;
   private kwilProvider: string;
   private chainId: string;
 
-  public constructor(client: Client, kwilProvider: string, chainId: string) {
-    this.client = client;
+  public constructor(authClient: AuthClient, kwilProvider: string, chainId: string) {
+    this.authClient = authClient;
     this.kwilProvider = kwilProvider;
     this.chainId = chainId;
   }
@@ -28,7 +43,7 @@ export class Auth<T extends EnvironmentType> {
    * @returns A promise that resolves to the authentication success or failure.
    */
   public async authenticate(signer: KwilSigner): Promise<GenericResponse<AuthSuccess<T>>> {
-    const authParam = await this.client.getAuthenticate();
+    const authParam = await this.authClient.getAuthenticateClient();
 
     const authProperties = objects.requireNonNil(
       authParam.data,
@@ -53,12 +68,12 @@ export class Auth<T extends EnvironmentType> {
       },
     };
 
-    const res = await this.client.postAuthenticate(authBody);
+    const res = await this.authClient.postAuthenticateClient(authBody);
 
     return res;
   }
 
   public async logout(): Promise<GenericResponse<LogoutResponse<T>>> {
-    return await this.client.logout();
+    return await this.authClient.logoutClient();
   }
 }

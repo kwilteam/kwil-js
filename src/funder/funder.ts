@@ -1,29 +1,40 @@
-import Client from '../api_client/client';
 import { PayloadBuilderImpl } from '../builders/payload_builder';
 import { Kwil } from '../client/kwil';
-import { BroadcastSyncType, BytesEncodingStatus, EnvironmentType, PayloadType } from '../core/enums';
+import {
+  BroadcastSyncType,
+  BytesEncodingStatus,
+  EnvironmentType,
+  PayloadType,
+} from '../core/enums';
 import { KwilSigner } from '../core/kwilSigner';
 import { TransferPayload } from '../core/payload';
 import { GenericResponse } from '../core/resreq';
-import { TxReceipt } from '../core/tx';
+import { Transaction, TxReceipt } from '../core/tx';
 import { hexToBytes } from '../utils/serial';
 import { TransferBody } from './funding_types';
 
+interface FunderClient {
+  broadcastClient(
+    tx: Transaction,
+    broadcastSync?: BroadcastSyncType
+  ): Promise<GenericResponse<TxReceipt>>;
+}
+
 export class Funder<T extends EnvironmentType> {
   private kwil: Kwil<T>;
-  private client: Client;
+  private funderClient: FunderClient;
   private chainId: string;
 
-  constructor(kwil: Kwil<T>, client: Client, chainId: string) {
+  constructor(kwil: Kwil<T>, funderClient: FunderClient, chainId: string) {
     this.kwil = kwil;
-    this.client = client;
+    this.funderClient = funderClient;
     this.chainId = chainId;
   }
 
   public async transfer(
     payload: TransferBody,
     signer: KwilSigner,
-    synchronous?: boolean,
+    synchronous?: boolean
   ): Promise<GenericResponse<TxReceipt>> {
     let to: Uint8Array;
     if (typeof payload.to === 'string') {
@@ -46,6 +57,9 @@ export class Funder<T extends EnvironmentType> {
       .signer(signer.signer, signer.signatureType)
       .buildTx();
 
-    return await this.client.broadcast(tx, synchronous ? BroadcastSyncType.COMMIT : undefined);
+    return await this.funderClient.broadcastClient(
+      tx,
+      synchronous ? BroadcastSyncType.COMMIT : undefined
+    );
   }
 }

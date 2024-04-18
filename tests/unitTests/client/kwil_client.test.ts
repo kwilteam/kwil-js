@@ -1,24 +1,16 @@
 import { getMock, postMock } from "../api_client/api-utils";
-import { Kwil } from "../../../src/client/kwil";
-import { ActionBuilderImpl } from "../../../src/builders/action_builder";
-import { DBBuilderImpl } from "../../../src/builders/db_builder";
-import { Transaction } from "../../../src/core/tx";
-import { Message, Msg } from "../../../src/core/message";
-import { BytesEncodingStatus, PayloadType, SerializationType } from "../../../src/core/enums";
-import { SignatureType } from "../../../src/core/signature";
-import { bytesToString, stringToBytes, stringToHex } from "../../../src/utils/serial";
-import { base64ToBytes, bytesToBase64 } from "../../../src/utils/base64";
+import { Msg } from "../../../src/core/message";
+import { stringToBytes, stringToHex } from "../../../src/utils/serial";
+import { bytesToBase64 } from "../../../src/utils/base64";
 import { Wallet } from "ethers";
-import { recoverSecp256k1PubKey } from "../../../src/utils/keys";
 import { KwilSigner } from "../../../src";
 import { ActionBody, ActionInput } from "../../../src/core/action";
 import { DeployBody } from "../../../src/core/database";
 import compiledKF from '../../test_schema2.json'
 import { DropBody } from "../../../src/core/database";
-import { BaseTransaction, Txn } from "../../../src/core/tx";
-import { BaseMessage } from "../../../dist/core/message";
+import { NodeKwil } from "../../../src";
 
-class TestKwil extends Kwil {
+class TestKwil extends NodeKwil {
     constructor() {
         super({kwilProvider: 'doesnt matter', chainId: 'doesnt matter'});
     }
@@ -33,12 +25,12 @@ describe('Kwil', () => {
         postMock.mockReset();
     });
 
-    const pubKey = '0x048767310544592e33b2fb5555527f49c0902cf0f472f4c87e65324abb75e7a5e1c035bc1ef5026f363c79588526c341af341a68fc37299183391699ee1864cc75';
+    const address = '0xAfFDC06cF34aFD7D5801A13d48C92AD39609901D'
 
     describe('getDBID', () => {
         it('should return the dbid', () => {
-            const dbid = kwil.getDBID(pubKey, 'mydb');
-            expect(dbid).toBe('xd924382720df474c6bb62d26da9aeb10add2ad2835c0b7e4a6336ad8');
+            const dbid = kwil.getDBID(address, 'mydb');
+            expect(dbid).toBe('x52197631a5de74a1e293681181c2a63418d7ae710a3f0370d91a99bd');
         });
     })
 
@@ -80,7 +72,7 @@ describe('Kwil', () => {
     describe('getAccount', () => {
         it('should return account info for a given wallet address', async () => {
             const mockAccount = {
-                public_key: bytesToBase64(stringToBytes(pubKey)),
+                identifier: bytesToBase64(stringToBytes(address)),
                 balance: 'mockBalance',
                 nonce: 'mockNonce'
             }
@@ -90,66 +82,11 @@ describe('Kwil', () => {
                 data: { account: mockAccount }
             });
 
-            const result = await kwil.getAccount(pubKey);
+            const result = await kwil.getAccount(address);
             expect(result.status).toBe(200);
-            expect(result.data?.public_key).toBeInstanceOf(Uint8Array);
+            expect(result.data?.identifier).toBeInstanceOf(Uint8Array);
             expect(result.data?.balance).toBe(mockAccount.balance);
             expect(result.data?.nonce).toBe(mockAccount.nonce);
-        })
-    })
-
-    describe('actionBuilder', () => {
-        it('should return an action builder', () => {
-            const actionBuilder = kwil.actionBuilder();
-            expect(actionBuilder).toBeDefined();
-            expect(actionBuilder).toBeInstanceOf(ActionBuilderImpl)
-        })
-    });
-
-    describe('dbBuilder', () => {
-        it('should return a db builder', () => {
-            const dbBuilder = kwil.dbBuilder();
-            expect(dbBuilder).toBeDefined();
-            expect(dbBuilder).toBeInstanceOf(DBBuilderImpl)
-        });
-    })
-
-    describe('dropDbBuilder', () => {
-        it('should return a db builder', () => {
-            const dbBuilder = kwil.dropDbBuilder();
-            expect(dbBuilder).toBeDefined();
-            expect(dbBuilder).toBeInstanceOf(DBBuilderImpl)
-        })
-    })
-
-    describe('broadcast', () => {
-        it('should broadcast a transaction', async () => {
-            const tx = Txn.create<BytesEncodingStatus.BASE64_ENCODED>(tx => {
-                tx.signature.signature_bytes = bytesToBase64(stringToBytes('mockSignatureBytes'));
-                tx.signature.signature_type = SignatureType.SECP256K1_PERSONAL;
-                tx.body.payload = 'mockPayload';
-                tx.body.payload_type = PayloadType.EXECUTE_ACTION;
-                tx.body.fee = '0';
-                tx.body.nonce = 1;
-                tx.body.chain_id = 'test id';
-                tx.sender = 'mockSender';
-                tx.body.description = '';
-                tx.sender = bytesToBase64(stringToBytes('mockSender'));
-                tx.serialization = SerializationType.SIGNED_MSG_CONCAT;
-            })
-
-            postMock.mockResolvedValue({
-                status: 200,
-                data: { tx_hash: bytesToBase64(stringToBytes('some_hash')) }
-            });
-
-            const result = await kwil.broadcast(tx);
-
-            expect(result.status).toBe(200);
-            expect(result.status).toBe(200);
-            expect(result.data).toEqual({
-                tx_hash: stringToHex('some_hash')
-            });
         })
     })
 
@@ -158,8 +95,7 @@ describe('Kwil', () => {
 
         beforeAll(async () => {
             const wallet = Wallet.createRandom();
-            const pubKey = await recoverSecp256k1PubKey(wallet);
-            kSigner = new KwilSigner(wallet, pubKey);
+            kSigner = new KwilSigner(wallet, wallet.address);
         })
 
         describe('execute', () => {
@@ -190,7 +126,7 @@ describe('Kwil', () => {
                     });
     
                     const mockAccount = {
-                        public_key: bytesToBase64(stringToBytes(pubKey)),
+                        identifier: bytesToBase64(stringToBytes(address)),
                         balance: 'mockBalance',
                         nonce: 'mockNonce'
                     }
@@ -268,7 +204,7 @@ describe('Kwil', () => {
                     });
     
                     const mockAccount = {
-                        public_key: bytesToBase64(stringToBytes(pubKey)),
+                        identifier: bytesToBase64(stringToBytes(address)),
                         balance: 'mockBalance',
                         nonce: 'mockNonce'
                     }
@@ -357,9 +293,7 @@ describe('Kwil', () => {
                 it('should send a message to a kwil node (read only operation)', async () => {
                     const msg = Msg.create(msg => {
                         msg.body.payload = bytesToBase64(stringToBytes('mockPayload'));
-                        msg.body.description = '';
                         msg.sender = 'mocksender';
-                        msg.serialization = SerializationType.SIGNED_MSG_CONCAT;
                     })
                     
                     postMock.mockResolvedValue({
@@ -528,7 +462,7 @@ describe('Kwil', () => {
             describe('success cases', () => {
                 beforeEach(() => {
                     const mockAccount = {
-                        public_key: bytesToBase64(stringToBytes(pubKey)),
+                        identifier: bytesToBase64(stringToBytes(address)),
                         balance: 'mockBalance',
                         nonce: 'mockNonce'
                     }
@@ -571,7 +505,7 @@ describe('Kwil', () => {
             describe('success cases', () => {
                 beforeEach(() => {
                     const mockAccount = {
-                        public_key: bytesToBase64(stringToBytes(pubKey)),
+                        identifier: bytesToBase64(stringToBytes(address)),
                         balance: 'mockBalance',
                         nonce: 'mockNonce'
                     }
@@ -615,11 +549,33 @@ describe('Kwil', () => {
         it('should return a list of databases for a given wallet address', async () => {
             getMock.mockResolvedValue({
                 status: 200,
-                data: { databases: ['db1', 'db2'] }
+                data: { databases: [
+                    {
+                        name: 'db1',
+                        owner: bytesToBase64(stringToBytes(address)),
+                        dbid: 'dbid1'
+                    },
+                    {
+                        name: 'db2',
+                        owner: bytesToBase64(stringToBytes(address)),
+                        dbid: 'dbid2'
+                    }
+                ] }
             });
-            const result = await kwil.listDatabases(pubKey);
+            const result = await kwil.listDatabases(address);
             expect(result.status).toBe(200);
-            expect(result.data).toEqual(['db1', 'db2']);
+            expect(result.data).toEqual([
+                {
+                    name: 'db1',
+                    owner: expect.any(Uint8Array),
+                    dbid: 'dbid1'
+                },
+                {
+                    name: 'db2',
+                    owner: expect.any(Uint8Array),
+                    dbid: 'dbid2'
+                }
+            ]);
         });
     })
 
@@ -653,6 +609,11 @@ describe('Kwil', () => {
     })
 
     describe('chainInfo', () => {
+        const consoleSpy = jest.spyOn(console, 'warn');
+
+        afterEach(() => {
+            consoleSpy.mockRestore();
+        })
         it('should return chain info', async () => {
             getMock.mockResolvedValueOnce({
                 status: 200,
@@ -689,5 +650,23 @@ describe('Kwil', () => {
             expect(result.data?.hash).toBe('doesnt matter');
             expect(consoleSpy).toHaveBeenCalled()
         });
+
+        it('should not log a warning if disableWarning is true', async () => {
+            getMock.mockResolvedValueOnce({
+                status: 200,
+                data: {
+                    chain_id: 'different chain id',
+                    height: '1',
+                    hash: 'doesnt matter',
+                }
+            });
+
+            const result = await kwil.chainInfo({ disableWarning: true });
+            expect(result.status).toBe(200);
+            expect(result.data?.chain_id).toBe('different chain id');
+            expect(result.data?.height).toBe('1');
+            expect(result.data?.hash).toBe('doesnt matter');
+            expect(consoleSpy).not.toHaveBeenCalled()
+        })
     })
 });
