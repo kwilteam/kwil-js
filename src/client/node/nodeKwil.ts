@@ -1,6 +1,6 @@
 import { Config } from '../../api_client/config';
 import { ActionBuilderImpl } from '../../builders/action_builder';
-import { ActionBody, ActionInput, Entries } from '../../core/action';
+import { ActionBody, ActionInput, Entries, ActionBodyNode } from '../../core/action';
 import { EnvironmentType } from '../../core/enums';
 import { KwilSigner } from '../../core/kwilSigner';
 import { BaseMessage, Message, MsgReceipt } from '../../core/message';
@@ -8,19 +8,23 @@ import { GenericResponse } from '../../core/resreq';
 import { Kwil } from '../kwil';
 
 export class NodeKwil extends Kwil<EnvironmentType.NODE> {
+  private autoAuthenticate: boolean;
+
   constructor(opts: Config) {
     super(opts);
+
+    this.autoAuthenticate = opts.autoAuthenticate !== undefined ? opts.autoAuthenticate : true;
   }
   /**
    * Calls a Kwil node. This can be used to execute read-only ('view') actions on Kwil.
    * If the action requires authentication in the Kwil Gateway, the kwilSigner should be passed. If the user is not authenticated, the user will be prompted to authenticate.
    *
-   * @param {ActionBody} actionBody - The body of the action to send. This should use the `ActionBody` interface.
+   * @param {ActionBodyNode} actionBody - The body of the action to send. This should use the `ActionBody` interface.
    * @param {KwilSigner} kwilSigner (optional) - KwilSigner should be passed if the action requires authentication OR if the action uses a `@caller` contextual variable. If `@caller` is used and authentication is not required, the user will not be prompted to authenticate; however, the user's identifier will be passed as the sender.
    * @returns A promise that resolves to the receipt of the message.
    */
   public async call(
-    actionBody: ActionBody,
+    actionBody: ActionBodyNode,
     kwilSigner?: KwilSigner
   ): Promise<GenericResponse<MsgReceipt>>;
 
@@ -33,11 +37,15 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
   public async call(actionBody: Message): Promise<GenericResponse<MsgReceipt>>;
 
   public async call(
-    actionBody: Message | ActionBody,
+    actionBody: Message | ActionBodyNode,
     kwilSigner?: KwilSigner
   ): Promise<GenericResponse<MsgReceipt>> {
     if (actionBody instanceof BaseMessage) {
       return await this.callClient(actionBody);
+    }
+
+    if (actionBody.cookie) {
+      this.cookie = actionBody.cookie;
     }
 
     let msg = ActionBuilderImpl.of<EnvironmentType.NODE>(this)
@@ -65,10 +73,10 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
     let res = await this.callClient(message);
 
     // if we get a 401, we need to return the response so we can try to authenticate
-    if(res.status === 401) {
+    if (this.autoAuthenticate && res.status === 401) {
       if (kwilSigner) {
         const authRes = await this.auth.authenticate(kwilSigner);
-        if(authRes.status === 200) {
+        if (authRes.status === 200) {
           // set the cookie
           this.cookie = authRes.data?.cookie;
 
@@ -76,7 +84,7 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
           res = await this.callClient(message);
         }
       } else {
-        throw new Error('Action requires authentication. Pass a KwilSigner to authenticate.')
+        throw new Error('Action requires authentication. Pass a KwilSigner to authenticate.');
       }
     }
 
