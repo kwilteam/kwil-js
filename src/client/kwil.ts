@@ -1,10 +1,10 @@
 import { generateDBID } from '../utils/dbid';
 import Client from '../api_client/client';
-import { Config, KwilConfig } from '../api_client/config';
+import { KwilConfig } from '../api_client/config';
 import { GenericResponse } from '../core/resreq';
 import { Database, DeployBody, DropBody, SelectQuery } from '../core/database';
 import { BaseTransaction, TxReceipt } from '../core/tx';
-import { Account, ChainInfo, DatasetInfo } from '../core/network';
+import { Account, ChainInfo, ChainInfoOpts, DatasetInfo } from '../core/network';
 import { ActionBuilderImpl } from '../builders/action_builder';
 import { base64ToBytes } from '../utils/base64';
 import { DBBuilderImpl } from '../builders/db_builder';
@@ -339,12 +339,13 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    *
    * Will log a warning if the returned chain id does not match the configured chain id.
    *
+   * @param {ChainInfoOpts} opts - Options for the chain info request.
    * @returns {ChainInfo} - A promise that resolves to the chain info.
    */
-  public async chainInfo(): Promise<GenericResponse<ChainInfo>> {
+  public async chainInfo(opts?: ChainInfoOpts): Promise<GenericResponse<ChainInfo>> {
     const info = await this.chainInfoClient();
 
-    if (info.data?.chain_id !== this.chainId) {
+    if (!opts?.disableWarning && info.data?.chain_id !== this.chainId) {
       console.warn(
         `WARNING: Chain ID mismatch. Expected ${info.data?.chain_id}, got ${this.chainId}`
       );

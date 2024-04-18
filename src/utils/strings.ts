@@ -1,5 +1,5 @@
 import {objects} from "./objects";
-import {Func, HexString, Nillable, NonNil} from "./types";
+import {Func, Nillable, NonNil} from "./types";
 
 export const strings = {
     is: (value: any): boolean => {

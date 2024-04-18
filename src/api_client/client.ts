@@ -3,7 +3,7 @@ import { Account, ChainInfo, DatasetInfo } from '../core/network';
 import { Database, SelectQuery } from '../core/database';
 import { Transaction, TxReceipt } from '../core/tx';
 import { Api } from './api';
-import { ApiConfig, ClientConfig } from './config';
+import { ClientConfig } from './config';
 import {
   BroadcastReq,
   BroadcastRes,
