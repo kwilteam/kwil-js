@@ -16,12 +16,14 @@ export interface ClientConfig extends ApiConfig {
 
 export interface KwilConfig extends ClientConfig {
     chainId: string;
+    autoAuthenticate?: boolean;
 }
 
 /**
  * @typedef {Object} Config
  * @property {string} kwilProvider - kwil provider url
  * @property {string} chainId - chain id
+ * @property {boolean} [autoAuthenticate] - auto authenticate on call requests to Kwil Gateway. Default is true.
  * @property {boolean} [unconfirmedNonce] - use unconfirmed nonce
  * @property {number} [timeout] - timeout for requests in milliseconds
  * @property {boolean} [logging] - enable logging

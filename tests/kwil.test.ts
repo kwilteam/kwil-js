@@ -14,11 +14,11 @@ import {
 } from './testingUtils';
 import { TxReceipt } from '../dist/core/tx';
 import schema from './test_schema2.json';
-import { KwilSigner, Types, Utils } from '../dist/index';
+import { KwilSigner, NodeKwil, Types, Utils } from '../dist/index';
 import { MsgReceipt } from '../dist/core/message';
 import nacl from 'tweetnacl';
 import { Signer as _NearSigner } from 'near-api-js';
-import { ActionBody, ActionInput } from '../dist/core/action';
+import { ActionBody, ActionInput, ActionBodyNode } from '../dist/core/action';
 import { DropBody } from '../dist/core/database';
 import { EnvironmentType } from '../dist/core/enums';
 import dotenv from 'dotenv';
@@ -391,6 +391,62 @@ describe('Testing case insentivity on test_db', () => {
     expect(result.status).toBe(200);
     expect(result.data).toBeDefined();
     expect(returnedCaller?.caller).toBe(newWallet.address);
+  });
+
+  describe('Testing authentication without autoAuthenticate', () => {
+    const newKwil = new NodeKwil({
+      kwilProvider: process.env.KWIL_PROVIDER || '',
+      chainId: process.env.CHAIN_ID || '',
+      autoAuthenticate: false,
+    });
+
+    it('should not authenticate automatically', async () => {
+      const body: ActionBody = {
+        action: 'view_must_sign',
+        dbid,
+      };
+
+      const result = await newKwil.call(body, kSigner);
+
+      expect(result.status).toBe(401);
+      expect(result.data?.result).toBe(null);
+    });
+
+    it('should still not autenticate even if I call the authenticate method', async () => {
+      await newKwil.auth.authenticate(kSigner);
+
+      const body: ActionBody = {
+        action: 'view_must_sign',
+        dbid,
+      };
+
+      const result = await newKwil.call(body, kSigner);
+
+      expect(result.status).toBe(401);
+      expect(result.data?.result).toBe(null);
+    });
+
+    it('should only authenticate when the cookie is passed back to the action', async () => {
+      const authRes = await newKwil.auth.authenticate(kSigner);
+      const cookie = authRes.data?.cookie;
+
+      if (!cookie) throw new Error('No cookie found');
+
+      const body: ActionBodyNode = {
+        action: 'view_must_sign',
+        dbid,
+        cookie
+      };
+
+      const result = await newKwil.call(body, kSigner);
+
+      expect(result.status).toBe(200);
+      expect(result.data).toBeDefined();
+      expect(result.data).toMatchObject<MsgReceipt>({
+        result: expect.any(Array),
+      });
+    });
+
   });
 });
 
