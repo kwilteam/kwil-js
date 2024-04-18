@@ -25,7 +25,7 @@ const TXN_BUILD_IN_PROGRESS: ActionInput[] = [];
  */
 
 export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuilder {
-  private readonly client: Kwil<T>;
+  private readonly kwil: Kwil<T>;
   private _signer: Nillable<SignerSupplier> = null;
   private _identifier: Nillable<HexString | Uint8Array> = null;
   private _actions: ActionInput[] = [];
@@ -39,12 +39,12 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
   /**
    * Initializes a new `ActionBuilder` instance.
    *
-   * @param {Kwil} client - The Kwil client, used to call higher level methods on the Kwil class.
+   * @param {Kwil} kwil - The Kwil client, used to call higher level methods on the Kwil class.
    * @returns {ActionBuilder} A new `ActionBuilder` instance.
    */
-  private constructor(client: Kwil<T>) {
-    this.client = objects.requireNonNil(
-      client,
+  private constructor(kwil: Kwil<T>) {
+    this.kwil = objects.requireNonNil(
+      kwil,
       'client cannot be null or undefined. Please pass a valid Kwil client. This is an internal error, please create an issue.'
     );
   }
@@ -151,7 +151,10 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
     this.assertNotBuilding();
 
     // throw runtime error if identifier is null or undefined
-    this._identifier = objects.requireNonNil(identifier, 'identifier cannot be null or undefined. Please pass a valid identifier to the .publicKey() method.');
+    this._identifier = objects.requireNonNil(
+      identifier,
+      'identifier cannot be null or undefined. Please pass a valid identifier to the .publicKey() method.'
+    );
     return this;
   }
 
@@ -320,7 +323,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
     };
 
     // build the transaction
-    let tx = PayloadBuilderImpl.of(this.client)
+    let tx = PayloadBuilderImpl.of(this.kwil)
       .payloadType(PayloadType.EXECUTE_ACTION)
       .payload(payload)
       .signer(signer, signatureType)
@@ -328,10 +331,10 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
       .chainId(chainId)
       .publicKey(identifier);
 
-    if(this._nonce) {
+    if (this._nonce) {
       tx = tx.nonce(this._nonce);
     }
-    
+
     return tx.buildTx();
   }
 
@@ -369,7 +372,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
       arguments: preparedActions.length > 0 ? preparedActions[0] : [],
     };
 
-    let msg: PayloadBuilder = PayloadBuilderImpl.of(this.client).payload(payload);
+    let msg: PayloadBuilder = PayloadBuilderImpl.of(this.kwil).payload(payload);
 
     // if a signer is specified, add the signer, signature type, identifier, and description to the message
     if (signer) {
@@ -399,7 +402,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
     );
 
     // retrieve the schema for the database
-    const schema = await this.client.getSchema(dbid);
+    const schema = await this.kwil.getSchema(dbid);
 
     // throw an error if the schema does not have any actions.
     if (!schema?.data?.actions) {

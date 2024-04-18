@@ -655,12 +655,12 @@ describe('Calling Actions', () => {
 
   it('should return an expired cookie when logging out', async () => {
     //@ts-ignore
-    const preCookier = kwil.client.cookie;
+    const preCookier = kwil.cookie;
 
     const result = await kwil.auth.logout();
 
     //@ts-ignore
-    const postCookie = kwil.client.cookie;
+    const postCookie = kwil.cookie;
 
     expect(result.status).toBe(200);
     expect(result.data).toBeDefined();
@@ -676,6 +676,10 @@ describe('Calling Actions', () => {
   }
 
   it('should allow a new signer after logging out', async () => {
+    // Log out
+    await kwil.auth.logout();
+
+    // Create a new signer
     const newWallet = Wallet.createRandom();
 
     const newSigner = new KwilSigner(newWallet, newWallet.address);

@@ -26,7 +26,7 @@ import { AllPayloads, UnencodedActionPayload } from '../core/payload';
  * See the proto files for more information on the structure of the payloads. {@link https://github.com/kwilteam/proto/tree/main/kwil/tx/v1}
  */
 export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBuilder {
-  private readonly client: Kwil<T>;
+  private readonly kwil: Kwil<T>;
   private _payloadType: Nillable<PayloadType> = null;
   private _payload: Nillable<() => NonNil<AllPayloads>> = null;
   private _signer: Nillable<SignerSupplier> = null;
@@ -39,12 +39,12 @@ export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBui
   /**
    * Initializes a new `PayloadBuilder` instance.
    *
-   * @param {Kwil} client - The Kwil client, used to call higher level methods on the Kwil class.
+   * @param {Kwil} kwil - The Kwil client, used to call higher level methods on the Kwil class.
    * @returns {PayloadBuilderImpl} - A new `PayloadBuilder` instance.
    */
-  private constructor(client: Kwil<T>) {
-    this.client = objects.requireNonNil(
-      client,
+  private constructor(kwil: Kwil<T>) {
+    this.kwil = objects.requireNonNil(
+      kwil,
       'client is required for TxnBuilder. Please pass a valid Kwil client. This is an internal error, please create an issue.'
     );
   }
@@ -220,24 +220,25 @@ export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBui
       tx.body.payload = bytesToBase64(kwilEncode(resolvedPayload));
       tx.body.payload_type = payloadType;
       // set the fee to 0 for estimating cost
-      tx.body.fee = "0"
+      tx.body.fee = '0';
     });
 
     // estimate the cost of the transaction with the estimateCost symbol from the client
-    const cost = await unwrap(this.client)(preEstTxn);
+    const cost = await unwrap(this.kwil)(preEstTxn);
 
     // retrieve the account for the nonce, if none is provided
     let nonce = this._nonce;
 
-    if(!this._nonce) {
-      const acct = await this.client.getAccount(identifier);
-      nonce = Number(
-        objects.requireNonNil(
-          acct.data?.nonce,
-          'something went wrong retrieving your account nonce.'
-        )
-      ) + 1;
-    };
+    if (!this._nonce) {
+      const acct = await this.kwil.getAccount(identifier);
+      nonce =
+        Number(
+          objects.requireNonNil(
+            acct.data?.nonce,
+            'something went wrong retrieving your account nonce.'
+          )
+        ) + 1;
+    }
 
     // add the nonce and fee to the transaction. Set the tx bytes back to uint8 so we can do the signature.
     const postEstTxn = Txn.copy<BytesEncodingStatus.UINT8_ENCODED>(preEstTxn, (tx) => {
@@ -248,7 +249,10 @@ export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBui
           'something went wrong estimating the cost of your transaction.'
         )
       );
-      tx.body.nonce = objects.requireNonNil(nonce, 'something went wrong retrieving your account nonce.')
+      tx.body.nonce = objects.requireNonNil(
+        nonce,
+        'something went wrong retrieving your account nonce.'
+      );
       tx.body.chain_id = chainId;
     });
 
