@@ -1,6 +1,4 @@
-import Client from '../../api_client/client';
 import { Config } from '../../api_client/config';
-import { Auth } from '../../auth/auth';
 import { ActionBuilderImpl } from '../../builders/action_builder';
 import { ActionBody, ActionInput, Entries } from '../../core/action';
 import { EnvironmentType } from '../../core/enums';
@@ -10,11 +8,8 @@ import { GenericResponse } from '../../core/resreq';
 import { Kwil } from '../kwil';
 
 export class NodeKwil extends Kwil<EnvironmentType.NODE> {
-  private config: Config;
-
   constructor(opts: Config) {
     super(opts);
-    this.config = opts;
   }
   /**
    * Calls a Kwil node. This can be used to execute read-only ('view') actions on Kwil.
@@ -42,7 +37,7 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
     kwilSigner?: KwilSigner
   ): Promise<GenericResponse<MsgReceipt>> {
     if (actionBody instanceof BaseMessage) {
-      return await this.client.call(actionBody);
+      return await this.callClient(actionBody);
     }
 
     let msg = ActionBuilderImpl.of<EnvironmentType.NODE>(this)
@@ -67,23 +62,18 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
 
     const message = await msg.buildMsg();
 
-    console.log(this.client)
-    let res = await this.client.call(message);
+    let res = await this.callClient(message);
 
     // if we get a 401, we need to return the response so we can try to authenticate
     if(res.status === 401) {
       if (kwilSigner) {
         const authRes = await this.auth.authenticate(kwilSigner);
         if(authRes.status === 200) {
-
-          // create a new client with the new cookie
-          this.client = new Client(this.config, authRes.data?.cookie);
-          
-          // create a new auth object with the new client
-          this.auth = new Auth(this.client, this.config.kwilProvider, this.config.chainId);
+          // set the cookie
+          this.cookie = authRes.data?.cookie;
 
           // call the message again
-          res = await this.client.call(message);
+          res = await this.callClient(message);
         }
       } else {
         throw new Error('Action requires authentication. Pass a KwilSigner to authenticate.')

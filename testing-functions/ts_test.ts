@@ -13,6 +13,8 @@ const kwil = new NodeKwil({
   logging: true,
 });
 
+console.log(kwil)
+
 import { JsonRpcProvider } from 'ethers';
 
 // add window.ethereum to typeof globalthis

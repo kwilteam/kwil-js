@@ -4,14 +4,17 @@ type seconds = number;
 
 export interface ApiConfig {
   kwilProvider: string;
-  unconfirmedNonce?: boolean;
   timeout?: number;
   logging?: boolean;
   logger?: Function;
   cache?: seconds;
 }
 
-export interface NetworkConfig {
+export interface ClientConfig extends ApiConfig {
+  unconfirmedNonce?: boolean;
+}
+
+export interface KwilConfig extends ClientConfig {
     chainId: string;
 }
 
@@ -25,4 +28,4 @@ export interface NetworkConfig {
  * @property {Function} [logger] - custom logger function
  * @property {number} [cache] - Time to live cache in seconds. Only getSchema requests are cached. Default is 10 minutes.
  */
-export type Config = ApiConfig & NetworkConfig;
+export type Config = KwilConfig;
