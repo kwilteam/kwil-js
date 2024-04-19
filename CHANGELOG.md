@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.5.10](https://github.com/kwilteam/kwil-js/compare/v0.5.9...v0.5.10) (2024-04-19)
+
+
+### Bug Fixes
+
+* **nodekwil:** carry cookie ([3a23e00](https://github.com/kwilteam/kwil-js/commit/3a23e0076242175b442145d2ad0beee801a81c25))
+
 ### [0.5.9](https://github.com/kwilteam/kwil-js/compare/v0.5.8...v0.5.9) (2024-04-18)
 
 
