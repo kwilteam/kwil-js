@@ -412,7 +412,7 @@ describe('Testing case insentivity on test_db', () => {
       expect(result.data?.result).toBe(null);
     });
 
-    it('should still not autenticate even if I call the authenticate method', async () => {
+    it('should autenticate after calling the authenticate method', async () => {
       await newKwil.auth.authenticate(kSigner);
 
       const body: ActionBody = {
@@ -422,11 +422,13 @@ describe('Testing case insentivity on test_db', () => {
 
       const result = await newKwil.call(body, kSigner);
 
-      expect(result.status).toBe(401);
-      expect(result.data?.result).toBe(null);
+      expect(result.status).toBe(200);
+      expect(result.data).toMatchObject<MsgReceipt>({
+        result: expect.any(Array),
+      });
     });
 
-    it('should only authenticate when the cookie is passed back to the action', async () => {
+    it('should authenticate when the cookie is passed back to the action', async () => {
       const authRes = await newKwil.auth.authenticate(kSigner);
       const cookie = authRes.data?.cookie;
 
@@ -438,7 +440,7 @@ describe('Testing case insentivity on test_db', () => {
         cookie
       };
 
-      const result = await newKwil.call(body, kSigner);
+      const result = await newKwil.call(body);
 
       expect(result.status).toBe(200);
       expect(result.data).toBeDefined();
@@ -447,6 +449,33 @@ describe('Testing case insentivity on test_db', () => {
       });
     });
 
+    it('should not authenticate when a bad cookie is passed back to the action', async () => {
+      const body: ActionBodyNode = {
+        action: 'view_must_sign',
+        dbid,
+        cookie: 'badCookie'
+      };
+
+      const result = await newKwil.call(body);
+
+      expect(result.status).toBe(401);
+      expect(result.data?.result).toBe(null);
+    });
+
+    it('should continue authenticating after a bad cookie was passed to the previous action', async () => {
+      const body: ActionBody = {
+        action: 'view_must_sign',
+        dbid,
+      };
+
+      const result = await newKwil.call(body, kSigner);
+
+      expect(result.status).toBe(200);
+      expect(result.data).toBeDefined();
+      expect(result.data).toMatchObject<MsgReceipt>({
+        result: expect.any(Array),
+      });
+    });
   });
 });
 
