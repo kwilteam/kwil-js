@@ -83,6 +83,9 @@ export default class Client extends Api {
         throw new Error('No cookie receiveed from gateway. An error occured with authentication.');
       }
 
+      // set the cookie
+      this.cookie = cookie[0];
+
       // if we are in nodejs, we need to return the cookie
       return {
         status: res.status,

@@ -44,7 +44,11 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
       return await this.callClient(actionBody);
     }
 
+    let tempCookie: string | undefined;
+
     if (actionBody.cookie) {
+      // set the temp cookie so we can reset it after the call
+      tempCookie = this.cookie;
       this.cookie = actionBody.cookie;
     }
 
@@ -71,6 +75,11 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
     const message = await msg.buildMsg();
 
     let res = await this.callClient(message);
+
+    // reset the cookie
+    if (tempCookie) {
+      this.cookie = tempCookie;
+    }
 
     // if we get a 401, we need to return the response so we can try to authenticate
     if (this.autoAuthenticate && res.status === 401) {
