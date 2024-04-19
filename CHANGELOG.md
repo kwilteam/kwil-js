@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.6.2](https://github.com/kwilteam/kwil-js/compare/v0.6.1...v0.6.2) (2024-04-19)
+
+
+### Features
+
+* auto authenticate ([2c1b650](https://github.com/kwilteam/kwil-js/commit/2c1b650e24a9ec3fc6df79d23f3530d4436276e5))
+* **chaininfo:** configurable warning ([fe00e9a](https://github.com/kwilteam/kwil-js/commit/fe00e9aeb929353623c8e95b654e9210e2dafbe8)), closes [#75](https://github.com/kwilteam/kwil-js/issues/75)
+
+
+### Bug Fixes
+
+* **nodekwil:** auth.logout() functionality ([08c7377](https://github.com/kwilteam/kwil-js/commit/08c737774238a7b8af26ced4fdb4028d1c898b72)), closes [#76](https://github.com/kwilteam/kwil-js/issues/76)
+* **nodekwil:** carry cookie ([9aef12a](https://github.com/kwilteam/kwil-js/commit/9aef12ab27f5b4ee8e0845a59ef5e888df4f0d1c))
+
 ### [0.6.1](https://github.com/kwilteam/kwil-js/compare/v0.6.0...v0.6.1) (2024-04-15)
 
 
