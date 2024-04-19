@@ -1,5 +1,5 @@
 import { objects } from '../utils/objects';
-import { ValueType } from './enums';
+import { EnvironmentType, ValueType } from './enums';
 
 export type Entry<T extends ValueType> = [string, T];
 
@@ -24,6 +24,10 @@ export interface ActionBody {
   inputs?: Entries[] | ActionInput[];
   description?: string;
   nonce?: number;
+}
+
+export interface ActionBodyNode extends ActionBody {
+  cookie?: string;
 }
 
 export function resolveActionInputs(inputs: Entries[] | ActionInput[]): ActionInput[] {

@@ -9,7 +9,7 @@ require('dotenv').config();
 
 const kwil = new NodeKwil({
   kwilProvider: process.env.KWIL_PROVIDER as string,
-  chainId: process.env.CHAIN_ID as string,
+  chainId: "",
   logging: true,
 });
 
@@ -81,9 +81,16 @@ async function main() {
   // transfer
   // const res = await kwil.funder.transfer(funderTest, signer);
   // console.log(res);
+
+  // chainInfo
+  const chainInfo = await kwil.chainInfo({
+    disableWarning: true
+  });
+
+  console.log(chainInfo);
 }
 
-// main();
+main();
 
 async function nilTest() {
   const signer = await buildSigner();
@@ -129,4 +136,4 @@ async function nilTest() {
   // console.log(test.data);
 }
 
-nilTest();
+// nilTest();

@@ -14,15 +14,16 @@ import {
 } from './testingUtils';
 import { TxReceipt } from '../dist/core/tx';
 import schema from './test_schema2.json';
-import { KwilSigner, Types, Utils } from '../dist/index';
+import { KwilSigner, NodeKwil, Types, Utils } from '../dist/index';
 import { MsgReceipt } from '../dist/core/message';
 import nacl from 'tweetnacl';
 import { Signer as _NearSigner } from 'near-api-js';
-import { ActionBody, ActionInput } from '../dist/core/action';
+import { ActionBody, ActionInput, ActionBodyNode } from '../dist/core/action';
 import { DropBody } from '../dist/core/database';
 import { EnvironmentType } from '../dist/core/enums';
 import dotenv from 'dotenv';
 import { LogoutResponse } from '../dist/core/auth';
+import { Wallet } from 'ethers';
 
 dotenv.config();
 const isKgwOn = process.env.GATEWAY_ON === 'TRUE';
@@ -348,13 +349,132 @@ describe('Testing case insentivity on test_db', () => {
   });
 
   it('should return an expired cookie when logging out', async () => {
+    //@ts-ignore
+    const preCookier = kwil.cookie;
+
     const result = await kwil.auth.logout();
+
+    //@ts-ignore
+    const postCookie = kwil.cookie;
 
     expect(result.status).toBe(200);
     expect(result.data).toBeDefined();
     expect(result.data).toMatchObject<LogoutResponse<EnvironmentType.NODE>>({
       result: 'ok',
       cookie: expect.any(String),
+    });
+    expect(preCookier).not.toBe(postCookie);
+  });
+
+  interface ViewCaller {
+    caller: string;
+  }
+
+  it('should allow a new signer after logging out', async () => {
+    // Log out
+    await kwil.auth.logout();
+
+    // Create a new signer
+    const newWallet = Wallet.createRandom();
+
+    const newSigner = new KwilSigner(newWallet, newWallet.address);
+
+    const body: ActionBody = {
+      action: 'view_caller',
+      dbid,
+    };
+
+    const result = await kwil.call(body, newSigner);
+
+    const returnedCaller = result.data?.result?.[0] as ViewCaller | undefined;
+
+    expect(result.status).toBe(200);
+    expect(result.data).toBeDefined();
+    expect(returnedCaller?.caller).toBe(newWallet.address);
+  });
+
+  describe('Testing authentication without autoAuthenticate', () => {
+    const newKwil = new NodeKwil({
+      kwilProvider: process.env.KWIL_PROVIDER || '',
+      chainId: process.env.CHAIN_ID || '',
+      autoAuthenticate: false,
+    });
+
+    it('should not authenticate automatically', async () => {
+      const body: ActionBody = {
+        action: 'view_must_sign',
+        dbid,
+      };
+
+      const result = await newKwil.call(body, kSigner);
+
+      expect(result.status).toBe(401);
+      expect(result.data?.result).toBe(null);
+    });
+
+    it('should autenticate after calling the authenticate method', async () => {
+      await newKwil.auth.authenticate(kSigner);
+
+      const body: ActionBody = {
+        action: 'view_must_sign',
+        dbid,
+      };
+
+      const result = await newKwil.call(body, kSigner);
+
+      expect(result.status).toBe(200);
+      expect(result.data).toMatchObject<MsgReceipt>({
+        result: expect.any(Array),
+      });
+    });
+
+    it('should authenticate when the cookie is passed back to the action', async () => {
+      const authRes = await newKwil.auth.authenticate(kSigner);
+      const cookie = authRes.data?.cookie;
+
+      if (!cookie) throw new Error('No cookie found');
+
+      const body: ActionBodyNode = {
+        action: 'view_must_sign',
+        dbid,
+        cookie
+      };
+
+      const result = await newKwil.call(body);
+
+      expect(result.status).toBe(200);
+      expect(result.data).toBeDefined();
+      expect(result.data).toMatchObject<MsgReceipt>({
+        result: expect.any(Array),
+      });
+    });
+
+    it('should not authenticate when a bad cookie is passed back to the action', async () => {
+      const body: ActionBodyNode = {
+        action: 'view_must_sign',
+        dbid,
+        cookie: 'badCookie'
+      };
+
+      const result = await newKwil.call(body);
+
+      expect(result.status).toBe(401);
+      expect(result.data?.result).toBe(null);
+    });
+
+    it('should continue authenticating after a bad cookie was passed to the previous action', async () => {
+      const body: ActionBody = {
+        action: 'view_must_sign',
+        dbid,
+      };
+
+      const result = await newKwil.call(body, kSigner);
+
+      expect(result.status).toBe(200);
+      expect(result.data).toBeDefined();
+      expect(result.data).toMatchObject<MsgReceipt>({
+        result: expect.any(Array),
+      });
     });
   });
 });

@@ -1,10 +1,10 @@
 import { generateDBID } from '../utils/dbid';
 import Client from '../api_client/client';
-import { Config } from '../api_client/config';
+import { KwilConfig } from '../api_client/config';
 import { GenericResponse } from '../core/resreq';
 import { Database, DeployBody, DropBody, SelectQuery } from '../core/database';
 import { BaseTransaction, TxReceipt } from '../core/tx';
-import { Account, ChainInfo, DatasetInfo } from '../core/network';
+import { Account, ChainInfo, ChainInfoOpts, DatasetInfo } from '../core/network';
 import { ActionBuilderImpl } from '../builders/action_builder';
 import { base64ToBytes } from '../utils/base64';
 import { DBBuilderImpl } from '../builders/db_builder';
@@ -30,41 +30,42 @@ import { Auth } from '../auth/auth';
  * The main class for interacting with the Kwil network.
  */
 
-export abstract class Kwil<T extends EnvironmentType> {
-  protected client: Client;
-  private readonly kwilProvider: string;
+export abstract class Kwil<T extends EnvironmentType> extends Client {
   protected readonly chainId: string;
   //cache schemas
   private schemas: Cache<GenericResponse<Database>>;
   public funder: Funder<T>;
   public auth: Auth<T>;
 
-  protected constructor(opts: Config) {
-    this.client = new Client({
-      kwilProvider: opts.kwilProvider,
-      unconfirmedNonce: opts.unconfirmedNonce,
-      timeout: opts.timeout,
-      logging: opts.logging,
-      logger: opts.logger,
-      cache: opts.cache,
-    });
-
+  protected constructor(opts: KwilConfig) {
+    super(opts);
     this.schemas = Cache.passive(opts.cache);
 
     // set chainId
     this.chainId = opts.chainId;
 
-    // set kwilProvider
-    this.kwilProvider = opts.kwilProvider;
-
     // create funder
-    this.funder = new Funder<T>(this, this.client, this.chainId);
+    this.funder = new Funder<T>(
+      this,
+      {
+        broadcastClient: this.broadcastClient.bind(this),
+      },
+      this.chainId
+    );
 
     // create authenticate
-    this.auth = new Auth<T>(this.client, this.kwilProvider, this.chainId);
+    this.auth = new Auth<T>(
+      {
+        getAuthenticateClient: this.getAuthenticateClient.bind(this),
+        postAuthenticateClient: this.postAuthenticateClient.bind(this),
+        logoutClient: this.logoutClient.bind(this),
+      },
+      this.config.kwilProvider,
+      this.chainId
+    );
 
     //create a wrapped symbol of estimateCost method
-    wrap(this, this.client.estimateCost.bind(this.client));
+    wrap(this, this.estimateCostClient.bind(this));
   }
 
   /**
@@ -94,7 +95,7 @@ export abstract class Kwil<T extends EnvironmentType> {
     }
 
     //fetch from server
-    const res = await this.client.getSchema(dbid);
+    const res = await this.getSchemaClient(dbid);
 
     //cache result
     if (res.status === 200) {
@@ -121,7 +122,7 @@ export abstract class Kwil<T extends EnvironmentType> {
       owner = hexToBytes(owner);
     }
 
-    return await this.client.getAccount(owner);
+    return await this.getAccountClient(owner);
   }
 
   /**
@@ -174,7 +175,7 @@ export abstract class Kwil<T extends EnvironmentType> {
     tx: BaseTransaction<BytesEncodingStatus.BASE64_ENCODED>,
     sync?: BroadcastSyncType
   ): Promise<GenericResponse<TxReceipt>> {
-    return await this.client.broadcast(tx, sync);
+    return await this.broadcastClient(tx, sync);
   }
 
   /**
@@ -209,7 +210,7 @@ export abstract class Kwil<T extends EnvironmentType> {
 
     const transaction = await tx.buildTx();
 
-    return await this.client.broadcast(
+    return await this.broadcastClient(
       transaction,
       synchronous ? BroadcastSyncType.COMMIT : undefined
     );
@@ -241,7 +242,7 @@ export abstract class Kwil<T extends EnvironmentType> {
 
     const transaction = await tx.buildTx();
 
-    return await this.client.broadcast(
+    return await this.broadcastClient(
       transaction,
       synchronous ? BroadcastSyncType.COMMIT : undefined
     );
@@ -273,7 +274,7 @@ export abstract class Kwil<T extends EnvironmentType> {
 
     const transaction = await tx.buildTx();
 
-    return await this.client.broadcast(
+    return await this.broadcastClient(
       transaction,
       synchronous ? BroadcastSyncType.COMMIT : undefined
     );
@@ -296,7 +297,7 @@ export abstract class Kwil<T extends EnvironmentType> {
       owner = hexToBytes(owner);
     }
 
-    return await this.client.listDatabases(owner);
+    return await this.listDatabasesClient(owner);
   }
 
   /**
@@ -313,7 +314,7 @@ export abstract class Kwil<T extends EnvironmentType> {
       query: query,
     };
 
-    let res = await this.client.selectQuery(q);
+    let res = await this.selectQueryClient(q);
     const uint8 = new Uint8Array(base64ToBytes(res.data as string));
     const decoder = new TextDecoder('utf-8');
     const jsonString = decoder.decode(uint8);
@@ -330,7 +331,7 @@ export abstract class Kwil<T extends EnvironmentType> {
    * @returns A promise that resolves to the transaction info receipt.
    */
   public async txInfo(hash: string): Promise<GenericResponse<TxInfoReceipt>> {
-    return await this.client.txInfo(hash);
+    return await this.txInfoClient(hash);
   }
 
   /**
@@ -338,12 +339,13 @@ export abstract class Kwil<T extends EnvironmentType> {
    *
    * Will log a warning if the returned chain id does not match the configured chain id.
    *
+   * @param {ChainInfoOpts} opts - Options for the chain info request.
    * @returns {ChainInfo} - A promise that resolves to the chain info.
    */
-  public async chainInfo(): Promise<GenericResponse<ChainInfo>> {
-    const info = await this.client.chainInfo();
+  public async chainInfo(opts?: ChainInfoOpts): Promise<GenericResponse<ChainInfo>> {
+    const info = await this.chainInfoClient();
 
-    if (info.data?.chain_id !== this.chainId) {
+    if (!opts?.disableWarning && info.data?.chain_id !== this.chainId) {
       console.warn(
         `WARNING: Chain ID mismatch. Expected ${info.data?.chain_id}, got ${this.chainId}`
       );
@@ -358,6 +360,6 @@ export abstract class Kwil<T extends EnvironmentType> {
    * @returns A promise that resolves to a string indicating the server's response.
    */
   public async ping(): Promise<GenericResponse<string>> {
-    return await this.client.ping();
+    return await this.pingClient();
   }
 }

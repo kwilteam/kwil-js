@@ -16,7 +16,7 @@ import { CompiledKuneiform, DbPayloadType, DropDbPayload } from '../core/payload
  */
 
 export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType> implements DBBuilder<T> {
-  private readonly client: Kwil<U>;
+  private readonly kwil: Kwil<U>;
   private _payload: Nillable<() => NonNil<CompiledKuneiform | DropDbPayload>> = null;
   private _signer: Nillable<SignerSupplier> = null;
   private _signatureType: Nillable<AnySignatureType>;
@@ -29,12 +29,12 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType> im
   /**
    * Initializes a new `DBBuilderImpl` instance.
    *
-   * @param {Kwil} client = The Kwil client, used to call higher level methods on the Kwil class.
+   * @param {Kwil} kwil = The Kwil client, used to call higher level methods on the Kwil class.
    * @param {DeployOrDrop} payloadType - The payload type for the database transaction. This should be `PayloadType.DEPLOY_DATABASE` or `PayloadType.DROP_DATABASE`.
    * @returns {DBBuilder} A new `DBBuilderImpl` instance.
    */
-  private constructor(client: Kwil<U>, payloadType: DeployOrDrop) {
-    this.client = client;
+  private constructor(kwil: Kwil<U>, payloadType: DeployOrDrop) {
+    this.kwil = kwil;
     this._payloadType = payloadType;
   }
 
@@ -222,7 +222,7 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType> im
       'signature type cannot be null or undefined. please specify a signature type.'
     );
 
-    let tx = PayloadBuilderImpl.of(this.client)
+    let tx = PayloadBuilderImpl.of(this.kwil)
       .payloadType(payloadType)
       .payload(cleanedPayload)
       .signer(signer, signatureType)

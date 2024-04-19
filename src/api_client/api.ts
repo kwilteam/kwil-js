@@ -15,19 +15,19 @@ import { ApiConfig } from './config';
 export abstract class Api {
   //private readonly METHOD_GET = 'GET';
   //private readonly METHOD_POST = 'POST';
-  private readonly host: string;
-  private readonly cookie?: string;
-
-  public config!: ApiConfig;
-  protected constructor(host: string, opts: ApiConfig, cookie?: string) {
+  protected cookie?: string;
+  protected readonly config: ApiConfig;
+  protected constructor(opts: ApiConfig) {
     this.config = this.mergeDefaults(opts);
-    this.host = host;
-    this.cookie = cookie;
   }
 
   private mergeDefaults(opts: ApiConfig): ApiConfig {
+    if (!opts.kwilProvider) {
+      throw new Error('No Kwil provider URL provided in configuration');
+    }
+
     return {
-      kwilProvider: opts.kwilProvider || 'https://provider.kwil.com', // these aren't actually used here but are required by the interface
+      kwilProvider: opts.kwilProvider,
       timeout: opts.timeout || 10000,
       logging: opts.logging || false,
       logger: opts.logger || console.log,
@@ -78,7 +78,7 @@ export abstract class Api {
     }
 
     let instance = Axios.create({
-      baseURL: this.host,
+      baseURL: this.config.kwilProvider,
       timeout: this.config.timeout,
       maxContentLength: 1024 * 1024 * 512,
       withCredentials: true,

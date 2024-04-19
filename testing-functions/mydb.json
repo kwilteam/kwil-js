@@ -122,6 +122,19 @@
       "statements": [
         "SELECT * from posts;"
       ]
+    },
+    {
+      "name": "view_caller",
+      "annotations": [
+        "kgw(authn='true')"
+      ],
+      "inputs": null,
+      "public": true,
+      "mutability": "view",
+      "auxiliaries": null,
+      "statements": [
+        "SELECT @caller AS caller;"
+      ]
     }
   ]
 }
