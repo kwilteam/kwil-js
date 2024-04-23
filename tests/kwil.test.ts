@@ -256,12 +256,9 @@ describe('Testing case insentivity on test_db', () => {
   }, 10000);
 
   test('delete_user action should execute', async () => {
-    const actionInputs = await buildActionInput(dbid);
-
     const body: ActionBody = {
       action: 'delete_user',
       dbid,
-      inputs: [actionInputs],
     };
 
     const result = await kwil.execute(body, kSigner, true);
@@ -290,12 +287,9 @@ describe('Testing case insentivity on test_db', () => {
   }, 10000);
 
   test('DELETE_USER action should execute', async () => {
-    const actionInputs = await buildActionInput(dbid);
-
     const body: ActionBody = {
       action: 'DELETE_USER',
-      dbid,
-      inputs: [actionInputs],
+      dbid
     };
 
     const result = await kwil.execute(body, kSigner, true);

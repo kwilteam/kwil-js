@@ -1,193 +1,204 @@
 {
-    "owner": "",
-    "name": "testDb",
-    "tables": [
-      {
-        "name": "users",
-        "columns": [
-          {
-            "name": "id",
-            "type": "int",
-            "attributes": [
-              {
-                "type": "primary_key"
-              },
-              {
-                "type": "not_null"
-              }
-            ]
+  "name": "testDb",
+  "owner": null,
+  "extensions": null,
+  "tables": [
+    {
+      "name": "users",
+      "columns": [
+        {
+          "name": "id",
+          "type": {
+            "name": "int",
+            "isArray": false
           },
-          {
-            "name": "username",
-            "type": "text"
-          },
-          {
-            "name": "age",
-            "type": "int",
-            "attributes": [
-              {
-                "type": "min",
-                "value": "0"
-              }
-            ]
-          },
-          {
-            "name": "wallet",
-            "type": "text"
+          "attributes": [
+            {
+              "type": "PRIMARY_KEY"
+            },
+            {
+              "type": "NOT_NULL"
+            }
+          ]
+        },
+        {
+          "name": "username",
+          "type": {
+            "name": "text",
+            "isArray": false
           }
-        ]
-      },
-      {
-        "name": "posts",
-        "columns": [
-          {
-            "name": "id",
-            "type": "int",
-            "attributes": [
-              {
-                "type": "primary_key"
-              },
-              {
-                "type": "not_null"
-              }
-            ]
+        },
+        {
+          "name": "age",
+          "type": {
+            "name": "int",
+            "isArray": false
           },
-          {
-            "name": "user_id",
-            "type": "int"
-          },
-          {
-            "name": "title",
-            "type": "text"
-          },
-          {
-            "name": "content",
-            "type": "text",
-            "attributes": [
-              {
-                "type": "max_length",
-                "value": "1000"
-              }
-            ]
+          "attributes": [
+            {
+              "type": "MIN",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "name": "wallet",
+          "type": {
+            "name": "text",
+            "isArray": false
           }
-        ],
-        "indexes": [
-          {
-            "name": "unique_index",
-            "columns": [
-              "user_id",
-              "title"
-            ],
-            "type": "unique_btree"
+        }
+      ],
+      "foreign_keys": null
+    },
+    {
+      "name": "posts",
+      "columns": [
+        {
+          "name": "id",
+          "type": {
+            "name": "int",
+            "isArray": false
+          },
+          "attributes": [
+            {
+              "type": "PRIMARY_KEY"
+            },
+            {
+              "type": "NOT_NULL"
+            }
+          ]
+        },
+        {
+          "name": "user_id",
+          "type": {
+            "name": "int",
+            "isArray": false
           }
-        ]
-      }
-    ],
-    "actions": [
-      {
-        "name": "createUserTest",
-        "inputs": [
-          "$id",
-          "$username",
-          "$age"
-        ],
-        "public": true,
-        "mutability": "update",
-        "auxiliaries": null,
-        "statements": [
-          "INSERT INTO users( id , username , age , wallet ) VALUES ( $id , $username , $age , @caller );"
-        ]
-      },
-      {
-        "name": "update_username",
-        "inputs": [
-          "$username"
-        ],
-        "public": true,
-        "mutability": "update",
-        "auxiliaries": null,
-        "statements": [
-          "UPDATE users SET username = $username WHERE wallet = @caller;"
-        ]
-      },
-      {
-        "name": "delete_user",
-        "inputs": null,
-        "public": true,
-        "mutability": "update",
-        "auxiliaries": null,
-        "statements": [
-          "DELETE FROM users WHERE wallet = @caller;"
-        ]
-      },
-      {
-        "name": "create_post",
-        "inputs": [
-          "$id",
-          "$title",
-          "$content"
-        ],
-        "public": true,
-        "mutability": "update",
-        "auxiliaries": null,
-        "statements": [
-          "INSERT INTO posts( id , user_id , title , content ) VALUES ( $id , ( SELECT id FROM users WHERE wallet = @caller ) , $title , $content );"
-        ]
-      },
-      {
-        "name": "delete_post",
-        "inputs": [
-          "$id"
-        ],
-        "public": true,
-        "mutability": "update",
-        "auxiliaries": null,
-        "statements": [
-          "DELETE FROM posts WHERE id = $id AND user_id =( SELECT id FROM users WHERE wallet = @caller );"
-        ]
-      },
-      {
-        "name": "get_user_by_wallet",
-        "inputs": [
-          "$address"
-        ],
-        "public": true,
-        "mutability": "update",
-        "auxiliaries": null,
-        "statements": [
-          "SELECT * FROM users WHERE wallet = $address;"
-        ]
-      },
-      {
-        "name": "list_users",
-        "inputs": null,
-        "public": true,
-        "mutability": "update",
-        "auxiliaries": null,
-        "statements": [
-          "SELECT * FROM users;"
-        ]
-      },
-      {
-        "name": "get_user_posts",
-        "inputs": null,
-        "public": true,
-        "mutability": "update",
-        "auxiliaries": null,
-        "statements": [
-          "SELECT title , content FROM posts WHERE user_id =( SELECT id FROM users WHERE username = $username );"
-        ]
-      },
-      {
-        "name": "multi_select",
-        "inputs": null,
-        "public": true,
-        "mutability": "update",
-        "auxiliaries": null,
-        "statements": [
-          "SELECT * FROM posts;",
-          "SELECT * FROM users;"
-        ]
-      }
-    ]
-  }
+        },
+        {
+          "name": "title",
+          "type": {
+            "name": "text",
+            "isArray": false
+          }
+        },
+        {
+          "name": "content",
+          "type": {
+            "name": "text",
+            "isArray": false
+          },
+          "attributes": [
+            {
+              "type": "MAX_LENGTH",
+              "value": "1000"
+            }
+          ]
+        }
+      ],
+      "indexes": [
+        {
+          "name": "unique_index",
+          "columns": [
+            "user_id",
+            "title"
+          ],
+          "type": "UNIQUE_BTREE"
+        }
+      ],
+      "foreign_keys": null
+    }
+  ],
+  "actions": [
+    {
+      "name": "createUserTest",
+      "parameters": [
+        "$id",
+        "$username",
+        "$age"
+      ],
+      "public": true,
+      "modifiers": null,
+      "body": "INSERT INTO users( id , username , age , wallet ) VALUES ( $id , $username , $age , @caller );"
+    },
+    {
+      "name": "update_username",
+      "parameters": [
+        "$username"
+      ],
+      "public": true,
+      "modifiers": null,
+      "body": "UPDATE users SET username = $username WHERE wallet = @caller;"
+    },
+    {
+      "name": "delete_user",
+      "parameters": null,
+      "public": true,
+      "modifiers": null,
+      "body": "DELETE FROM users WHERE wallet = @caller;"
+    },
+    {
+      "name": "create_post",
+      "parameters": [
+        "$id",
+        "$title",
+        "$content"
+      ],
+      "public": true,
+      "modifiers": null,
+      "body": "INSERT INTO posts( id , user_id , title , content ) VALUES ( $id , ( SELECT id FROM users WHERE wallet = @caller ) , $title , $content );"
+    },
+    {
+      "name": "delete_post",
+      "parameters": [
+        "$id"
+      ],
+      "public": true,
+      "modifiers": null,
+      "body": "DELETE FROM posts WHERE id = $id AND user_id =( SELECT id FROM users WHERE wallet = @caller );"
+    },
+    {
+      "name": "get_user_by_wallet",
+      "parameters": [
+        "$address"
+      ],
+      "public": true,
+      "modifiers": [
+        "VIEW"
+      ],
+      "body": "SELECT * FROM users WHERE wallet = $address;"
+    },
+    {
+      "name": "list_users",
+      "parameters": null,
+      "public": true,
+      "modifiers": [
+        "VIEW"
+      ],
+      "body": "SELECT * FROM users;"
+    },
+    {
+      "name": "get_user_posts",
+      "parameters": [
+        "$username"
+      ],
+      "public": true,
+      "modifiers": [
+        "VIEW"
+      ],
+      "body": "SELECT title , content FROM posts WHERE user_id =( SELECT id FROM users WHERE username = $username );"
+    },
+    {
+      "name": "multi_select",
+      "parameters": null,
+      "public": true,
+      "modifiers": [
+        "VIEW"
+      ],
+      "body": "SELECT * FROM posts;\n    SELECT * FROM users;"
+    }
+  ],
+  "procedures": null,
+  "foreign_calls": null
+}

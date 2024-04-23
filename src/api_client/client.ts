@@ -48,6 +48,7 @@ export default class Client extends Api {
       tables: [],
       actions: [],
       extensions: [],
+      procedures: [],
     };
 
     if (res.data) {
@@ -57,6 +58,7 @@ export default class Client extends Api {
         tables: res.data.schema.tables,
         actions: res.data.schema.actions,
         extensions: res.data.schema.extensions,
+        procedures: res.data.schema.procedures,
       };
     }
 

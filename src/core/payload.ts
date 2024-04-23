@@ -1,5 +1,5 @@
-import { HexString, NonNil } from "../utils/types";
-import { ActionSchema, Attribute, Column, Extension, Index, Table, Database } from "./database";
+import { NonNil } from "../utils/types";
+import { ActionSchema, Attribute, Column, Extension, Index, Table, Database, Procedure, ForeignKey, DataType } from "./database";
 import { BytesEncodingStatus, DeployOrDrop, PayloadType, ValueType } from "./enums";
 
 /**
@@ -61,11 +61,12 @@ export interface DropDbPayload {
  * The schema follows the Database Interface {@link Database}, with each field being optional.
  */
 export interface CompiledKuneiform {
-    owner: Uint8Array | string;
+    owner: Uint8Array | string | null,
     name: string;
-    tables?: Partial<CompiledTable>[];
-    actions?: Partial<CompiledAction>[];
-    extensions?: Partial<Extension>[];
+    tables: Partial<CompiledTable>[] | null;
+    actions: Partial<CompiledAction>[] | null;
+    extensions: Partial<Extension>[] | null;
+    procedures: Partial<Procedure>[] | null;
 };
 
 /**
@@ -79,13 +80,14 @@ export interface TransferPayload<T extends BytesEncodingStatus> {
     amount: string;
 }
 
-type CompiledTable = Omit<Table, 'columns' | 'indexes'> & {
+type CompiledTable = Omit<Table, 'columns' | 'indexes' | 'foreign_keys'> & {
     columns: ReadonlyArray<Partial<CompiledColumn>>;
     indexes: ReadonlyArray<Partial<CompiledIndex>>;
+    foreign_keys: ReadonlyArray<Partial<ForeignKey>> | null;
 }
 
 type CompiledColumn = Omit<Column, 'attributes' | 'type'> & {
-    type: string;
+    type: DataType;
     attributes: ReadonlyArray<Partial<CompiledAttribute>>;
 }
 
@@ -97,8 +99,8 @@ type CompiledIndex = Omit<Index, 'type'> & {
     type: string;
 }
 
-type CompiledAction = Omit<ActionSchema, 'auxiliaries' | 'inputs' | 'annotations'> & {
+type CompiledAction = Omit<ActionSchema, 'parameters' | 'annotations' | 'modifiers'> & {
     annotations: ReadonlyArray<string> | null;
-    auxiliaries: ReadonlyArray<string> | null;
-    inputs: ReadonlyArray<string> | null;
+    parameters: ReadonlyArray<string> | null;
+    modifiers: ReadonlyArray<string> | null;
 }

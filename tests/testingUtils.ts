@@ -45,7 +45,9 @@ export async function deployTempSchema(schema: CompiledKuneiform, signer: KwilSi
     const payload: DeployBody = {
         schema,
     }
+    console.log('deploying this schema:', schema?.procedures?.[0])
     const res = await kwil.deploy(payload, signer, true);
+    console.log(res)
     const hash = res.data?.tx_hash;
     if(!hash) throw new Error("No hash returned from deploy");
     return res;

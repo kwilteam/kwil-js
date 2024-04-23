@@ -312,7 +312,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
     );
 
     // throw runtime error if action is a view action. view actions require a different payload structure than transactions.
-    if (actionSchema.mutability === 'view') {
+    if (actionSchema.modifiers.includes('VIEW')) {
       throw new Error(`Action ${name} is a 'view' action. Please use kwil.call().`);
     }
 
@@ -359,7 +359,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
     }
 
     // throw runtime error if action is not a view action. transactions require a different payload structure than view actions.
-    if (actionSchema.mutability === 'update') {
+    if (actionSchema.modifiers.includes('VIEW') === false) {
       throw new Error(`Action ${name} is not a view only action. Please use kwil.execute().`);
     }
 
@@ -463,14 +463,14 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
     actionSchema: ActionSchema,
     actionName: string
   ): ValueType[][] {
-    // if action does not require inputs, return an empty array
-    if ((!actionSchema.inputs || actionSchema.inputs.length === 0) && actions.length === 0) {
+    // if action does not require parameters, return an empty array
+    if ((!actionSchema.parameters || actionSchema.parameters.length === 0) && actions.length === 0) {
       return [];
     }
 
-    // throw runtime error if action does not have any inputs but inputs were provided
-    if (!actionSchema.inputs) {
-      throw new Error(`No inputs found for action schema: ${actionName}.`);
+    // throw runtime error if action does not have any parameters but inputs were provided
+    if (!actionSchema.parameters || actionSchema.parameters.length === 0) {
+      throw new Error(`No parameters found for action schema: ${actionName}.`);
     }
 
     // throw runtime error if no actions were provided but inputs are required
@@ -480,10 +480,10 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
 
     // track the missing actions
     const missingActions = new Set<string>();
-    actionSchema.inputs.forEach((i) => {
-      const found = actions.find((a) => a.containsKey(i));
+    actionSchema.parameters.forEach((p) => {
+      const found = actions.find((a) => a.containsKey(p));
       if (!found) {
-        missingActions.add(i);
+        missingActions.add(p);
       }
     });
 
@@ -495,13 +495,13 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
     const missingInputs = new Set<string>();
     actions.forEach((a) => {
       const copy = ActionInput.from(a);
-      actionSchema.inputs.forEach((i) => {
-        if (missingInputs.has(i)) {
+      actionSchema.parameters.forEach((p) => {
+        if (missingInputs.has(p)) {
           return;
         }
 
-        if (!copy.containsKey(i)) {
-          missingInputs.add(i);
+        if (!copy.containsKey(p)) {
+          missingInputs.add(p);
           return;
         }
 
@@ -509,15 +509,15 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
           return;
         }
 
-        const val = copy.get(i);
+        const val = copy.get(p);
 
-        copy.put(i, val);
+        copy.put(p, val);
       });
 
       if (missingInputs.size === 0) {
         preparedActions.push(
-          actionSchema.inputs.map((i) => {
-            const val = copy.get(i);
+          actionSchema.parameters.map((p) => {
+            const val = copy.get(p);
 
             // because all values are technically strings under the kwildb hood, we need to convert all values that will resolve to a string to a string.
             if (val?.toString()) {
