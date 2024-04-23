@@ -199,6 +199,5 @@
       "body": "SELECT * FROM posts;\n    SELECT * FROM users;"
     }
   ],
-  "procedures": null,
-  "foreign_calls": null
+  "procedures": null
 }

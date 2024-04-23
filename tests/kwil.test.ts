@@ -344,7 +344,7 @@ describe('Testing case insentivity on test_db', () => {
 
   it('should return an expired cookie when logging out', async () => {
     //@ts-ignore
-    const preCookier = kwil.cookie;
+    const preCookie = kwil.cookie;
 
     const result = await kwil.auth.logout();
 
@@ -357,7 +357,7 @@ describe('Testing case insentivity on test_db', () => {
       result: 'ok',
       cookie: expect.any(String),
     });
-    expect(preCookier).not.toBe(postCookie);
+    expect(preCookie).not.toBe(postCookie);
   });
 
   interface ViewCaller {
