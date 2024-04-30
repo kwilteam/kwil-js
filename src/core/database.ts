@@ -98,7 +98,7 @@ export interface Procedure {
   public: boolean;
   modifiers: ReadonlyArray<string>;
   body: string;
-  returnTypes: ProcedureReturn;
+  return_types: ProcedureReturn;
   annotations: ReadonlyArray<string>;
 }
 
@@ -109,11 +109,11 @@ export interface NamedType {
 
 export interface DataType {
   name: string;
-  isArray: boolean;
+  is_array: boolean;
 }
 
 export interface ProcedureReturn {
-  isTable: boolean;
+  is_table: boolean;
   fields: ReadonlyArray<NamedType>;
 }
 

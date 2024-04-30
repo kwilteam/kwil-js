@@ -2,6 +2,7 @@ database mydb;
 
 table posts {
     id int primary notnull,
+    user text notnull,
     post_title text notnull,
     post_body text notnull
 }

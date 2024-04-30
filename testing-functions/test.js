@@ -46,7 +46,7 @@ async function test() {
     
     const dbid = kwil.getDBID(address, "mydb")
     // // await authenticate(kwil, kwilSigner)
-    // broadcast(kwil, testDB, kwilSigner)
+    broadcast(kwil, testDB, kwilSigner)
     // broadcastEd25519(kwil, testDB)
     // await getTxInfo(kwil, txHash)
     // await getSchema(kwil, dbid)
@@ -59,7 +59,7 @@ async function test() {
     // await select(kwil, dbid, "SELECT * FROM posts")
     // bulkAction(kwil, dbid, "add_post", wallet, address)
     // await testViewWithParam(kwil, dbid, wallet)
-    await testViewWithSign(kwil, dbid, kwilSigner)
+    // await testViewWithSign(kwil, dbid, kwilSigner)
     // await testViewWithEdSigner(kwil, dbid)
     // await customSignature(kwil, dbid)
     // await julioSignature(kwil, dbid)

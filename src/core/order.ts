@@ -78,14 +78,14 @@ export function enforceDatabaseOrder(db: NonNil<Database>): NonNil<Database> {
                 public: procedure.public,
                 modifiers: procedure.modifiers,
                 body: procedure.body,
-                returnTypes: {
-                    isTable: procedure.returnTypes.isTable,
-                    fields: procedure.returnTypes.fields && procedure.returnTypes.fields.length > 0 ? procedure.returnTypes.fields?.map(field => {
+                return_types: {
+                    is_table: procedure.return_types.is_table,
+                    fields: procedure.return_types.fields && procedure.return_types.fields.length > 0 ? procedure.return_types.fields?.map(field => {
                         return {
                             name: field.name,
                             type: {
                                 name: field.type.name,
-                                isArray: field.type.isArray,
+                                is_array: field.type.is_array,
                             }
                         }
                     }) : [],

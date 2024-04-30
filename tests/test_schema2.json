@@ -1,5 +1,5 @@
 {
-  "name": "testDb",
+  "name": "testdb",
   "owner": null,
   "extensions": null,
   "tables": [
@@ -10,7 +10,7 @@
           "name": "id",
           "type": {
             "name": "int",
-            "isArray": false
+            "is_array": false
           },
           "attributes": [
             {
@@ -25,14 +25,14 @@
           "name": "username",
           "type": {
             "name": "text",
-            "isArray": false
+            "is_array": false
           }
         },
         {
           "name": "age",
           "type": {
             "name": "int",
-            "isArray": false
+            "is_array": false
           },
           "attributes": [
             {
@@ -45,7 +45,7 @@
           "name": "wallet",
           "type": {
             "name": "text",
-            "isArray": false
+            "is_array": false
           }
         }
       ],
@@ -58,7 +58,7 @@
           "name": "id",
           "type": {
             "name": "int",
-            "isArray": false
+            "is_array": false
           },
           "attributes": [
             {
@@ -73,21 +73,21 @@
           "name": "user_id",
           "type": {
             "name": "int",
-            "isArray": false
+            "is_array": false
           }
         },
         {
           "name": "title",
           "type": {
             "name": "text",
-            "isArray": false
+            "is_array": false
           }
         },
         {
           "name": "content",
           "type": {
             "name": "text",
-            "isArray": false
+            "is_array": false
           },
           "attributes": [
             {
@@ -112,7 +112,7 @@
   ],
   "actions": [
     {
-      "name": "createUserTest",
+      "name": "createusertest",
       "parameters": [
         "$id",
         "$username",
@@ -199,5 +199,6 @@
       "body": "SELECT * FROM posts;\n    SELECT * FROM users;"
     }
   ],
-  "procedures": null
+  "procedures": null,
+  "foreign_calls": null
 }

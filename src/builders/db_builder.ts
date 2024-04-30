@@ -290,7 +290,7 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType>
             if (!column.type) {
               column.type = {
                 name: VarType.NULL,
-                isArray: false,
+                is_array: false,
               };
             }
 
@@ -448,7 +448,7 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType>
             if (!parameter.type) {
               parameter.type = {
                 name: '',
-                isArray: false,
+                is_array: false,
               };
             }
           });
@@ -465,19 +465,19 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType>
           procedure.body = '';
         }
 
-        if (!procedure.returnTypes) {
-          procedure.returnTypes = {
-            isTable: false,
+        if (!procedure.return_types) {
+          procedure.return_types = {
+            is_table: false,
             fields: [],
           };
         }
 
-        if (!procedure.returnTypes.fields) {
-          procedure.returnTypes.fields = [];
+        if (!procedure.return_types.fields) {
+          procedure.return_types.fields = [];
         }
 
-        procedure.returnTypes.fields &&
-          procedure.returnTypes.fields.forEach((field) => {
+        procedure.return_types.fields &&
+          procedure.return_types.fields.forEach((field) => {
             if (!field.name) {
               field.name = '';
             }
@@ -485,7 +485,7 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType>
             if (!field.type) {
               field.type = {
                 name: '',
-                isArray: false,
+                is_array: false,
               };
             }
           });

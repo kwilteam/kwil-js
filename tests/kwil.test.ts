@@ -132,7 +132,7 @@ describe('Kwil Integration Tests', () => {
       ],
       description: 'This is a test action',
     };
-
+    
     const result = await kwil.execute(actionBody, kSigner, true);
 
     expect(result.data).toBeDefined();
@@ -345,8 +345,9 @@ describe('Testing case insentivity on test_db', () => {
   it('should return an expired cookie when logging out', async () => {
     //@ts-ignore
     const preCookie = kwil.cookie;
-
+    console.log(kwil)
     const result = await kwil.auth.logout();
+    console.log('result:', result)
 
     //@ts-ignore
     const postCookie = kwil.cookie;
@@ -357,6 +358,9 @@ describe('Testing case insentivity on test_db', () => {
       result: 'ok',
       cookie: expect.any(String),
     });
+
+    console.log('preCookie:', preCookie);
+    console.log('postCookie:', postCookie);
     expect(preCookie).not.toBe(postCookie);
   });
 
