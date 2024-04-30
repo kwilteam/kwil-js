@@ -76,11 +76,11 @@ export default class Client extends Api {
   ): Promise<GenericResponse<AuthSuccess<T>>> {
     const res = await super.post<PostAuthResponse>(`/auth`, body);
     checkRes(res);
-
+    
     if (typeof window === 'undefined') {
       const cookie = res.headers['set-cookie'];
       if (!cookie) {
-        throw new Error('No cookie receiveed from gateway. An error occured with authentication.');
+        throw new Error('No cookie received from gateway. An error occured with authentication.');
       }
 
       // set the cookie
@@ -106,10 +106,17 @@ export default class Client extends Api {
     };
   }
 
-  protected async logoutClient<T extends EnvironmentType>(): Promise<
+  protected async logoutClient<T extends EnvironmentType>(identifier?: Uint8Array): Promise<
     GenericResponse<LogoutResponse<T>>
   > {
-    const res = await super.get<LogoutResponse<T>>(`/logout`);
+    let logoutExt = '';
+
+    if (identifier) {
+      // KGW expects the identifier to be hex encoded
+      logoutExt = `?account=${bytesToHex(identifier)}`;
+    }
+
+    const res = await super.get<LogoutResponse<T>>(`/logout${logoutExt}`);
     checkRes(res);
 
     // remove the cookie
@@ -119,7 +126,7 @@ export default class Client extends Api {
     if (typeof window === 'undefined') {
       const cookie = res.headers['set-cookie'];
       if (!cookie) {
-        throw new Error('No cookie receiveed from gateway. An error occured with authentication.');
+        throw new Error('No cookie received from gateway. An error occured with authentication.');
       }
 
       return {

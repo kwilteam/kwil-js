@@ -20,7 +20,7 @@ interface AuthClient {
   postAuthenticateClient<T extends EnvironmentType>(
     body: AuthenticatedBody<BytesEncodingStatus.BASE64_ENCODED>
   ): Promise<GenericResponse<AuthSuccess<T>>>;
-  logoutClient<T extends EnvironmentType>(): Promise<GenericResponse<LogoutResponse<T>>>;
+  logoutClient<T extends EnvironmentType>(identifier?: Uint8Array): Promise<GenericResponse<LogoutResponse<T>>>;
 }
 
 export class Auth<T extends EnvironmentType> {
@@ -73,7 +73,8 @@ export class Auth<T extends EnvironmentType> {
     return res;
   }
 
-  public async logout(): Promise<GenericResponse<LogoutResponse<T>>> {
-    return await this.authClient.logoutClient();
+  public async logout(signer?: KwilSigner): Promise<GenericResponse<LogoutResponse<T>>> {
+    const identifier = signer?.identifier || undefined;
+    return await this.authClient.logoutClient(identifier);
   }
 }
