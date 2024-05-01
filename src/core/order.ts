@@ -5,8 +5,20 @@ import { Database } from "./database";
 
 export function enforceDatabaseOrder(db: NonNil<Database>): NonNil<Database> {
     return {
-        owner: db.owner,
         name: db.name,
+        owner: db.owner,
+        extensions: db.extensions && db.extensions.length > 0 ? db.extensions?.map(extension => {
+            return {
+                name: extension.name,
+                initialization: extension.initialization && extension.initialization.length > 0 ? extension.initialization?.map(initialization => {
+                    return {
+                        name: initialization.name,
+                        value: initialization.value,
+                    }
+                }): [],
+                alias: extension.alias,
+            }
+        }) : [],
         tables: db.tables && db.tables.length > 0 ? db.tables?.map(table => {
             return {
                 name: table.name,
@@ -48,23 +60,37 @@ export function enforceDatabaseOrder(db: NonNil<Database>): NonNil<Database> {
             return {
                 name: action.name,
                 annotations: action.annotations,
-                inputs: action.inputs,
-                mutability: action.mutability,
-                auxiliaries: action.auxiliaries,
+                parameters: action.parameters,
                 public: action.public,
-                statements: action.statements,
+                modifiers: action.modifiers,
+                body: action.body,
             }
         }): [],
-        extensions: db.extensions && db.extensions.length > 0 ? db.extensions?.map(extension => {
+        procedures: db.procedures && db.procedures.length > 0 ? db.procedures?.map(procedure => {
             return {
-                name: extension.name,
-                config: extension.config && extension.config.length > 0 ? extension.config?.map(config => {
+                name: procedure.name,
+                parameters: procedure.parameters && procedure.parameters.length > 0 ? procedure.parameters?.map(parameter => {
                     return {
-                        argument: config.argument,
-                        value: config.value,
+                        name: parameter.name,
+                        type: parameter.type,
                     }
-                }): [],
-                alias: extension.alias,
+                }) : [],
+                public: procedure.public,
+                modifiers: procedure.modifiers,
+                body: procedure.body,
+                return_types: {
+                    is_table: procedure.return_types.is_table,
+                    fields: procedure.return_types.fields && procedure.return_types.fields.length > 0 ? procedure.return_types.fields?.map(field => {
+                        return {
+                            name: field.name,
+                            type: {
+                                name: field.type.name,
+                                is_array: field.type.is_array,
+                            }
+                        }
+                    }) : [],
+                },
+                annotations: procedure.annotations,
             }
         }) : [],
     }

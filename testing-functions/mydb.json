@@ -1,140 +1,180 @@
 {
-  "owner": "",
-  "name": "mydb",
-  "tables": [
-    {
-      "name": "posts",
-      "columns": [
+    "name": "mydb",
+    "owner": null,
+    "extensions": null,
+    "tables": [
         {
-          "name": "id",
-          "type": "int",
-          "attributes": [
-            {
-              "type": "primary_key"
-            },
-            {
-              "type": "not_null"
-            }
-          ]
-        },
-        {
-          "name": "name",
-          "type": "text",
-          "attributes": [
-            {
-              "type": "not_null"
-            }
-          ]
-        },
-        {
-          "name": "post_title",
-          "type": "text",
-          "attributes": [
-            {
-              "type": "not_null"
-            }
-          ]
-        },
-        {
-          "name": "post_body",
-          "type": "text",
-          "attributes": [
-            {
-              "type": "not_null"
-            }
-          ]
+            "name": "posts",
+            "columns": [
+                {
+                    "name": "id",
+                    "type": {
+                        "name": "int",
+                        "is_array": false
+                    },
+                    "attributes": [
+                        {
+                            "type": "PRIMARY_KEY"
+                        },
+                        {
+                            "type": "NOT_NULL"
+                        }
+                    ]
+                },
+                {
+                    "name": "name",
+                    "type": {
+                        "name": "text",
+                        "is_array": false
+                    },
+                    "attributes": [
+                        {
+                            "type": "NOT_NULL"
+                        }
+                    ]
+                },
+                {
+                    "name": "post_title",
+                    "type": {
+                        "name": "text",
+                        "is_array": false
+                    },
+                    "attributes": [
+                        {
+                            "type": "NOT_NULL"
+                        }
+                    ]
+                },
+                {
+                    "name": "post_body",
+                    "type": {
+                        "name": "text",
+                        "is_array": false
+                    },
+                    "attributes": [
+                        {
+                            "type": "NOT_NULL"
+                        }
+                    ]
+                }
+            ],
+            "foreign_keys": null
         }
-      ]
-    }
-  ],
-  "actions": [
-    {
-      "name": "add_post",
-      "inputs": [
-        "$id",
-        "$user",
-        "$title",
-        "$body"
-      ],
-      "public": true,
-      "mutability": "update",
-      "auxiliaries": null,
-      "statements": [
-        "INSERT INTO posts VALUES ( $id , $user , $title , $body );"
-      ]
-    },
-    {
-      "name": "update_post",
-      "inputs": [
-        "$body",
-        "$id"
-      ],
-      "public": true,
-      "mutability": "update",
-      "auxiliaries": null,
-      "statements": [
-        "UPDATE posts SET post_body = $body WHERE id = $id;"
-      ]
-    },
-    {
-      "name": "delete_post",
-      "inputs": [
-        "$id"
-      ],
-      "public": true,
-      "mutability": "update",
-      "auxiliaries": null,
-      "statements": [
-        "DELETE FROM posts WHERE id = $id;"
-      ]
-    },
-    {
-      "name": "read_posts",
-      "inputs": null,
-      "public": true,
-      "mutability": "view",
-      "auxiliaries": null,
-      "statements": [
-        "SELECT count(*) FROM posts;"
-      ]
-    },
-    {
-      "name": "view_with_param",
-      "inputs": [
-        "$id"
-      ],
-      "public": true,
-      "mutability": "view",
-      "auxiliaries": null,
-      "statements": [
-        "SELECT * from posts WHERE id = $id;"
-      ]
-    },
-    {
-      "name": "view_must_sign",
-      "annotations": [
-        "kgw(authn='true')"
-      ],
-      "inputs": null,
-      "public": true,
-      "mutability": "view",
-      "auxiliaries": null,
-      "statements": [
-        "SELECT * from posts;"
-      ]
-    },
-    {
-      "name": "view_caller",
-      "annotations": [
-        "kgw(authn='true')"
-      ],
-      "inputs": null,
-      "public": true,
-      "mutability": "view",
-      "auxiliaries": null,
-      "statements": [
-        "SELECT @caller AS caller;"
-      ]
-    }
-  ]
+    ],
+    "actions": [
+        {
+            "name": "add_post",
+            "parameters": [
+                "$id",
+                "$user",
+                "$title",
+                "$body"
+            ],
+            "public": true,
+            "modifiers": null,
+            "body": "INSERT INTO posts VALUES ( $id , $user , $title , $body );"
+        },
+        {
+            "name": "update_post",
+            "parameters": [
+                "$body",
+                "$id"
+            ],
+            "public": true,
+            "modifiers": null,
+            "body": "UPDATE posts SET post_body = $body WHERE id = $id;"
+        },
+        {
+            "name": "delete_post",
+            "parameters": [
+                "$id"
+            ],
+            "public": true,
+            "modifiers": null,
+            "body": "DELETE FROM posts WHERE id = $id;"
+        },
+        {
+            "name": "read_posts",
+            "parameters": null,
+            "public": true,
+            "modifiers": [
+                "VIEW"
+            ],
+            "body": "SELECT count(*) FROM posts;"
+        },
+        {
+            "name": "view_with_param",
+            "parameters": [
+                "$id"
+            ],
+            "public": true,
+            "modifiers": [
+                "VIEW"
+            ],
+            "body": "SELECT * from posts WHERE id = $id;"
+        },
+        {
+            "name": "view_must_sign",
+            "annotations": [
+                "@kgw(authn='true')"
+            ],
+            "parameters": null,
+            "public": true,
+            "modifiers": [
+                "VIEW"
+            ],
+            "body": "SELECT * from posts;"
+        },
+        {
+            "name": "view_caller",
+            "annotations": [
+                "@kgw(authn='true')"
+            ],
+            "parameters": null,
+            "public": true,
+            "modifiers": [
+                "VIEW"
+            ],
+            "body": "SELECT @caller AS caller;"
+        }
+    ],
+    "procedures": [
+        {
+            "name": "get_post_by_id",
+            "parameters": [
+                {
+                    "name": "$id",
+                    "type": {
+                        "name": "int",
+                        "is_array": false
+                    }
+                }
+            ],
+            "public": true,
+            "modifiers": [
+                "VIEW"
+            ],
+            "body": "for $row in SELECT post_title, post_body FROM posts WHERE id = $id {\n        return $row.post_title, $row.post_body; \n    }\n\n    error(format('record with id = \"%s\" not found', $id));",
+            "return_types": {
+                "is_table": false,
+                "fields": [
+                    {
+                        "name": "title",
+                        "type": {
+                            "name": "text",
+                            "is_array": false
+                        }
+                    },
+                    {
+                        "name": "body",
+                        "type": {
+                            "name": "text",
+                            "is_array": false
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "foreign_calls": null
 }

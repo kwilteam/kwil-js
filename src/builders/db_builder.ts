@@ -4,7 +4,14 @@ import { objects } from '../utils/objects';
 import { Kwil } from '../client/kwil';
 import { PayloadBuilderImpl } from './payload_builder';
 import { DBBuilder, SignerSupplier } from '../core/builders';
-import { AttributeType, DataType, DeployOrDrop, EnvironmentType, IndexType, PayloadType } from '../core/enums';
+import {
+  AttributeType,
+  VarType,
+  DeployOrDrop,
+  EnvironmentType,
+  IndexType,
+  PayloadType,
+} from '../core/enums';
 import { Database } from '../core/database';
 import { enforceDatabaseOrder } from '../core/order';
 import { AnySignatureType, SignatureType, getSignatureType } from '../core/signature';
@@ -15,7 +22,9 @@ import { CompiledKuneiform, DbPayloadType, DropDbPayload } from '../core/payload
  * It creates a transaction to deploy a new database on the Kwil network.
  */
 
-export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType> implements DBBuilder<T> {
+export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType>
+  implements DBBuilder<T>
+{
   private readonly kwil: Kwil<U>;
   private _payload: Nillable<() => NonNil<CompiledKuneiform | DropDbPayload>> = null;
   private _signer: Nillable<SignerSupplier> = null;
@@ -164,7 +173,7 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType> im
 
   /**
    * Specifies the nonce for the database deployment / drop. This is optional, and if not specified, the nonce will be retrieved from the Kwil network.
-   * 
+   *
    * @param {number} nonce - The nonce for the database deployment / drop.
    * @returns {DBBuilder} The current `DBBuilder` instance for chaining.
    */
@@ -196,6 +205,7 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType> im
       const encodablePayload = this.makePayloadEncodable(
         payload as () => NonNil<CompiledKuneiform>
       );
+
       // reassign cleanedPayload to be a callback function that returns the encodable payload with the correct order
       cleanedPayload = () => enforceDatabaseOrder(encodablePayload);
     }
@@ -278,7 +288,10 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType> im
             }
 
             if (!column.type) {
-              column.type = DataType.NULL;
+              column.type = {
+                name: VarType.NULL,
+                is_array: false,
+              };
             }
 
             if (!column.attributes) {
@@ -361,28 +374,24 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType> im
           action.name = '';
         }
 
-        if(!action.annotations) {
+        if (!action.annotations) {
           action.annotations = [];
         }
 
-        if (!action.inputs) {
-          action.inputs = [];
+        if (!action.parameters) {
+          action.parameters = [];
         }
 
-        if (!action.mutability) {
-          action.mutability = '';
-        }
-
-        if (!action.auxiliaries) {
-          action.auxiliaries = [];
-        }
-
-        if ((action.public === undefined )|| (action.public === null)) {
+        if (action.public === undefined || action.public === null) {
           action.public = true;
         }
 
-        if (!action.statements) {
-          action.statements = [];
+        if (!action.modifiers) {
+          action.modifiers = [];
+        }
+
+        if (!action.body) {
+          action.body = '';
         }
       });
 
@@ -396,24 +405,94 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType> im
           extension.name = '';
         }
 
-        if (!extension.config) {
-          extension.config = [];
+        if (!extension.initialization) {
+          extension.initialization = [];
         }
 
         if (!extension.alias) {
           extension.alias = '';
         }
 
-        extension.config &&
-          extension.config.forEach((config) => {
-            if (!config.argument) {
-              config.argument = '';
+        extension.initialization &&
+          extension.initialization.forEach((initialization) => {
+            if (!initialization.name) {
+              initialization.name = '';
             }
 
-            if (!config.value) {
-              config.value = '';
+            if (!initialization.value) {
+              initialization.value = '';
             }
           });
+      });
+
+    if (!db.procedures) {
+      db.procedures = [];
+    }
+
+    db.procedures &&
+      db.procedures.forEach((procedure) => {
+        if (!procedure.name) {
+          procedure.name = '';
+        }
+
+        if (!procedure.parameters) {
+          procedure.parameters = [];
+        }
+
+        procedure.parameters &&
+          procedure.parameters.forEach((parameter) => {
+            if (!parameter.name) {
+              parameter.name = '';
+            }
+
+            if (!parameter.type) {
+              parameter.type = {
+                name: '',
+                is_array: false,
+              };
+            }
+          });
+
+        if (procedure.public === undefined || procedure.public === null) {
+          procedure.public = true;
+        }
+
+        if (!procedure.modifiers) {
+          procedure.modifiers = [];
+        }
+
+        if (!procedure.body) {
+          procedure.body = '';
+        }
+
+        if (!procedure.return_types) {
+          procedure.return_types = {
+            is_table: false,
+            fields: [],
+          };
+        }
+
+        if (!procedure.return_types.fields) {
+          procedure.return_types.fields = [];
+        }
+
+        procedure.return_types.fields &&
+          procedure.return_types.fields.forEach((field) => {
+            if (!field.name) {
+              field.name = '';
+            }
+
+            if (!field.type) {
+              field.type = {
+                name: '',
+                is_array: false,
+              };
+            }
+          });
+
+        if (!procedure.annotations) {
+          procedure.annotations = [];
+        }
       });
 
     return db;

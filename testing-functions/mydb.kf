@@ -1,0 +1,46 @@
+database mydb;
+
+table posts {
+    id int primary notnull,
+    user text notnull,
+    post_title text notnull,
+    post_body text notnull
+}
+
+action add_post ($id, $user, $title, $body) public {
+    INSERT INTO posts VALUES ( $id , $user , $title , $body );
+}
+
+action update_post ($body, $id) public {
+    UPDATE posts SET post_body = $body WHERE id = $id;
+}
+
+action delete_post ($id) public {
+    DELETE FROM posts WHERE id = $id;
+}
+
+action read_posts () public view {
+    SELECT count(*) FROM posts;
+}
+
+action view_with_param ($id) public view {
+    SELECT * from posts WHERE id = $id;
+}
+
+@kgw(authn='true')
+action view_must_sign () public view {
+    SELECT * from posts;
+} 
+
+@kgw(authn='true')
+action view_caller () public view {
+    SELECT @caller AS caller;
+}
+
+procedure get_post_by_id($id int) public view returns (title text, body text) {
+    for $row in SELECT post_title, post_body FROM posts WHERE id = $id {
+        return $row.post_title, $row.post_body; // will return on the first iteration
+    }
+
+    error(format('record with id = "%s" not found', $id));
+}

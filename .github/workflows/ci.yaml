@@ -57,7 +57,7 @@ jobs:
         run: |
           git clone https://github.com/kwilteam/kwil-db.git /tmp/kwil-db
           cd /tmp/kwil-db
-          go work init && go work use . ./parse ./test ./core
+          go work init && go work use . ./test ./core
           task build:docker
           cd deployments/compose/kwil
           echo "Starting kwil docker"
