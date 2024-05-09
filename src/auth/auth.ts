@@ -63,8 +63,8 @@ export class Auth<T extends EnvironmentType> {
       nonce: authProperties.nonce,
       sender: bytesToBase64(signer.identifier),
       signature: {
-        signature_bytes: bytesToBase64(signature),
-        signature_type: signer.signatureType,
+        sig: bytesToBase64(signature),
+        type: signer.signatureType,
       },
     };
 

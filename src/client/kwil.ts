@@ -18,7 +18,7 @@ import {
   EnvironmentType,
   PayloadType,
 } from '../core/enums';
-import { hexToBytes } from '../utils/serial';
+import { bytesToString, hexToBytes } from '../utils/serial';
 import { isNearPubKey, nearB58ToHex } from '../utils/keys';
 import { ActionBody, resolveActionInputs } from '../core/action';
 import { KwilSigner } from '../core/kwilSigner';
@@ -314,13 +314,11 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       query: query,
     };
 
-    let res = await this.selectQueryClient(q);
-    const uint8 = new Uint8Array(base64ToBytes(res.data as string));
-    const decoder = new TextDecoder('utf-8');
-    const jsonString = decoder.decode(uint8);
+    const res = await this.selectQueryClient(q);
+
     return {
       status: res.status,
-      data: JSON.parse(jsonString),
+      data: JSON.parse(bytesToString(base64ToBytes(res.data as string))),
     } as GenericResponse<Map<string, any>[]>;
   }
 

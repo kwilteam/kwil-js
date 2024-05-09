@@ -5,33 +5,26 @@ import { Transaction, TxReceipt } from '../core/tx';
 import { Api } from './api';
 import { ClientConfig } from './config';
 import {
-  BroadcastReq,
-  BroadcastRes,
   CallRes,
-  ChainInfoRes,
-  EstimateCostReq,
   EstimateCostRes,
   GenericResponse,
-  GetAccountResponse,
   GetAuthResponse,
-  GetSchemaResponse,
   ListDatabasesResponse,
-  PongRes,
   PostAuthResponse,
   SelectRes,
-  TxQueryReq,
-  TxQueryRes,
 } from '../core/resreq';
-import { base64UrlEncode, bytesToHex, hexToBytes } from '../utils/serial';
+import { base64ToHex, bytesToHex, bytesToString, hexToBase64, hexToBytes } from '../utils/serial';
 import { TxInfoReceipt } from '../core/txQuery';
 import { Message, MsgData, MsgReceipt } from '../core/message';
 import { kwilDecode } from '../utils/rlp';
 import { BroadcastSyncType, BytesEncodingStatus, EnvironmentType } from '../core/enums';
 import { AuthInfo, AuthSuccess, AuthenticatedBody, LogoutResponse } from '../core/auth';
 import { AxiosResponse } from 'axios';
+import { AccountRequest, AccountResponse, AccountStatus, BroadcastRequest, BroadcastResponse, CallRequest, CallResponse, ChainInfoRequest, ChainInfoResponse, EstimatePriceRequest, JSONRPCMethod, JsonRPCRequest, JsonRPCResponse, ListDatabasesRequest, PingRequest, PingResponse, QueryRequest, SchemaRequest, SchemaResponse, TxQueryRequest, TxQueryResponse } from '../core/jsonrpc';
 
 export default class Client extends Api {
   private unconfirmedNonce: boolean;
+  private jsonRpcId: number = 1;
 
   constructor(opts: ClientConfig) {
     super(opts);
@@ -39,44 +32,34 @@ export default class Client extends Api {
   }
 
   protected async getSchemaClient(dbid: string): Promise<GenericResponse<Database>> {
-    const res = await super.get<GetSchemaResponse>(`/api/v1/databases/${dbid}/schema`);
-    checkRes(res);
+    const body = this.buildJsonRpcRequest<SchemaRequest>(
+      JSONRPCMethod.METHOD_SCHEMA,
+      { dbid }
+    );
 
-    let schema: Database = {
-      name: '',
-      owner: new Uint8Array(),
-      tables: [],
-      actions: [],
-      extensions: [],
-      procedures: [],
-    };
+    const res = await super.post<JsonRPCResponse<SchemaResponse>>(`/rpc/v1`, body);
 
-    if (res.data) {
-      schema = {
-        name: res.data.schema.name,
-        owner: base64ToBytes(res.data.schema.owner),
-        tables: res.data.schema.tables,
-        actions: res.data.schema.actions,
-        extensions: res.data.schema.extensions,
-        procedures: res.data.schema.procedures,
+    return checkRes(res, (r) => {
+      return {
+        ...r.result.schema,
+        owner: hexToBytes(r.result.schema.owner || ''),
       };
-    }
-
-    return {
-      status: res.status,
-      data: schema,
-    };
+    });
   }
 
+  // TODO: Update once KGW is updated for JSON RPC - DO NOT MERGE WITHOUT RESOLVING
   protected async getAuthenticateClient(): Promise<GenericResponse<AuthInfo>> {
     const res = await super.get<GetAuthResponse>(`/auth`);
+    // @ts-ignore
     return checkRes(res, (r) => r.result);
   }
 
+  // TODO: Update once KGW is updated for JSON RPC - DO NOT MERGE WITHOUT RESOLVING
   protected async postAuthenticateClient<T extends EnvironmentType>(
     body: AuthenticatedBody<BytesEncodingStatus.BASE64_ENCODED>
   ): Promise<GenericResponse<AuthSuccess<T>>> {
     const res = await super.post<PostAuthResponse>(`/auth`, body);
+    // @ts-ignore - DO NOT MERGE WITHOUT RESOLVING
     checkRes(res);
     
     if (typeof window === 'undefined') {
@@ -108,17 +91,12 @@ export default class Client extends Api {
     };
   }
 
-  protected async logoutClient<T extends EnvironmentType>(identifier?: Uint8Array): Promise<
+  // TODO: Update once KGW is updated for JSON RPC - DO NOT MERGE WITHOUT RESOLVING
+  protected async logoutClient<T extends EnvironmentType>(): Promise<
     GenericResponse<LogoutResponse<T>>
   > {
-    let logoutExt = '';
-
-    if (identifier) {
-      // KGW expects the identifier to be hex encoded
-      logoutExt = `?account=${bytesToHex(identifier)}`;
-    }
-
-    const res = await super.get<LogoutResponse<T>>(`/logout${logoutExt}`);
+    const res = await super.get<LogoutResponse<T>>(`/logout`);
+    // @ts-ignore - DO NOT MERGE WITHOUT RESOLVING
     checkRes(res);
 
     // remove the cookie
@@ -151,61 +129,55 @@ export default class Client extends Api {
   }
 
   protected async getAccountClient(owner: Uint8Array): Promise<GenericResponse<Account>> {
-    const urlSafeB64 = base64UrlEncode(bytesToBase64(owner));
-    const unconfirmedNonce = this.unconfirmedNonce ? '?status=1' : '';
-    const res = await super.get<GetAccountResponse>(
-      `/api/v1/accounts/${urlSafeB64}` + unconfirmedNonce
+    const body = this.buildJsonRpcRequest<AccountRequest>(
+      JSONRPCMethod.METHOD_ACCOUNT,
+      {
+        identifier: bytesToHex(owner),
+        status: this.unconfirmedNonce ? AccountStatus.PENDING : AccountStatus.LATEST
+      }
     );
-    checkRes(res);
 
-    let acct: Account = {
-      balance: '',
-      identifier: new Uint8Array(),
-      nonce: '',
-    };
+    const res = await super.post<JsonRPCResponse<AccountResponse>>(`/rpc/v1`, body);
 
-    if (res.data) {
-      acct.balance = res.data.account.balance;
-      acct.identifier = base64ToBytes(res.data.account.identifier as string);
-      acct.nonce = res.data.account.nonce;
-    }
-
-    return {
-      status: res.status,
-      data: acct,
-    };
+    return checkRes(res, (r) => {
+      return {
+        ...r.result,
+        identifier: hexToBytes(r.result.identifier || ''),
+      }
+    });
   }
 
   protected async listDatabasesClient(owner?: Uint8Array): Promise<GenericResponse<DatasetInfo[]>> {
-    let urlSafeB64 = '';
+    const body = this.buildJsonRpcRequest<ListDatabasesRequest>(
+      JSONRPCMethod.METHOD_DATABASES,
+      { owner: owner ? bytesToHex(owner) : undefined }
+    );
 
-    if (owner) {
-      urlSafeB64 = base64UrlEncode(bytesToBase64(owner));
-    }
+    const res = await super.post<JsonRPCResponse<ListDatabasesResponse>>(`/rpc/v1`, body);
 
-    const res = await super.get<ListDatabasesResponse>(`/api/v1/${urlSafeB64}/databases`);
+    return checkRes(res, (r) => {
+      if (!r.result.databases) {
+        return [];
+      }
 
-    //convert base64 identifiers to Uint8Array
-    const convertedRes: AxiosResponse<{ databases: DatasetInfo[] }> = {
-      ...res,
-      data: {
-        databases: res.data.databases.map((db) => {
-          return {
-            ...db,
-            owner: base64ToBytes(db.owner),
-          };
-        }),
-      },
-    };
-
-    return checkRes(convertedRes, (r) => r.databases);
+      return r.result.databases.map((db) => {
+        return {
+          ...db,
+          owner: hexToBytes(db.owner),
+        };
+      });
+    });
   }
 
   protected async estimateCostClient(tx: Transaction): Promise<GenericResponse<string>> {
-    let req: EstimateCostReq = { tx: tx.txData };
+    const body = this.buildJsonRpcRequest<EstimatePriceRequest>(
+      JSONRPCMethod.METHOD_PRICE,
+      { tx: tx.txData }
+    )
 
-    const res = await super.post<EstimateCostRes>(`/api/v1/estimate_price`, req);
-    return checkRes(res, (r) => r.price);
+    const res = await super.post<JsonRPCResponse<EstimateCostRes>>(`/rpc/v1`, body);
+
+    return checkRes(res, (r) => r.result.price);
   }
 
   protected async broadcastClient(
@@ -216,135 +188,154 @@ export default class Client extends Api {
       throw new Error('Tx must be signed before broadcasting.');
     }
 
-    const req: BroadcastReq = {
-      tx: tx.txData,
-      ...(broadcastSync !== (null || undefined) ? { sync: broadcastSync } : {}),
-    };
+    const body = this.buildJsonRpcRequest<BroadcastRequest>(
+      JSONRPCMethod.METHOD_BROADCAST,
+      { tx: tx.txData, ...(broadcastSync ? { sync: broadcastSync } : {}) }
+    )
 
-    const res = await super.post<BroadcastRes>(`/api/v1/broadcast`, req);
-    checkRes(res);
+    const res = await super.post<JsonRPCResponse<BroadcastResponse>>(`/rpc/v1`, body);
 
-    let body = {
-      tx_hash: '',
-    };
-
-    if (res.data.tx_hash) {
-      const bytes = res.data.tx_hash;
-      body.tx_hash = bytesToHex(base64ToBytes(bytes));
-    }
-
-    //TODO: Should we always be returning body, regardless of
-    return {
-      status: res.status,
-      data: body,
-    };
+    return checkRes(res, (r) => {
+      return {
+        tx_hash: base64ToHex(r.result.tx_hash),
+      }
+    });
   }
 
   protected async pingClient(): Promise<GenericResponse<string>> {
-    const res = await super.get<PongRes>(`/api/v1/ping`);
-    return checkRes(res, (r) => r.message);
+    const body = this.buildJsonRpcRequest<PingRequest>(
+      JSONRPCMethod.METHOD_PING,
+      { message: 'ping' }
+    )
+
+    const res = await super.post<JsonRPCResponse<PingResponse>>(`/rpc/v1`, body);
+
+    return checkRes(res, (r) => r.result.message);
   }
 
   protected async chainInfoClient(): Promise<GenericResponse<ChainInfo>> {
-    const res = await super.get<ChainInfoRes>(`/api/v1/chain_info`);
-    return checkRes(res, (r) => r);
-  }
+    const body = this.buildJsonRpcRequest<ChainInfoRequest>(
+      JSONRPCMethod.METHOD_CHAIN_INFO,
+      {}
+    )
 
-  protected async selectQueryClient(query: SelectQuery): Promise<GenericResponse<string>> {
-    const res = await super.post<SelectRes>(`/api/v1/query`, query);
+    const res = await super.post<JsonRPCResponse<ChainInfoResponse>>(`/rpc/v1`, body);
+
     return checkRes(res, (r) => r.result);
   }
 
+  protected async selectQueryClient(query: SelectQuery): Promise<GenericResponse<string>> {
+    const body = this.buildJsonRpcRequest<QueryRequest>(
+      JSONRPCMethod.METHOD_QUERY,
+      query
+    )
+
+    const res = await super.post<JsonRPCResponse<SelectRes>>(`/rpc/v1`, body);
+
+    return checkRes(res, (r) => r.result.result);
+  }
+
   protected async txInfoClient(tx_hash: string): Promise<GenericResponse<TxInfoReceipt>> {
-    tx_hash = bytesToBase64(hexToBytes(tx_hash));
-    const req: TxQueryReq = { tx_hash };
+    const body = this.buildJsonRpcRequest<TxQueryRequest>(
+      JSONRPCMethod.METHOD_TX_QUERY,
+      { tx_hash: hexToBase64(tx_hash) }
+    )
 
-    const res = await super.post<TxQueryRes>(`/api/v1/tx_query`, req);
-    checkRes(res);
+    const res = await super.post<JsonRPCResponse<TxQueryResponse>>(`/rpc/v1`, body);
 
-    let body;
-
-    if (res.data.hash && res.data.height && res.data.tx && res.data.tx_result) {
-      body = {
-        hash: bytesToHex(base64ToBytes(res.data.hash)),
-        height: res.data.height,
+    return checkRes(res, (r) => {
+      return {
+        ...r.result,
+        hash: base64ToHex(r.result.hash),
         tx: {
+          ...r.result.tx,
           body: {
-            payload: kwilDecode(base64ToBytes(res.data.tx.body.payload as string)),
-            payload_type: res.data.tx.body.payload_type,
-            fee: res.data.tx.body.fee ? BigInt(res.data.tx.body.fee) : null,
-            nonce: res.data.tx.body.nonce,
-            chain_id: res.data.tx.body.chain_id,
-            description: res.data.tx.body.description,
+            ...r.result.tx.body,
+            payload: kwilDecode(base64ToBytes(r.result.tx.body.payload as string)),
           },
           signature: {
-            signature_bytes: base64ToBytes(res.data.tx.signature.signature_bytes as string),
-            signature_type: res.data.tx.signature.signature_type,
+            ...r.result.tx.signature,
+            sig: base64ToBytes(r.result.tx.signature.sig as string),
           },
-          sender: base64ToBytes(res.data.tx.sender as string),
-          serialization: res.data.tx.serialization,
-        },
-        tx_result: res.data.tx_result,
-      };
-    }
-
-    return {
-      status: res.status,
-      data: body,
-    };
+          sender: hexToBytes(r.result.tx.sender || ''),
+        }
+      }
+    });
   }
 
   protected async callClient(msg: Message): Promise<GenericResponse<MsgReceipt>> {
-    let req: MsgData<BytesEncodingStatus.BASE64_ENCODED> = {
-      body: msg.body,
-      auth_type: msg.auth_type,
-      sender: msg.sender,
-    };
+    const body = this.buildJsonRpcRequest<CallRequest>(
+      JSONRPCMethod.METHOD_CALL,
+      { 
+        body: msg.body,
+        auth_type: msg.auth_type,
+        sender: msg.sender || '',
+      }
+    )
 
-    const res = await super.post<CallRes>(`/api/v1/call`, req);
+    const res = await super.post<JsonRPCResponse<CallResponse>>(`rpc/v1`, body)
 
     // if we get a 401, we need to return the response so we can try to authenticate
-    if (res.status !== 401) {
-      checkRes(res);
+    if (res.status === 401) {
+      return {
+        status: res.status,
+        data: JSON.parse(bytesToString(base64ToBytes(res.data.result.result))),
+      }
     }
 
-    let result: any = null;
+    return checkRes(res, (r) => {
+      return {
+        result: JSON.parse(bytesToString(base64ToBytes(r.result.result)))
+      }
+    });
+  }
 
-    if (res.data.result) {
-      const uint8 = new Uint8Array(base64ToBytes(res.data.result));
-      const decoder = new TextDecoder('utf-8');
-      const jsonString = decoder.decode(uint8);
-      result = JSON.parse(jsonString);
-    }
-
-    const cleanReceipt: MsgReceipt = !result
-      ? {
-          result: null,
-        }
-      : {
-          result: result,
-        };
-
+  private buildJsonRpcRequest<T>(method: JSONRPCMethod, params: T): JsonRPCRequest<T> {
     return {
-      status: res.status,
-      data: cleanReceipt,
+      jsonrpc: '2.0',
+      id: this.jsonRpcId++,
+      method,
+      params,
     };
   }
 }
 
 function checkRes<T, R>(
-  res: GenericResponse<T>,
-  selector?: (r: T) => R | undefined
+  res: AxiosResponse<JsonRPCResponse<T>>,
+  selector: (r: JsonRPCResponse<T>) => R | undefined
 ): GenericResponse<R> {
-  if (res.status != 200 || !res.data) {
-    throw new Error(
-      JSON.stringify(res.data) ||
+
+  switch (res.status) {
+    case 200:
+      break;
+    case 401:
+      throw new Error(JSON.stringify(res.data) || 'Unauthorized.');
+    case 404:
+      throw new Error(JSON.stringify(res.data) || 'Not found.');
+    case 500:
+      throw new Error(JSON.stringify(res.data) || 'Internal server error.');
+    default:
+      throw new Error(
+        JSON.stringify(res.data) ||
         'An unknown error has occurred.  Please check your network connection.'
-    );
+      );
   }
 
-  if (!selector) {
-    return { status: res.status, data: undefined };
+  if (!res.data) {
+    throw new Error(`failed to parse response: ${res}`);
+  }
+
+  if (res.data.error) {
+    const data = res.data.error.data ? `, data: ${JSON.stringify(res.data.error.data)}` : '';
+    throw new Error(`JSON RPC call error: code: ${res.data.error.code}, message: ${res.data.error.message}` + data);
+  }
+
+  if (res.data.jsonrpc !== '2.0') {
+    throw new Error(JSON.stringify(res.data) || 'Invalid JSON RPC response.');
+  }
+
+  if (!res.data.result) {
+    throw new Error(JSON.stringify(res.data) || 'No result in JSON RPC response.');
   }
 
   return {

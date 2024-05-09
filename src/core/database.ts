@@ -74,10 +74,10 @@ export interface ForeignKeyAction {
 
 export interface ActionSchema {
   name: string;
-  annotations: ReadonlyArray<string>;
-  parameters: ReadonlyArray<string>;
+  annotations?: ReadonlyArray<string>;
+  parameters?: ReadonlyArray<string>;
   public: boolean;
-  modifiers: ReadonlyArray<string>;
+  modifiers?: ReadonlyArray<string>;
   body: string;
 }
 

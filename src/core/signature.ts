@@ -4,8 +4,8 @@ import { hexToBytes } from "../utils/serial";
 import { BytesEncodingStatus, PayloadBytesTypes } from "./enums";
 
 export interface Signature<T extends PayloadBytesTypes> {
-    signature_bytes: Nillable<T extends BytesEncodingStatus.BASE64_ENCODED ? Base64String : Uint8Array>;
-    signature_type: CustomSignatureType;
+    sig: Nillable<T extends BytesEncodingStatus.BASE64_ENCODED ? Base64String : Uint8Array>;
+    type: CustomSignatureType;
 }
 
 export enum SignatureType {

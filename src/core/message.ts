@@ -1,5 +1,5 @@
 import { strings } from "../utils/strings";
-import { Base64String, Nillable, NonNil } from "../utils/types";
+import { Base64String, HexString, Nillable, NonNil } from "../utils/types";
 import { BytesEncodingStatus, PayloadBytesTypes, PayloadType } from "./enums";
 import { UnencodedActionPayload } from "./payload";
 import { AnySignatureType, Signature, SignatureType } from "./signature";
@@ -17,7 +17,8 @@ export interface MsgReceipt {
 export interface MsgData<T extends PayloadBytesTypes> {
     body: MsgBody<T>;
     auth_type: AnySignatureType;
-    sender: Nillable<T extends BytesEncodingStatus.BASE64_ENCODED ? Base64String : Uint8Array>;
+    // when the other bytes are base64, it means it is time to turn the sender bytes to hex string
+    sender: Nillable<T extends BytesEncodingStatus.BASE64_ENCODED ? HexString : Uint8Array>;
 }
 
 interface MsgBody<T extends PayloadBytesTypes> {

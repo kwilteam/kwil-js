@@ -312,7 +312,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
     );
 
     // throw runtime error if action is a view action. view actions require a different payload structure than transactions.
-    if (actionSchema.modifiers.includes('VIEW')) {
+    if (actionSchema.modifiers && actionSchema.modifiers.includes('VIEW')) {
       throw new Error(`Action ${name} is a 'view' action. Please use kwil.call().`);
     }
 
@@ -359,7 +359,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
     }
 
     // throw runtime error if action is not a view action. transactions require a different payload structure than view actions.
-    if (actionSchema.modifiers.includes('VIEW') === false) {
+    if (actionSchema.modifiers && actionSchema.modifiers.includes('VIEW') === false) {
       throw new Error(`Action ${name} is not a view only action. Please use kwil.execute().`);
     }
 
@@ -495,7 +495,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
     const missingInputs = new Set<string>();
     actions.forEach((a) => {
       const copy = ActionInput.from(a);
-      actionSchema.parameters.forEach((p) => {
+      actionSchema.parameters?.forEach((p) => {
         if (missingInputs.has(p)) {
           return;
         }
@@ -515,7 +515,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
       });
 
       if (missingInputs.size === 0) {
-        preparedActions.push(
+        actionSchema.parameters && preparedActions.push(
           actionSchema.parameters.map((p) => {
             const val = copy.get(p);
 
@@ -523,7 +523,8 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
             if (val?.toString()) {
               return val.toString();
             }
-            return val;
+            
+            return val
           })
         );
       }

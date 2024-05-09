@@ -23,7 +23,7 @@ export interface GetAccountResponse {
 }
 
 export interface ListDatabasesResponse {
-  databases: DatasetInfoServer[];
+  databases?: DatasetInfoServer[];
 }
 
 export interface EstimateCostReq {

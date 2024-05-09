@@ -27,7 +27,7 @@ async function test() {
     //update to goerli when live
     const provider = new ethers.JsonRpcProvider(process.env.ETH_PROVIDER)
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
-    const txHash = 'b1ac84b20a99b7ad42435d653e4ed21c4cfa86c88b929e385f33664314ab5bec'
+    const txHash = 'abbe4b6f877f74971f4333dc12d2b2ec90d3888bae4e25c0173d97ec0320452b'
     const address = await wallet.address
 
     const getEdKeys = async () => {
@@ -67,7 +67,7 @@ async function test() {
 
     const dbid = kwil.getDBID(address, "mydb")
     // // await authenticate(kwil, kwilSigner)
-    broadcast(kwil, testDB, kwilSigner)
+    // broadcast(kwil, testDB, kwilSigner)
     // broadcastEd25519(kwil, testDB)
     // await getTxInfo(kwil, txHash)
     // await getSchema(kwil, dbid)
@@ -77,7 +77,7 @@ async function test() {
     // chainInfo(kwil)
     // await execSingleAction(kwil, dbid, "add_post", wallet, address)
     // await execSingleActionKwilSigner(kwil, dbid, "add_post", kwilSigner)
-    // await select(kwil, dbid, "SELECT * FROM posts")
+    await select(kwil, dbid, "SELECT * FROM posts")
     // bulkAction(kwil, dbid, "add_post", wallet, address)
     // await testViewWithParam(kwil, dbid, wallet)
     // await testViewWithSign(kwil, dbid, kwilSigner)
@@ -100,7 +100,7 @@ async function authenticate(kwil, signer) {
 async function getSchema(kwil, d) {
     const res = await kwil.getSchema(d)
     const schema = res.data
-    logger(schema)
+    logger(res)
 }
 
 async function getAccount(kwil, owner) {
