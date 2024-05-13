@@ -37,7 +37,7 @@ export enum PayloadType {
   INVALID_PAYLOAD_TYPE = 'invalid',
   DEPLOY_DATABASE = 'deploy_schema',
   DROP_DATABASE = 'drop_schema',
-  EXECUTE_ACTION = 'execute_action',
+  EXECUTE_ACTION = 'execute',
   CALL_ACTION = 'call_action',
   TRANSFER = 'transfer',
 }

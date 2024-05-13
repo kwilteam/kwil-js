@@ -1,4 +1,5 @@
 import { Base64String, HexString } from "../utils/types";
+import { AuthInfo, AuthenticatedBody } from "./auth";
 import { Database } from "./database";
 import { BroadcastSyncType, BytesEncodingStatus } from "./enums";
 import { MsgData } from "./message";
@@ -25,6 +26,9 @@ export enum JSONRPCMethod {
     METHOD_QUERY = 'user.query',
     METHOD_TX_QUERY = 'user.tx_query',
     METHOD_SCHEMA = 'user.schema',
+    METHOD_KGW_PARAM = 'kgw.authn_param',
+    METHOD_KGW_AUTHN = 'kgw.authn',
+    METHOD_KGW_LOGOUT = 'kgw.logout',
 }
 
 export interface SchemaRequest {
@@ -51,7 +55,9 @@ export interface BroadcastRequest {
 
 export type CallRequest = MsgData<BytesEncodingStatus.BASE64_ENCODED>;
 
-export interface ChainInfoRequest {
+export type ChainInfoRequest = EmptyRequest;
+
+interface EmptyRequest {
     [key: string]: never;
 }
 
@@ -115,7 +121,7 @@ interface Result {
 export type ChainInfoResponse = ChainInfo;
 
 export interface ListDatabasesResponse {
-    databases: DatasetInfoServer[];
+    databases?: DatasetInfoServer[];
 }
 
 export interface PingResponse {
@@ -131,4 +137,18 @@ export interface TxQueryResponse {
     height: number;
     tx: TxnData<BytesEncodingStatus.BASE64_ENCODED>;
     tx_result: TxResult;
+}
+
+export type AuthParamRequest = EmptyRequest;
+
+export type AuthParamResponse = AuthInfo;
+
+export type AuthnRequest = AuthenticatedBody<BytesEncodingStatus.BASE64_ENCODED>;
+
+export interface AuthnResponse {
+    result: string
+}
+
+export interface AuthnLogoutRequest {
+    account: Base64String;
 }

@@ -2,8 +2,9 @@
 
 import { NonNil } from "../utils/types";
 import { Database } from "./database";
+import { CompiledKuneiform } from "./payload";
 
-export function enforceDatabaseOrder(db: NonNil<Database>): NonNil<Database> {
+export function enforceDatabaseOrder(db: NonNil<Database>): NonNil<CompiledKuneiform> {
     return {
         name: db.name,
         owner: db.owner,
@@ -93,5 +94,28 @@ export function enforceDatabaseOrder(db: NonNil<Database>): NonNil<Database> {
                 annotations: procedure.annotations,
             }
         }) : [],
+        foreign_calls: db.foreign_calls && db.foreign_calls.length > 0 ? db.foreign_calls?.map(foreignCall => {
+            return {
+                name: foreignCall.name,
+                parameters: foreignCall.parameters && foreignCall.parameters.length > 0 ? foreignCall.parameters?.map(parameter => {
+                    return {
+                        name: parameter.name,
+                        is_array: parameter.is_array,
+                    }
+                }): [],
+                returns: {
+                    is_table: foreignCall.returns.is_table,
+                    fields: foreignCall.returns.fields && foreignCall.returns.fields.length > 0 ? foreignCall.returns.fields?.map(field => {
+                        return {
+                            name: field.name,
+                            type: {
+                                name: field.type.name,
+                                is_array: field.type.is_array,
+                            }
+                        }
+                    }) : [],
+                }
+            }
+        }): [],
     }
 }

@@ -15,7 +15,7 @@ import {
 import { Database } from '../core/database';
 import { enforceDatabaseOrder } from '../core/order';
 import { AnySignatureType, SignatureType, getSignatureType } from '../core/signature';
-import { CompiledKuneiform, DbPayloadType, DropDbPayload } from '../core/payload';
+import { AllPayloads, CompiledKuneiform, DbPayloadType, DropDbPayload } from '../core/payload';
 
 /**
  * `DBBuilderImpl` class is an implementation of the `DBBuilder` interface.
@@ -197,7 +197,7 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType>
     );
 
     // create cleanedPayload that is equal to the current callback function
-    let cleanedPayload: () => NonNil<object> = () => payload();
+    let cleanedPayload: () => NonNil<AllPayloads> = () => payload();
 
     // if it is a deploy database, we need to add all of the required fields and field order to make it RLP encodable. The Kuneiform parser does not include null fields.
     if (this._payloadType === PayloadType.DEPLOY_DATABASE) {
@@ -493,6 +493,57 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType>
         if (!procedure.annotations) {
           procedure.annotations = [];
         }
+      });
+
+    if (!db.foreign_calls) {
+      db.foreign_calls = [];
+    }
+    
+    db.foreign_calls &&
+      db.foreign_calls.forEach((foreignCall) => {
+        if (!foreignCall.name) {
+          foreignCall.name = '';
+        }
+
+        if (!foreignCall.parameters) {
+          foreignCall.parameters = [];
+        }
+
+        foreignCall.parameters &&
+          foreignCall.parameters.forEach((parameter) => {
+            if (!parameter.name) {
+              parameter.name = '';
+            }
+
+            if (parameter.is_array === undefined || parameter.is_array === null) {
+              parameter.is_array = false;
+            }
+          });
+
+        if (!foreignCall.returns) {
+          foreignCall.returns = {
+            is_table: false,
+            fields: [],
+          };
+        }
+
+        if (!foreignCall.returns.fields) {
+          foreignCall.returns.fields = [];
+        }
+
+        foreignCall.returns.fields &&
+          foreignCall.returns.fields.forEach((field) => {
+            if (!field.name) {
+              field.name = '';
+            }
+
+            if (!field.type) {
+              field.type = {
+                name: '',
+                is_array: false,
+              };
+            }
+          });
       });
 
     return db;

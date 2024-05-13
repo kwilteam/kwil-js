@@ -9,6 +9,11 @@ export type Func<T, U> = (t: T) => U;
 export type Unary<T> = Func<T, T>;
 export type Runnable = () => void;
 
+// should be recursive, can allow each property to be undefined or null
+export type PartialNillable<T> = {
+  [K in keyof T]?: Nillable<T[K] extends object ? PartialNillable<T[K]> : T[K]>;
+};
+
 /**
  * A string that represents a hex encoded value.
  */

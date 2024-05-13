@@ -5,22 +5,16 @@ import { Transaction, TxReceipt } from '../core/tx';
 import { Api } from './api';
 import { ClientConfig } from './config';
 import {
-  CallRes,
-  EstimateCostRes,
   GenericResponse,
-  GetAuthResponse,
-  ListDatabasesResponse,
-  PostAuthResponse,
-  SelectRes,
 } from '../core/resreq';
 import { base64ToHex, bytesToHex, bytesToString, hexToBase64, hexToBytes } from '../utils/serial';
 import { TxInfoReceipt } from '../core/txQuery';
-import { Message, MsgData, MsgReceipt } from '../core/message';
+import { Message, MsgReceipt } from '../core/message';
 import { kwilDecode } from '../utils/rlp';
 import { BroadcastSyncType, BytesEncodingStatus, EnvironmentType } from '../core/enums';
 import { AuthInfo, AuthSuccess, AuthenticatedBody, LogoutResponse } from '../core/auth';
 import { AxiosResponse } from 'axios';
-import { AccountRequest, AccountResponse, AccountStatus, BroadcastRequest, BroadcastResponse, CallRequest, CallResponse, ChainInfoRequest, ChainInfoResponse, EstimatePriceRequest, JSONRPCMethod, JsonRPCRequest, JsonRPCResponse, ListDatabasesRequest, PingRequest, PingResponse, QueryRequest, SchemaRequest, SchemaResponse, TxQueryRequest, TxQueryResponse } from '../core/jsonrpc';
+import { AccountRequest, AccountResponse, AccountStatus, AuthParamRequest, AuthParamResponse, AuthnLogoutRequest, AuthnRequest, AuthnResponse, BroadcastRequest, BroadcastResponse, CallRequest, CallResponse, ChainInfoRequest, ChainInfoResponse, EstimatePriceRequest, EstimatePriceResponse, JSONRPCMethod, JsonRPCRequest, JsonRPCResponse, ListDatabasesRequest, ListDatabasesResponse, PingRequest, PingResponse, QueryRequest, QueryResponse, SchemaRequest, SchemaResponse, TxQueryRequest, TxQueryResponse } from '../core/jsonrpc';
 
 export default class Client extends Api {
   private unconfirmedNonce: boolean;
@@ -47,85 +41,81 @@ export default class Client extends Api {
     });
   }
 
-  // TODO: Update once KGW is updated for JSON RPC - DO NOT MERGE WITHOUT RESOLVING
   protected async getAuthenticateClient(): Promise<GenericResponse<AuthInfo>> {
-    const res = await super.get<GetAuthResponse>(`/auth`);
-    // @ts-ignore
+    const body = this.buildJsonRpcRequest<AuthParamRequest>(
+      JSONRPCMethod.METHOD_KGW_PARAM,
+      {}
+    )
+
+    const res = await super.post<JsonRPCResponse<AuthParamResponse>>(`/rpc/v1`, body);
+
+    return checkRes(res, (r) => r.result);
+  }
+
+  protected async postAuthenticateClient<T extends EnvironmentType>(
+    authBody: AuthenticatedBody<BytesEncodingStatus.BASE64_ENCODED>
+  ): Promise<GenericResponse<AuthSuccess<T>>> {
+    const body = this.buildJsonRpcRequest<AuthnRequest>(
+      JSONRPCMethod.METHOD_KGW_AUTHN,
+      authBody
+    )
+
+    const res = await super.post<JsonRPCResponse<AuthnResponse>>(`/rpc/v1`, body);
+
+    if (typeof window === 'undefined') {
+      return checkRes(res, (r) => {
+        const cookie = res.headers['set-cookie'];
+        if (!cookie) {
+          throw new Error('No cookie receiveed from gateway. An error occured with authentication.');
+        }
+
+        return {
+          ...r.result,
+          cookie: cookie[0],
+        }
+      })
+    }
+
+    // if we are in the browser, we don't need to return the cookie
     return checkRes(res, (r) => r.result);
   }
 
   // TODO: Update once KGW is updated for JSON RPC - DO NOT MERGE WITHOUT RESOLVING
-  protected async postAuthenticateClient<T extends EnvironmentType>(
-    body: AuthenticatedBody<BytesEncodingStatus.BASE64_ENCODED>
-  ): Promise<GenericResponse<AuthSuccess<T>>> {
-    const res = await super.post<PostAuthResponse>(`/auth`, body);
-    // @ts-ignore - DO NOT MERGE WITHOUT RESOLVING
-    checkRes(res);
-    
-    if (typeof window === 'undefined') {
-      const cookie = res.headers['set-cookie'];
-      if (!cookie) {
-        throw new Error('No cookie received from gateway. An error occured with authentication.');
-      }
-
-      // set the cookie
-      this.cookie = cookie[0];
-
-      // if we are in nodejs, we need to return the cookie
-      return {
-        status: res.status,
-        // @ts-ignore
-        data: {
-          result: res.data.result,
-          cookie: cookie[0],
-        },
-      };
-    }
-
-    // if we are in the browser, we don't need to return the cookie
-    return {
-      status: res.status,
-      data: {
-        result: res.data.result,
-      },
-    };
-  }
-
-  // TODO: Update once KGW is updated for JSON RPC - DO NOT MERGE WITHOUT RESOLVING
-  protected async logoutClient<T extends EnvironmentType>(): Promise<
+  protected async logoutClient<T extends EnvironmentType>(
+    identifier?: Uint8Array
+  ): Promise<
     GenericResponse<LogoutResponse<T>>
   > {
-    const res = await super.get<LogoutResponse<T>>(`/logout`);
-    // @ts-ignore - DO NOT MERGE WITHOUT RESOLVING
-    checkRes(res);
+    const body = this.buildJsonRpcRequest<AuthnLogoutRequest>(
+      JSONRPCMethod.METHOD_KGW_LOGOUT,
+      {
+        account: identifier ? bytesToBase64(identifier) : '',
+      }
+    )
 
-    // remove the cookie
-    this.cookie = undefined;
+    const res = await super.post<JsonRPCResponse<AuthnResponse>>(`/rpc/v1`, body);
 
     // if we are in nodejs, we need to return the cookie
     if (typeof window === 'undefined') {
-      const cookie = res.headers['set-cookie'];
-      if (!cookie) {
-        throw new Error('No cookie received from gateway. An error occured with authentication.');
-      }
+      return checkRes(res, (r) => {
+        // remove the cookie
+        // TODO: This will have to change for NodeKwil to manage inidvidual user logout.
+        this.cookie = undefined;
 
-      return {
-        status: res.status,
-        // @ts-ignore
-        data: {
-          result: res.data.result,
+        const cookie = res.headers['set-cookie'];
+        if (!cookie) {
+          throw new Error('No cookie received from gateway. An error occured with logout.');
+        }
+
+        return {
+          ...r.result,
           cookie: cookie[0],
-        },
-      };
+        }
+      })
     }
 
     // if we are in the browser, we don't need to return the cookie - the browser will handle it
-    return {
-      status: res.status,
-      data: {
-        result: res.data.result,
-      },
-    };
+    return checkRes(res, (r) => r.result);
   }
 
   protected async getAccountClient(owner: Uint8Array): Promise<GenericResponse<Account>> {
@@ -175,7 +165,7 @@ export default class Client extends Api {
       { tx: tx.txData }
     )
 
-    const res = await super.post<JsonRPCResponse<EstimateCostRes>>(`/rpc/v1`, body);
+    const res = await super.post<JsonRPCResponse<EstimatePriceResponse>>(`/rpc/v1`, body);
 
     return checkRes(res, (r) => r.result.price);
   }
@@ -224,15 +214,17 @@ export default class Client extends Api {
     return checkRes(res, (r) => r.result);
   }
 
-  protected async selectQueryClient(query: SelectQuery): Promise<GenericResponse<string>> {
+  protected async selectQueryClient(query: SelectQuery): Promise<GenericResponse<Object[]>> {
     const body = this.buildJsonRpcRequest<QueryRequest>(
       JSONRPCMethod.METHOD_QUERY,
       query
     )
 
-    const res = await super.post<JsonRPCResponse<SelectRes>>(`/rpc/v1`, body);
+    const res = await super.post<JsonRPCResponse<QueryResponse>>(`/rpc/v1`, body);
 
-    return checkRes(res, (r) => r.result.result);
+    return checkRes(res, (r) => {
+      return JSON.parse(bytesToString(base64ToBytes(r.result.result))) as Object[];
+    });
   }
 
   protected async txInfoClient(tx_hash: string): Promise<GenericResponse<TxInfoReceipt>> {
@@ -252,6 +244,7 @@ export default class Client extends Api {
           body: {
             ...r.result.tx.body,
             payload: kwilDecode(base64ToBytes(r.result.tx.body.payload as string)),
+            fee: BigInt(r.result.tx.body.fee || 0),
           },
           signature: {
             ...r.result.tx.signature,
@@ -279,7 +272,9 @@ export default class Client extends Api {
     if (res.status === 401) {
       return {
         status: res.status,
-        data: JSON.parse(bytesToString(base64ToBytes(res.data.result.result))),
+        data: {
+          result: null,
+        }
       }
     }
 

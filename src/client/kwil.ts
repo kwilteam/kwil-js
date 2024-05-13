@@ -6,7 +6,6 @@ import { Database, DeployBody, DropBody, SelectQuery } from '../core/database';
 import { BaseTransaction, TxReceipt } from '../core/tx';
 import { Account, ChainInfo, ChainInfoOpts, DatasetInfo } from '../core/network';
 import { ActionBuilderImpl } from '../builders/action_builder';
-import { base64ToBytes } from '../utils/base64';
 import { DBBuilderImpl } from '../builders/db_builder';
 import { NonNil } from '../utils/types';
 import { ActionBuilder, DBBuilder } from '../core/builders';
@@ -18,7 +17,7 @@ import {
   EnvironmentType,
   PayloadType,
 } from '../core/enums';
-import { bytesToString, hexToBytes } from '../utils/serial';
+import { hexToBytes } from '../utils/serial';
 import { isNearPubKey, nearB58ToHex } from '../utils/keys';
 import { ActionBody, resolveActionInputs } from '../core/action';
 import { KwilSigner } from '../core/kwilSigner';
@@ -191,9 +190,11 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     kwilSigner: KwilSigner,
     synchronous?: boolean
   ): Promise<GenericResponse<TxReceipt>> {
+    const name = !actionBody.name && actionBody.action ? actionBody.action : actionBody.name;
+
     let tx = ActionBuilderImpl.of<T>(this)
       .dbid(actionBody.dbid)
-      .name(actionBody.action)
+      .name(name)
       .description(actionBody.description || '')
       .publicKey(kwilSigner.identifier)
       .chainId(this.chainId)
@@ -314,12 +315,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       query: query,
     };
 
-    const res = await this.selectQueryClient(q);
-
-    return {
-      status: res.status,
-      data: JSON.parse(bytesToString(base64ToBytes(res.data as string))),
-    } as GenericResponse<Map<string, any>[]>;
+    return await this.selectQueryClient(q);
   }
 
   /**

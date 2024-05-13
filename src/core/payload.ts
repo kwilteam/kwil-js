@@ -1,18 +1,15 @@
-import { NonNil } from "../utils/types";
-import { ActionSchema, Attribute, Column, Extension, Index, Table, Database, Procedure, ForeignKey, DataType } from "./database";
+import { NonNil, PartialNillable } from "../utils/types";
+import { ActionSchema, Attribute, Column, Extension, Index, Table, Database, Procedure, ForeignProcedure } from "./database";
 import { BytesEncodingStatus, DeployOrDrop, PayloadType, ValueType } from "./enums";
 
 /**
  * `AllPayloads` is the union of all payload types.
  */
 export type AllPayloads = UnencodedActionPayload<PayloadType.CALL_ACTION | PayloadType.EXECUTE_ACTION> |
-    DbPayloadType<DeployOrDrop> |
     DropDbPayload |
-    CompiledKuneiform;
+    CompiledKuneiform |
+    TransferPayload<BytesEncodingStatus.HEX_ENCODED>
 
-/**
- * Unencoded action payload is the non-RlP encoded version of the payload body for actions (both `update` and `view` actions).
- */
 export type UnencodedActionPayload<T extends PayloadType.CALL_ACTION | PayloadType.EXECUTE_ACTION> = {
     dbid: string;
     action: string;
@@ -63,10 +60,11 @@ export interface DropDbPayload {
 export interface CompiledKuneiform {
     owner: Uint8Array | string | null,
     name: string;
-    tables: Partial<CompiledTable>[] | null;
-    actions: Partial<CompiledAction>[] | null;
-    extensions: Partial<Extension>[] | null;
-    procedures: Partial<Procedure>[] | null;
+    tables: PartialNillable<CompiledTable>[] | null;
+    actions: PartialNillable<ActionSchema>[] | null;
+    extensions: PartialNillable<Extension>[] | null;
+    procedures: PartialNillable<Procedure>[] | null;
+    foreign_calls: PartialNillable<ForeignProcedure>[] | null;
 };
 
 /**
@@ -80,14 +78,13 @@ export interface TransferPayload<T extends BytesEncodingStatus> {
     amount: string;
 }
 
-type CompiledTable = Omit<Table, 'columns' | 'indexes' | 'foreign_keys'> & {
+// The CompiledXXX types are used to replace the enums in the Database interface with strings.
+type CompiledTable = Omit<Table, 'columns' | 'indexes' > & {
     columns: ReadonlyArray<Partial<CompiledColumn>>;
     indexes: ReadonlyArray<Partial<CompiledIndex>>;
-    foreign_keys: ReadonlyArray<Partial<ForeignKey>> | null;
 }
 
-type CompiledColumn = Omit<Column, 'attributes' | 'type'> & {
-    type: DataType;
+type CompiledColumn = Omit<Column, 'attributes' > & {
     attributes: ReadonlyArray<Partial<CompiledAttribute>>;
 }
 
@@ -97,10 +94,4 @@ type CompiledAttribute = Omit<Attribute, 'type'> & {
 
 type CompiledIndex = Omit<Index, 'type'> & {
     type: string;
-}
-
-type CompiledAction = Omit<ActionSchema, 'parameters' | 'annotations' | 'modifiers'> & {
-    annotations: ReadonlyArray<string> | null;
-    parameters: ReadonlyArray<string> | null;
-    modifiers: ReadonlyArray<string> | null;
 }

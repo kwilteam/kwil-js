@@ -3,7 +3,6 @@ import { KwilSigner, NodeKwil, Utils } from '../dist/index';
 import { ActionBody } from '../dist/core/action';
 import { DeployBody, DropBody } from '../dist/core/database';
 import compiledKf from './mydb.json';
-import nilKf from './nil.kf.json';
 import { TransferBody } from '../dist/funder/funding_types';
 require('dotenv').config();
 
@@ -33,6 +32,7 @@ async function main() {
   // actions
   const actionBody: ActionBody = {
     dbid: kwil.getDBID(signer.identifier, 'mydb'),
+    name: '',
     action: 'add_post',
     inputs: [
       {
@@ -46,7 +46,7 @@ async function main() {
   };
 
   // execute
-  // await kwil.execute(actionBody, signer);
+  await kwil.execute(actionBody, signer);
 
   //call with signer
   // const callRes = await kwil.call(actionBody, signer);
@@ -57,7 +57,7 @@ async function main() {
 
   // deploy database
   const deployBody: DeployBody = {
-    schema: nilKf,
+    schema: compiledKf,
     description: 'My first database',
   };
 
@@ -116,17 +116,17 @@ async function nilTest() {
     });
   }
 
-  const res = await kwil.execute(
-    {
-      dbid: kwil.getDBID(signer.identifier, 'nil_error'),
-      action: 'insert_record',
-      inputs: oneHundredInputs,
-    },
-    signer,
-    true
-  );
+  // const res = await kwil.execute(
+  //   {
+  //     dbid: kwil.getDBID(signer.identifier, 'nil_error'),
+  //     action: 'insert_record',
+  //     inputs: oneHundredInputs,
+  //   },
+  //   signer,
+  //   true
+  // );
 
-  console.log(res);
+  // console.log(res);
 
   // const test = await kwil.selectQuery(
   //   kwil.getDBID(signer.identifier, 'nil_error'),

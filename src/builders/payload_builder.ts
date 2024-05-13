@@ -377,8 +377,7 @@ Kwil Chain ID: ${tx.body.chain_id}
         desc: description,
         payload: bytesToBase64(tx.body.payload as Uint8Array),
         type: newTx.body.type as PayloadType,
-        // @ts-ignore - DO NOT MERGE WITHOUT RESOLVING - Jon is looking into why fee is unmarshalled to an integer.
-        fee: Number(newTx.body.fee),
+        fee: newTx.body.fee?.toString() || '',
         nonce: newTx.body.nonce,
         chain_id: newTx.body.chain_id,
       };

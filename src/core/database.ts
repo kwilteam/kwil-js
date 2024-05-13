@@ -34,6 +34,7 @@ export interface Database {
   tables: ReadonlyArray<Table>;
   actions: ReadonlyArray<ActionSchema>;
   procedures: ReadonlyArray<Procedure>;
+  foreign_calls: ReadonlyArray<ForeignProcedure>;
 }
 
 export interface Table {
@@ -74,10 +75,10 @@ export interface ForeignKeyAction {
 
 export interface ActionSchema {
   name: string;
-  annotations?: ReadonlyArray<string>;
-  parameters?: ReadonlyArray<string>;
+  annotations: ReadonlyArray<string>;
+  parameters: ReadonlyArray<string>;
   public: boolean;
-  modifiers?: ReadonlyArray<string>;
+  modifiers: ReadonlyArray<string>;
   body: string;
 }
 
@@ -120,4 +121,10 @@ export interface ProcedureReturn {
 export interface SelectQuery {
   dbid: string;
   query: string;
+}
+
+export interface ForeignProcedure {
+  name: string;
+  parameters: ReadonlyArray<DataType>;
+  returns: ProcedureReturn;
 }

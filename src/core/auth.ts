@@ -49,7 +49,6 @@ export function composeAuthMsg(
   version: string,
   chainId: string,
 ): string {
-  const target = new URL('auth', domain);
   let msg = '';
   msg += `${domain} wants you to sign in with your account:\n`;
   msg += `\n`;
@@ -57,7 +56,8 @@ export function composeAuthMsg(
     msg += `${authParam.statement}\n`;
   }
   msg += '\n';
-  msg += `URI: ${target.href}\n`;
+  // @Yaiba: Should I trust the URI provided by KGW or should I use the domain / create my own?
+  msg += `URI: ${authParam.uri}\n`;
   msg += `Version: ${version}\n`;
   msg += `Chain ID: ${chainId}\n`;
   msg += `Nonce: ${authParam.nonce}\n`;

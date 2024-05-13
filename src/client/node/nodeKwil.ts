@@ -52,10 +52,12 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
       this.cookie = actionBody.cookie;
     }
 
+    const name = !actionBody.name && actionBody.action ? actionBody.action : actionBody.name;
+
     let msg = ActionBuilderImpl.of<EnvironmentType.NODE>(this)
       .chainId(this.chainId)
       .dbid(actionBody.dbid)
-      .name(actionBody.action)
+      .name(name)
       .description(actionBody.description || '');
 
     if (actionBody.inputs) {

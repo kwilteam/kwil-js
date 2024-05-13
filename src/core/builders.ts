@@ -4,7 +4,7 @@ import { ActionInput } from './action';
 import { DeployOrDrop, PayloadType } from './enums';
 import { Message } from './message';
 import { AnySignatureType } from './signature';
-import { DbPayloadType } from './payload';
+import { AllPayloads, DbPayloadType } from './payload';
 
 // Eth Signer is any class with a signMessage() method. This is supported by Ethers v5 and Ethers v6.
 export type EthSigner = {
@@ -62,7 +62,7 @@ export interface PayloadBuilder {
    * @returns {PayloadBuilder} - The current `PayloadBuilder` instance for chaining.
    * @throws {Error} - If the payload is null or undefined.
    */
-  payload(payload: (() => NonNil<object>) | NonNil<object>): NonNil<PayloadBuilder>;
+  payload(payload: (() => NonNil<AllPayloads>) | NonNil<AllPayloads>): NonNil<PayloadBuilder>;
 
   /**
    * Specifies the chain ID for the network being used.
@@ -196,12 +196,12 @@ export interface ActionBuilder {
   /**
    * Specifies the name of the action to be executed.
    *
-   * @param {string} actionName - The name of the action to be executed.
+   * @param {string} name - The name of the action or procedure to be executed.
    * @returns {ActionBuilder} The current `ActionBuilder` instance for chaining.
    * @throws Will throw an error if the value is specified while the action is being built.
    * @throws Will throw an error if the action name is null or undefined.
    */
-  name(actionName: string): NonNil<ActionBuilder>;
+  name(name: string): NonNil<ActionBuilder>;
 
   /**
    * Specifies the database identifier (DBID) of the database that contains the action to be executed.

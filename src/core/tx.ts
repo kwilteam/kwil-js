@@ -26,7 +26,7 @@ interface TxBody<T extends PayloadBytesTypes> {
     payload: Nillable<T extends BytesEncodingStatus.BASE64_ENCODED ? Base64String : Uint8Array>;
     type: PayloadType;
     // once bytes are set to base64, it means the tx is ready to be sent over GRPC, which means BigInt needs to be converted to string
-    fee: Nillable<BigInt>;
+    fee: Nillable<T extends BytesEncodingStatus.BASE64_ENCODED ? string : bigint>;
     nonce: number | null;
     chain_id: string;
 }

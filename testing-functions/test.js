@@ -54,16 +54,16 @@ async function test() {
         const res1 = await kwil.auth.authenticate(kwilSigner1)
         logger(res1)
         logger("Logged in with wallet 1")
-        const res2 = await kwil.auth.authenticate(kwilSigner1)
+        const res2 = await kwil.auth.authenticate(kwilSigner2)
         logger(res2)
-        logger("Logged in with wallet 1")
+        logger("Logged in with wallet 2")
 
-        // const res3 = await kwil.auth.logout()
-        // logger(res3)
-        // logger("Logged out with wallet 1")
+        const res3 = await kwil.auth.logout(kwilSigner1)
+        logger(res3)
+        logger("Logged out with wallet 1")
     }
 
-    testMultiLogout()
+    // testMultiLogout()
 
     const dbid = kwil.getDBID(address, "mydb")
     // // await authenticate(kwil, kwilSigner)
@@ -77,9 +77,9 @@ async function test() {
     // chainInfo(kwil)
     // await execSingleAction(kwil, dbid, "add_post", wallet, address)
     // await execSingleActionKwilSigner(kwil, dbid, "add_post", kwilSigner)
-    await select(kwil, dbid, "SELECT * FROM posts")
+    // await select(kwil, dbid, "SELECT * FROM posts")
     // bulkAction(kwil, dbid, "add_post", wallet, address)
-    // await testViewWithParam(kwil, dbid, wallet)
+    await testViewWithParam(kwil, dbid, wallet)
     // await testViewWithSign(kwil, dbid, kwilSigner)
     // await testViewWithEdSigner(kwil, dbid)
     // await customSignature(kwil, dbid)
@@ -88,9 +88,25 @@ async function test() {
     // await dropDb(kwil, dbid, wallet, address)
     // await transfer(kwil, "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf", 20, kwilSigner)
     // bulkActionInput(kwil, kwilSigner)
+    // executeGeneralAction(kwil, dbid, "admin_set", kwilSigner, {
+    //     "$key": 'dbid',
+    //     "$value": "x5b8e04de90b0e0b29a2ea6ff8e0824ca41b18e4f19002c71c6c08e0b"
+    // })
 }
 
 test()
+
+async function executeGeneralAction(kwil, dbid, name, wallet, input) {
+    const body = {
+        action: name,
+        dbid,
+        inputs: [ input ]
+    }
+
+    const res = await kwil.execute(body, wallet, true)
+
+    logger(res)
+}
 
 async function authenticate(kwil, signer) {
     const res = await kwil.authenticate(signer)

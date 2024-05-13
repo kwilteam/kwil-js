@@ -45,10 +45,12 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
       return await this.callClient(actionBody);
     }
 
+    const name = !actionBody.name && actionBody.action ? actionBody.action : actionBody.name;
+
     let msg = ActionBuilderImpl.of<EnvironmentType.BROWSER>(this)
       .chainId(this.chainId)
       .dbid(actionBody.dbid)
-      .name(actionBody.action)
+      .name(name)
       .description(actionBody.description || '');
 
     if (actionBody.inputs) {
