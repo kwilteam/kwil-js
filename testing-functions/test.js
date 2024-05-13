@@ -8,7 +8,7 @@ const util = require("util")
 const near = require('near-api-js')
 const { from_b58 } = require('../dist/utils/base58')
 const { bytesToHex, hexToBytes, stringToBytes, bytesToEthHex } = require('../dist/utils/serial')
-const { bytesToBase64 } = require('../dist/utils/base64')
+const { bytesToBase64, base64ToBytes } = require('../dist/utils/base64')
 const scrypt = require("scrypt-js")
 const nacl = require("tweetnacl")
 const { sha256BytesToBytes } = require("../dist/utils/crypto")
@@ -43,7 +43,28 @@ async function test() {
     })
 
     const kwilSigner = new KwilSigner(wallet, address)
-    
+
+    async function testMultiLogout() {
+        const ethWallet1 = ethers.Wallet.createRandom()
+        const ethWallet2 = ethers.Wallet.createRandom()
+
+        const kwilSigner1 = new KwilSigner(ethWallet1, ethWallet1.address)
+        const kwilSigner2 = new KwilSigner(ethWallet2, ethWallet2.address)
+
+        const res1 = await kwil.auth.authenticate(kwilSigner1)
+        logger(res1)
+        logger("Logged in with wallet 1")
+        const res2 = await kwil.auth.authenticate(kwilSigner1)
+        logger(res2)
+        logger("Logged in with wallet 1")
+
+        // const res3 = await kwil.auth.logout()
+        // logger(res3)
+        // logger("Logged out with wallet 1")
+    }
+
+    testMultiLogout()
+
     const dbid = kwil.getDBID(address, "mydb")
     // // await authenticate(kwil, kwilSigner)
     broadcast(kwil, testDB, kwilSigner)

@@ -370,7 +370,7 @@ describe('Testing case insentivity on test_db', () => {
 
   it('should allow a new signer after logging out', async () => {
     // Log out
-    await kwil.auth.logout();
+    // await kwil.auth.logout();
 
     // Create a new signer
     const newWallet = Wallet.createRandom();
@@ -420,6 +420,8 @@ describe('Testing case insentivity on test_db', () => {
 
       const result = await newKwil.call(body, kSigner);
 
+      await newKwil.auth.logout();
+
       expect(result.status).toBe(200);
       expect(result.data).toMatchObject<MsgReceipt>({
         result: expect.any(Array),
@@ -438,7 +440,7 @@ describe('Testing case insentivity on test_db', () => {
         cookie
       };
 
-      const result = await newKwil.call(body);
+      const result = await newKwil.call(body, kSigner);
 
       expect(result.status).toBe(200);
       expect(result.data).toBeDefined();
@@ -454,7 +456,7 @@ describe('Testing case insentivity on test_db', () => {
         cookie: 'badCookie'
       };
 
-      const result = await newKwil.call(body);
+      const result = await newKwil.call(body, kSigner);
 
       expect(result.status).toBe(401);
       expect(result.data?.result).toBe(null);
