@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.6.3](https://github.com/kwilteam/kwil-js/compare/v0.6.2...v0.6.3) (2024-05-14)
+
+
+### Features
+
+* **client:** individual logout ([ec3aac3](https://github.com/kwilteam/kwil-js/commit/ec3aac3375354a6e672edd7b2bf53792c0eafad4))
+
+
+### Bug Fixes
+
+* **client:** individual logout on multi-user session ([0b8e8b6](https://github.com/kwilteam/kwil-js/commit/0b8e8b6ec85cebd597540a7fcf614adb03a021c4))
+
 ### [0.6.2](https://github.com/kwilteam/kwil-js/compare/v0.6.1...v0.6.2) (2024-04-19)
 
 
