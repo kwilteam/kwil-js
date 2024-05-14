@@ -39,7 +39,7 @@ async function test() {
         kwilProvider: process.env.KWIL_PROVIDER || "SHOULD FAIL",
         chainId: chainId,
         timeout: 10000,
-        logging: true,
+
     })
 
     const kwilSigner = new KwilSigner(wallet, address)
@@ -50,6 +50,8 @@ async function test() {
 
         const kwilSigner1 = new KwilSigner(ethWallet1, ethWallet1.address)
         const kwilSigner2 = new KwilSigner(ethWallet2, ethWallet2.address)
+
+        console.log('wallet1, wallet2', ethWallet1.address, ethWallet2.address)
 
         const res1 = await kwil.auth.authenticate(kwilSigner1)
         logger(res1)

@@ -98,13 +98,17 @@ export default class Client extends Api {
     // if we are in nodejs, we need to return the cookie
     if (typeof window === 'undefined') {
       return checkRes(res, (r) => {
-        // remove the cookie
-        // TODO: This will have to change for NodeKwil to manage inidvidual user logout.
-        this.cookie = undefined;
-
         const cookie = res.headers['set-cookie'];
         if (!cookie) {
           throw new Error('No cookie received from gateway. An error occured with logout.');
+        }
+
+        // if the cookie is empty, set the cookie to undefined
+        if (cookie[0].startsWith('kgw_session=;')) {
+          this.cookie = undefined;
+        } else {
+          // set the cookie
+          this.cookie = cookie[0];
         }
 
         return {
