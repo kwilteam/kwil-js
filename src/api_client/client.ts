@@ -119,14 +119,18 @@ export default class Client extends Api {
     const res = await super.get<LogoutResponse<T>>(`/logout${logoutExt}`);
     checkRes(res);
 
-    // remove the cookie
-    this.cookie = undefined;
-
     // if we are in nodejs, we need to return the cookie
     if (typeof window === 'undefined') {
       const cookie = res.headers['set-cookie'];
       if (!cookie) {
         throw new Error('No cookie received from gateway. An error occured with authentication.');
+      }
+
+      if (cookie[0].startsWith('kgw_session=;')) {
+        this.cookie = undefined;
+      } else {
+        // set the cookie
+        this.cookie = cookie[0];
       }
 
       return {
