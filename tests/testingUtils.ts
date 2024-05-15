@@ -3,6 +3,7 @@ import { KwilSigner, NodeKwil } from "../dist";
 import scrypt from 'scrypt-js';
 import nacl from 'tweetnacl';
 import mydb from '../testing-functions/mydb.json';
+import baseSchema from '../testing-functions/base_schema.json';
 import { DeployBody } from "../dist/core/database";
 import { CompiledKuneiform } from "../dist/core/payload";
 import { GenericResponse } from "../dist/core/resreq";
@@ -31,6 +32,25 @@ export async function deployTestDb(signer: KwilSigner): Promise<void> {
     const res = await kwil.deploy(body, signer, true);
     const hash = res.data?.tx_hash;
     if(!hash) throw new Error('No tx hash returned from Kwil Network');
+}
+
+export async function deployBaseSchema(signer: KwilSigner): Promise<void> {
+    const { data } = await kwil.listDatabases(signer.identifier);
+    if (!data) throw new Error('No data returned from list databases call');
+    let isBaseSchemaDeployed = false;
+
+    for(const db of data) {
+        if(db.name === 'base_schema') {
+            isBaseSchemaDeployed = true;
+            break;
+        }
+    }
+
+    if(!isBaseSchemaDeployed) {
+        await kwil.deploy({
+            schema: baseSchema
+        }, signer, true);
+    }
 }
 
 export async function deployIfNoTestDb(signer: KwilSigner): Promise<void> {

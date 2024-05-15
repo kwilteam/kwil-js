@@ -5,6 +5,7 @@ const logSpy = jest.spyOn(console, 'log').mockImplementation((...args) => {
 jest.resetModules();
 import {
   AmntObject,
+  deployBaseSchema,
   deployIfNoTestDb,
   deployTempSchema,
   deriveKeyPair64,
@@ -34,13 +35,16 @@ const kSigner = new KwilSigner(wallet, address);
 
 // Kwil methods that do NOT return another class (e.g. funder, action, and DBBuilder)
 describe('Kwil Integration Tests', () => {
+  const baseDbid = kwil.getDBID(address, 'base_schema');
   beforeAll(async () => {
     await deployIfNoTestDb(kSigner);
-  }, 10000);
+    await deployBaseSchema(kSigner);
+  }, 20000);
 
-  afterAll(async() => {
+  afterAll(async () => {
     await dropTestDb(dbid, kSigner);
-  }, 10000)
+    await dropTestDb(baseDbid, kSigner);
+  }, 20000)
 
   afterEach(() => {
     logSpy.mockClear();
@@ -111,7 +115,7 @@ describe('Kwil Integration Tests', () => {
     expect(result.status).toBe(200);
   });
 
-  it('should execute an action', async() => {
+  it('execute should submit an action tx', async () => {
     const records = await kwil.selectQuery(dbid, 'SELECT COUNT(*) FROM posts');
     if (!records.status || !records.data) throw new Error('No posts found');
 
@@ -132,7 +136,7 @@ describe('Kwil Integration Tests', () => {
       ],
       description: 'This is a test action',
     };
-    
+
     const result = await kwil.execute(actionBody, kSigner, true);
 
     expect(result.data).toBeDefined();
@@ -141,18 +145,91 @@ describe('Kwil Integration Tests', () => {
     });
   }, 10000);
 
-  test('kwil.call() should return a MsgReceipt', async () => {
+  test('execute should submit a procedure tx', async () => {
+    const records = await kwil.selectQuery(dbid, 'SELECT COUNT(*) FROM posts');
+    if (!records.status || !records.data) throw new Error('No posts found');
+
+    const amnt = records.data[0] as AmntObject;
+
+    const recordCount = amnt['count'] + 1;
+
+    const actionBody: ActionBody = {
+      dbid,
+      name: 'proc_add_user',
+      inputs: [
+        {
+          $id: recordCount,
+          $user: 'Luke',
+          $title: 'Test Post',
+          $body: 'This is a test post',
+        },
+      ],
+      description: 'This is a test procedure',
+    };
+
+    const result = await kwil.execute(actionBody, kSigner, true);
+
+    expect(result.data).toBeDefined();
+    expect(result.data).toMatchObject<TxReceipt>({
+      tx_hash: expect.any(String),
+    });
+  }, 10000)
+
+  // Todo: Implement this test once this issue is resolved: https://github.com/kwilteam/kwil-db/issues/740
+  // test('execute should execute a procedure with a foreign call to another schema', async() => {
+
+  // })
+
+  test('call should submit a view action', async () => {
     const body: ActionBody = {
       dbid,
       name: 'read_posts',
     };
 
-    const result = await kwil.call(body, kSigner);
+    const result = await kwil.call(body);
     expect(result.status).toBe(200);
     expect(result.data).toMatchObject<MsgReceipt>({
       result: expect.any(Array),
     });
-  });
+  }, 10000);
+
+  test('call should submit a view procedure', async () => {
+    const body: ActionBody = {
+      dbid,
+      name: 'get_post_by_id',
+      inputs: [
+        {
+          $id: 1,
+        },
+      ],
+    };
+
+    const result = await kwil.call(body);
+
+    expect(result.data).toBeDefined();
+    expect(result.status).toBe(200);
+    expect(result.data).toMatchObject<MsgReceipt>({
+      result: expect.any(Array),
+    });
+  }, 10000)
+
+  test('call should submit a view procedure that foreign calls a different schema', async () => {
+    const body: ActionBody = {
+      dbid,
+      name: 'proc_call_base',
+      inputs: [{
+        $dbid: baseDbid,
+      }]
+    }
+
+    const result = await kwil.call(body);
+
+    expect(result.data).toBeDefined();
+    expect(result.status).toBe(200);
+    expect(result.data).toMatchObject<MsgReceipt>({
+      result: expect.any(Array),
+    });
+  }, 10000);
 
   (isGasOn ? test : test.skip)('Kwil.funder should transfer tokens', async () => {
     const funder = kwil.funder;
@@ -165,8 +242,8 @@ describe('Kwil Integration Tests', () => {
     expect(result.data).toMatchObject<TxReceipt>({
       tx_hash: expect.any(String),
     });
-  });
-  
+  }, 10000);
+
   test('a database should be deployed with kwil.deploy()', async () => {
     const result = await deployTempSchema(schema, kSigner);
     expect(result.data).toBeDefined();
@@ -504,7 +581,7 @@ describe('Testing custom signers', () => {
       const amnt = count.data[0] as AmntObject;
       recordCount = amnt['count'];
     } else {
-        throw new Error('Something went wrong checking how many records on users table in the Testing custom signers section')
+      throw new Error('Something went wrong checking how many records on users table in the Testing custom signers section')
     }
 
     input = new Utils.ActionInput();
@@ -548,11 +625,11 @@ describe('Testing custom signers', () => {
 });
 
 describe('Testing simple actions and db deploy / drop (builder pattern alternative)', () => {
-  beforeAll(async() => {
+  beforeAll(async () => {
     await deployIfNoTestDb(kSigner)
   }, 10000);
 
-  afterAll(async() => {
+  afterAll(async () => {
     await dropTestDb(dbid, kSigner);
   }, 10000);
 

@@ -1,10 +1,10 @@
 // for RLP-encoding, we need to ensure that the order of the object is the same as the Go struct that is being encoded.
 
 import { NonNil } from "../utils/types";
-import { Database } from "./database";
+import { Database, EncodeableDatabase } from "./database";
 import { CompiledKuneiform } from "./payload";
 
-export function enforceDatabaseOrder(db: NonNil<Database>): NonNil<CompiledKuneiform> {
+export function enforceDatabaseOrder(db: NonNil<EncodeableDatabase>): NonNil<EncodeableDatabase> {
     return {
         name: db.name,
         owner: db.owner,
@@ -79,18 +79,7 @@ export function enforceDatabaseOrder(db: NonNil<Database>): NonNil<CompiledKunei
                 public: procedure.public,
                 modifiers: procedure.modifiers,
                 body: procedure.body,
-                return_types: {
-                    is_table: procedure.return_types.is_table,
-                    fields: procedure.return_types.fields && procedure.return_types.fields.length > 0 ? procedure.return_types.fields?.map(field => {
-                        return {
-                            name: field.name,
-                            type: {
-                                name: field.type.name,
-                                is_array: field.type.is_array,
-                            }
-                        }
-                    }) : [],
-                },
+                return_types: procedure.return_types,
                 annotations: procedure.annotations,
             }
         }) : [],
@@ -103,18 +92,7 @@ export function enforceDatabaseOrder(db: NonNil<Database>): NonNil<CompiledKunei
                         is_array: parameter.is_array,
                     }
                 }): [],
-                returns: {
-                    is_table: foreignCall.returns.is_table,
-                    fields: foreignCall.returns.fields && foreignCall.returns.fields.length > 0 ? foreignCall.returns.fields?.map(field => {
-                        return {
-                            name: field.name,
-                            type: {
-                                name: field.type.name,
-                                is_array: field.type.is_array,
-                            }
-                        }
-                    }) : [],
-                }
+                returns: foreignCall.returns
             }
         }): [],
     }

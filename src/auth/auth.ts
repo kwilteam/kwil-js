@@ -12,13 +12,13 @@ import {
 import { BytesEncodingStatus, EnvironmentType } from '../core/enums';
 import { objects } from '../utils/objects';
 import { executeSign } from '../core/signature';
-import { stringToBytes } from '../utils/serial';
+import { bytesToHex, stringToBytes } from '../utils/serial';
 import { bytesToBase64 } from '../utils/base64';
 
 interface AuthClient {
   getAuthenticateClient(): Promise<GenericResponse<AuthInfo>>;
   postAuthenticateClient<T extends EnvironmentType>(
-    body: AuthenticatedBody<BytesEncodingStatus.BASE64_ENCODED>
+    body: AuthenticatedBody<BytesEncodingStatus.HEX_ENCODED>
   ): Promise<GenericResponse<AuthSuccess<T>>>;
   logoutClient<T extends EnvironmentType>(identifier?: Uint8Array): Promise<GenericResponse<LogoutResponse<T>>>;
 }
@@ -59,9 +59,9 @@ export class Auth<T extends EnvironmentType> {
 
     const signature = await executeSign(stringToBytes(msg), signer.signer, signer.signatureType);
 
-    const authBody: AuthenticatedBody<BytesEncodingStatus.BASE64_ENCODED> = {
+    const authBody: AuthenticatedBody<BytesEncodingStatus.HEX_ENCODED> = {
       nonce: authProperties.nonce,
-      sender: bytesToBase64(signer.identifier),
+      sender: bytesToHex(signer.identifier),
       signature: {
         sig: bytesToBase64(signature),
         type: signer.signatureType,

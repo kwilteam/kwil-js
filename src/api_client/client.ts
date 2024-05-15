@@ -53,7 +53,7 @@ export default class Client extends Api {
   }
 
   protected async postAuthenticateClient<T extends EnvironmentType>(
-    authBody: AuthenticatedBody<BytesEncodingStatus.BASE64_ENCODED>
+    authBody: AuthenticatedBody<BytesEncodingStatus.HEX_ENCODED>
   ): Promise<GenericResponse<AuthSuccess<T>>> {
     const body = this.buildJsonRpcRequest<AuthnRequest>(
       JSONRPCMethod.METHOD_KGW_AUTHN,
@@ -89,7 +89,7 @@ export default class Client extends Api {
     const body = this.buildJsonRpcRequest<AuthnLogoutRequest>(
       JSONRPCMethod.METHOD_KGW_LOGOUT,
       {
-        account: identifier ? bytesToBase64(identifier) : '',
+        account: identifier ? bytesToHex(identifier) : '',
       }
     )
 

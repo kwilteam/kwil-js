@@ -1,5 +1,5 @@
 import { NonNil, PartialNillable } from "../utils/types";
-import { ActionSchema, Attribute, Column, Extension, Index, Table, Database, Procedure, ForeignProcedure } from "./database";
+import { ActionSchema, Attribute, Column, Extension, Index, Table, Database, Procedure, ForeignProcedure, EncodeableDatabase } from "./database";
 import { BytesEncodingStatus, DeployOrDrop, PayloadType, ValueType } from "./enums";
 
 /**
@@ -9,6 +9,7 @@ export type AllPayloads = UnencodedActionPayload<PayloadType.CALL_ACTION | Paylo
     DropDbPayload |
     CompiledKuneiform |
     TransferPayload<BytesEncodingStatus.HEX_ENCODED>
+    | EncodeableDatabase
 
 export type UnencodedActionPayload<T extends PayloadType.CALL_ACTION | PayloadType.EXECUTE_ACTION> = {
     dbid: string;

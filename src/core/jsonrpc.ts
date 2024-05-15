@@ -143,7 +143,7 @@ export type AuthParamRequest = EmptyRequest;
 
 export type AuthParamResponse = AuthInfo;
 
-export type AuthnRequest = AuthenticatedBody<BytesEncodingStatus.BASE64_ENCODED>;
+export type AuthnRequest = AuthenticatedBody<BytesEncodingStatus.HEX_ENCODED>;
 
 export interface AuthnResponse {
     result: string

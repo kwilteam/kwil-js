@@ -12,7 +12,7 @@ import {
   IndexType,
   PayloadType,
 } from '../core/enums';
-import { Database } from '../core/database';
+import { Database, EncodeableDatabase } from '../core/database';
 import { enforceDatabaseOrder } from '../core/order';
 import { AnySignatureType, SignatureType, getSignatureType } from '../core/signature';
 import { AllPayloads, CompiledKuneiform, DbPayloadType, DropDbPayload } from '../core/payload';
@@ -252,12 +252,12 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType>
    * @param payload
    * @returns
    */
-  private makePayloadEncodable(payload: () => NonNil<CompiledKuneiform>): NonNil<Database> {
+  private makePayloadEncodable(payload: () => NonNil<CompiledKuneiform>): NonNil<EncodeableDatabase> {
     // check if the payload has the required fields for the database
 
     const resolvedPayload = payload();
 
-    let db: Database = resolvedPayload as Database;
+    let db = resolvedPayload as EncodeableDatabase;
 
     if (!db.owner) {
       db.owner = new Uint8Array();
@@ -466,29 +466,8 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType>
         }
 
         if (!procedure.return_types) {
-          procedure.return_types = {
-            is_table: false,
-            fields: [],
-          };
+          procedure.return_types = []
         }
-
-        if (!procedure.return_types.fields) {
-          procedure.return_types.fields = [];
-        }
-
-        procedure.return_types.fields &&
-          procedure.return_types.fields.forEach((field) => {
-            if (!field.name) {
-              field.name = '';
-            }
-
-            if (!field.type) {
-              field.type = {
-                name: '',
-                is_array: false,
-              };
-            }
-          });
 
         if (!procedure.annotations) {
           procedure.annotations = [];
@@ -521,29 +500,8 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType>
           });
 
         if (!foreignCall.returns) {
-          foreignCall.returns = {
-            is_table: false,
-            fields: [],
-          };
+          foreignCall.returns = [];
         }
-
-        if (!foreignCall.returns.fields) {
-          foreignCall.returns.fields = [];
-        }
-
-        foreignCall.returns.fields &&
-          foreignCall.returns.fields.forEach((field) => {
-            if (!field.name) {
-              field.name = '';
-            }
-
-            if (!field.type) {
-              field.type = {
-                name: '',
-                is_array: false,
-              };
-            }
-          });
       });
 
     return db;

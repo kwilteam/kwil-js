@@ -1,13 +1,13 @@
-import { Base64String } from '../utils/types';
+import { Base64String, HexString } from '../utils/types';
 import { BytesEncodingStatus, EnvironmentType } from './enums';
 import { Signature } from './signature';
 
 export interface AuthenticatedBody<
-  T extends BytesEncodingStatus.BASE64_ENCODED | BytesEncodingStatus.UINT8_ENCODED
+  T extends BytesEncodingStatus.HEX_ENCODED | BytesEncodingStatus.UINT8_ENCODED
 > {
   nonce: string;
-  sender: Base64String;
-  signature: Signature<T>;
+  sender: HexString;
+  signature: Signature<T extends BytesEncodingStatus.HEX_ENCODED ? BytesEncodingStatus.BASE64_ENCODED : BytesEncodingStatus.UINT8_ENCODED>;
 }
 
 export interface AuthInfo {

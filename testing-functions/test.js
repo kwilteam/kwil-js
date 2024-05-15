@@ -4,6 +4,7 @@
 const kwiljs = require("../dist/index")
 const ethers = require("ethers")
 const testDB = require("./mydb.json")
+const baseSchema = require("./base_schema.json")
 const util = require("util")
 const near = require('near-api-js')
 const { from_b58 } = require('../dist/utils/base58')
@@ -39,7 +40,7 @@ async function test() {
         kwilProvider: process.env.KWIL_PROVIDER || "SHOULD FAIL",
         chainId: chainId,
         timeout: 10000,
-
+        logging: true
     })
 
     const kwilSigner = new KwilSigner(wallet, address)
@@ -68,7 +69,7 @@ async function test() {
     // testMultiLogout()
 
     const dbid = kwil.getDBID(address, "mydb")
-    // // await authenticate(kwil, kwilSigner)
+    // await authenticate(kwil, kwilSigner)
     // broadcast(kwil, testDB, kwilSigner)
     // broadcastEd25519(kwil, testDB)
     // await getTxInfo(kwil, txHash)
@@ -81,7 +82,7 @@ async function test() {
     // await execSingleActionKwilSigner(kwil, dbid, "add_post", kwilSigner)
     // await select(kwil, dbid, "SELECT * FROM posts")
     // bulkAction(kwil, dbid, "add_post", wallet, address)
-    await testViewWithParam(kwil, dbid, wallet)
+    // await testViewWithParam(kwil, dbid, wallet)
     // await testViewWithSign(kwil, dbid, kwilSigner)
     // await testViewWithEdSigner(kwil, dbid)
     // await customSignature(kwil, dbid)
@@ -90,17 +91,32 @@ async function test() {
     // await dropDb(kwil, dbid, wallet, address)
     // await transfer(kwil, "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf", 20, kwilSigner)
     // bulkActionInput(kwil, kwilSigner)
-    // executeGeneralAction(kwil, dbid, "admin_set", kwilSigner, {
-    //     "$key": 'dbid',
-    //     "$value": "x5b8e04de90b0e0b29a2ea6ff8e0824ca41b18e4f19002c71c6c08e0b"
+    executeGeneralAction(kwil, dbid, "proc_insert_base", kwilSigner, {
+        "$dbid": kwil.getDBID(address, "base_schema")
+    })
+    // executeGeneralView(kwil, dbid, "proc_call_base", {
+    //     "$dbid": kwil.getDBID(address, "base_schema")
     // })
 }
 
 test()
 
+async function executeGeneralView(kwil, dbid, name, input) {
+    const body = {
+        name,
+        dbid,
+        inputs: [ input ]
+    }
+
+    const res = await kwil.call(body)
+
+    logger(res)
+
+}
+
 async function executeGeneralAction(kwil, dbid, name, wallet, input) {
     const body = {
-        action: name,
+        name,
         dbid,
         inputs: [ input ]
     }
@@ -111,7 +127,7 @@ async function executeGeneralAction(kwil, dbid, name, wallet, input) {
 }
 
 async function authenticate(kwil, signer) {
-    const res = await kwil.authenticate(signer)
+    const res = await kwil.auth.authenticate(signer)
     logger(res)
 }
 
@@ -290,7 +306,7 @@ async function dropDb(kwil, dbid, w, pubKey) {
         })
         .buildTx()
 
-    const res = await kwil.broadcast(tx)
+    const res = await kwil.broadcast(tx, 2)
 
     logger(res)
 }
