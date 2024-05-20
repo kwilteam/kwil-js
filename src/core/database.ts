@@ -27,6 +27,17 @@ export interface DropBody {
   nonce?: number;
 }
 
+// Encodable database is the same as database but procedures.returns can be an empty array
+export type EncodeableDatabase = Omit<Database, 'procedures' | 'foreign_calls'> & {
+  procedures: ReadonlyArray<Omit<Procedure, 'return_types'> & {
+    return_types: ProcedureReturn | Array<never>;
+  }>,
+  foreign_calls: ReadonlyArray<Omit<ForeignProcedure, 'returns'> & {
+    returns: ProcedureReturn | Array<never>;
+  }>,
+
+};
+
 export interface Database {
   owner: Uint8Array;
   name: string;
@@ -34,6 +45,7 @@ export interface Database {
   tables: ReadonlyArray<Table>;
   actions: ReadonlyArray<ActionSchema>;
   procedures: ReadonlyArray<Procedure>;
+  foreign_calls: ReadonlyArray<ForeignProcedure>;
 }
 
 export interface Table {
@@ -120,4 +132,10 @@ export interface ProcedureReturn {
 export interface SelectQuery {
   dbid: string;
   query: string;
+}
+
+export interface ForeignProcedure {
+  name: string;
+  parameters: ReadonlyArray<DataType>;
+  returns: ProcedureReturn;
 }

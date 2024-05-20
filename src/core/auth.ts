@@ -1,13 +1,13 @@
-import { Base64String } from '../utils/types';
+import { Base64String, HexString } from '../utils/types';
 import { BytesEncodingStatus, EnvironmentType } from './enums';
 import { Signature } from './signature';
 
 export interface AuthenticatedBody<
-  T extends BytesEncodingStatus.BASE64_ENCODED | BytesEncodingStatus.UINT8_ENCODED
+  T extends BytesEncodingStatus.HEX_ENCODED | BytesEncodingStatus.UINT8_ENCODED
 > {
   nonce: string;
-  sender: Base64String;
-  signature: Signature<T>;
+  sender: HexString;
+  signature: Signature<T extends BytesEncodingStatus.HEX_ENCODED ? BytesEncodingStatus.BASE64_ENCODED : BytesEncodingStatus.UINT8_ENCODED>;
 }
 
 export interface AuthInfo {
@@ -49,7 +49,6 @@ export function composeAuthMsg(
   version: string,
   chainId: string,
 ): string {
-  const target = new URL('auth', domain);
   let msg = '';
   msg += `${domain} wants you to sign in with your account:\n`;
   msg += `\n`;
@@ -57,7 +56,8 @@ export function composeAuthMsg(
     msg += `${authParam.statement}\n`;
   }
   msg += '\n';
-  msg += `URI: ${target.href}\n`;
+  // @Yaiba: Should I trust the URI provided by KGW or should I use the domain / create my own?
+  msg += `URI: ${authParam.uri}\n`;
   msg += `Version: ${version}\n`;
   msg += `Chain ID: ${chainId}\n`;
   msg += `Nonce: ${authParam.nonce}\n`;

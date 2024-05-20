@@ -2,7 +2,7 @@ database mydb;
 
 table posts {
     id int primary notnull,
-    user text notnull,
+    name text notnull,
     post_title text notnull,
     post_body text notnull
 }
@@ -37,10 +37,33 @@ action view_caller () public view {
     SELECT @caller AS caller;
 }
 
+procedure proc_add_user($user text , $title text, $body text) public {
+  $count int;
+  for $amnt in SELECT count(*) AS count FROM posts {
+    $count := $amnt.count + 1;
+  }
+
+  INSERT INTO posts (id, name, post_title, post_body)
+  VALUES ($count, $user, $title, $body);
+}
+
 procedure get_post_by_id($id int) public view returns (title text, body text) {
     for $row in SELECT post_title, post_body FROM posts WHERE id = $id {
         return $row.post_title, $row.post_body; // will return on the first iteration
     }
 
     error(format('record with id = "%s" not found', $id));
+}
+
+foreign procedure call_base_view() returns (text)
+
+procedure proc_call_base ($dbid text) public view returns (original text) {
+    $message text := call_base_view[$dbid, 'return_hello']();
+    return $message;
+}
+
+foreign procedure call_base_insert()
+
+procedure proc_insert_base ($dbid text) public {
+    call_base_insert[$dbid, 'add_foo']();
 }

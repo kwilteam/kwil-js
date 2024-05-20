@@ -6,7 +6,7 @@ import { BytesEncodingStatus } from "./enums";
 export interface Account {
     identifier: Uint8Array | string;
     balance: string;
-    nonce: string;
+    nonce: number;
 }
 
 export interface ChainInfo {
@@ -21,7 +21,7 @@ export interface ChainInfoOpts {
 
 export type DatasetInfo = DatasetInfoBase<BytesEncodingStatus.HEX_ENCODED>;
 
-export type DatasetInfoServer = DatasetInfoBase<BytesEncodingStatus.BASE64_ENCODED>;
+export type DatasetInfoServer = DatasetInfoBase<BytesEncodingStatus.BASE64_ENCODED>
 
 export interface DatasetInfoBase<T extends BytesEncodingStatus> {
     name: string;

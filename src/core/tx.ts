@@ -1,4 +1,4 @@
-import { Base64String, Nillable, NonNil } from "../utils/types";
+import { Base64String, HexString, Nil, Nillable, NonNil } from "../utils/types";
 import { Signature, SignatureType } from "./signature";
 import { strings } from "../utils/strings";
 import { PayloadType, SerializationType, BytesEncodingStatus, PayloadBytesTypes } from "./enums";
@@ -16,16 +16,17 @@ export interface TxReceipt {
 export interface TxnData<T extends PayloadBytesTypes> {
     signature: Signature<T>;
     body: TxBody<T>;
-    sender: Nillable<T extends BytesEncodingStatus.BASE64_ENCODED ? Base64String : Uint8Array>;
+    // when the other bytes are base64, it means it is time to turn the sender bytes to hex string
+    sender: Nillable<T extends BytesEncodingStatus.BASE64_ENCODED ? HexString : Uint8Array>;
     serialization: SerializationType;
 }
 
 interface TxBody<T extends PayloadBytesTypes> {
-    description: string;
+    desc: string;
     payload: Nillable<T extends BytesEncodingStatus.BASE64_ENCODED ? Base64String : Uint8Array>;
-    payload_type: PayloadType;
+    type: PayloadType;
     // once bytes are set to base64, it means the tx is ready to be sent over GRPC, which means BigInt needs to be converted to string
-    fee: Nillable<T extends BytesEncodingStatus.BASE64_ENCODED ? string : BigInt>;
+    fee: Nillable<T extends BytesEncodingStatus.BASE64_ENCODED ? string : bigint>;
     nonce: number | null;
     chain_id: string;
 }
@@ -50,13 +51,13 @@ export class BaseTransaction<T extends PayloadBytesTypes> implements TxnData<T> 
         // create basic template of tx. Null values are used to be compatible with both types in PayloadBytesTypes.
         this.data = data || {
             signature: {
-                signature_bytes: null,
-                signature_type: SignatureType.SIGNATURE_TYPE_INVALID
+                sig: null,
+                type: SignatureType.SIGNATURE_TYPE_INVALID
             },
             body: {
-                description: '',
+                desc: '',
                 payload: null,
-                payload_type: PayloadType.INVALID_PAYLOAD_TYPE,
+                type: PayloadType.INVALID_PAYLOAD_TYPE,
                 fee: null,
                 nonce: null,
                 chain_id: ''
@@ -71,7 +72,7 @@ export class BaseTransaction<T extends PayloadBytesTypes> implements TxnData<T> 
     }
 
     public isSigned(): boolean {
-        return !strings.isNilOrEmpty(this.data.signature.signature_bytes as string);
+        return !strings.isNilOrEmpty(this.data.signature.sig as string);
     }
 
     public get signature(): Readonly<Signature<T>> {
@@ -104,13 +105,13 @@ export namespace Txn {
         // create basic template of tx. Null values are used to be compatible with both types in PayloadBytesTypes.
         const tx = {
             signature: {
-                signature_bytes: null,
-                signature_type: SignatureType.SECP256K1_PERSONAL
+                sig: null,
+                type: SignatureType.SECP256K1_PERSONAL
             },
             body: {
-                description: '',
+                desc: '',
                 payload: null,
-                payload_type: PayloadType.INVALID_PAYLOAD_TYPE,
+                type: PayloadType.INVALID_PAYLOAD_TYPE,
                 fee: null,
                 nonce: null,
                 chain_id: '' 

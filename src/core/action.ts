@@ -10,19 +10,33 @@ export type Entries = { [key: string]: ValueType };
 export type Predicate = (k: [key: string, v: ValueType]) => boolean;
 
 /**
- * @typedef {Object} ActionBody is the interface for executing an action with the `kwil.execute()` method or calling an action with the `kwil.call()` method.
- *
- * @param {string} dbid - The database ID of the record on which to execute the action.
- * @param {string} action - The name of the action to execute.
- * @param {ActionInput[] | Entries[]} inputs - An array of action inputs.
- * @param {string} description (optional) - An optional description of the action.
- * @param {number} nonce (optional) - An optional nonce value for the action.
- */
+ * ActionBody is the interface for executing an action with the `kwil.execute()` method or calling an action with the `kwil.call()` method.
+  */
 export interface ActionBody {
+  /**
+   * dbid is the database ID of the record on which to execute the action.
+   */
   dbid: string;
-  action: string;
+  /**
+   * name is the name of the action or procedure to execute.
+   */
+  name: string
+  /**
+   * action is the name of the action or procedure to execute.
+   * @deprecated This field is deprecated. Use ActionBody.name instead.
+   */
+  action?: string;
+  /**
+   * inputs is an array of action inputs.
+   */
   inputs?: Entries[] | ActionInput[];
+  /**
+   * description is an optional description of the action.
+   */
   description?: string;
+  /**
+   * nonce is an optional nonce value for the action.
+   */
   nonce?: number;
 }
 

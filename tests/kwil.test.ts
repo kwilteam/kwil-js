@@ -5,6 +5,7 @@ const logSpy = jest.spyOn(console, 'log').mockImplementation((...args) => {
 jest.resetModules();
 import {
   AmntObject,
+  deployBaseSchema,
   deployIfNoTestDb,
   deployTempSchema,
   deriveKeyPair64,
@@ -22,7 +23,7 @@ import { ActionBody, ActionInput, ActionBodyNode } from '../dist/core/action';
 import { DropBody } from '../dist/core/database';
 import { EnvironmentType } from '../dist/core/enums';
 import dotenv from 'dotenv';
-import { LogoutResponse } from '../dist/core/auth';
+import { AuthSuccess, LogoutResponse } from '../dist/core/auth';
 import { Wallet } from 'ethers';
 
 dotenv.config();
@@ -34,13 +35,16 @@ const kSigner = new KwilSigner(wallet, address);
 
 // Kwil methods that do NOT return another class (e.g. funder, action, and DBBuilder)
 describe('Kwil Integration Tests', () => {
+  const baseDbid = kwil.getDBID(address, 'base_schema');
   beforeAll(async () => {
     await deployIfNoTestDb(kSigner);
-  }, 10000);
+    await deployBaseSchema(kSigner);
+  }, 20000);
 
-  afterAll(async() => {
+  afterAll(async () => {
     await dropTestDb(dbid, kSigner);
-  }, 10000)
+    await dropTestDb(baseDbid, kSigner);
+  }, 20000)
 
   afterEach(() => {
     logSpy.mockClear();
@@ -111,7 +115,7 @@ describe('Kwil Integration Tests', () => {
     expect(result.status).toBe(200);
   });
 
-  it('should execute an action', async() => {
+  it('execute should submit an action tx', async () => {
     const records = await kwil.selectQuery(dbid, 'SELECT COUNT(*) FROM posts');
     if (!records.status || !records.data) throw new Error('No posts found');
 
@@ -121,7 +125,7 @@ describe('Kwil Integration Tests', () => {
 
     const actionBody: ActionBody = {
       dbid,
-      action: 'add_post',
+      name: 'add_post',
       inputs: [
         {
           $id: recordCount,
@@ -132,7 +136,7 @@ describe('Kwil Integration Tests', () => {
       ],
       description: 'This is a test action',
     };
-    
+
     const result = await kwil.execute(actionBody, kSigner, true);
 
     expect(result.data).toBeDefined();
@@ -141,18 +145,91 @@ describe('Kwil Integration Tests', () => {
     });
   }, 10000);
 
-  test('kwil.call() should return a MsgReceipt', async () => {
-    const body: ActionBody = {
+  test('execute should submit a procedure tx', async () => {
+    const records = await kwil.selectQuery(dbid, 'SELECT COUNT(*) FROM posts');
+    if (!records.status || !records.data) throw new Error('No posts found');
+
+    const amnt = records.data[0] as AmntObject;
+
+    const recordCount = amnt['count'] + 1;
+
+    const actionBody: ActionBody = {
       dbid,
-      action: 'read_posts',
+      name: 'proc_add_user',
+      inputs: [
+        {
+          $id: recordCount,
+          $user: 'Luke',
+          $title: 'Test Post',
+          $body: 'This is a test post',
+        },
+      ],
+      description: 'This is a test procedure',
     };
 
-    const result = await kwil.call(body, kSigner);
+    const result = await kwil.execute(actionBody, kSigner, true);
+
+    expect(result.data).toBeDefined();
+    expect(result.data).toMatchObject<TxReceipt>({
+      tx_hash: expect.any(String),
+    });
+  }, 10000)
+
+  // Todo: Implement this test once this issue is resolved: https://github.com/kwilteam/kwil-db/issues/740
+  // test('execute should execute a procedure with a foreign call to another schema', async() => {
+
+  // })
+
+  test('call should submit a view action', async () => {
+    const body: ActionBody = {
+      dbid,
+      name: 'read_posts',
+    };
+
+    const result = await kwil.call(body);
     expect(result.status).toBe(200);
     expect(result.data).toMatchObject<MsgReceipt>({
       result: expect.any(Array),
     });
-  });
+  }, 10000);
+
+  test('call should submit a view procedure', async () => {
+    const body: ActionBody = {
+      dbid,
+      name: 'get_post_by_id',
+      inputs: [
+        {
+          $id: 1,
+        },
+      ],
+    };
+
+    const result = await kwil.call(body);
+
+    expect(result.data).toBeDefined();
+    expect(result.status).toBe(200);
+    expect(result.data).toMatchObject<MsgReceipt>({
+      result: expect.any(Array),
+    });
+  }, 10000)
+
+  test('call should submit a view procedure that foreign calls a different schema', async () => {
+    const body: ActionBody = {
+      dbid,
+      name: 'proc_call_base',
+      inputs: [{
+        $dbid: baseDbid,
+      }]
+    }
+
+    const result = await kwil.call(body);
+
+    expect(result.data).toBeDefined();
+    expect(result.status).toBe(200);
+    expect(result.data).toMatchObject<MsgReceipt>({
+      result: expect.any(Array),
+    });
+  }, 10000);
 
   (isGasOn ? test : test.skip)('Kwil.funder should transfer tokens', async () => {
     const funder = kwil.funder;
@@ -165,8 +242,8 @@ describe('Kwil Integration Tests', () => {
     expect(result.data).toMatchObject<TxReceipt>({
       tx_hash: expect.any(String),
     });
-  });
-  
+  }, 10000);
+
   test('a database should be deployed with kwil.deploy()', async () => {
     const result = await deployTempSchema(schema, kSigner);
     expect(result.data).toBeDefined();
@@ -242,7 +319,7 @@ describe('Testing case insentivity on test_db', () => {
     const actionInputs = await buildActionInput(dbid);
 
     const body: ActionBody = {
-      action: 'createUserTest',
+      name: 'createUserTest',
       dbid,
       inputs: [actionInputs],
     };
@@ -257,7 +334,7 @@ describe('Testing case insentivity on test_db', () => {
 
   test('delete_user action should execute', async () => {
     const body: ActionBody = {
-      action: 'delete_user',
+      name: 'delete_user',
       dbid,
     };
 
@@ -273,7 +350,7 @@ describe('Testing case insentivity on test_db', () => {
     const actionInputs = await buildActionInput(dbid);
 
     const body: ActionBody = {
-      action: 'CREATEUSERTEST',
+      name: 'CREATEUSERTEST',
       dbid,
       inputs: [actionInputs],
     };
@@ -288,7 +365,7 @@ describe('Testing case insentivity on test_db', () => {
 
   test('DELETE_USER action should execute', async () => {
     const body: ActionBody = {
-      action: 'DELETE_USER',
+      name: 'DELETE_USER',
       dbid
     };
 
@@ -304,7 +381,7 @@ describe('Testing case insentivity on test_db', () => {
     const actionInputs = await buildActionInput(dbid);
 
     const body: ActionBody = {
-      action: 'createusertest',
+      name: 'createusertest',
       dbid,
       inputs: [actionInputs],
     };
@@ -329,7 +406,7 @@ describe('Testing case insentivity on test_db', () => {
 
   it('should authenticate and return data automatically', async () => {
     const body: ActionBody = {
-      action: 'view_must_sign',
+      name: 'view_must_sign',
       dbid,
     };
 
@@ -370,7 +447,7 @@ describe('Testing case insentivity on test_db', () => {
 
   it('should allow a new signer after logging out', async () => {
     // Log out
-    // await kwil.auth.logout();
+    await kwil.auth.logout();
 
     // Create a new signer
     const newWallet = Wallet.createRandom();
@@ -378,7 +455,7 @@ describe('Testing case insentivity on test_db', () => {
     const newSigner = new KwilSigner(newWallet, newWallet.address);
 
     const body: ActionBody = {
-      action: 'view_caller',
+      name: 'view_caller',
       dbid,
     };
 
@@ -400,7 +477,7 @@ describe('Testing case insentivity on test_db', () => {
 
     it('should not authenticate automatically', async () => {
       const body: ActionBody = {
-        action: 'view_must_sign',
+        name: 'view_must_sign',
         dbid,
       };
 
@@ -410,21 +487,15 @@ describe('Testing case insentivity on test_db', () => {
       expect(result.data?.result).toBe(null);
     });
 
-    it('should autenticate after calling the authenticate method', async () => {
-      await newKwil.auth.authenticate(kSigner);
-
-      const body: ActionBody = {
-        action: 'view_must_sign',
-        dbid,
-      };
-
-      const result = await newKwil.call(body, kSigner);
+    it('should authenticate after calling the authenticate method', async () => {
+      const result = await newKwil.auth.authenticate(kSigner);
 
       await newKwil.auth.logout();
 
       expect(result.status).toBe(200);
-      expect(result.data).toMatchObject<MsgReceipt>({
-        result: expect.any(Array),
+      expect(result.data).toMatchObject<AuthSuccess<EnvironmentType.NODE>>({
+        result: 'ok',
+        cookie: expect.any(String),
       });
     });
 
@@ -435,7 +506,7 @@ describe('Testing case insentivity on test_db', () => {
       if (!cookie) throw new Error('No cookie found');
 
       const body: ActionBodyNode = {
-        action: 'view_must_sign',
+        name: 'view_must_sign',
         dbid,
         cookie
       };
@@ -451,7 +522,7 @@ describe('Testing case insentivity on test_db', () => {
 
     it('should not authenticate when a bad cookie is passed back to the action', async () => {
       const body: ActionBodyNode = {
-        action: 'view_must_sign',
+        name: 'view_must_sign',
         dbid,
         cookie: 'badCookie'
       };
@@ -464,7 +535,7 @@ describe('Testing case insentivity on test_db', () => {
 
     it('should continue authenticating after a bad cookie was passed to the previous action', async () => {
       const body: ActionBody = {
-        action: 'view_must_sign',
+        name: 'view_must_sign',
         dbid,
       };
 
@@ -510,7 +581,7 @@ describe('Testing custom signers', () => {
       const amnt = count.data[0] as AmntObject;
       recordCount = amnt['count'];
     } else {
-        throw new Error('Something went wrong checking how many records on users table in the Testing custom signers section')
+      throw new Error('Something went wrong checking how many records on users table in the Testing custom signers section')
     }
 
     input = new Utils.ActionInput();
@@ -524,7 +595,7 @@ describe('Testing custom signers', () => {
   test("ed25519 signed tx's should broadcast correctly", async () => {
     const body: ActionBody = {
       dbid,
-      action: 'add_post',
+      name: 'add_post',
       inputs: [input],
     };
 
@@ -540,7 +611,7 @@ describe('Testing custom signers', () => {
   test('ed25519 signed msgs should call correctly', async () => {
     const payload: ActionBody = {
       dbid,
-      action: 'view_must_sign',
+      name: 'view_must_sign',
     };
 
     const result = await kwil.call(payload, edSigner);
@@ -554,18 +625,18 @@ describe('Testing custom signers', () => {
 });
 
 describe('Testing simple actions and db deploy / drop (builder pattern alternative)', () => {
-  beforeAll(async() => {
+  beforeAll(async () => {
     await deployIfNoTestDb(kSigner)
   }, 10000);
 
-  afterAll(async() => {
+  afterAll(async () => {
     await dropTestDb(dbid, kSigner);
   }, 10000);
 
   test('kwil.call() with ActionBody interface as first argument, action inputs NOT REQUIRED, and no signature required should return a MsgReceipt', async () => {
     const actionBody: ActionBody = {
       dbid: dbid,
-      action: 'read_posts',
+      name: 'read_posts',
     };
 
     const result = await kwil.call(actionBody);
@@ -580,7 +651,7 @@ describe('Testing simple actions and db deploy / drop (builder pattern alternati
     test('with action inputs as array of objects', async () => {
       const actionBody: ActionBody = {
         dbid,
-        action: 'view_with_param',
+        name: 'view_with_param',
         inputs: [
           {
             $id: 1,
@@ -601,7 +672,7 @@ describe('Testing simple actions and db deploy / drop (builder pattern alternati
 
       const actionBody: ActionBody = {
         dbid,
-        action: 'view_with_param',
+        name: 'view_with_param',
         inputs: [input],
       };
 
@@ -618,7 +689,7 @@ describe('Testing simple actions and db deploy / drop (builder pattern alternati
   test('kwil.call() with ActionBody interface as first argument, action inputs NOT REQUIRED, and signature required should return a MsgReceipt', async () => {
     const actionBody: ActionBody = {
       dbid,
-      action: 'view_must_sign',
+      name: 'view_must_sign',
       description: 'This is a test action',
     };
 
@@ -646,7 +717,7 @@ describe('Testing simple actions and db deploy / drop (builder pattern alternati
     test('with action inputs as array of objects', async () => {
       const actionBody: ActionBody = {
         dbid,
-        action: 'add_post',
+        name: 'add_post',
         inputs: [
           {
             $id: recordCount,
@@ -677,7 +748,7 @@ describe('Testing simple actions and db deploy / drop (builder pattern alternati
 
       const actionBody: ActionBody = {
         dbid,
-        action: 'add_post',
+        name: 'add_post',
         inputs: [input],
         description: 'This is a test action',
       };
@@ -697,7 +768,7 @@ describe('Testing simple actions and db deploy / drop (builder pattern alternati
       if (!nonce) throw new Error('No nonce found');
       const actionBody: ActionBody = {
         dbid,
-        action: 'add_post',
+        name: 'add_post',
         inputs: [
           {
             $id: recordCount,
@@ -725,7 +796,7 @@ describe('Testing simple actions and db deploy / drop (builder pattern alternati
       if (!nonce) throw new Error('No nonce found');
       const actionBody: ActionBody = {
         dbid,
-        action: 'add_post',
+        name: 'add_post',
         inputs: [
           {
             $id: recordCount,
@@ -761,7 +832,7 @@ describe('unconfirmedNonce', () => {
     const recordCount = amnt['count'] + 1;
     const actionBody: ActionBody = {
       dbid,
-      action: 'add_post',
+      name: 'add_post',
       inputs: [
         {
           $id: recordCount,

@@ -5,7 +5,6 @@ import { Kwil } from '../client/kwil';
 import { ActionBuilder, SignerSupplier, PayloadBuilder } from '../core/builders';
 import { PayloadBuilderImpl } from './payload_builder';
 import { ActionInput } from '../core/action';
-import { ActionSchema } from '../core/database';
 import { EnvironmentType, PayloadType, ValueType } from '../core/enums';
 import { AnySignatureType, SignatureType, getSignatureType } from '../core/signature';
 import { UnencodedActionPayload } from '../core/payload';
@@ -14,9 +13,16 @@ import { Message } from '../core/message';
 interface CheckSchema {
   dbid: string;
   name: string;
-  actionSchema: ActionSchema;
+  modifiers?: ReadonlyArray<string>;
   preparedActions: ValueType[][] | [];
   nilArgs: boolean[][] | [];
+}
+
+interface ExecSchema {
+  name: string;
+  public: boolean;
+  parameters?: ReadonlyArray<string>;
+  modifiers?: ReadonlyArray<string>;
 }
 
 const TXN_BUILD_IN_PROGRESS: ActionInput[] = [];
@@ -63,18 +69,18 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
   /**
    * Specifies the name of the action to be executed.
    *
-   * @param {string} actionName - The name of the action to be executed.
+   * @param {string} name - The name of the action or procedure to be executed.
    * @returns {ActionBuilder} The current `ActionBuilder` instance for chaining.
    * @throws Will throw an error if the value is specified while the action is being built.
    * @throws Will throw an error if the action name is null or undefined.
    */
-  name(actionName: string): NonNil<ActionBuilder> {
+  name(name: string): NonNil<ActionBuilder> {
     this.assertNotBuilding();
 
     // throw runtime error if action name is null or undefined
     this._name = objects.requireNonNil(
-      actionName.toLowerCase(),
-      'action name cannot be null or undefined. please specify the action name you wish to execute.'
+      name.toLowerCase(),
+      'name cannot be null or undefined. please specify the action or procedure name you wish to execute.'
     );
     return this;
   }
@@ -285,7 +291,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
    */
   private async dobuildTx(actions: ActionInput[]): Promise<Transaction> {
     // retrieve the schema and run validations
-    const { dbid, name, preparedActions, actionSchema, nilArgs } = await this.checkSchema(actions);
+    const { dbid, name, preparedActions, modifiers, nilArgs } = await this.checkSchema(actions);
 
     // throw runtime error if signer is null or undefined
     const signer = objects.requireNonNil(
@@ -312,8 +318,8 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
     );
 
     // throw runtime error if action is a view action. view actions require a different payload structure than transactions.
-    if (actionSchema.modifiers.includes('VIEW')) {
-      throw new Error(`Action ${name} is a 'view' action. Please use kwil.call().`);
+    if (modifiers && modifiers.includes('VIEW')) {
+      throw new Error(`Action / Procedure ${name} is a 'view' action. Please use kwil.call().`);
     }
 
     // construct payload
@@ -337,7 +343,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
       tx = tx.nonce(this._nonce);
     }
 
-    return tx.buildTx();
+    return await tx.buildTx();
   }
 
   /**
@@ -349,7 +355,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
    */
   private async doBuildMsg(action: ActionInput[]): Promise<Message> {
     // retrieve the schema and run validations
-    const { dbid, name, preparedActions, actionSchema, nilArgs } = await this.checkSchema(action);
+    const { dbid, name, preparedActions, modifiers, nilArgs } = await this.checkSchema(action);
 
     // throw a runtime error if more than one set of inputs is trying to be executed. Call does not allow bulk execution.
     if (preparedActions && preparedActions.length > 1) {
@@ -359,7 +365,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
     }
 
     // throw runtime error if action is not a view action. transactions require a different payload structure than view actions.
-    if (actionSchema.modifiers.includes('VIEW') === false) {
+    if (modifiers && modifiers.includes('VIEW') === false) {
       throw new Error(`Action ${name} is not a view only action. Please use kwil.execute().`);
     }
 
@@ -398,34 +404,53 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
     // throw runtime errors is dbid or action name is null or undefined
     const dbid = objects.requireNonNil(
       this._dbid,
-      'dbid is required to execute or call an action.'
+      'dbid is required to execute or call an action or procedure.'
     );
     const name = objects.requireNonNil(
       this._name,
-      'action name is required to execute or call an action.'
+      'name is required to execute or call an action or procedure.'
     );
 
     // retrieve the schema for the database
     const schema = await this.kwil.getSchema(dbid);
 
     // throw an error if the schema does not have any actions.
-    if (!schema?.data?.actions) {
+    if (!schema?.data?.actions && !schema.data?.procedures) {
       throw new Error(
-        `Could not retrieve actions for database ${dbid}. Please double check that you have the correct DBID.`
+        `Could not retrieve actions or procedures for database ${dbid}. Please double check that you have the correct DBID.`
       );
     }
 
     // validate the the name exists on the schema.
-    const actionSchema = schema.data.actions.find((act) => act.name == name);
-    if (!actionSchema) {
+    const actionSchema = schema.data.actions?.find((a) => a.name === name)
+    const procedureSchema = schema.data.procedures?.find((p) => p.name === name)
+
+    const foundActionOrProcedure = actionSchema || procedureSchema;
+
+    if (!foundActionOrProcedure) {
       throw new Error(
-        `Could not find action ${name} in database ${dbid}. Please double check that you have the correct DBID and action name.`
+        `Could not find action or procedure ${name} in database ${dbid}. Please double check that you have the correct DBID and action name.`
       );
     }
 
+    const execSchema: ExecSchema = actionSchema ?
+      {
+        name: actionSchema.name,
+        public: actionSchema.public,
+        parameters: actionSchema.parameters,
+        modifiers: actionSchema.modifiers,
+      } : {
+        // if we have reached this point and actionSchema is null, then we know that procedureSchema is not null.
+        name: procedureSchema?.name as string,
+        public: procedureSchema?.public as boolean,
+        parameters: procedureSchema?.parameters.map(p => p.name) as string[],
+        modifiers: procedureSchema?.modifiers as string[],
+      }
+
+
     if (actions) {
       // ensure that no action inputs or values are missing
-      const preparedActions = this.prepareActions(actions, actionSchema, name);
+      const preparedActions = this.prepareActions(actions, execSchema, name);
       const nilArgs = preparedActions.map((a1) => {
         return a1.map((a2) => {
           return a2 === null || a2 === undefined;
@@ -435,41 +460,41 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
       return {
         dbid: dbid,
         name: name,
-        actionSchema: actionSchema,
+        modifiers: execSchema.modifiers,
         preparedActions: preparedActions,
         nilArgs: nilArgs,
       };
-    } else {
-      return {
-        dbid: dbid,
-        name: name,
-        actionSchema: actionSchema,
-        preparedActions: [],
-        nilArgs: [],
-      };
     }
-  }
+
+    return {
+      dbid: dbid,
+      name: name,
+      modifiers: execSchema.modifiers,
+      preparedActions: [],
+      nilArgs: [],
+    };
+  };
 
   /**
    * Validates that the action is not missing any inputs.
    *
    * @param {ActionInput[]} actions - The values of the actions to be executed.
-   * @param {ActionSchema} actionSchema - The schema of the action to be executed.
+   * @param {ExecSchema} execSchema - The schema of the action to be executed.
    * @param {string} actionName - The name of the action to be executed.
    * @returns {ValueType[][]} - An array of arrays of values to be executed.
    */
   private prepareActions(
     actions: ActionInput[],
-    actionSchema: ActionSchema,
+    execSchema: ExecSchema,
     actionName: string
   ): ValueType[][] {
     // if action does not require parameters, return an empty array
-    if ((!actionSchema.parameters || actionSchema.parameters.length === 0) && actions.length === 0) {
+    if ((!execSchema.parameters || execSchema.parameters.length === 0) && actions.length === 0) {
       return [];
     }
 
     // throw runtime error if action does not have any parameters but inputs were provided
-    if (!actionSchema.parameters || actionSchema.parameters.length === 0) {
+    if (!execSchema.parameters || execSchema.parameters.length === 0) {
       throw new Error(`No parameters found for action schema: ${actionName}.`);
     }
 
@@ -480,7 +505,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
 
     // track the missing actions
     const missingActions = new Set<string>();
-    actionSchema.parameters.forEach((p) => {
+    execSchema.parameters.forEach((p) => {
       const found = actions.find((a) => a.containsKey(p));
       if (!found) {
         missingActions.add(p);
@@ -495,7 +520,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
     const missingInputs = new Set<string>();
     actions.forEach((a) => {
       const copy = ActionInput.from(a);
-      actionSchema.parameters.forEach((p) => {
+      execSchema.parameters?.forEach((p) => {
         if (missingInputs.has(p)) {
           return;
         }
@@ -515,15 +540,16 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
       });
 
       if (missingInputs.size === 0) {
-        preparedActions.push(
-          actionSchema.parameters.map((p) => {
+        execSchema.parameters && preparedActions.push(
+          execSchema.parameters.map((p) => {
             const val = copy.get(p);
 
             // because all values are technically strings under the kwildb hood, we need to convert all values that will resolve to a string to a string.
             if (val?.toString()) {
               return val.toString();
             }
-            return val;
+
+            return val
           })
         );
       }

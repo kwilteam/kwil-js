@@ -4,6 +4,7 @@
 const kwiljs = require("../dist/index")
 const ethers = require("ethers")
 const testDB = require("./mydb.json")
+const baseSchema = require("./base_schema.json")
 const util = require("util")
 const near = require('near-api-js')
 const { from_b58 } = require('../dist/utils/base58')
@@ -27,7 +28,7 @@ async function test() {
     //update to goerli when live
     const provider = new ethers.JsonRpcProvider(process.env.ETH_PROVIDER)
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
-    const txHash = 'b1ac84b20a99b7ad42435d653e4ed21c4cfa86c88b929e385f33664314ab5bec'
+    const txHash = 'abbe4b6f877f74971f4333dc12d2b2ec90d3888bae4e25c0173d97ec0320452b'
     const address = await wallet.address
 
     const getEdKeys = async () => {
@@ -39,7 +40,7 @@ async function test() {
         kwilProvider: process.env.KWIL_PROVIDER || "SHOULD FAIL",
         chainId: chainId,
         timeout: 10000,
-        logging: true,
+        logging: true
     })
 
     const kwilSigner = new KwilSigner(wallet, address)
@@ -51,23 +52,25 @@ async function test() {
         const kwilSigner1 = new KwilSigner(ethWallet1, ethWallet1.address)
         const kwilSigner2 = new KwilSigner(ethWallet2, ethWallet2.address)
 
+        console.log('wallet1, wallet2', ethWallet1.address, ethWallet2.address)
+
         const res1 = await kwil.auth.authenticate(kwilSigner1)
         logger(res1)
         logger("Logged in with wallet 1")
-        const res2 = await kwil.auth.authenticate(kwilSigner1)
+        const res2 = await kwil.auth.authenticate(kwilSigner2)
         logger(res2)
-        logger("Logged in with wallet 1")
+        logger("Logged in with wallet 2")
 
-        // const res3 = await kwil.auth.logout()
-        // logger(res3)
-        // logger("Logged out with wallet 1")
+        const res3 = await kwil.auth.logout(kwilSigner1)
+        logger(res3)
+        logger("Logged out with wallet 1")
     }
 
-    testMultiLogout()
+    // testMultiLogout()
 
     const dbid = kwil.getDBID(address, "mydb")
-    // // await authenticate(kwil, kwilSigner)
-    broadcast(kwil, testDB, kwilSigner)
+    // await authenticate(kwil, kwilSigner)
+    // broadcast(kwil, testDB, kwilSigner)
     // broadcastEd25519(kwil, testDB)
     // await getTxInfo(kwil, txHash)
     // await getSchema(kwil, dbid)
@@ -88,19 +91,50 @@ async function test() {
     // await dropDb(kwil, dbid, wallet, address)
     // await transfer(kwil, "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf", 20, kwilSigner)
     // bulkActionInput(kwil, kwilSigner)
+    executeGeneralAction(kwil, dbid, "proc_insert_base", kwilSigner, {
+        "$dbid": kwil.getDBID(address, "base_schema")
+    })
+    // executeGeneralView(kwil, dbid, "proc_call_base", {
+    //     "$dbid": kwil.getDBID(address, "base_schema")
+    // })
 }
 
 test()
 
+async function executeGeneralView(kwil, dbid, name, input) {
+    const body = {
+        name,
+        dbid,
+        inputs: [ input ]
+    }
+
+    const res = await kwil.call(body)
+
+    logger(res)
+
+}
+
+async function executeGeneralAction(kwil, dbid, name, wallet, input) {
+    const body = {
+        name,
+        dbid,
+        inputs: [ input ]
+    }
+
+    const res = await kwil.execute(body, wallet, true)
+
+    logger(res)
+}
+
 async function authenticate(kwil, signer) {
-    const res = await kwil.authenticate(signer)
+    const res = await kwil.auth.authenticate(signer)
     logger(res)
 }
 
 async function getSchema(kwil, d) {
     const res = await kwil.getSchema(d)
     const schema = res.data
-    logger(schema)
+    logger(res)
 }
 
 async function getAccount(kwil, owner) {
@@ -272,7 +306,7 @@ async function dropDb(kwil, dbid, w, pubKey) {
         })
         .buildTx()
 
-    const res = await kwil.broadcast(tx)
+    const res = await kwil.broadcast(tx, 2)
 
     logger(res)
 }

@@ -218,9 +218,8 @@ export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBui
     const preEstTxn = Txn.create<BytesEncodingStatus.BASE64_ENCODED>((tx) => {
       // rlp encode the payload and convert to base64
       tx.body.payload = bytesToBase64(kwilEncode(resolvedPayload));
-      tx.body.payload_type = payloadType;
-      // set the fee to 0 for estimating cost
-      tx.body.fee = '0';
+      tx.body.type = payloadType;
+      tx.sender = bytesToHex(identifier);
     });
 
     // estimate the cost of the transaction with the estimateCost symbol from the client
@@ -356,7 +355,7 @@ export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBui
     // create the signature message
     const signatureMessage = `${description}
 
-PayloadType: ${tx.body.payload_type}
+PayloadType: ${tx.body.type}
 PayloadDigest: ${bytesToHex(digest)}
 Fee: ${tx.body.fee}
 Nonce: ${tx.body.nonce}
@@ -371,19 +370,19 @@ Kwil Chain ID: ${tx.body.chain_id}
     return Txn.copy<BytesEncodingStatus.BASE64_ENCODED>(tx, (newTx) => {
       newTx.signature = {
         // bytes must be base64 encoded for transport over GRPC
-        signature_bytes: bytesToBase64(signedMessage),
-        signature_type: signatureType.toString() as SignatureType,
+        sig: bytesToBase64(signedMessage),
+        type: signatureType.toString() as SignatureType,
       };
       newTx.body = {
-        description: description,
+        desc: description,
         payload: bytesToBase64(tx.body.payload as Uint8Array),
-        payload_type: newTx.body.payload_type as PayloadType,
-        fee: newTx.body.fee?.toString(),
+        type: newTx.body.type as PayloadType,
+        fee: newTx.body.fee?.toString() || '',
         nonce: newTx.body.nonce,
         chain_id: newTx.body.chain_id,
       };
       // bytes must be base64 encoded for transport over GRPC
-      newTx.sender = bytesToBase64(identifier);
+      newTx.sender = bytesToHex(identifier);
       newTx.serialization = SerializationType.SIGNED_MSG_CONCAT;
     });
   }
@@ -414,7 +413,7 @@ Kwil Chain ID: ${tx.body.chain_id}
       msg.body.payload = bytesToBase64(encodedPayload);
       msg.auth_type = signatureType;
       // bytes must be base64 encoded for transport over GRPC
-      msg.sender = bytesToBase64(identifier);
+      msg.sender = bytesToHex(identifier);
     });
   }
 }

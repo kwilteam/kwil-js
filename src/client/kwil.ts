@@ -6,7 +6,6 @@ import { Database, DeployBody, DropBody, SelectQuery } from '../core/database';
 import { BaseTransaction, TxReceipt } from '../core/tx';
 import { Account, ChainInfo, ChainInfoOpts, DatasetInfo } from '../core/network';
 import { ActionBuilderImpl } from '../builders/action_builder';
-import { base64ToBytes } from '../utils/base64';
 import { DBBuilderImpl } from '../builders/db_builder';
 import { NonNil } from '../utils/types';
 import { ActionBuilder, DBBuilder } from '../core/builders';
@@ -191,9 +190,11 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     kwilSigner: KwilSigner,
     synchronous?: boolean
   ): Promise<GenericResponse<TxReceipt>> {
+    const name = !actionBody.name && actionBody.action ? actionBody.action : actionBody.name;
+
     let tx = ActionBuilderImpl.of<T>(this)
       .dbid(actionBody.dbid)
-      .name(actionBody.action)
+      .name(name)
       .description(actionBody.description || '')
       .publicKey(kwilSigner.identifier)
       .chainId(this.chainId)
@@ -314,14 +315,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       query: query,
     };
 
-    let res = await this.selectQueryClient(q);
-    const uint8 = new Uint8Array(base64ToBytes(res.data as string));
-    const decoder = new TextDecoder('utf-8');
-    const jsonString = decoder.decode(uint8);
-    return {
-      status: res.status,
-      data: JSON.parse(jsonString),
-    } as GenericResponse<Map<string, any>[]>;
+    return await this.selectQueryClient(q);
   }
 
   /**

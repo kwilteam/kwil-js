@@ -12,10 +12,10 @@ import {
   IndexType,
   PayloadType,
 } from '../core/enums';
-import { Database } from '../core/database';
+import { Database, EncodeableDatabase } from '../core/database';
 import { enforceDatabaseOrder } from '../core/order';
 import { AnySignatureType, SignatureType, getSignatureType } from '../core/signature';
-import { CompiledKuneiform, DbPayloadType, DropDbPayload } from '../core/payload';
+import { AllPayloads, CompiledKuneiform, DbPayloadType, DropDbPayload } from '../core/payload';
 
 /**
  * `DBBuilderImpl` class is an implementation of the `DBBuilder` interface.
@@ -197,7 +197,7 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType>
     );
 
     // create cleanedPayload that is equal to the current callback function
-    let cleanedPayload: () => NonNil<object> = () => payload();
+    let cleanedPayload: () => NonNil<AllPayloads> = () => payload();
 
     // if it is a deploy database, we need to add all of the required fields and field order to make it RLP encodable. The Kuneiform parser does not include null fields.
     if (this._payloadType === PayloadType.DEPLOY_DATABASE) {
@@ -252,12 +252,12 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType>
    * @param payload
    * @returns
    */
-  private makePayloadEncodable(payload: () => NonNil<CompiledKuneiform>): NonNil<Database> {
+  private makePayloadEncodable(payload: () => NonNil<CompiledKuneiform>): NonNil<EncodeableDatabase> {
     // check if the payload has the required fields for the database
 
     const resolvedPayload = payload();
 
-    let db: Database = resolvedPayload as Database;
+    let db = resolvedPayload as EncodeableDatabase;
 
     if (!db.owner) {
       db.owner = new Uint8Array();
@@ -466,32 +466,41 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType>
         }
 
         if (!procedure.return_types) {
-          procedure.return_types = {
-            is_table: false,
-            fields: [],
-          };
+          procedure.return_types = []
         }
-
-        if (!procedure.return_types.fields) {
-          procedure.return_types.fields = [];
-        }
-
-        procedure.return_types.fields &&
-          procedure.return_types.fields.forEach((field) => {
-            if (!field.name) {
-              field.name = '';
-            }
-
-            if (!field.type) {
-              field.type = {
-                name: '',
-                is_array: false,
-              };
-            }
-          });
 
         if (!procedure.annotations) {
           procedure.annotations = [];
+        }
+      });
+
+    if (!db.foreign_calls) {
+      db.foreign_calls = [];
+    }
+    
+    db.foreign_calls &&
+      db.foreign_calls.forEach((foreignCall) => {
+        if (!foreignCall.name) {
+          foreignCall.name = '';
+        }
+
+        if (!foreignCall.parameters) {
+          foreignCall.parameters = [];
+        }
+
+        foreignCall.parameters &&
+          foreignCall.parameters.forEach((parameter) => {
+            if (!parameter.name) {
+              parameter.name = '';
+            }
+
+            if (parameter.is_array === undefined || parameter.is_array === null) {
+              parameter.is_array = false;
+            }
+          });
+
+        if (!foreignCall.returns) {
+          foreignCall.returns = [];
         }
       });
 
