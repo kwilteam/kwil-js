@@ -1,12 +1,17 @@
-export type ValueType = string | number | null | undefined;
+export type ValueType = string | number | null | undefined | Array<ValueType> | boolean;
 
+/**
+ * VarType is the type of the data in the database.
+ * 
+ * Although Kwil supports text, int, bool, blob, uuid, uint256, decimal, and null types, kwil-js only supports text, int, bool, decimal, and null. If you need to send blob, uuid, or uint256 types, you should send them as a javascript string.
+ * 
+ */
 export enum VarType {
-  NULL = 'null',
-  TEXT = 'text',
-  INT = 'int',
-  BOOL = 'bool',
-  BLOB = 'blob',
-  UUID = 'uuid',
+  TEXTSTR = 'text',
+  INTSTR = 'int',
+  BOOLSTR = 'bool',
+  DECIMALSTR = 'decimal',
+  NULLSTR = 'null',
   UNKNOWN = 'unknown',
 }
 

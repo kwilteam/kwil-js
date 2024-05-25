@@ -8,7 +8,7 @@
       "columns": [
         {
           "name": "id",
-          "type": { "name": "int", "is_array": false },
+          "type": { "name": "int", "is_array": false, "metadata": null },
           "attributes": [
             { "type": "PRIMARY_KEY", "value": "" },
             { "type": "NOT_NULL", "value": "" }
@@ -16,17 +16,17 @@
         },
         {
           "name": "name",
-          "type": { "name": "text", "is_array": false },
+          "type": { "name": "text", "is_array": false, "metadata": null },
           "attributes": [{ "type": "NOT_NULL", "value": "" }]
         },
         {
           "name": "post_title",
-          "type": { "name": "text", "is_array": false },
+          "type": { "name": "text", "is_array": false, "metadata": null },
           "attributes": [{ "type": "NOT_NULL", "value": "" }]
         },
         {
           "name": "post_body",
-          "type": { "name": "text", "is_array": false },
+          "type": { "name": "text", "is_array": false, "metadata": null },
           "attributes": [{ "type": "NOT_NULL", "value": "" }]
         }
       ],
@@ -96,9 +96,9 @@
     {
       "name": "proc_add_user",
       "parameters": [
-        { "name": "$user", "type": { "name": "text", "is_array": false } },
-        { "name": "$title", "type": { "name": "text", "is_array": false } },
-        { "name": "$body", "type": { "name": "text", "is_array": false } }
+        { "name": "$user", "type": { "name": "text", "is_array": false, "metadata": null } },
+        { "name": "$title", "type": { "name": "text", "is_array": false, "metadata": null } },
+        { "name": "$body", "type": { "name": "text", "is_array": false, "metadata": null } }
       ],
       "public": true,
       "modifiers": null,
@@ -108,34 +108,42 @@
     },
     {
       "name": "get_post_by_id",
-      "parameters": [{ "name": "$id", "type": { "name": "int", "is_array": false } }],
+      "parameters": [
+        { "name": "$id", "type": { "name": "int", "is_array": false, "metadata": null } }
+      ],
       "public": true,
       "modifiers": ["VIEW"],
       "body": "for $row in SELECT post_title, post_body FROM posts WHERE id = $id {\n        return $row.post_title, $row.post_body; // will return on the first iteration\n    }\n\n    error(format('record with id = \"%s\" not found', $id));",
       "return_types": {
         "is_table": false,
         "fields": [
-          { "name": "title", "type": { "name": "text", "is_array": false } },
-          { "name": "body", "type": { "name": "text", "is_array": false } }
+          { "name": "title", "type": { "name": "text", "is_array": false, "metadata": null } },
+          { "name": "body", "type": { "name": "text", "is_array": false, "metadata": null } }
         ]
       },
       "annotations": null
     },
     {
       "name": "proc_call_base",
-      "parameters": [{ "name": "$dbid", "type": { "name": "text", "is_array": false } }],
+      "parameters": [
+        { "name": "$dbid", "type": { "name": "text", "is_array": false, "metadata": null } }
+      ],
       "public": true,
       "modifiers": ["VIEW"],
       "body": "$message text := call_base_view[$dbid, 'return_hello']();\n    return $message;",
       "return_types": {
         "is_table": false,
-        "fields": [{ "name": "original", "type": { "name": "text", "is_array": false } }]
+        "fields": [
+          { "name": "original", "type": { "name": "text", "is_array": false, "metadata": null } }
+        ]
       },
       "annotations": null
     },
     {
       "name": "proc_insert_base",
-      "parameters": [{ "name": "$dbid", "type": { "name": "text", "is_array": false } }],
+      "parameters": [
+        { "name": "$dbid", "type": { "name": "text", "is_array": false, "metadata": null } }
+      ],
       "public": true,
       "modifiers": null,
       "body": "call_base_insert[$dbid, 'add_foo']();",
@@ -149,7 +157,9 @@
       "parameters": null,
       "returns": {
         "is_table": false,
-        "fields": [{ "name": "col0", "type": { "name": "text", "is_array": false } }]
+        "fields": [
+          { "name": "col0", "type": { "name": "text", "is_array": false, "metadata": null } }
+        ]
       }
     },
     { "name": "call_base_insert", "parameters": null, "returns": null }

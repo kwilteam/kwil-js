@@ -420,11 +420,9 @@ describe('Testing case insentivity on test_db', () => {
   });
 
   it('should return an expired cookie when logging out', async () => {
-    //@ts-ignore
+    // @ts-ignore
     const preCookie = kwil.cookie;
-    console.log(kwil)
     const result = await kwil.auth.logout();
-    console.log('result:', result)
 
     //@ts-ignore
     const postCookie = kwil.cookie;

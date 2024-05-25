@@ -1,21 +1,23 @@
 import { Transaction } from '../core/tx';
 import { objects } from '../utils/objects';
-import { HexString, Nillable, NonNil, Promisy } from '../utils/types';
+import { Base64String, HexString, Nillable, NonNil, Promisy } from '../utils/types';
 import { Kwil } from '../client/kwil';
 import { ActionBuilder, SignerSupplier, PayloadBuilder } from '../core/builders';
 import { PayloadBuilderImpl } from './payload_builder';
 import { ActionInput } from '../core/action';
-import { EnvironmentType, PayloadType, ValueType } from '../core/enums';
+import { EnvironmentType, PayloadType, ValueType, VarType } from '../core/enums';
 import { AnySignatureType, SignatureType, getSignatureType } from '../core/signature';
-import { UnencodedActionPayload } from '../core/payload';
+import { CompiledDataType, EncodedValue, UnencodedActionPayload } from '../core/payload';
 import { Message } from '../core/message';
+import { DataType } from '../core/database';
+import { stringToBytes } from '../utils/serial';
+import { bytesToBase64 } from '../utils/base64';
 
 interface CheckSchema {
   dbid: string;
   name: string;
   modifiers?: ReadonlyArray<string>;
-  preparedActions: ValueType[][] | [];
-  nilArgs: boolean[][] | [];
+  preparedActions: EncodedValue[][];
 }
 
 interface ExecSchema {
@@ -291,7 +293,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
    */
   private async dobuildTx(actions: ActionInput[]): Promise<Transaction> {
     // retrieve the schema and run validations
-    const { dbid, name, preparedActions, modifiers, nilArgs } = await this.checkSchema(actions);
+    const { dbid, name, preparedActions, modifiers } = await this.checkSchema(actions);
 
     // throw runtime error if signer is null or undefined
     const signer = objects.requireNonNil(
@@ -327,7 +329,6 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
       dbid: dbid,
       action: name,
       arguments: preparedActions,
-      nilArgs: nilArgs,
     };
 
     // build the transaction
@@ -355,7 +356,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
    */
   private async doBuildMsg(action: ActionInput[]): Promise<Message> {
     // retrieve the schema and run validations
-    const { dbid, name, preparedActions, modifiers, nilArgs } = await this.checkSchema(action);
+    const { dbid, name, preparedActions, modifiers } = await this.checkSchema(action);
 
     // throw a runtime error if more than one set of inputs is trying to be executed. Call does not allow bulk execution.
     if (preparedActions && preparedActions.length > 1) {
@@ -379,7 +380,6 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
       // if there are prepared actions, then the first element in the array is the action inputs.
       arguments: preparedActions.length > 0 ? preparedActions[0] : [],
       // if there are nilArgs, then the first element in the array is the nilArgs.
-      nilArgs: nilArgs.length > 0 ? nilArgs[0] : [],
     };
 
     let msg: PayloadBuilder = PayloadBuilderImpl.of(this.kwil).payload(payload);
@@ -451,18 +451,13 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
     if (actions) {
       // ensure that no action inputs or values are missing
       const preparedActions = this.prepareActions(actions, execSchema, name);
-      const nilArgs = preparedActions.map((a1) => {
-        return a1.map((a2) => {
-          return a2 === null || a2 === undefined;
-        });
-      });
+     
 
       return {
         dbid: dbid,
         name: name,
         modifiers: execSchema.modifiers,
-        preparedActions: preparedActions,
-        nilArgs: nilArgs,
+        preparedActions
       };
     }
 
@@ -471,7 +466,6 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
       name: name,
       modifiers: execSchema.modifiers,
       preparedActions: [],
-      nilArgs: [],
     };
   };
 
@@ -487,7 +481,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
     actions: ActionInput[],
     execSchema: ExecSchema,
     actionName: string
-  ): ValueType[][] {
+  ): EncodedValue[][] {
     // if action does not require parameters, return an empty array
     if ((!execSchema.parameters || execSchema.parameters.length === 0) && actions.length === 0) {
       return [];
@@ -539,16 +533,11 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
         copy.put(p, val);
       });
 
+      
       if (missingInputs.size === 0) {
         execSchema.parameters && preparedActions.push(
           execSchema.parameters.map((p) => {
             const val = copy.get(p);
-
-            // because all values are technically strings under the kwildb hood, we need to convert all values that will resolve to a string to a string.
-            if (val?.toString()) {
-              return val.toString();
-            }
-
             return val
           })
         );
@@ -559,12 +548,103 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
       throw new Error(`Inputs are missing for actions: ${Array.from(missingInputs)}`);
     }
 
-    return preparedActions;
+    let encodedValues: EncodedValue[][] = [];
+
+    // construct the encoded value
+    preparedActions.forEach((action) => {
+      let singleEncodedValues: EncodedValue[] = [];
+      action.forEach((val) => {
+        const { metadata } = analyzeDecimal(val);
+
+        const metadataSpread = metadata ? { metadata } : {}
+
+        const dataType: DataType = {
+          name: val === null || val === undefined ? VarType.NULLSTR : VarType.TEXTSTR,
+          is_array: Array.isArray(val),
+          ...metadataSpread
+        }
+
+        let data: Base64String[] = []
+
+        if(Array.isArray(val)) {
+          data = val.map((v) => {
+            return v?.toString() || ''
+          })
+        } else {
+          data = [val?.toString() || '']
+        }
+
+        singleEncodedValues.push({
+          type: dataType,
+          data
+        })
+      })
+
+      encodedValues.push(singleEncodedValues)
+    })
+
+    return encodedValues;
   }
 
   private assertNotBuilding(): void {
     if (this._actions === TXN_BUILD_IN_PROGRESS) {
       throw new Error('Cannot modify the builder while a transaction is being built.');
     }
+  }
+}
+
+function analyzeNumber(num: number) {
+  // Convert the number to a string and handle potential negative sign
+  const numStr = Math.abs(num).toString();
+
+  // Check for the presence of a decimal point
+  const decimalIndex = numStr.indexOf('.');
+  const hasDecimal = decimalIndex !== -1;
+
+  // Calculate total digits (excluding the decimal point)
+  const totalDigits = hasDecimal ? numStr.length - 1 : numStr.length;
+
+  // Analysis object to hold the results
+  const analysis = {
+    hasDecimal: hasDecimal,
+    totalDigits: totalDigits,
+    decimalPosition: hasDecimal ? decimalIndex : -1
+  };
+
+  return analysis;
+}
+
+function analyzeDecimal(val: ValueType): { metadata: [number, number] | undefined} {
+  if (val === null) {
+    return { metadata: undefined };
+  }
+  
+  if (val === undefined) {
+    return { metadata: undefined };
+  }
+
+  if(Array.isArray(val)) {
+    return analyzeDecimal(val[0])
+  }
+
+  let metadata: [number, number] | undefined;
+
+  switch (typeof val) {
+    case 'string':
+      break;
+    case 'number':
+      const numAnalysis = analyzeNumber(val);
+      if (numAnalysis.hasDecimal) {
+        metadata = [numAnalysis.totalDigits, numAnalysis.decimalPosition];
+      }
+      break;
+    case 'boolean':
+      break;
+    default:
+      throw new Error(`Unsupported type: ${typeof val}. If using a uuid, blob, or uint256, please convert to a JavaScript string.`);
+  }
+
+  return {
+    metadata
   }
 }

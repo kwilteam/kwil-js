@@ -1,6 +1,6 @@
 {
   "name": "testdb",
-  "owner": null,
+  "owner": "",
   "extensions": null,
   "tables": [
     {
@@ -8,47 +8,29 @@
       "columns": [
         {
           "name": "id",
-          "type": {
-            "name": "int",
-            "is_array": false
-          },
+          "type": { "name": "int", "is_array": false, "metadata": null },
           "attributes": [
-            {
-              "type": "PRIMARY_KEY"
-            },
-            {
-              "type": "NOT_NULL"
-            }
+            { "type": "PRIMARY_KEY", "value": "" },
+            { "type": "NOT_NULL", "value": "" }
           ]
         },
         {
           "name": "username",
-          "type": {
-            "name": "text",
-            "is_array": false
-          }
+          "type": { "name": "text", "is_array": false, "metadata": null },
+          "attributes": null
         },
         {
           "name": "age",
-          "type": {
-            "name": "int",
-            "is_array": false
-          },
-          "attributes": [
-            {
-              "type": "MIN",
-              "value": "0"
-            }
-          ]
+          "type": { "name": "int", "is_array": false, "metadata": null },
+          "attributes": [{ "type": "MIN", "value": "0" }]
         },
         {
           "name": "wallet",
-          "type": {
-            "name": "text",
-            "is_array": false
-          }
+          "type": { "name": "text", "is_array": false, "metadata": null },
+          "attributes": null
         }
       ],
+      "indexes": null,
       "foreign_keys": null
     },
     {
@@ -56,56 +38,30 @@
       "columns": [
         {
           "name": "id",
-          "type": {
-            "name": "int",
-            "is_array": false
-          },
+          "type": { "name": "int", "is_array": false, "metadata": null },
           "attributes": [
-            {
-              "type": "PRIMARY_KEY"
-            },
-            {
-              "type": "NOT_NULL"
-            }
+            { "type": "PRIMARY_KEY", "value": "" },
+            { "type": "NOT_NULL", "value": "" }
           ]
         },
         {
           "name": "user_id",
-          "type": {
-            "name": "int",
-            "is_array": false
-          }
+          "type": { "name": "int", "is_array": false, "metadata": null },
+          "attributes": null
         },
         {
           "name": "title",
-          "type": {
-            "name": "text",
-            "is_array": false
-          }
+          "type": { "name": "text", "is_array": false, "metadata": null },
+          "attributes": null
         },
         {
           "name": "content",
-          "type": {
-            "name": "text",
-            "is_array": false
-          },
-          "attributes": [
-            {
-              "type": "MAX_LENGTH",
-              "value": "1000"
-            }
-          ]
+          "type": { "name": "text", "is_array": false, "metadata": null },
+          "attributes": [{ "type": "MAX_LENGTH", "value": "1000" }]
         }
       ],
       "indexes": [
-        {
-          "name": "unique_index",
-          "columns": [
-            "user_id",
-            "title"
-          ],
-          "type": "UNIQUE_BTREE"
-        }
+        { "name": "unique_index", "columns": ["user_id", "title"], "type": "UNIQUE_BTREE" }
       ],
       "foreign_keys": null
     }
@@ -113,26 +69,23 @@
   "actions": [
     {
       "name": "createusertest",
-      "parameters": [
-        "$id",
-        "$username",
-        "$age"
-      ],
+      "annotations": null,
+      "parameters": ["$id", "$username", "$age"],
       "public": true,
       "modifiers": null,
       "body": "INSERT INTO users( id , username , age , wallet ) VALUES ( $id , $username , $age , @caller );"
     },
     {
       "name": "update_username",
-      "parameters": [
-        "$username"
-      ],
+      "annotations": null,
+      "parameters": ["$username"],
       "public": true,
       "modifiers": null,
       "body": "UPDATE users SET username = $username WHERE wallet = @caller;"
     },
     {
       "name": "delete_user",
+      "annotations": null,
       "parameters": null,
       "public": true,
       "modifiers": null,
@@ -140,62 +93,50 @@
     },
     {
       "name": "create_post",
-      "parameters": [
-        "$id",
-        "$title",
-        "$content"
-      ],
+      "annotations": null,
+      "parameters": ["$id", "$title", "$content"],
       "public": true,
       "modifiers": null,
       "body": "INSERT INTO posts( id , user_id , title , content ) VALUES ( $id , ( SELECT id FROM users WHERE wallet = @caller ) , $title , $content );"
     },
     {
       "name": "delete_post",
-      "parameters": [
-        "$id"
-      ],
+      "annotations": null,
+      "parameters": ["$id"],
       "public": true,
       "modifiers": null,
       "body": "DELETE FROM posts WHERE id = $id AND user_id =( SELECT id FROM users WHERE wallet = @caller );"
     },
     {
       "name": "get_user_by_wallet",
-      "parameters": [
-        "$address"
-      ],
+      "annotations": null,
+      "parameters": ["$address"],
       "public": true,
-      "modifiers": [
-        "VIEW"
-      ],
+      "modifiers": ["VIEW"],
       "body": "SELECT * FROM users WHERE wallet = $address;"
     },
     {
       "name": "list_users",
+      "annotations": null,
       "parameters": null,
       "public": true,
-      "modifiers": [
-        "VIEW"
-      ],
+      "modifiers": ["VIEW"],
       "body": "SELECT * FROM users;"
     },
     {
       "name": "get_user_posts",
-      "parameters": [
-        "$username"
-      ],
+      "annotations": null,
+      "parameters": ["$username"],
       "public": true,
-      "modifiers": [
-        "VIEW"
-      ],
+      "modifiers": ["VIEW"],
       "body": "SELECT title , content FROM posts WHERE user_id =( SELECT id FROM users WHERE username = $username );"
     },
     {
       "name": "multi_select",
+      "annotations": null,
       "parameters": null,
       "public": true,
-      "modifiers": [
-        "VIEW"
-      ],
+      "modifiers": ["VIEW"],
       "body": "SELECT * FROM posts;\n    SELECT * FROM users;"
     }
   ],
