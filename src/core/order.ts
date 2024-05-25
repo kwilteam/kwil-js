@@ -24,15 +24,21 @@ export function enforceDatabaseOrder(db: NonNil<EncodeableDatabase>): NonNil<Enc
             return {
                 name: table.name,
                 columns: table.columns && table.columns.length > 0 ? table.columns?.map(column => {
+                    const metadataSpread = column.type.metadata ? { metadata: column.type.metadata } : {}
                     return {
                         name: column.name,
-                        type: column.type,
+                        type: {
+                            name: column.type.name,
+                            is_array: column.type.is_array,
+                            ...metadataSpread
+                        },
                         attributes: column.attributes?.map(attribute => {
                             return {
                                 type: attribute.type,
                                 value: attribute.value,
                             }
                         }),
+                       
                     }
                 }) : [],
                 indexes: table.indexes && table.indexes.length > 0 ? table.indexes?.map(index => {
@@ -71,9 +77,14 @@ export function enforceDatabaseOrder(db: NonNil<EncodeableDatabase>): NonNil<Enc
             return {
                 name: procedure.name,
                 parameters: procedure.parameters && procedure.parameters.length > 0 ? procedure.parameters?.map(parameter => {
+                    const metadataSpread = parameter.type.metadata ? { metadata: parameter.type.metadata } : {}
                     return {
                         name: parameter.name,
-                        type: parameter.type,
+                        type: {
+                            name: parameter.type.name,
+                            is_array: parameter.type.is_array,
+                            ...metadataSpread
+                        }
                     }
                 }) : [],
                 public: procedure.public,
@@ -87,9 +98,11 @@ export function enforceDatabaseOrder(db: NonNil<EncodeableDatabase>): NonNil<Enc
             return {
                 name: foreignCall.name,
                 parameters: foreignCall.parameters && foreignCall.parameters.length > 0 ? foreignCall.parameters?.map(parameter => {
+                    const metadataSpread = parameter.metadata ? { metadata: parameter.metadata } : {}
                     return {
                         name: parameter.name,
                         is_array: parameter.is_array,
+                        ...metadataSpread
                     }
                 }): [],
                 returns: foreignCall.returns

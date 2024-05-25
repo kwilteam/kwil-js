@@ -8,7 +8,7 @@
       "columns": [
         {
           "name": "id",
-          "type": { "name": "uuid", "is_array": false },
+          "type": { "name": "uuid", "is_array": false, "metadata": null },
           "attributes": [{ "type": "PRIMARY_KEY", "value": "" }]
         }
       ],
@@ -26,7 +26,9 @@
       "body": "return 'hello world';",
       "return_types": {
         "is_table": false,
-        "fields": [{ "name": "message", "type": { "name": "text", "is_array": false } }]
+        "fields": [
+          { "name": "message", "type": { "name": "text", "is_array": false, "metadata": null } }
+        ]
       },
       "annotations": null
     },

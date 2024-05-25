@@ -1,13 +1,13 @@
 import { objects } from '../utils/objects';
-import { EnvironmentType, ValueType } from './enums';
+import { ValueType } from './enums';
 
-export type Entry<T extends ValueType> = [string, T];
+export type Entry<T extends ValueType | ValueType[]> = [string, T];
 
-export type EntryType = Entry<ValueType>;
+export type EntryType = Entry<ValueType> | Entry<ValueType[]>;
 
-export type Entries = { [key: string]: ValueType };
+export type Entries = { [key: string]: ValueType | ValueType []};
 
-export type Predicate = (k: [key: string, v: ValueType]) => boolean;
+export type Predicate = (k: [key: string, v: ValueType | ValueType[]]) => boolean;
 
 /**
  * ActionBody is the interface for executing an action with the `kwil.execute()` method or calling an action with the `kwil.call()` method.
@@ -171,7 +171,7 @@ export class ActionInput implements Iterable<EntryType> {
    */
 
   public toArray(filter?: Predicate): ReadonlyArray<EntryType> {
-    return Object.entries(this.map).filter(filter ?? (() => true));
+    return Object.entries(this.map).filter(filter ?? (() => true)) as ReadonlyArray<EntryType>;
   }
 
   /**

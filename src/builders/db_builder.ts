@@ -23,8 +23,7 @@ import { AllPayloads, CompiledKuneiform, DbPayloadType, DropDbPayload } from '..
  */
 
 export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType>
-  implements DBBuilder<T>
-{
+  implements DBBuilder<T> {
   private readonly kwil: Kwil<U>;
   private _payload: Nillable<() => NonNil<CompiledKuneiform | DropDbPayload>> = null;
   private _signer: Nillable<SignerSupplier> = null;
@@ -257,6 +256,7 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType>
 
     const resolvedPayload = payload();
 
+    // @ts-ignore
     let db = resolvedPayload as EncodeableDatabase;
 
     if (!db.owner) {
@@ -287,11 +287,24 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType>
               column.name = '';
             }
 
-            if (!column.type) {
+
+            if (!column.type.name) {
+              column.type.name = VarType.NULLSTR
+            }
+
+            if (!column.type.is_array) {
+              column.type.is_array = false
+            }
+
+            // Todo: Revist this, the approach feels hacky
+            // Kuneiform parser outputs a null metadata field, but for RLP, we need to remove the metata property from the object
+            if (column.type.metadata === null || column.type.metadata === undefined) {
+              // remove from object
               column.type = {
-                name: VarType.NULL,
-                is_array: false,
-              };
+                name: column.type.name,
+                is_array: column.type.is_array
+              }
+
             }
 
             if (!column.attributes) {
@@ -445,11 +458,22 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType>
               parameter.name = '';
             }
 
-            if (!parameter.type) {
+            if (!parameter.type.name) {
+              parameter.type.name = VarType.NULLSTR
+            }
+
+            if (!parameter.type.is_array) {
+              parameter.type.is_array = false
+            }
+
+            // Todo: Revist this, the approach feels hacky
+            // Kuneiform parser outputs a null metadata field, but for RLP, we need to remove the metata property from the object
+            if (parameter.type.metadata === null || parameter.type.metadata === undefined) {
+              // remove from object
               parameter.type = {
-                name: '',
-                is_array: false,
-              };
+                name: parameter.type.name,
+                is_array: parameter.type.is_array,
+              }
             }
           });
 
@@ -469,6 +493,37 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType>
           procedure.return_types = []
         }
 
+        if (!Array.isArray(procedure.return_types)) {
+          if (!procedure.return_types.is_table) {
+            procedure.return_types.is_table = false;
+          }
+
+          procedure.return_types.fields &&
+            procedure.return_types.fields.forEach((field) => {
+              if (!field.name) {
+                field.name = ''
+              }
+
+              if (!field.type.name) {
+                field.type.name = VarType.TEXTSTR
+              }
+
+              if (!field.type.is_array) {
+                field.type.is_array = false
+              }
+
+              // Todo: Revist this, the approach feels hacky
+              // Kuneiform parser outputs a null metadata field, but for RLP, we need to remove the metata property from the object
+              if (field.type.metadata === null || field.type.metadata === undefined) {
+                // remove from object
+                field.type = {
+                  name: field.type.name,
+                  is_array: field.type.is_array
+                }
+              }
+            })
+        }
+
         if (!procedure.annotations) {
           procedure.annotations = [];
         }
@@ -477,7 +532,7 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType>
     if (!db.foreign_calls) {
       db.foreign_calls = [];
     }
-    
+
     db.foreign_calls &&
       db.foreign_calls.forEach((foreignCall) => {
         if (!foreignCall.name) {
@@ -491,16 +546,53 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType>
         foreignCall.parameters &&
           foreignCall.parameters.forEach((parameter) => {
             if (!parameter.name) {
-              parameter.name = '';
+              parameter.name = VarType.NULLSTR;
             }
 
             if (parameter.is_array === undefined || parameter.is_array === null) {
               parameter.is_array = false;
             }
+
+            if (parameter.metadata === null || parameter.metadata === undefined) {
+              parameter = {
+                name: parameter.name,
+                is_array: parameter.is_array
+              }
+            }
           });
 
         if (!foreignCall.returns) {
           foreignCall.returns = [];
+        }
+
+        if (!Array.isArray(foreignCall.returns)) {
+          if (!foreignCall.returns.is_table) {
+            foreignCall.returns.is_table = false;
+          }
+
+          foreignCall.returns.fields.forEach((field) => {
+            if (!field.name) {
+              field.name = ''
+            }
+
+            if (!field.type.name) {
+              field.type.name = VarType.TEXTSTR
+            }
+
+            if (!field.type.is_array) {
+              field.type.is_array = false
+            }
+
+            // Todo: Revist this, the approach feels hacky
+            // Kuneiform parser outputs a null metadata field, but for RLP, we need to remove the metata property from the object
+            if (field.type.metadata === null || field.type.metadata === undefined) {
+              // remove from object
+              field.type = {
+                name: field.type.name,
+                is_array: field.type.is_array
+              }
+            }
+          })
         }
       });
 

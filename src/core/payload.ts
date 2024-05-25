@@ -1,5 +1,5 @@
-import { NonNil, PartialNillable } from "../utils/types";
-import { ActionSchema, Attribute, Column, Extension, Index, Table, Database, Procedure, ForeignProcedure, EncodeableDatabase } from "./database";
+import { Base64String, Nillable, NonNil, PartialNillable } from "../utils/types";
+import { ActionSchema, Attribute, Column, Extension, Index, Table, Database, Procedure, ForeignProcedure, EncodeableDatabase, DataType, ProcedureReturn, NamedType } from "./database";
 import { BytesEncodingStatus, DeployOrDrop, PayloadType, ValueType } from "./enums";
 
 /**
@@ -14,30 +14,14 @@ export type AllPayloads = UnencodedActionPayload<PayloadType.CALL_ACTION | Paylo
 export type UnencodedActionPayload<T extends PayloadType.CALL_ACTION | PayloadType.EXECUTE_ACTION> = {
     dbid: string;
     action: string;
-    arguments: ActionValueType<T> | [];
-    nilArgs: NilArgValueType<T> | [];
+    arguments: T extends PayloadType.EXECUTE_ACTION ?
+        EncodedValue[][] : EncodedValue[];
 }
 
-/**
- * `ActionValueType` is the type of the `arguments` field in the `UnencodedActionPayload` type.
- * The generic allows the UnencodedActionPayload to be typed to the correct payload type.
- * Update actions can have nested `ValueType` arrays because the allow bulk actions.
- * View actions can only have a single `ValueType` array because they only allow single actions. 
- */
-type ActionValueType<T extends PayloadType.CALL_ACTION | PayloadType.EXECUTE_ACTION> = T extends PayloadType.EXECUTE_ACTION ?
-    ValueType[][] :
-    ValueType[];
-
-/**
- * `NilArgValueType` is the type of the `nilArgs` field in the `UnencodedActionPayload` type.
- * The generic allows the UnencodedActionPayload to be typed to the correct payload type.
- * Update actions can have nested `boolean` arrays because the allow bulk actions.
- * View actions can only have a single `boolean` array because they only allow single actions.
- * The `NilArgValueType` is used to indicate whether the action has nil arguments, and the location of the nil arguments.
- */
-type NilArgValueType<T extends PayloadType.CALL_ACTION | PayloadType.EXECUTE_ACTION> = T extends PayloadType.EXECUTE_ACTION ?
-    boolean[][] :
-    boolean[];
+export interface EncodedValue {
+    type: DataType;
+    data: Base64String[];
+}
 
 /**
  * `DBPayloadType` is the the payload type for deploying and dropping databases.
@@ -64,8 +48,8 @@ export interface CompiledKuneiform {
     tables: PartialNillable<CompiledTable>[] | null;
     actions: PartialNillable<ActionSchema>[] | null;
     extensions: PartialNillable<Extension>[] | null;
-    procedures: PartialNillable<Procedure>[] | null;
-    foreign_calls: PartialNillable<ForeignProcedure>[] | null;
+    procedures: PartialNillable<CompiledProcedure>[] | null;
+    foreign_calls: PartialNillable<CompiledForeignProcedure>[] | null;
 };
 
 /**
@@ -80,13 +64,19 @@ export interface TransferPayload<T extends BytesEncodingStatus> {
 }
 
 // The CompiledXXX types are used to replace the enums in the Database interface with strings.
-type CompiledTable = Omit<Table, 'columns' | 'indexes' > & {
-    columns: ReadonlyArray<Partial<CompiledColumn>>;
-    indexes: ReadonlyArray<Partial<CompiledIndex>>;
+export type CompiledTable = Omit<Table, 'columns' | 'indexes' > & {
+    columns: ReadonlyArray<CompiledColumn>;
+    indexes: ReadonlyArray<CompiledIndex>;
 }
 
-type CompiledColumn = Omit<Column, 'attributes' > & {
-    attributes: ReadonlyArray<Partial<CompiledAttribute>>;
+type CompiledColumn = Omit<Column, 'attributes' | 'type' > & {
+    attributes: ReadonlyArray<CompiledAttribute>;
+    type: CompiledDataType;
+}
+
+export type CompiledDataType = Omit<DataType, 'name' | 'metadata'> & {
+    name: string;
+    metadata?: [number, number] | Array<never> | null
 }
 
 type CompiledAttribute = Omit<Attribute, 'type'> & {
@@ -95,4 +85,22 @@ type CompiledAttribute = Omit<Attribute, 'type'> & {
 
 type CompiledIndex = Omit<Index, 'type'> & {
     type: string;
+}
+
+export type CompiledProcedure = Omit<Procedure, 'return_types' | 'parameters'> & {
+    parameters: ReadonlyArray<CompiledNamedType>;
+    return_types: CompiledProcedureReturn | Array<never>;
+}
+
+type CompiledProcedureReturn = Omit<ProcedureReturn, 'fields'> & {
+    fields: ReadonlyArray<CompiledNamedType>;
+}
+
+type CompiledNamedType = Omit<NamedType, 'type'> & {
+    type: CompiledDataType;
+}
+
+export type CompiledForeignProcedure = Omit<ForeignProcedure, 'returns' | 'parameters'> & {
+    parameters: ReadonlyArray<CompiledDataType>
+    returns: CompiledProcedureReturn | Array<never>;
 }
