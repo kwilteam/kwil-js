@@ -130,7 +130,7 @@
       ],
       "public": true,
       "modifiers": ["VIEW"],
-      "body": "$message text := call_base_view[$dbid, 'return_hello']('hello');\n    return $message;",
+      "body": "$message text := call_base_view[$dbid, 'return_hello']();\n    return $message;",
       "return_types": {
         "is_table": false,
         "fields": [
@@ -154,7 +154,7 @@
   "foreign_calls": [
     {
       "name": "call_base_view",
-      "parameters": [{ "name": "text", "is_array": false, "metadata": null }],
+      "parameters": null,
       "returns": {
         "is_table": false,
         "fields": [

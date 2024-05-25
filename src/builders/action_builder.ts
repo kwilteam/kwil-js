@@ -614,13 +614,13 @@ function analyzeNumber(num: number) {
   return analysis;
 }
 
-function analyzeDecimal(val: ValueType) {
+function analyzeDecimal(val: ValueType): { metadata: [number, number] | undefined} {
   if (val === null) {
-    return { varType: VarType.NULLSTR, metadata: undefined };
+    return { metadata: undefined };
   }
   
   if (val === undefined) {
-    return { varType: VarType.NULLSTR, metadata: undefined };
+    return { metadata: undefined };
   }
 
   if(Array.isArray(val)) {
