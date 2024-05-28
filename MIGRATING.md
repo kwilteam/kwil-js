@@ -6,9 +6,9 @@ If you have any questions on a migration, please reach out to luke@kwil.com.
 
 ## Migrating from @kwilteam/kwil-js@0.6 to @kwilteam/kwil-js@0.7-beta.0
 
-Below is a list of all key changes from the [Kwil v0.6 SDK](https://github.com/kwilteam/kwil-js/releases/tag/v0.6.3) to the v0.7-beta SDK.
+Below is a list of all key changes from the [@kwilteam/kwil-js v0.6 SDK](https://github.com/kwilteam/kwil-js/releases/tag/v0.6.3) to the v0.7-beta SDK.
 
-Note that this SDK must be used with a Kwil Node v0.8.0 and above.
+Note that this SDK must be used with Kwil-DB v0.8.0.
 
 ### Breaking Changes
 
@@ -34,9 +34,9 @@ const kwil = new WebKwil({
 });
 ```
 
-#### Kwil.execute() payload (`ActionBody`), requires `name` property instead of `action`.
+#### Kwil.execute() payload requires `name` property instead of `action`
 
-In order to make the API clearer for executing both actions and procedures, the `action` property in the `ActionBody` object has been renamed to `name`. This change is to make it clear that the `name` property is used to specify the name of the action or procedure to be executed.
+In order to make the API clearer for executing both actions and procedures, the `action` property in the `ActionBody` interface has been renamed to `name`. This change is to make it clear that the `name` property is used to specify the name of the action or procedure to be executed.
 
 The `action` property is still supported for backwards compatibility. It will be removed in kwil-js v0.8.
 
