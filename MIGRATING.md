@@ -1,28 +1,90 @@
-# Migrating from Kwil SDK v3
+# Kwil-JS Migration Guide
+
+This document contains important information for migrating between Kwil-JS versions.
+
+If you have any questions on this migration, please reach out to luke@kwil.com.
+
+## Migrating from @kwilteam/kwil-js v0.6 to v0.7-beta
+
+Below is a list of all key changes from the [Kwil v0.6 SDK](https://github.com/kwilteam/kwil-js/releases/tag/v0.6.3) to the v0.7-beta SDK.
+
+Note that this SDK must be used with a Kwil Node v0.8.0 and above.
+
+### Breaking Changes
+
+#### JSON-RPC Endpoint in Kwil Constructor
+
+The Kwil-JS SDK now relies on the JSON-RPC endpoint introduced in Kwil-DB v0.8. Previously, the SDK relied on the REST API endpoint. By default, the Kwil-DB JSON-RPC endpoint is available at `http://localhost:8484`.
+
+##### Old Version
+
+```javascript
+const kwil = new WebKwil({
+    kwilProvider: 'http://localhost:8080', // REST API endpoint
+    chainId: 'your_chain_id'
+});
+```
+
+##### New Version
+
+```javascript
+const kwil = new WebKwil({
+    kwilProvider: 'http://localhost:8484', // JSON-RPC endpoint
+    chainId: 'your_chain_id'
+});
+```
+
+#### Kwil.execute() payload (`ActionBody`), requires `name` property instead of `action`.
+
+In order to make the API clearer for executing both actions and procedures, the `action` property in the `ActionBody` object has been renamed to `name`. This change is to make it clear that the `name` property is used to specify the name of the action or procedure to be executed.
+
+The `action` property is still supported for backwards compatibility. It will be removed in kwil-js v0.8.
+
+##### Old Version
+
+```javascript
+await kwil.execute({
+    dbid: 'some_dbid',
+    action: 'action_name',
+    inputs: [ 'inputs' ]
+}, kwilSigner);
+```
+
+##### New Version
+
+```javascript
+await kwil.execute({
+    dbid: 'some_dbid',
+    name: 'action_or_procedure_name',
+    inputs: [ 'inputs' ]
+}, kwilSigner);
+```
+
+## Migrating from Kwil SDK v3 (old SDK) to @kwilteam/kwil-js v0.6
 
 Below is a list of all key changes from the [Kwil v3 SDK / old Kwil SDK](https://www.npmjs.com/package/kwil).
 
 Note that this SDK must be used with a Kwil Node v0.6.0 and above. If you are not using a Kwil Node on v0.6.0 or above, please use the [old Kwil SDK](https://www.npmjs.com/package/kwil).
 
-## Breaking Changes
+### Breaking Changes
 
-### Chain ID Configuration
+#### Chain ID Configuration
 
 In order to prevent users from accidentally broadcasting transactions to the wrong Kwil chain, the Kwil chain ID must now be specified when initializing the Kwil object.
 
-#### Old Version
+##### Old Version
 
 ```javascript
 const kwil = new WebKwil({
-    provider: 'https://some_kwil_provider',
+    kwilProvider: 'https://some_kwil_kwil_provider',
 });
 ```
 
-#### New Version
+##### New Version
 
 ```javascript
 const kwil = new WebKwil({
-    provider: 'https://some_kwil_provider',
+    kwilProvider: 'https://some_kwil_kwil_provider',
     chainId: 'your_chain_id'
 });
 ```
@@ -41,7 +103,7 @@ const res = await kwil.chainInfo()
 */
 ```
 
-### Account Identifiers Determined by Signers
+#### Account Identifiers Determined by Signers
 
 In the old version, accounts were only identified by Ethereum Wallets. Now, Kwil Networks support pluggable authentication/signers, meaning that the signer determines the appropriate account identifier.
 
@@ -54,7 +116,7 @@ Out of the box, Kwil supports Secp256k1 (Ethereum) and Ed25519 signatures. Their
 
 When returned from the server, identifiers will always be represented as a Uint8Array.
 
-#### Old Version
+##### Old Version
 
 ```javascript
 const res = await kwil.getAccount('wallet_address');
@@ -68,7 +130,7 @@ const res = await kwil.getAccount('wallet_address');
 */
 ```
 
-#### New Version
+##### New Version
 
 ```javascript
 const res = await kwil.getAccount('account_identifier');
@@ -83,13 +145,13 @@ const res = await kwil.getAccount('account_identifier');
 
 ```
 
-### Executing Actions + Friendly Signature Messages
+#### Executing Actions + Friendly Signature Messages
 
 The previous version of Kwil used an `ActionBuilder()` class to build and sign transactions. `ActionBuilder()` has been moved internally. Actions can now be executed by using the `kwil.execute()` method, passing an object that matches the `ActionBody` interface and a [KwilSigner](#kwil-signer-class--ed25519-signatures) (see more below).
 
 You can also customize the signature message that appears in MetaMask by adding a `decscription` field to the action body.
 
-#### Old Version
+##### Old Version
 
 ```javascript
 const tx = await kwil
@@ -101,7 +163,7 @@ const tx = await kwil
     .buildTx();
 ```
 
-#### New Version
+##### New Version
 
 ```javascript
 const actionBody = {
@@ -114,13 +176,13 @@ const actionBody = {
 const res = await kwil.execute(actionBody, kwilSigner);
 ```
 
-### Data Returned From Transactions
+#### Data Returned From Transactions
 
 In the old version, the information returned from the broadcast endpoint would indicate whether a transaction was successful or not.
 
 Now, a transaction must be mined on the Kwil chain before a user will know if it is successful. This means that the `.broadcast()` method will only return a `tx_hash`. You can check the status of the tx by calling `kwil.txInfo(tx_hash)`.
 
-#### Old Version
+##### Old Version
 
 ```javascript
 const res = await kwil.broadcast(tx);
@@ -133,7 +195,7 @@ const res = await kwil.broadcast(tx);
     }
 */
 ```
-#### New Version
+##### New Version
 
 ```javascript
 const res = await kwil.execute(actionBody, kwilSigner);
@@ -156,13 +218,13 @@ const success = await kwil.txInfo(res.data?.tx_hash);
 */
 ```
 
-### List Databases now returns array of `DatasetInfo` objects
+#### List Databases now returns array of `DatasetInfo` objects
 
 In the old version, the `kwil.listDatabases()` method returned an array of database name strings. Now, the `kwil.listDatabases()` method returns an array of `DatasetInfo` objects, which contains the database name, database ID, and database owner.
 
 Additionally, you can now leave the first parameter of `kwil.listDatabases()` empty to list all databases on the Kwil network.
 
-#### Old Version
+##### Old Version
 
 ```javascript
 const res = await kwil.listDatabases();
@@ -172,7 +234,7 @@ const res = await kwil.listDatabases();
 */
 ```
 
-#### New Version
+##### New Version
 
 ```javascript
 const res = await kwil.listDatabases();
@@ -194,13 +256,13 @@ const res = await kwil.listDatabases();
 */
 ```
 
-### Snake case for data returned from server
+#### Snake case for data returned from server
 
 In the old version, there were case inconsistencies in data that was returned from the kwil network. Some data was in camel case, whereas other was in snake case. Now, all data is returned with snake case.
 
-## New Features
+### New Features
 
-### Kwil Signer Class & ED25519 Signatures
+#### Kwil Signer Class & ED25519 Signatures
 
 In the old version, the Kwil SDK used EtherJS signers for signing transactions. Now, the Kwil SDK uses a `KwilSigner` class, which can be used to sign transactions with multiple signature types.
 
@@ -211,8 +273,8 @@ import { KwilSigner } from '@kwilteam/kwil-js';
 import { BrowserProvider } from 'ethers';
 
 // get ethers signer
-const provider = new BrowserProvider(window.ethereum)
-const signer = await provider.getSigner();
+const kwilProvider = new BrowserProvider(window.ethereum)
+const signer = await kwilProvider.getSigner();
 
 // get wallet address
 const address = await signer.getAddress();
@@ -274,7 +336,7 @@ If the view action uses a `@caller` contextual variable, you should also pass th
 await kwil.call(actionBody, kwilSigner)
 ```
 
-### TxInfo Endpoint
+#### TxInfo Endpoint
 
 After broadcasting a transaction, you can check its status (success, failure, blockheight, etc) by calling the `kwil.txInfo()` method.
 
