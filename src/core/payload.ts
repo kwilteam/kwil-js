@@ -76,7 +76,7 @@ type CompiledColumn = Omit<Column, 'attributes' | 'type' > & {
 
 export type CompiledDataType = Omit<DataType, 'name' | 'metadata'> & {
     name: string;
-    metadata?: [number, number] | Array<never> | null
+    metadata?: Array<number> | Array<never> | null
 }
 
 type CompiledAttribute = Omit<Attribute, 'type'> & {

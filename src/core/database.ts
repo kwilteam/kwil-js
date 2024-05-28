@@ -118,7 +118,7 @@ export interface NamedType {
 export interface DataType {
   name: VarType;
   is_array: boolean;
-  metadata?: [number, number] | Array<never> | null;
+  metadata?: Array<number> | Array<never> | null;
 }
 
 export interface ProcedureReturn {
