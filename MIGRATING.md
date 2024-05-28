@@ -4,7 +4,7 @@ This document contains important information for migrating between Kwil-JS versi
 
 If you have any questions on a migration, please reach out to luke@kwil.com.
 
-## Migrating from @kwilteam/kwil-js v0.6 to v0.7-beta
+## Migrating from @kwilteam/kwil-js@0.6 to @kwilteam/kwil-js@0.7-beta.0
 
 Below is a list of all key changes from the [Kwil v0.6 SDK](https://github.com/kwilteam/kwil-js/releases/tag/v0.6.3) to the v0.7-beta SDK.
 
