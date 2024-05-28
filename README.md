@@ -4,10 +4,11 @@ Kwil-JS is a JavaScript/Typescript SDK for building browser and NodeJS applicati
 
 ## Versioning
 
-Make sure to use the correct version of the Kwil-JS SDK for the version of the Kwil daemon you are using:
+Make sure to use the correct version of the Kwil-JS SDK for the version of the [Kwil-DB](https://github.com/kwilteam/kwil-db/tags) you are using:
 
 | Kwil Daemon Version | Kwil-JS Version |
 | :------------------: | :-------------: |
+| v0.8                 | v0.7             |
 | v.0.7 only           | v0.6             |
 | v0.6 & v0.7          | v0.5             |
 
@@ -145,7 +146,7 @@ const dbid = kwil.getDBID("account_identifier", "database_name")
 
 const actionBody = {
     dbid,
-    action: "your_action_name",
+    name: "your_action_name",
     inputs: [ input ],
     description: "Click sign to execute the action!"
 }
@@ -186,7 +187,7 @@ const dbid = kwil.getDBID("account_identifier", "database_name")
 
 const actionBody = {
     dbid,
-    action: "your_action_name",
+    name: "your_action_name",
     inputs: [ input ]
 }
 
