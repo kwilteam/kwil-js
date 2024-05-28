@@ -2,7 +2,7 @@
 
 This document contains important information for migrating between Kwil-JS versions.
 
-If you have any questions on this migration, please reach out to luke@kwil.com.
+If you have any questions on a migration, please reach out to luke@kwil.com.
 
 ## Migrating from @kwilteam/kwil-js v0.6 to v0.7-beta
 
