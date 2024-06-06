@@ -33,6 +33,7 @@
     "@commitlint/config-conventional": "^17.7.0",
     "@types/jest": "^29.5.3",
     "@types/node": "^18.11.17",
+    "@types/uuid": "^9.0.8",
     "@typescript-eslint/eslint-plugin": "^5.38.0",
     "@typescript-eslint/parser": "^5.38.0",
     "commitizen": "^4.3.0",
@@ -52,7 +53,8 @@
     "ts-jest": "^29.1.0",
     "ts-node": "^10.9.1",
     "tweetnacl": "^1.0.3",
-    "typescript": "^4.9.4"
+    "typescript": "^4.9.4",
+    "uuid": "^9.0.1"
   },
   "dependencies": {
     "axios": "^0.27.2",

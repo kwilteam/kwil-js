@@ -849,3 +849,189 @@ describe('unconfirmedNonce', () => {
     expect(nonce).toBe(initialNonce + 1);
   });
 });
+
+import variableDb from './variable_test.json'
+import { v4 as uuidV4 } from 'uuid';
+import { stringToBytes } from '../dist/utils/serial';
+import { bytesToBase64 } from '../dist/utils/base64';
+
+describe.only('Kwil DB types', () => {
+  const kwilSigner = new KwilSigner(wallet, address);
+  const dbid = kwil.getDBID(address, 'variable_test');
+
+  beforeAll(async () => {
+    await kwil.deploy({
+      schema: variableDb,
+    }, kwilSigner, true);
+  }, 10000);
+
+  afterAll(async () => {
+    await dropTestDb(dbid, kwilSigner);
+  }, 10000);
+
+  test('should be able to insert a record with a UUID', async () => {
+    const uuid = uuidV4();
+
+    const res = await kwil.execute({
+      dbid,
+      name: 'insert_uuid',
+      inputs: [
+        {
+          $id: uuid
+        }
+      ]
+    }, kwilSigner, true);
+
+    expect(res.data).toBeDefined();
+    expect(res.status).toBe(200);
+
+    const query = await kwil.selectQuery(dbid, `SELECT * FROM var_table WHERE uuid_col = '${uuid}'`);
+    expect(query.data).toBeDefined();
+    expect(query.data).toHaveLength(1);
+  }, 10000);
+
+  test('should be able to insert a record with a text', async () => {
+    const id = uuidV4();
+    const text = 'This is a test text';
+
+    const res = await kwil.execute({
+      dbid,
+      name: 'insert_text',
+      inputs: [
+        {
+          $id: id,
+          $text: text
+        }
+      ]
+    }, kwilSigner, true);
+
+    expect(res.data).toBeDefined();
+    expect(res.status).toBe(200);
+
+    const query = await kwil.selectQuery(dbid, `SELECT * FROM var_table WHERE text_col = '${text}'`);
+
+    expect(query.data).toBeDefined();
+    expect(query.data).toHaveLength(1);
+  }, 10000);
+
+  test('should be able to insert a record with an integer', async () => {
+    const id = uuidV4();
+    const num = 123;
+
+    const res = await kwil.execute({
+      dbid,
+      name: 'insert_int',
+      inputs: [
+        {
+          $id: id,
+          $int: num
+        }
+      ]
+    }, kwilSigner, true);
+
+    expect(res.data).toBeDefined();
+    expect(res.status).toBe(200);
+
+    const query = await kwil.selectQuery(dbid, `SELECT * FROM var_table WHERE int_col = ${num}`);
+
+    expect(query.data).toBeDefined();
+    expect(query.data).toHaveLength(1);
+  }, 10000)
+
+  test('should be able to insert a record with a boolean', async () => {
+    const id = uuidV4();
+    const bool = true;
+
+    const res = await kwil.execute({
+      dbid,
+      name: 'insert_bool',
+      inputs: [
+        {
+          $id: id,
+          $bool: bool
+        }
+      ]
+    }, kwilSigner, true);
+
+    expect(res.data).toBeDefined();
+    expect(res.status).toBe(200);
+
+    const query = await kwil.selectQuery(dbid, `SELECT * FROM var_table WHERE bool_col = ${bool}`);
+
+    expect(query.data).toBeDefined();
+    expect(query.data).toHaveLength(1);
+  }, 10000);
+
+  test('should be able to insert a record with a decimal', async () => {
+    const id = uuidV4();
+    const dec = 12.345;
+
+    const res = await kwil.execute({
+      dbid,
+      name: 'insert_dec',
+      inputs: [
+        {
+          $id: id,
+          $dec: dec
+        }
+      ]
+    }, kwilSigner, true);
+
+    expect(res.data).toBeDefined();
+    expect(res.status).toBe(200);
+
+    const query = await kwil.selectQuery(dbid, `SELECT * FROM var_table WHERE uuid_col = '${id}'`);
+
+    expect(query.data).toBeDefined();
+    expect(query.data).toHaveLength(1);
+  }, 10000);
+
+  test('should be able to insert a record with a blob', async () => {
+    const id = uuidV4();
+    const blob = bytesToBase64(stringToBytes('This is a test blob'));
+
+    const res = await kwil.execute({
+      dbid,
+      name: 'insert_blob',
+      inputs: [
+        {
+          $id: id,
+          $blob: blob
+        }
+      ]
+    }, kwilSigner, true);
+
+    expect(res.data).toBeDefined();
+    expect(res.status).toBe(200);
+
+    const query = await kwil.selectQuery(dbid, `SELECT * FROM var_table WHERE blob_col = '${blob}'`);
+
+    expect(query.data).toBeDefined();
+    expect(query.data).toHaveLength(1);
+  }, 10000);
+
+  test('should be able to insert a uint256 value', async () => {
+    const id = uuidV4();
+    const maxUint256 = '115792089237316195423570985008687907853269984665640564039457584007913129639935'
+
+    const res = await kwil.execute({
+      dbid,
+      name: 'insert_uint256',
+      inputs: [
+        {
+          $id: id,
+          $uint256: maxUint256
+        }
+      ]
+    }, kwilSigner, true);
+
+    expect(res.data).toBeDefined();
+    expect(res.status).toBe(200);
+    
+    const query = await kwil.selectQuery(dbid, `SELECT * FROM var_table WHERE uint256_col = ${maxUint256}`);
+
+    expect(query.data).toBeDefined();
+    expect(query.data).toHaveLength(1);
+  }, 10000);
+})
+
