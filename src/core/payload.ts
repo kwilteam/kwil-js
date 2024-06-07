@@ -1,6 +1,6 @@
-import { Base64String, Nillable, NonNil, PartialNillable } from "../utils/types";
+import { NonNil, PartialNillable } from "../utils/types";
 import { ActionSchema, Attribute, Column, Extension, Index, Table, Database, Procedure, ForeignProcedure, EncodeableDatabase, DataType, ProcedureReturn, NamedType } from "./database";
-import { BytesEncodingStatus, DeployOrDrop, PayloadType, ValueType } from "./enums";
+import { BytesEncodingStatus, DeployOrDrop, PayloadType } from "./enums";
 
 /**
  * `AllPayloads` is the union of all payload types.
@@ -20,7 +20,7 @@ export type UnencodedActionPayload<T extends PayloadType.CALL_ACTION | PayloadTy
 
 export interface EncodedValue {
     type: DataType;
-    data: Base64String[];
+    data: string[] | Uint8Array[]
 }
 
 /**

@@ -1,17 +1,15 @@
 import { Transaction } from '../core/tx';
 import { objects } from '../utils/objects';
-import { Base64String, HexString, Nillable, NonNil, Promisy } from '../utils/types';
+import { HexString, Nillable, NonNil, Promisy } from '../utils/types';
 import { Kwil } from '../client/kwil';
 import { ActionBuilder, SignerSupplier, PayloadBuilder } from '../core/builders';
 import { PayloadBuilderImpl } from './payload_builder';
 import { ActionInput } from '../core/action';
 import { EnvironmentType, PayloadType, ValueType, VarType } from '../core/enums';
 import { AnySignatureType, SignatureType, getSignatureType } from '../core/signature';
-import { CompiledDataType, EncodedValue, UnencodedActionPayload } from '../core/payload';
+import { EncodedValue, UnencodedActionPayload } from '../core/payload';
 import { Message } from '../core/message';
 import { DataType } from '../core/database';
-import { stringToBytes } from '../utils/serial';
-import { bytesToBase64 } from '../utils/base64';
 
 interface CheckSchema {
   dbid: string;
@@ -554,23 +552,25 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
     preparedActions.forEach((action) => {
       let singleEncodedValues: EncodedValue[] = [];
       action.forEach((val) => {
-        const { metadata } = analyzeDecimal(val);
+        const { metadata, varType } = analyzeVariable(val);
 
         const metadataSpread = metadata ? { metadata } : {}
 
         const dataType: DataType = {
-          name: val === null || val === undefined ? VarType.NULLSTR : VarType.TEXTSTR,
+          name: varType,
           is_array: Array.isArray(val),
           ...metadataSpread
         }
 
-        let data: Base64String[] = []
+        let data: string[] | Uint8Array[] = []
 
-        if(Array.isArray(val)) {
+        if(Array.isArray(val) && !(val instanceof Uint8Array)) {
           data = val.map((v) => {
             return v?.toString() || ''
           })
-        } else {
+        } else if(val instanceof Uint8Array) {
+          data = [val]
+        } else { 
           data = [val?.toString() || '']
         }
 
@@ -614,20 +614,16 @@ function analyzeNumber(num: number) {
   return analysis;
 }
 
-function analyzeDecimal(val: ValueType): { metadata: [number, number] | undefined} {
-  if (val === null) {
-    return { metadata: undefined };
-  }
-  
-  if (val === undefined) {
-    return { metadata: undefined };
-  }
-
+function analyzeVariable(val: ValueType): { metadata: [number, number] | undefined, varType: VarType } {
   if(Array.isArray(val)) {
-    return analyzeDecimal(val[0])
+    // In Kwil, if there is an array of values, each value in the array must be of the same type.
+    return analyzeVariable(val[0])
   }
 
   let metadata: [number, number] | undefined;
+  // Default to text string
+  // Only other types are null or blob. For client-side tooling, everything else can be sent as a string, and Kwil will handle the conversion.
+  let varType: VarType = VarType.TEXT;
 
   switch (typeof val) {
     case 'string':
@@ -640,11 +636,24 @@ function analyzeDecimal(val: ValueType): { metadata: [number, number] | undefine
       break;
     case 'boolean':
       break;
+    case 'object':
+      if(val instanceof Uint8Array) {
+        varType = VarType.BLOB;
+        break;
+      }
+      if(val === null) {
+        varType = VarType.NULL;
+        break;
+      }
+    case 'undefined':
+      varType = VarType.NULL;
+      break;
     default:
       throw new Error(`Unsupported type: ${typeof val}. If using a uuid, blob, or uint256, please convert to a JavaScript string.`);
   }
 
   return {
-    metadata
+    metadata,
+    varType
   }
 }

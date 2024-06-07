@@ -12,7 +12,7 @@ import {
   IndexType,
   PayloadType,
 } from '../core/enums';
-import { Database, EncodeableDatabase } from '../core/database';
+import { EncodeableDatabase } from '../core/database';
 import { enforceDatabaseOrder } from '../core/order';
 import { AnySignatureType, SignatureType, getSignatureType } from '../core/signature';
 import { AllPayloads, CompiledKuneiform, DbPayloadType, DropDbPayload } from '../core/payload';
@@ -289,7 +289,7 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType>
 
 
             if (!column.type.name) {
-              column.type.name = VarType.NULLSTR
+              column.type.name = VarType.NULL
             }
 
             if (!column.type.is_array) {
@@ -459,7 +459,7 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType>
             }
 
             if (!parameter.type.name) {
-              parameter.type.name = VarType.NULLSTR
+              parameter.type.name = VarType.NULL
             }
 
             if (!parameter.type.is_array) {
@@ -505,7 +505,7 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType>
               }
 
               if (!field.type.name) {
-                field.type.name = VarType.TEXTSTR
+                field.type.name = VarType.TEXT
               }
 
               if (!field.type.is_array) {
@@ -546,7 +546,7 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType>
         foreignCall.parameters &&
           foreignCall.parameters.forEach((parameter) => {
             if (!parameter.name) {
-              parameter.name = VarType.NULLSTR;
+              parameter.name = VarType.NULL;
             }
 
             if (parameter.is_array === undefined || parameter.is_array === null) {
@@ -576,7 +576,7 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType>
             }
 
             if (!field.type.name) {
-              field.type.name = VarType.TEXTSTR
+              field.type.name = VarType.TEXT
             }
 
             if (!field.type.is_array) {

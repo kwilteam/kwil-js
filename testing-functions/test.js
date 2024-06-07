@@ -15,6 +15,7 @@ const nacl = require("tweetnacl")
 const { sha256BytesToBytes } = require("../dist/utils/crypto")
 const { KwilSigner } = require("../dist/core/kwilSigner")
 const { ActionInput } = require("../dist/core/action")
+const { v4 } = require("uuid")
 
 require("dotenv").config()
 
@@ -91,9 +92,10 @@ async function test() {
     // await dropDb(kwil, dbid, wallet, address)
     // await transfer(kwil, "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf", 20, kwilSigner)
     // bulkActionInput(kwil, kwilSigner)
-    executeGeneralAction(kwil, 'xc604759389f85914bd191a29cb75d370f1b9da7899752e69adff42d2', "insert_blob", kwilSigner, {
-        $id: '201f32d7-5699-4f07-90bc-66b5057c7fa0',
-        $blob: 'sample blob',
+    // console.log(base64ToBytes('QVFJREJBVUdCd2dKQ2c9PQ=='))
+    executeGeneralAction(kwil, 'x57a8f6119fa4a0d6999ebd03678089dabc7e5083fbc06c2ac410da15', "insert_blob", kwilSigner, {
+        $id: v4(),
+        $blob: new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
     })
     // executeGeneralView(kwil, dbid, "proc_insert_base", {
     //     "$dbid": kwil.getDBID(address, "base_schema")

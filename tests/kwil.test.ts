@@ -852,8 +852,8 @@ describe('unconfirmedNonce', () => {
 
 import variableDb from './variable_test.json'
 import { v4 as uuidV4 } from 'uuid';
-import { stringToBytes } from '../dist/utils/serial';
-import { bytesToBase64 } from '../dist/utils/base64';
+import { bytesToString, stringToBytes } from '../dist/utils/serial';
+import { base64ToBytes, bytesToBase64 } from '../dist/utils/base64';
 
 describe('Kwil DB types', () => {
   const kwilSigner = new KwilSigner(wallet, address);
@@ -986,9 +986,9 @@ describe('Kwil DB types', () => {
     expect(query.data).toHaveLength(1);
   }, 10000);
 
-  test('should be able to insert a record with a blob', async () => {
+  test('should be able to insert a record with a blob as a string', async () => {
     const id = uuidV4();
-    const blob = bytesToBase64(stringToBytes('This is a test blob'));
+    const blob = 'this is a test blob'
 
     const res = await kwil.execute({
       dbid,
@@ -1008,6 +1008,33 @@ describe('Kwil DB types', () => {
 
     expect(query.data).toBeDefined();
     expect(query.data).toHaveLength(1);
+  }, 10000);
+
+  test('should be able to insert a record with a blob as a Uint8array', async () => {
+    const id = uuidV4();
+    const blob = new Uint8Array([1, 2, 3, 4, 5]);
+
+    const res = await kwil.execute({
+      dbid,
+      name: 'insert_blob',
+      inputs: [
+        {
+          $id: id,
+          $blob: blob
+        }
+      ]
+    }, kwilSigner, true);
+
+    expect(res.data).toBeDefined();
+    expect(res.status).toBe(200);
+    const query = await kwil.selectQuery(dbid, `SELECT * FROM var_table WHERE blob_col = '${bytesToString(blob)}'::blob`);
+    expect(query.data).toBeDefined();
+    expect(query.data).toHaveLength(1);
+
+   // @ts-ignore
+   // base64
+    const blobVal = query.data[0]?.blob_col as string;
+    expect(base64ToBytes(blobVal)).toStrictEqual(blob);
   }, 10000);
 
   test('should be able to insert a uint256 value', async () => {

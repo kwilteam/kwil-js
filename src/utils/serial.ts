@@ -1,7 +1,7 @@
 import Long from 'long';
 import {strings} from "./strings";
 import {objects} from "./objects";
-import { HexString, NonNil } from './types';
+import { HexString } from './types';
 import { base64ToBytes, bytesToBase64 } from './base64';
 
 export function stringToBytes(str: string): Uint8Array {

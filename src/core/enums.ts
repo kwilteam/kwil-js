@@ -1,4 +1,9 @@
-export type ValueType = string | number | null | undefined | Array<ValueType> | boolean;
+/**
+ * ValueType is the type of the data in the database.
+ * 
+ * If you are sending bytes to a blob column, you must send it as a Uint8Array. If you send a string to blob column, it will be converted to base64.
+ */
+export type ValueType = string | number | null | undefined | Array<ValueType> | boolean | Uint8Array;
 
 /**
  * VarType is the type of the data in the database.
@@ -7,11 +12,12 @@ export type ValueType = string | number | null | undefined | Array<ValueType> | 
  * 
  */
 export enum VarType {
-  TEXTSTR = 'text',
-  INTSTR = 'int',
-  BOOLSTR = 'bool',
-  DECIMALSTR = 'decimal',
-  NULLSTR = 'null',
+  TEXT = 'text',
+  INT = 'int',
+  BOOL = 'bool',
+  DECIMAL = 'decimal',
+  NULL = 'null',
+  BLOB = 'blob',
   UNKNOWN = 'unknown',
 }
 
