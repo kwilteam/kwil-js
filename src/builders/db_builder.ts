@@ -561,16 +561,16 @@ export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType>
             }
           });
 
-        if (!foreignCall.returns) {
-          foreignCall.returns = [];
+        if (!foreignCall.return_types) {
+          foreignCall.return_types = [];
         }
 
-        if (!Array.isArray(foreignCall.returns)) {
-          if (!foreignCall.returns.is_table) {
-            foreignCall.returns.is_table = false;
+        if (!Array.isArray(foreignCall.return_types)) {
+          if (!foreignCall.return_types.is_table) {
+            foreignCall.return_types.is_table = false;
           }
 
-          foreignCall.returns.fields.forEach((field) => {
+          foreignCall.return_types.fields.forEach((field) => {
             if (!field.name) {
               field.name = ''
             }

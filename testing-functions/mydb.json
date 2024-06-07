@@ -155,13 +155,13 @@
     {
       "name": "call_base_view",
       "parameters": null,
-      "returns": {
+      "return_types": {
         "is_table": false,
         "fields": [
           { "name": "col0", "type": { "name": "text", "is_array": false, "metadata": null } }
         ]
       }
     },
-    { "name": "call_base_insert", "parameters": null, "returns": null }
+    { "name": "call_base_insert", "parameters": null, "return_types": null }
   ]
 }

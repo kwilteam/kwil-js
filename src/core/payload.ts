@@ -100,7 +100,7 @@ type CompiledNamedType = Omit<NamedType, 'type'> & {
     type: CompiledDataType;
 }
 
-export type CompiledForeignProcedure = Omit<ForeignProcedure, 'returns' | 'parameters'> & {
+export type CompiledForeignProcedure = Omit<ForeignProcedure, 'return_types' | 'parameters'> & {
     parameters: ReadonlyArray<CompiledDataType>
-    returns: CompiledProcedureReturn | Array<never>;
+    return_types: CompiledProcedureReturn | Array<never>;
 }
