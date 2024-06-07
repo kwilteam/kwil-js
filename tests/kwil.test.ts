@@ -855,7 +855,7 @@ import { v4 as uuidV4 } from 'uuid';
 import { stringToBytes } from '../dist/utils/serial';
 import { bytesToBase64 } from '../dist/utils/base64';
 
-describe.only('Kwil DB types', () => {
+describe('Kwil DB types', () => {
   const kwilSigner = new KwilSigner(wallet, address);
   const dbid = kwil.getDBID(address, 'variable_test');
 
@@ -885,7 +885,7 @@ describe.only('Kwil DB types', () => {
     expect(res.data).toBeDefined();
     expect(res.status).toBe(200);
 
-    const query = await kwil.selectQuery(dbid, `SELECT * FROM var_table WHERE uuid_col = '${uuid}'`);
+    const query = await kwil.selectQuery(dbid, `SELECT * FROM var_table WHERE uuid_col = '${uuid}'::uuid`);
     expect(query.data).toBeDefined();
     expect(query.data).toHaveLength(1);
   }, 10000);
@@ -980,7 +980,7 @@ describe.only('Kwil DB types', () => {
     expect(res.data).toBeDefined();
     expect(res.status).toBe(200);
 
-    const query = await kwil.selectQuery(dbid, `SELECT * FROM var_table WHERE uuid_col = '${id}'`);
+    const query = await kwil.selectQuery(dbid, `SELECT * FROM var_table WHERE uuid_col = '${id}'::uuid`);
 
     expect(query.data).toBeDefined();
     expect(query.data).toHaveLength(1);
@@ -1004,7 +1004,7 @@ describe.only('Kwil DB types', () => {
     expect(res.data).toBeDefined();
     expect(res.status).toBe(200);
 
-    const query = await kwil.selectQuery(dbid, `SELECT * FROM var_table WHERE blob_col = '${blob}'`);
+    const query = await kwil.selectQuery(dbid, `SELECT * FROM var_table WHERE blob_col = '${blob}'::blob`);
 
     expect(query.data).toBeDefined();
     expect(query.data).toHaveLength(1);

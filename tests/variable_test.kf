@@ -5,6 +5,7 @@ table var_table {
     text_col text,
     int_col int,
     bool_col bool,
+    dec_col decimal(5,2),
     blob_col blob,
     uint256_col uint256
 }
@@ -22,6 +23,11 @@ action insert_text ($id, $text) public {
 action insert_int ($id, $int) public {
     INSERT INTO var_table (uuid_col, int_col)
     VALUES($id, $int);
+}
+
+action insert_dec ($id, $dec) public {
+    INSERT INTO var_table (uuid_col, dec_col)
+    VALUES($id, $dec);
 }
 
 action insert_bool ($id, $bool) public {

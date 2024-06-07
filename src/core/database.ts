@@ -134,5 +134,5 @@ export interface SelectQuery {
 export interface ForeignProcedure {
   name: string;
   parameters: ReadonlyArray<DataType>;
-  returns: ProcedureReturn;
+  return_types: ProcedureReturn;
 }

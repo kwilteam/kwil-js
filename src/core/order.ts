@@ -105,7 +105,7 @@ export function enforceDatabaseOrder(db: NonNil<EncodeableDatabase>): NonNil<Enc
                         ...metadataSpread
                     }
                 }): [],
-                returns: foreignCall.returns
+                return_types: foreignCall.return_types
             }
         }): [],
     }
