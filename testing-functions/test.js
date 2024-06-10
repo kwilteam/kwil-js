@@ -74,7 +74,7 @@ async function test() {
     // broadcast(kwil, testDB, kwilSigner)
     // broadcastEd25519(kwil, testDB)
     // await getTxInfo(kwil, txHash)
-    // await getSchema(kwil, dbid)
+    // await getSchema(kwil, 'xe04718a9b8780a0b61fbc082b5493d19f5202b5bd6af4d75072b3193')
     // getAccount(kwil, address)
     // listDatabases(kwil)
     // ping(kwil)
@@ -93,12 +93,9 @@ async function test() {
     // await transfer(kwil, "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf", 20, kwilSigner)
     // bulkActionInput(kwil, kwilSigner)
     // console.log(base64ToBytes('QVFJREJBVUdCd2dKQ2c9PQ=='))
-    executeGeneralAction(kwil, 'x57a8f6119fa4a0d6999ebd03678089dabc7e5083fbc06c2ac410da15', "insert_blob", kwilSigner, {
-        $id: v4(),
-        $blob: new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-    })
-    // executeGeneralView(kwil, dbid, "proc_insert_base", {
-    //     "$dbid": kwil.getDBID(address, "base_schema")
+    executeGeneralAction(kwil, 'xe04718a9b8780a0b61fbc082b5493d19f5202b5bd6af4d75072b3193', "new_proc", kwilSigner)
+    // executeGeneralView(kwil, "x57a8f6119fa4a0d6999ebd03678089dabc7e5083fbc06c2ac410da15", "new_proc", {
+       
     // })
 }
 
@@ -121,7 +118,7 @@ async function executeGeneralAction(kwil, dbid, name, wallet, input) {
     const body = {
         name,
         dbid,
-        inputs: [ input ]
+        ...input ? { inputs: [input] } : {}
     }
 
     const res = await kwil.execute(body, wallet, true)

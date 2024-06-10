@@ -441,7 +441,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
         // if we have reached this point and actionSchema is null, then we know that procedureSchema is not null.
         name: procedureSchema?.name as string,
         public: procedureSchema?.public as boolean,
-        parameters: procedureSchema?.parameters.map(p => p.name) as string[],
+        parameters: procedureSchema?.parameters?.map(p => p.name) as string[] || [],
         modifiers: procedureSchema?.modifiers as string[],
       }
 
