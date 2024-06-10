@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.7.0](https://github.com/kwilteam/kwil-js/compare/v0.6.2...v0.7.0) (2024-06-10)
+
+
+### ⚠ BREAKING CHANGES
+
+* The internal database and action payload interfaces are now aligned with kwil v0.8
+beta-0. From this commit on, you should only use kwil-db versions v0.8-beta+.
+* **client:** Kwil-JS now relies on kwil-db's JSONRPC endpoints (available in kwil-db v0.8+).
+From this commit on, you should only use Kwil-JS with kwil-db v0.8+.
+* The `Database` and `CompiledKuneiform` types changed, as well as many of the
+internal checks on action executions. From this commit on, kwil-js should only be used with kwil-db
+v0.8+
+
+### Features
+
+* add procedures to schema ([965f9a2](https://github.com/kwilteam/kwil-js/commit/965f9a278f075c4f431676a8ade55f9f7eb3fb5b))
+* **client:** individual logout ([f49bc8a](https://github.com/kwilteam/kwil-js/commit/f49bc8a7089608f7f36b602dc3b0e02cbf7bf23d))
+* **client:** jsonrpc for KGW ([58b4309](https://github.com/kwilteam/kwil-js/commit/58b4309f179c638c9dc22f1cfe00453d7fac4e5d))
+* **client:** migrate to json-rpc ([3eb5112](https://github.com/kwilteam/kwil-js/commit/3eb5112d598be6ce4a06e51762a01b5ebe114c3a))
+* support passing Uint8Array for Action Inputs ([a3680d5](https://github.com/kwilteam/kwil-js/commit/a3680d583be66d7b0d34dfa8a44a0d04648a0609))
+* support typed parameters ([#85](https://github.com/kwilteam/kwil-js/issues/85)) ([d411b32](https://github.com/kwilteam/kwil-js/commit/d411b322e9a32bdeafe26260144e3b0d3e03e9c6))
+
+
+### Bug Fixes
+
+* **client:** individual logout on multi-user session ([e9e0062](https://github.com/kwilteam/kwil-js/commit/e9e00627623107b56e0fb198c329b239b12de1f7))
+
 ### [0.6.2](https://github.com/kwilteam/kwil-js/compare/v0.6.1...v0.6.2) (2024-04-19)
 
 
