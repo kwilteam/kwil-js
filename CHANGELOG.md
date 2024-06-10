@@ -7,8 +7,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### ⚠ BREAKING CHANGES
 
-* The internal database and action payload interfaces are now aligned with kwil v0.8
-beta-0. From this commit on, you should only use kwil-db versions v0.8-beta+.
+* The internal database and action payload interfaces are now aligned with kwil v0.8. From this commit on, you should only use kwil-db versions v0.8-beta+.
 * **client:** Kwil-JS now relies on kwil-db's JSONRPC endpoints (available in kwil-db v0.8+).
 From this commit on, you should only use Kwil-JS with kwil-db v0.8+.
 * The `Database` and `CompiledKuneiform` types changed, as well as many of the
