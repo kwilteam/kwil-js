@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.7.1](https://github.com/kwilteam/kwil-js/compare/v0.7.0...v0.7.1) (2024-06-10)
+
+
+### Bug Fixes
+
+* **action_builder.ts:** handling null params for procedures ([51fb71f](https://github.com/kwilteam/kwil-js/commit/51fb71fa341b85ae2d46ad94a742a78078ef83e0))
+
 ## [0.7.0](https://github.com/kwilteam/kwil-js/compare/v0.6.2...v0.7.0) (2024-06-10)
 
 
