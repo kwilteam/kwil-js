@@ -1,4 +1,4 @@
-import { KwilSigner, WebKwil } from '../../../../src/index'
+import { KwilSigner, WebKwil } from '@kwilteam/kwil-js'
 
 export async function testViewWithSign(kwil: WebKwil, dbid: string, signer: KwilSigner) {
     const res = await kwil.call({
