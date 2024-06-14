@@ -107,7 +107,7 @@
       "mutability": "view",
       "auxiliaries": null,
       "statements": [
-        "SELECT * from posts WHERE id = $id;"
+        "SELECT * FROM posts WHERE id = $id;"
       ]
     },
     {
@@ -118,11 +118,9 @@
       "inputs": null,
       "public": true,
       "mutability": "view",
-      "auxiliaries": [
-        "mustsign"
-      ],
+      "auxiliaries": null,
       "statements": [
-        "SELECT * from posts;"
+        "SELECT * FROM posts;"
       ]
     }
   ]

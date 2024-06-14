@@ -1,4 +1,4 @@
-import { Utils, WebKwil } from '../../../src/index';
+import { Utils, WebKwil } from '@kwilteam/kwil-js';
 
 export async function testViewWithParam(kwil: WebKwil, dbid: string): Promise<void> {
     const actionInput = Utils.ActionInput
