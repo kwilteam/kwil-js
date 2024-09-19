@@ -28,9 +28,10 @@ function logger(msg) {
 async function test() {
     //update to goerli when live
     const provider = new ethers.JsonRpcProvider(process.env.ETH_PROVIDER)
-    const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
-    const txHash = 'abbe4b6f877f74971f4333dc12d2b2ec90d3888bae4e25c0173d97ec0320452b'
-    const address = await wallet.address
+    const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider) // signer
+    const txHash = '90a922292d2a057c0ea9d8f34162a4ba1673c8c7146a565ca66c90b40b42b150'
+    const address = await wallet.address // address
+    
 
     const getEdKeys = async () => {
         const key = await deriveKeyPair64("password", "humanId")
@@ -69,7 +70,7 @@ async function test() {
 
     // testMultiLogout()
 
-    const dbid = kwil.getDBID(address, "mydb")
+    const dbid = kwil.getDBID(address, "sample")
     // await authenticate(kwil, kwilSigner)
     // broadcast(kwil, testDB, kwilSigner)
     // broadcastEd25519(kwil, testDB)
@@ -81,7 +82,7 @@ async function test() {
     // chainInfo(kwil)
     // await execSingleAction(kwil, dbid, "add_post", wallet, address)
     // await execSingleActionKwilSigner(kwil, dbid, "add_post", kwilSigner)
-    // await select(kwil, dbid, "SELECT * FROM posts")
+    // await select(kwil, dbid, "SELECT * FROM users")
     // bulkAction(kwil, dbid, "add_post", wallet, address)
     // await testViewWithParam(kwil, dbid, wallet)
     // await testViewWithSign(kwil, dbid, kwilSigner)
@@ -93,22 +94,28 @@ async function test() {
     // await transfer(kwil, "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf", 20, kwilSigner)
     // bulkActionInput(kwil, kwilSigner)
     // console.log(base64ToBytes('QVFJREJBVUdCd2dKQ2c9PQ=='))
-    executeGeneralAction(kwil, 'xe04718a9b8780a0b61fbc082b5493d19f5202b5bd6af4d75072b3193', "new_proc", kwilSigner)
-    // executeGeneralView(kwil, "x57a8f6119fa4a0d6999ebd03678089dabc7e5083fbc06c2ac410da15", "new_proc", {
-       
-    // })
+
+    const user = {
+        $id: 1,
+        $username: "Tyler",
+        $age: 4
+    }
+    // executeGeneralAction(kwil, dbid, "create_user", kwilSigner, user)
+    executeGeneralView(kwil, dbid, "get_user", user.$username, kwilSigner)
 }
 
 test()
 
-async function executeGeneralView(kwil, dbid, name, input) {
+async function executeGeneralView(kwil, dbid, name, input, signer ) {
     const body = {
         name,
         dbid,
-        inputs: [ input ]
+        inputs: [{$username: input}]
     }
 
-    const res = await kwil.call(body)
+    console.log(body)
+
+    const res = await kwil.call(body, signer)
 
     logger(res)
 

@@ -23,6 +23,7 @@ export default class Client extends Api {
   constructor(opts: ClientConfig) {
     super(opts);
     this.unconfirmedNonce = opts.unconfirmedNonce || false;
+
   }
 
   protected async getSchemaClient(dbid: string): Promise<GenericResponse<Database>> {
@@ -66,7 +67,7 @@ export default class Client extends Api {
       return checkRes(res, (r) => {
         const cookie = res.headers['set-cookie'];
         if (!cookie) {
-          throw new Error('No cookie receiveed from gateway. An error occured with authentication.');
+          throw new Error('No cookie received from gateway. An error occurred with authentication.');
         }
 
         return {
@@ -278,13 +279,13 @@ export default class Client extends Api {
 
     const res = await super.post<JsonRPCResponse<CallResponse>>(`rpc/v1`, body)
 
-    // if we get a 401, we need to return the response so we can try to authenticate
     if (res.status === 401) {
       return {
         status: res.status,
         data: {
           result: null,
-        }
+        },
+        authCode: res.data.error?.code
       }
     }
 
