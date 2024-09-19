@@ -77,6 +77,7 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
     const message = await msg.buildMsg();
 
     let res = await this.callClient(message);
+    console.log(res)
 
     // reset the cookie
     if (tempCookie) {
