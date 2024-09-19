@@ -83,6 +83,13 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
       this.cookie = tempCookie;
     }
 
+    // Need to decide what the error code is (KGW or Private Mode) after request is made by user (View or Read Actions)
+    // If kwild (Private) auth error code =>
+      // kwild auth flow and then retry the request & handle cookies
+        // remember that they are talking to kwild node in private mode so all subsequent requests include kwild auth flow
+    // if kgw (Gateway) auth error code =>
+      // kgw auth flow and retry request & handle cookies
+
     // if we get a 401, we need to return the response so we can try to authenticate
     if (this.autoAuthenticate && res.status === 401) {
       if (kwilSigner) {

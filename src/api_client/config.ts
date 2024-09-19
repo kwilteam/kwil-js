@@ -12,6 +12,7 @@ export interface ApiConfig {
 
 export interface ClientConfig extends ApiConfig {
   unconfirmedNonce?: boolean;
+  autoAuthenticate?: boolean;
 }
 
 export interface KwilConfig extends ClientConfig {

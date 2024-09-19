@@ -11,6 +11,11 @@ export interface MsgReceipt {
     get result(): Nillable<Base64String>;
 }
 
+// Extending the MsgReceipt interface to include 'code'
+// export interface MsgAuthCode extends MsgReceipt {
+//     authCode: number;
+//   }
+
 /**
  * `MsgData` is the interface for a payload structure for a request to the Kwil `call` GRPC endpoint {@link https://github.com/kwilteam/proto/blob/main/kwil/tx/v1/call.proto}.
  */

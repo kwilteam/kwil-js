@@ -8,12 +8,12 @@ import { GenericResponse } from '../../core/resreq';
 import { Kwil } from '../kwil';
 
 export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
-  private readonly autoAuthenticate: boolean;
+  // private readonly autoAuthenticate: boolean;
 
   constructor(opts: Config) {
     super(opts);
 
-    this.autoAuthenticate = opts.autoAuthenticate !== undefined ? opts.autoAuthenticate : true;
+    // this.autoAuthenticate = opts.autoAuthenticate !== undefined ? opts.autoAuthenticate : true;
   }
 
   /**
@@ -71,8 +71,15 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
 
     let res = await this.callClient(message);
 
+    // Need to decide what the error code is (KGW or Private Mode) after request is made by user (View or Read Actions)
+    // If kwild (Private) auth error code =>
+      // kwild auth flow and then retry the request
+        // remember that they are talking to kwild node in private mode so all subsequent requests include kwild auth flow
+    // if kgw (Gateway) auth error code =>
+      // kgw auth flow and retry request
+
     // if we get a 401 and autoAuthenticate is true, try to authenticate and call again
-    if(this.autoAuthenticate && res.status === 401) {
+    if(res.status === 401) {
       if (kwilSigner) {
         const authRes = await this.auth.authenticate(kwilSigner);
         if(authRes.status === 200) {
@@ -83,6 +90,7 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
       }
     }
 
+    console.log(res)
     return res;
   }
 }
