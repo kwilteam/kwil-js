@@ -279,7 +279,12 @@ export default class Client extends Api {
 
     const res = await super.post<JsonRPCResponse<CallResponse>>(`rpc/v1`, body)
 
-    if (res.status === 401) {
+
+    if (res.data.error?.code === -1001
+      // OR whatever error code for KGW
+      // OR if autoAuthenticated is true
+      
+    ) {
       return {
         status: res.status,
         data: {
