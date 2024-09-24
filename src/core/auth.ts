@@ -29,13 +29,11 @@ export interface PrivateModeAuthInfo {
 }
 
 export interface PrivateSignature {
-  signature:  {
-    sig: string;
-    type: AnySignatureType;
-  }
+  sig: string;
+  type: AnySignatureType;
 }
 
-export type AuthSuccess<T extends EnvironmentType> = T extends EnvironmentType.BROWSER ? BrowserAuthSuccess : NodeAuthSuccess; 
+export type AuthSuccess<T extends EnvironmentType> = T extends EnvironmentType.BROWSER ? BrowserAuthSuccess : NodeAuthSuccess;
 
 interface BrowserAuthSuccess {
   result: string;
@@ -83,7 +81,7 @@ export function composeAuthMsg(
 export function generateSignatureText(
   dbid: string,
   action: string,
-  digest: Uint8Array,
+  digest: HexString,
   challenge: string,
 ): string {
   let sigText = 'Kwil view call.\n';
@@ -108,7 +106,7 @@ export function verifyAuthProperties(
   version: string,
   chainId: string,
 ): void {
-  if (authParm.domain && authParm.domain!== domain) {
+  if (authParm.domain && authParm.domain !== domain) {
     throw new Error(`Domain mismatch: ${authParm.domain} !== ${domain}`);
   }
   if (authParm.version && authParm.version !== version) {

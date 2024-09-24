@@ -16,7 +16,7 @@ import { BytesEncodingStatus, EnvironmentType } from '../core/enums';
 import { objects } from '../utils/objects';
 import { executeSign, Signature } from '../core/signature';
 import { bytesToHex, stringToBytes } from '../utils/serial';
-import { bytesToBase64 } from '../utils/base64';
+import { base64ToBytes, bytesToBase64 } from '../utils/base64';
 import { BaseMessage, Message } from '../core/message';
 import { ActionBodyNode } from '../core/action';
 import { sha256BytesToBytes } from '../utils/crypto';
@@ -86,20 +86,20 @@ export class Auth<T extends EnvironmentType> {
 
   public async privateModeAuthenticate(signer: KwilSigner, actionBody: ActionBodyNode, challenge: string, payload: string): Promise<PrivateSignature> {
     // create the digest, which is the first bytes of the sha256 hash of the rlp-encoded payload
-    const uInt8ArrayPayload = stringToBytes(payload)
+    console.log('payload below')
+    console.log(payload)
+    const uInt8ArrayPayload = base64ToBytes(payload);
     const digest = sha256BytesToBytes(uInt8ArrayPayload).subarray(0, 20);
-    const msg = generateSignatureText(actionBody.dbid, actionBody.name, digest, challenge)
+    const msg = generateSignatureText(actionBody.dbid, actionBody.name, bytesToHex(digest), challenge)
+    console.log(msg)
 
     const signature = await executeSign(stringToBytes(msg), signer.signer, signer.signatureType);
     const sig = await bytesToBase64(signature)
 
     const privateSignature = {
-      signature: {
         sig: sig,
         type: signer.signatureType
-      }
     }
-
     return privateSignature;
   }
 

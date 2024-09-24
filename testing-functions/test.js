@@ -70,7 +70,7 @@ async function test() {
 
     // testMultiLogout()
 
-    const dbid = kwil.getDBID(address, "sample")
+    const dbid = kwil.getDBID(address, "mydb")
     // await authenticate(kwil, kwilSigner)
     // broadcast(kwil, testDB, kwilSigner)
     // broadcastEd25519(kwil, testDB)
@@ -101,7 +101,7 @@ async function test() {
         $age: 4
     }
     // executeGeneralAction(kwil, dbid, "create_user", kwilSigner, user)
-    executeGeneralView(kwil, dbid, "get_user", user.$username, kwilSigner)
+    executeGeneralView(kwil, dbid, "read_posts", null, kwilSigner)
 }
 
 test()
@@ -110,7 +110,7 @@ async function executeGeneralView(kwil, dbid, name, input, signer ) {
     const body = {
         name,
         dbid,
-        inputs: [{$username: input}]
+        ...input ? { inputs: [input] } : {}
     }
 
     console.log(body)

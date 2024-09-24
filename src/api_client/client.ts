@@ -302,21 +302,22 @@ export default class Client extends Api {
       auth_type: msg.auth_type,
       sender: msg.sender || '',
       signature: {
-        signature: {
-          sig: msg.signature?.signature.sig || '',
-          type: msg.signature?.signature.type || '',
-        }
+          sig: msg.signature?.sig || '',
+          type: msg.signature?.type || '',
       },
     });
 
     const res = await super.post<JsonRPCResponse<CallResponse>>(`rpc/v1`, body);
 
+    console.log('ferror?')
+    console.log(res.data.error?.code)
+
     if (
-      res.data.error?.code === -1001 ||
+      res.data.error?.code === -1001
       // OR whatever error code for KGW
-      res.data.error?.code === undefined ||
-      // OR if autoAuthenticated is true
-      autoAuthenticate
+      // res.data.error?.code === undefined ||
+      // // OR if autoAuthenticated is true
+      // autoAuthenticate
     ) {
       return {
         status: res.status,
@@ -327,6 +328,7 @@ export default class Client extends Api {
       };
     }
 
+    console.log('we are here')
     return checkRes(res, (r) => {
       return {
         result: JSON.parse(bytesToString(base64ToBytes(r.result.result))),
