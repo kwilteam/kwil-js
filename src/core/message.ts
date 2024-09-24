@@ -1,8 +1,9 @@
 import { strings } from "../utils/strings";
 import { Base64String, HexString, Nillable, NonNil } from "../utils/types";
+import { PrivateSignature } from "./auth";
 import { BytesEncodingStatus, PayloadBytesTypes, PayloadType } from "./enums";
 import { UnencodedActionPayload } from "./payload";
-import { AnySignatureType, Signature, SignatureType } from "./signature";
+import { AnySignatureType, SignatureType } from "./signature";
 
 /**
  * `MsgReceipt` is the interface for a payload structure for a response from the Kwil `call` GRPC endpoint {@link https://github.com/kwilteam/proto/blob/main/kwil/tx/v1/call.proto}.
@@ -24,6 +25,7 @@ export interface MsgData<T extends PayloadBytesTypes> {
     auth_type: AnySignatureType;
     // when the other bytes are base64, it means it is time to turn the sender bytes to hex string
     sender: Nillable<T extends BytesEncodingStatus.BASE64_ENCODED ? HexString : Uint8Array>;
+    signature: Nillable<PrivateSignature>;
 }
 
 interface MsgBody<T extends PayloadBytesTypes> {
@@ -58,6 +60,12 @@ export class BaseMessage<T extends PayloadBytesTypes> implements MsgData<T> {
             },
             auth_type: SignatureType.SECP256K1_PERSONAL,
             sender: null,
+            signature:  {
+                signature: {
+                    sig: '',
+                    type: SignatureType.SECP256K1_PERSONAL,
+                }
+            },
         };
     }
 
@@ -71,6 +79,10 @@ export class BaseMessage<T extends PayloadBytesTypes> implements MsgData<T> {
 
     public get sender(): Nillable<T extends BytesEncodingStatus.BASE64_ENCODED ? Base64String : Uint8Array> {
         return this.data.sender;
+    }
+
+    public get signature(): Nillable<PrivateSignature> {
+        return this.data.signature;
     }
 }
 
@@ -89,11 +101,17 @@ export namespace Msg {
         const msg = {
             body: {
                 payload: null,
-                description: "",
+                // description: "",
                 challenge: "",
             },
             auth_type: SignatureType.SECP256K1_PERSONAL,
             sender: null,
+            signature: {
+                signature: {
+                    sig: '',
+                    type: SignatureType.SECP256K1_PERSONAL,
+                }
+              },
         }
 
         // Pass the 'msg' object to the 'configure' function allowing external modification of its propoerties before instantiation of BaseMessage.
@@ -118,6 +136,8 @@ export namespace Msg {
             msg.body = source.body;
             msg.auth_type = source.auth_type;
             msg.sender = source.sender;
+            msg.signature = source.signature
+
 
             // Pass the 'msg' object to the 'configure' function allowing external modification of its propoerties before instantiation of BaseMessage.
             configure(msg);

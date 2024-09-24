@@ -5,6 +5,8 @@ import { EnvironmentType } from '../../core/enums';
 import { KwilSigner } from '../../core/kwilSigner';
 import { BaseMessage, Message, MsgReceipt } from '../../core/message';
 import { GenericResponse } from '../../core/resreq';
+import { bytesToBase64 } from '../../utils/base64';
+import { hexToBytes, stringToBytes } from '../../utils/serial';
 import { Kwil } from '../kwil';
 
 export class NodeKwil extends Kwil<EnvironmentType.NODE> {
@@ -73,8 +75,8 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
       .chainId(this.chainId)
       .dbid(actionBody.dbid)
       .name(name)
-      .description(actionBody.description || '');
-    // put signature from privateModeAuth
+      .description(actionBody.description || '')
+      .challenge(msgChallenge);
 
     if (actionBody.inputs) {
       const inputs =
@@ -90,10 +92,14 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
         .publicKey(kwilSigner.identifier);
     }
 
-    // message without challenge
-    const message = await msg1.buildMsg();
+    // message without signature
+    let message = await msg1.buildMsg();
 
-    let res = await this.callClient(message, this.autoAuthenticate);
+    let res = await this.callClient(message, this.autoAuthenticate, this.privateMode);
+
+    const byteChallenge = await hexToBytes(msgChallenge)
+    const base64Challenge = await bytesToBase64(byteChallenge)
+    console.log(base64Challenge)
 
     if (!this.privateMode) {
       // reset the cookie
@@ -101,16 +107,6 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
         this.cookie = tempCookie;
       }
     }
-
-    // if (kwilSigner && message.body.payload) {
-    //   const authPrivateModeRes = await this.auth.privateModeAuthenticate(
-    //     kwilSigner,
-    //     actionBody,
-    //     msgChallenge,
-    //     message.body.payload
-    //   );
-    //   console.log(authPrivateModeRes)
-    // }
 
     // Need to check authentication errors, sign message and retry request/response
     if (this.autoAuthenticate) {
@@ -130,18 +126,18 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
           }
           // Private Mode Authentication
           if (res.authCode === -1001 && message.body.payload) {
-            console.log("You")
             const authPrivateModeRes = await this.auth.privateModeAuthenticate(
               kwilSigner,
               actionBody,
               msgChallenge,
               message.body.payload
             );
-            console.log("Yo")
               // message with signature to be passed
-              msg1.challenge(authPrivateModeRes)
-              res = await this.callClient(message);
-            
+              msg1.challenge(base64Challenge);
+              msg1.signature(authPrivateModeRes);
+              message = await msg1.buildMsg();
+              console.log(message)
+              res = await this.callClient(message, this.privateMode);
           }
         } catch (error) {
           console.error('Authentication failed:', error);

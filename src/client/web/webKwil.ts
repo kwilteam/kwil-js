@@ -120,7 +120,7 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
               message.body.payload
             );
               // message with signature to be passed
-              msg1.challenge(authPrivateModeRes)
+              // msg1.challenge(authPrivateModeRes)
               res = await this.callClient(message);
             
           }
