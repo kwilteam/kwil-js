@@ -28,6 +28,7 @@ export interface MsgData<T extends PayloadBytesTypes> {
 
 interface MsgBody<T extends PayloadBytesTypes> {
     payload: Nillable<T extends BytesEncodingStatus.BASE64_ENCODED ? Base64String : UnencodedActionPayload<PayloadType.CALL_ACTION>>;
+    challenge?: Nillable<String>;
 }
 
 /**
@@ -52,7 +53,8 @@ export class BaseMessage<T extends PayloadBytesTypes> implements MsgData<T> {
         // create a basic template of msg. Null values are used to be compatible with both types in PayloadBytesTypes.
         this.data = data || {
             body: {
-                payload: null
+                payload: null,
+                challenge: '',
             },
             auth_type: SignatureType.SECP256K1_PERSONAL,
             sender: null,
@@ -87,7 +89,8 @@ export namespace Msg {
         const msg = {
             body: {
                 payload: null,
-                description: ""
+                description: "",
+                challenge: "",
             },
             auth_type: SignatureType.SECP256K1_PERSONAL,
             sender: null,

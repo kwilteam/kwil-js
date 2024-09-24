@@ -13,7 +13,7 @@
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
     "declarationDir": "./dist",
-    "declarationMap": false
+    "declarationMap": false,
   },
   "include": [
     "src/index.ts",

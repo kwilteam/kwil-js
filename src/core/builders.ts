@@ -80,6 +80,15 @@ export interface PayloadBuilder {
    */
   nonce(nonce: number): NonNil<PayloadBuilder>;
 
+
+  /**
+   * Specifies the nonce for the transaction. If this is not specified, the nonce will be retrieved from the Kwil network.
+   *
+   * @param {string} challenge- The nonce for the transaction.
+   * @returns {PayloadBuilder} The current `PayloadBuilder` instance for chaining.
+   */
+  challenge(challenge: Nillable<string>): NonNil<PayloadBuilder>;
+
   /**
    * Builds the payload for the `kwil.broadcast()` method (i.e. the broadcast GRPC endpoint - see {@link https://github.com/kwilteam/proto/blob/main/kwil/tx/v1/broadcast.proto})
    *
@@ -295,6 +304,14 @@ export interface ActionBuilder {
    * @returns {ActionBuilder} The current `ActionBuilder` instance for chaining.
    */
   nonce(nonce: number): NonNil<ActionBuilder>;
+
+  /**
+   * Specifies the challenge for the transaction.
+   *
+   * @param {string} challenge - The challenge for the transaction.
+   * @returns {ActionBuilder} The current `ActionBuilder` instance for chaining.
+   */
+  challenge(challenge: string): NonNil<ActionBuilder>;
 
   /**
    * Builds a transaction. This will call the kwil network to retrieve the schema and the signer's account.

@@ -1,4 +1,5 @@
 import { Base64String, HexString } from '../utils/types';
+import { ActionBody } from './action';
 import { BytesEncodingStatus, EnvironmentType } from './enums';
 import { Signature } from './signature';
 
@@ -8,6 +9,7 @@ export interface AuthenticatedBody<
   nonce: string;
   sender: HexString;
   signature: Signature<T extends BytesEncodingStatus.HEX_ENCODED ? BytesEncodingStatus.BASE64_ENCODED : BytesEncodingStatus.UINT8_ENCODED>;
+  challenge?: string;
 }
 
 export interface AuthInfo {
@@ -19,6 +21,12 @@ export interface AuthInfo {
   domain: string;
   version: string;
   uri: string;
+}
+
+export interface PrivateModeAuthInfo {
+  dbid: string;
+  action: string;
+  challenge: string;
 }
 
 export type AuthSuccess<T extends EnvironmentType> = T extends EnvironmentType.BROWSER ? BrowserAuthSuccess : NodeAuthSuccess; 
@@ -64,6 +72,21 @@ export function composeAuthMsg(
   msg += `Issue At: ${authParam.issue_at}\n`;
   msg += `Expiration Time: ${authParam.expiration_time}\n`;
   return msg;
+}
+
+export function generateSignatureText(
+  dbid: string,
+  action: string,
+  digest: Uint8Array,
+  challenge: string,
+): string {
+  let sigText = 'Kwil view call.\n';
+  sigText += '\n';
+  sigText += `DBID: ${dbid}\n`;
+  sigText += `Method: ${action}\n`;
+  sigText += `Digest: ${digest}\n`;
+  sigText += `Challenge: ${challenge}\n`;
+  return sigText;
 }
 
 export function removeTrailingSlash(url: string): string {

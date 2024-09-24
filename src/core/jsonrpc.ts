@@ -16,6 +16,7 @@ export interface JsonRPCRequest<T> {
 
 export enum JSONRPCMethod {
     // TODO: Should we implement version? It hasn't historically existed on Kwil-JS, but i notice it in kwil-db.
+    METHOD_HEALTH = 'user.health',
     METHOD_PING = 'user.ping',
     METHOD_CHAIN_INFO = 'user.chain_info',
     METHOD_ACCOUNT = 'user.account',
@@ -29,6 +30,7 @@ export enum JSONRPCMethod {
     METHOD_KGW_PARAM = 'kgw.authn_param',
     METHOD_KGW_AUTHN = 'kgw.authn',
     METHOD_KGW_LOGOUT = 'kgw.logout',
+    METHOD_CHALLENGE  = 'user.challenge',
 }
 
 export interface SchemaRequest {
@@ -56,6 +58,10 @@ export interface BroadcastRequest {
 export type CallRequest = MsgData<BytesEncodingStatus.BASE64_ENCODED>;
 
 export type ChainInfoRequest = EmptyRequest;
+
+export type ChallengeRequest = EmptyRequest;
+
+export type HealthRequest = EmptyRequest;
 
 interface EmptyRequest {
     [key: string]: never;
@@ -112,10 +118,14 @@ export interface BroadcastResponse {
 }
 
 export type CallResponse = Result;
+export type ChallengeResponse = Result;
 export type QueryResponse = Result;
+export type HealthResponse = Result;
 
 interface Result {
     result: Base64String;
+    challenge?: string
+    mode?: string
 }
 
 export type ChainInfoResponse = ChainInfo;
