@@ -42,6 +42,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
   private _chainId: Nillable<string>;
   private _description: Nillable<string> = null;
   private _nonce: Nillable<number> = null;
+  private _challenge: Nillable<string> = null;
 
   /**
    * Initializes a new `ActionBuilder` instance.
@@ -237,6 +238,18 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
   }
 
   /**
+   * Specifies the challenge for the transaction.
+   *
+   * @param {string} challenge - The challenge for the transaction.
+   * @returns {ActionBuilder} The current `ActionBuilder` instance for chaining.
+   */
+  challenge(challenge: string): NonNil<ActionBuilder> {
+    // this._challenge = objects.requireNonNil(challenge, 'challenge cannot be null or undefined.');
+    this._challenge = challenge;
+    return this;
+  }
+
+  /**
    * Builds a transaction. This will call the kwil network to retrieve the schema and the signer's account.
    *
    * @returns {Promise<Transaction>} - A promise that resolves to a Transaction object. This transaction can be broadcasted to the Kwil network with the `kwil.broadcast()` api.
@@ -335,6 +348,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
       .payload(payload)
       .signer(signer, signatureType)
       .description(this._description)
+      .challenge(this._challenge)
       .chainId(chainId)
       .publicKey(identifier);
 
@@ -420,8 +434,8 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
     }
 
     // validate the the name exists on the schema.
-    const actionSchema = schema.data.actions?.find((a) => a.name === name)
-    const procedureSchema = schema.data.procedures?.find((p) => p.name === name)
+    const actionSchema = schema.data.actions?.find((a) => a.name === name);
+    const procedureSchema = schema.data.procedures?.find((p) => p.name === name);
 
     const foundActionOrProcedure = actionSchema || procedureSchema;
 
@@ -431,31 +445,30 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
       );
     }
 
-    const execSchema: ExecSchema = actionSchema ?
-      {
-        name: actionSchema.name,
-        public: actionSchema.public,
-        parameters: actionSchema.parameters,
-        modifiers: actionSchema.modifiers,
-      } : {
-        // if we have reached this point and actionSchema is null, then we know that procedureSchema is not null.
-        name: procedureSchema?.name as string,
-        public: procedureSchema?.public as boolean,
-        parameters: procedureSchema?.parameters?.map(p => p.name) as string[] || [],
-        modifiers: procedureSchema?.modifiers as string[],
-      }
-
+    const execSchema: ExecSchema = actionSchema
+      ? {
+          name: actionSchema.name,
+          public: actionSchema.public,
+          parameters: actionSchema.parameters,
+          modifiers: actionSchema.modifiers,
+        }
+      : {
+          // if we have reached this point and actionSchema is null, then we know that procedureSchema is not null.
+          name: procedureSchema?.name as string,
+          public: procedureSchema?.public as boolean,
+          parameters: (procedureSchema?.parameters?.map((p) => p.name) as string[]) || [],
+          modifiers: procedureSchema?.modifiers as string[],
+        };
 
     if (actions) {
       // ensure that no action inputs or values are missing
       const preparedActions = this.prepareActions(actions, execSchema, name);
-     
 
       return {
         dbid: dbid,
         name: name,
         modifiers: execSchema.modifiers,
-        preparedActions
+        preparedActions,
       };
     }
 
@@ -465,7 +478,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
       modifiers: execSchema.modifiers,
       preparedActions: [],
     };
-  };
+  }
 
   /**
    * Validates that the action is not missing any inputs.
@@ -531,14 +544,14 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
         copy.put(p, val);
       });
 
-      
       if (missingInputs.size === 0) {
-        execSchema.parameters && preparedActions.push(
-          execSchema.parameters.map((p) => {
-            const val = copy.get(p);
-            return val
-          })
-        );
+        execSchema.parameters &&
+          preparedActions.push(
+            execSchema.parameters.map((p) => {
+              const val = copy.get(p);
+              return val;
+            })
+          );
       }
     });
 
@@ -554,34 +567,34 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
       action.forEach((val) => {
         const { metadata, varType } = analyzeVariable(val);
 
-        const metadataSpread = metadata ? { metadata } : {}
+        const metadataSpread = metadata ? { metadata } : {};
 
         const dataType: DataType = {
           name: varType,
           is_array: Array.isArray(val),
-          ...metadataSpread
-        }
+          ...metadataSpread,
+        };
 
-        let data: string[] | Uint8Array[] = []
+        let data: string[] | Uint8Array[] = [];
 
-        if(Array.isArray(val) && !(val instanceof Uint8Array)) {
+        if (Array.isArray(val) && !(val instanceof Uint8Array)) {
           data = val.map((v) => {
-            return v?.toString() || ''
-          })
-        } else if(val instanceof Uint8Array) {
-          data = [val]
-        } else { 
-          data = [val?.toString() || '']
+            return v?.toString() || '';
+          });
+        } else if (val instanceof Uint8Array) {
+          data = [val];
+        } else {
+          data = [val?.toString() || ''];
         }
 
         singleEncodedValues.push({
           type: dataType,
-          data
-        })
-      })
+          data,
+        });
+      });
 
-      encodedValues.push(singleEncodedValues)
-    })
+      encodedValues.push(singleEncodedValues);
+    });
 
     return encodedValues;
   }
@@ -608,16 +621,19 @@ function analyzeNumber(num: number) {
   const analysis = {
     hasDecimal: hasDecimal,
     totalDigits: totalDigits,
-    decimalPosition: hasDecimal ? decimalIndex : -1
+    decimalPosition: hasDecimal ? decimalIndex : -1,
   };
 
   return analysis;
 }
 
-function analyzeVariable(val: ValueType): { metadata: [number, number] | undefined, varType: VarType } {
-  if(Array.isArray(val)) {
+function analyzeVariable(val: ValueType): {
+  metadata: [number, number] | undefined;
+  varType: VarType;
+} {
+  if (Array.isArray(val)) {
     // In Kwil, if there is an array of values, each value in the array must be of the same type.
-    return analyzeVariable(val[0])
+    return analyzeVariable(val[0]);
   }
 
   let metadata: [number, number] | undefined;
@@ -637,11 +653,11 @@ function analyzeVariable(val: ValueType): { metadata: [number, number] | undefin
     case 'boolean':
       break;
     case 'object':
-      if(val instanceof Uint8Array) {
+      if (val instanceof Uint8Array) {
         varType = VarType.BLOB;
         break;
       }
-      if(val === null) {
+      if (val === null) {
         varType = VarType.NULL;
         break;
       }
@@ -649,11 +665,13 @@ function analyzeVariable(val: ValueType): { metadata: [number, number] | undefin
       varType = VarType.NULL;
       break;
     default:
-      throw new Error(`Unsupported type: ${typeof val}. If using a uuid, blob, or uint256, please convert to a JavaScript string.`);
+      throw new Error(
+        `Unsupported type: ${typeof val}. If using a uuid, blob, or uint256, please convert to a JavaScript string.`
+      );
   }
 
   return {
     metadata,
-    varType
-  }
+    varType,
+  };
 }

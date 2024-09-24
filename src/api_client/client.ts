@@ -4,9 +4,7 @@ import { Database, SelectQuery } from '../core/database';
 import { Transaction, TxReceipt } from '../core/tx';
 import { Api } from './api';
 import { ClientConfig } from './config';
-import {
-  GenericResponse,
-} from '../core/resreq';
+import { GenericResponse } from '../core/resreq';
 import { base64ToHex, bytesToHex, bytesToString, hexToBase64, hexToBytes } from '../utils/serial';
 import { TxInfoReceipt } from '../core/txQuery';
 import { Message, MsgReceipt } from '../core/message';
@@ -14,7 +12,41 @@ import { kwilDecode } from '../utils/rlp';
 import { BroadcastSyncType, BytesEncodingStatus, EnvironmentType } from '../core/enums';
 import { AuthInfo, AuthSuccess, AuthenticatedBody, LogoutResponse } from '../core/auth';
 import { AxiosResponse } from 'axios';
-import { AccountRequest, AccountResponse, AccountStatus, AuthParamRequest, AuthParamResponse, AuthnLogoutRequest, AuthnRequest, AuthnResponse, BroadcastRequest, BroadcastResponse, CallRequest, CallResponse, ChainInfoRequest, ChainInfoResponse, EstimatePriceRequest, EstimatePriceResponse, JSONRPCMethod, JsonRPCRequest, JsonRPCResponse, ListDatabasesRequest, ListDatabasesResponse, PingRequest, PingResponse, QueryRequest, QueryResponse, SchemaRequest, SchemaResponse, TxQueryRequest, TxQueryResponse } from '../core/jsonrpc';
+import {
+  AccountRequest,
+  AccountResponse,
+  AccountStatus,
+  AuthParamRequest,
+  AuthParamResponse,
+  AuthnLogoutRequest,
+  AuthnRequest,
+  AuthnResponse,
+  BroadcastRequest,
+  BroadcastResponse,
+  CallRequest,
+  CallResponse,
+  ChainInfoRequest,
+  ChainInfoResponse,
+  ChallengeRequest,
+  ChallengeResponse,
+  EstimatePriceRequest,
+  EstimatePriceResponse,
+  HealthRequest,
+  HealthResponse,
+  JSONRPCMethod,
+  JsonRPCRequest,
+  JsonRPCResponse,
+  ListDatabasesRequest,
+  ListDatabasesResponse,
+  PingRequest,
+  PingResponse,
+  QueryRequest,
+  QueryResponse,
+  SchemaRequest,
+  SchemaResponse,
+  TxQueryRequest,
+  TxQueryResponse,
+} from '../core/jsonrpc';
 
 export default class Client extends Api {
   private unconfirmedNonce: boolean;
@@ -23,14 +55,10 @@ export default class Client extends Api {
   constructor(opts: ClientConfig) {
     super(opts);
     this.unconfirmedNonce = opts.unconfirmedNonce || false;
-
   }
 
   protected async getSchemaClient(dbid: string): Promise<GenericResponse<Database>> {
-    const body = this.buildJsonRpcRequest<SchemaRequest>(
-      JSONRPCMethod.METHOD_SCHEMA,
-      { dbid }
-    );
+    const body = this.buildJsonRpcRequest<SchemaRequest>(JSONRPCMethod.METHOD_SCHEMA, { dbid });
 
     const res = await super.post<JsonRPCResponse<SchemaResponse>>(`/rpc/v1`, body);
 
@@ -43,10 +71,7 @@ export default class Client extends Api {
   }
 
   protected async getAuthenticateClient(): Promise<GenericResponse<AuthInfo>> {
-    const body = this.buildJsonRpcRequest<AuthParamRequest>(
-      JSONRPCMethod.METHOD_KGW_PARAM,
-      {}
-    )
+    const body = this.buildJsonRpcRequest<AuthParamRequest>(JSONRPCMethod.METHOD_KGW_PARAM, {});
 
     const res = await super.post<JsonRPCResponse<AuthParamResponse>>(`/rpc/v1`, body);
 
@@ -56,10 +81,7 @@ export default class Client extends Api {
   protected async postAuthenticateClient<T extends EnvironmentType>(
     authBody: AuthenticatedBody<BytesEncodingStatus.HEX_ENCODED>
   ): Promise<GenericResponse<AuthSuccess<T>>> {
-    const body = this.buildJsonRpcRequest<AuthnRequest>(
-      JSONRPCMethod.METHOD_KGW_AUTHN,
-      authBody
-    )
+    const body = this.buildJsonRpcRequest<AuthnRequest>(JSONRPCMethod.METHOD_KGW_AUTHN, authBody);
 
     const res = await super.post<JsonRPCResponse<AuthnResponse>>(`/rpc/v1`, body);
 
@@ -67,14 +89,16 @@ export default class Client extends Api {
       return checkRes(res, (r) => {
         const cookie = res.headers['set-cookie'];
         if (!cookie) {
-          throw new Error('No cookie received from gateway. An error occurred with authentication.');
+          throw new Error(
+            'No cookie received from gateway. An error occurred with authentication.'
+          );
         }
 
         return {
           ...r.result,
           cookie: cookie[0],
-        }
-      })
+        };
+      });
     }
 
     // if we are in the browser, we don't need to return the cookie
@@ -84,15 +108,10 @@ export default class Client extends Api {
   // TODO: Update once KGW is updated for JSON RPC - DO NOT MERGE WITHOUT RESOLVING
   protected async logoutClient<T extends EnvironmentType>(
     identifier?: Uint8Array
-  ): Promise<
-    GenericResponse<LogoutResponse<T>>
-  > {
-    const body = this.buildJsonRpcRequest<AuthnLogoutRequest>(
-      JSONRPCMethod.METHOD_KGW_LOGOUT,
-      {
-        account: identifier ? bytesToHex(identifier) : '',
-      }
-    )
+  ): Promise<GenericResponse<LogoutResponse<T>>> {
+    const body = this.buildJsonRpcRequest<AuthnLogoutRequest>(JSONRPCMethod.METHOD_KGW_LOGOUT, {
+      account: identifier ? bytesToHex(identifier) : '',
+    });
 
     const res = await super.post<JsonRPCResponse<AuthnResponse>>(`/rpc/v1`, body);
 
@@ -115,8 +134,8 @@ export default class Client extends Api {
         return {
           ...r.result,
           cookie: cookie[0],
-        }
-      })
+        };
+      });
     }
 
     // if we are in the browser, we don't need to return the cookie - the browser will handle it
@@ -124,13 +143,10 @@ export default class Client extends Api {
   }
 
   protected async getAccountClient(owner: Uint8Array): Promise<GenericResponse<Account>> {
-    const body = this.buildJsonRpcRequest<AccountRequest>(
-      JSONRPCMethod.METHOD_ACCOUNT,
-      {
-        identifier: bytesToHex(owner),
-        status: this.unconfirmedNonce ? AccountStatus.PENDING : AccountStatus.LATEST
-      }
-    );
+    const body = this.buildJsonRpcRequest<AccountRequest>(JSONRPCMethod.METHOD_ACCOUNT, {
+      identifier: bytesToHex(owner),
+      status: this.unconfirmedNonce ? AccountStatus.PENDING : AccountStatus.LATEST,
+    });
 
     const res = await super.post<JsonRPCResponse<AccountResponse>>(`/rpc/v1`, body);
 
@@ -138,15 +154,14 @@ export default class Client extends Api {
       return {
         ...r.result,
         identifier: hexToBytes(r.result.identifier || ''),
-      }
+      };
     });
   }
 
   protected async listDatabasesClient(owner?: Uint8Array): Promise<GenericResponse<DatasetInfo[]>> {
-    const body = this.buildJsonRpcRequest<ListDatabasesRequest>(
-      JSONRPCMethod.METHOD_DATABASES,
-      { owner: owner ? bytesToHex(owner) : undefined }
-    );
+    const body = this.buildJsonRpcRequest<ListDatabasesRequest>(JSONRPCMethod.METHOD_DATABASES, {
+      owner: owner ? bytesToHex(owner) : undefined,
+    });
 
     const res = await super.post<JsonRPCResponse<ListDatabasesResponse>>(`/rpc/v1`, body);
 
@@ -165,10 +180,9 @@ export default class Client extends Api {
   }
 
   protected async estimateCostClient(tx: Transaction): Promise<GenericResponse<string>> {
-    const body = this.buildJsonRpcRequest<EstimatePriceRequest>(
-      JSONRPCMethod.METHOD_PRICE,
-      { tx: tx.txData }
-    )
+    const body = this.buildJsonRpcRequest<EstimatePriceRequest>(JSONRPCMethod.METHOD_PRICE, {
+      tx: tx.txData,
+    });
 
     const res = await super.post<JsonRPCResponse<EstimatePriceResponse>>(`/rpc/v1`, body);
 
@@ -183,25 +197,24 @@ export default class Client extends Api {
       throw new Error('Tx must be signed before broadcasting.');
     }
 
-    const body = this.buildJsonRpcRequest<BroadcastRequest>(
-      JSONRPCMethod.METHOD_BROADCAST,
-      { tx: tx.txData, ...(broadcastSync ? { sync: broadcastSync } : {}) }
-    )
+    const body = this.buildJsonRpcRequest<BroadcastRequest>(JSONRPCMethod.METHOD_BROADCAST, {
+      tx: tx.txData,
+      ...(broadcastSync ? { sync: broadcastSync } : {}),
+    });
 
     const res = await super.post<JsonRPCResponse<BroadcastResponse>>(`/rpc/v1`, body);
 
     return checkRes(res, (r) => {
       return {
         tx_hash: base64ToHex(r.result.tx_hash),
-      }
+      };
     });
   }
 
   protected async pingClient(): Promise<GenericResponse<string>> {
-    const body = this.buildJsonRpcRequest<PingRequest>(
-      JSONRPCMethod.METHOD_PING,
-      { message: 'ping' }
-    )
+    const body = this.buildJsonRpcRequest<PingRequest>(JSONRPCMethod.METHOD_PING, {
+      message: 'ping',
+    });
 
     const res = await super.post<JsonRPCResponse<PingResponse>>(`/rpc/v1`, body);
 
@@ -209,10 +222,7 @@ export default class Client extends Api {
   }
 
   protected async chainInfoClient(): Promise<GenericResponse<ChainInfo>> {
-    const body = this.buildJsonRpcRequest<ChainInfoRequest>(
-      JSONRPCMethod.METHOD_CHAIN_INFO,
-      {}
-    )
+    const body = this.buildJsonRpcRequest<ChainInfoRequest>(JSONRPCMethod.METHOD_CHAIN_INFO, {});
 
     const res = await super.post<JsonRPCResponse<ChainInfoResponse>>(`/rpc/v1`, body);
 
@@ -225,11 +235,26 @@ export default class Client extends Api {
     });
   }
 
+  protected async healthModeCheck(): Promise<GenericResponse<String>> {
+    // JsonRPCRequest to Determine mode (KGW or Private)
+    const body = this.buildJsonRpcRequest<HealthRequest>(JSONRPCMethod.METHOD_HEALTH, {});
+
+    const res = await super.post<JsonRPCResponse<HealthResponse>>(`rpc/v1`, body);
+
+    return checkRes(res, (r) => r.result.mode);
+  }
+
+  protected async challengeClient(): Promise<GenericResponse<String>> {
+    // JsonRPCRequest to generate a challenge
+    const body = this.buildJsonRpcRequest<ChallengeRequest>(JSONRPCMethod.METHOD_CHALLENGE, {});
+
+    const res = await super.post<JsonRPCResponse<ChallengeResponse>>(`rpc/v1`, body);
+
+    return checkRes(res, (r) => r.result.challenge);
+  }
+
   protected async selectQueryClient(query: SelectQuery): Promise<GenericResponse<Object[]>> {
-    const body = this.buildJsonRpcRequest<QueryRequest>(
-      JSONRPCMethod.METHOD_QUERY,
-      query
-    )
+    const body = this.buildJsonRpcRequest<QueryRequest>(JSONRPCMethod.METHOD_QUERY, query);
 
     const res = await super.post<JsonRPCResponse<QueryResponse>>(`/rpc/v1`, body);
 
@@ -239,10 +264,9 @@ export default class Client extends Api {
   }
 
   protected async txInfoClient(tx_hash: string): Promise<GenericResponse<TxInfoReceipt>> {
-    const body = this.buildJsonRpcRequest<TxQueryRequest>(
-      JSONRPCMethod.METHOD_TX_QUERY,
-      { tx_hash: hexToBase64(tx_hash) }
-    )
+    const body = this.buildJsonRpcRequest<TxQueryRequest>(JSONRPCMethod.METHOD_TX_QUERY, {
+      tx_hash: hexToBase64(tx_hash),
+    });
 
     const res = await super.post<JsonRPCResponse<TxQueryResponse>>(`/rpc/v1`, body);
 
@@ -262,42 +286,44 @@ export default class Client extends Api {
             sig: base64ToBytes(r.result.tx.signature.sig as string),
           },
           sender: hexToBytes(r.result.tx.sender || ''),
-        }
-      }
+        },
+      };
     });
   }
 
-  protected async callClient(msg: Message): Promise<GenericResponse<MsgReceipt>> {
-    const body = this.buildJsonRpcRequest<CallRequest>(
-      JSONRPCMethod.METHOD_CALL,
-      { 
-        body: msg.body,
-        auth_type: msg.auth_type,
-        sender: msg.sender || '',
-      }
-    )
+  protected async callClient(
+    msg: Message,
+    autoAuthenticate?: boolean
+  ): Promise<GenericResponse<MsgReceipt>> {
 
-    const res = await super.post<JsonRPCResponse<CallResponse>>(`rpc/v1`, body)
+    const body = this.buildJsonRpcRequest<CallRequest>(JSONRPCMethod.METHOD_CALL, {
+      body: msg.body,
+      auth_type: msg.auth_type,
+      sender: msg.sender || '',
+    });
 
+    const res = await super.post<JsonRPCResponse<CallResponse>>(`rpc/v1`, body);
 
-    if (res.data.error?.code === -1001
+    if (
+      res.data.error?.code === -1001 ||
       // OR whatever error code for KGW
+      res.data.error?.code === undefined ||
       // OR if autoAuthenticated is true
-      
+      autoAuthenticate
     ) {
       return {
         status: res.status,
         data: {
           result: null,
         },
-        authCode: res.data.error?.code
-      }
+        authCode: res.data.error?.code,
+      };
     }
 
     return checkRes(res, (r) => {
       return {
-        result: JSON.parse(bytesToString(base64ToBytes(r.result.result)))
-      }
+        result: JSON.parse(bytesToString(base64ToBytes(r.result.result))),
+      };
     });
   }
 
@@ -315,7 +341,6 @@ function checkRes<T, R>(
   res: AxiosResponse<JsonRPCResponse<T>>,
   selector: (r: JsonRPCResponse<T>) => R | undefined
 ): GenericResponse<R> {
-
   switch (res.status) {
     case 200:
       break;
@@ -328,7 +353,7 @@ function checkRes<T, R>(
     default:
       throw new Error(
         JSON.stringify(res.data) ||
-        'An unknown error has occurred.  Please check your network connection.'
+          'An unknown error has occurred.  Please check your network connection.'
       );
   }
 
@@ -338,7 +363,9 @@ function checkRes<T, R>(
 
   if (res.data.error) {
     const data = res.data.error.data ? `, data: ${JSON.stringify(res.data.error.data)}` : '';
-    throw new Error(`JSON RPC call error: code: ${res.data.error.code}, message: ${res.data.error.message}` + data);
+    throw new Error(
+      `JSON RPC call error: code: ${res.data.error.code}, message: ${res.data.error.message}` + data
+    );
   }
 
   if (res.data.jsonrpc !== '2.0') {

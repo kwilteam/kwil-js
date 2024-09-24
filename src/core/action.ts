@@ -38,6 +38,8 @@ export interface ActionBody {
    * nonce is an optional nonce value for the action.
    */
   nonce?: number;
+
+  challenge?: string;
 }
 
 export interface ActionBodyNode extends ActionBody {

@@ -35,6 +35,7 @@ export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBui
   private _chainId: Nillable<string> = null;
   private _description: NonNil<string> = '';
   private _nonce: Nillable<number> = null;
+  private _challenge: NonNil<string> = '';
 
   /**
    * Initializes a new `PayloadBuilder` instance.
@@ -183,6 +184,17 @@ export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBui
   }
 
   /**
+   * Specifies the nonce for the transaction. If none is provided, the SDK will retrieve the account nonce from the network.
+   *
+   * @param {string} challenge - The nonce for the transaction.
+   * @returns {PayloadBuilder} The current `PayloadBuilder` instance for chaining.
+   */
+  challenge(challenge: string): NonNil<PayloadBuilder> {
+    this._challenge = challenge;
+    return this;
+  }
+
+  /**
    * Builds the payload for the `kwil.broadcast()` method (i.e. the broadcast GRPC endpoint - see {@link https://github.com/kwilteam/proto/blob/main/kwil/tx/v1/tx.proto})
    *
    * @returns {BaseTransaction} - A promise that resolves to the signed transaction.
@@ -282,6 +294,7 @@ export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBui
     // create the msg object with the payload, with the payload bytes type set to uint8 for RLP encoding.
     let msg = Msg.create<BytesEncodingStatus.UINT8_ENCODED>((msg) => {
       msg.body.payload = resolvedPayload as UnencodedActionPayload<PayloadType.CALL_ACTION>;
+      msg.body.challenge = this._challenge as string;
     });
 
     // if a signer has been provided, execute a signed `view` action
@@ -351,6 +364,7 @@ export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBui
   ): Promise<Transaction> {
     // create the digest, which is the first bytes of the sha256 hash of the rlp-encoded payload
     const digest = sha256BytesToBytes(tx.body.payload as Uint8Array).subarray(0, 20);
+    console.log("Payload" + tx.body.payload)
 
     // create the signature message
     const signatureMessage = `${description}

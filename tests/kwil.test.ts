@@ -215,6 +215,7 @@ describe('Kwil Integration Tests', () => {
     const body: ActionBody = {
       dbid,
       name: 'read_posts',
+      challenge: '',
     };
 
     const result = await kwil.call(body);
@@ -232,6 +233,7 @@ describe('Kwil Integration Tests', () => {
           $id: 1,
         },
       ],
+      challenge: '',
     };
 
     const result = await kwil.call(body);
@@ -248,7 +250,8 @@ describe('Kwil Integration Tests', () => {
       name: 'proc_call_base',
       inputs: [{
         $dbid: baseDbid,
-      }]
+      }],
+      challenge: '',
     }
 
     const result = await kwil.call(body);
