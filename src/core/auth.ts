@@ -1,7 +1,7 @@
 import { Base64String, HexString } from '../utils/types';
 import { ActionBody } from './action';
 import { BytesEncodingStatus, EnvironmentType } from './enums';
-import { Signature } from './signature';
+import { AnySignatureType, Signature, SignatureType } from './signature';
 
 export interface AuthenticatedBody<
   T extends BytesEncodingStatus.HEX_ENCODED | BytesEncodingStatus.UINT8_ENCODED
@@ -9,7 +9,6 @@ export interface AuthenticatedBody<
   nonce: string;
   sender: HexString;
   signature: Signature<T extends BytesEncodingStatus.HEX_ENCODED ? BytesEncodingStatus.BASE64_ENCODED : BytesEncodingStatus.UINT8_ENCODED>;
-  challenge?: string;
 }
 
 export interface AuthInfo {
@@ -27,6 +26,13 @@ export interface PrivateModeAuthInfo {
   dbid: string;
   action: string;
   challenge: string;
+}
+
+export interface PrivateSignature {
+  signature:  {
+    sig: string;
+    type: AnySignatureType;
+  }
 }
 
 export type AuthSuccess<T extends EnvironmentType> = T extends EnvironmentType.BROWSER ? BrowserAuthSuccess : NodeAuthSuccess; 

@@ -10,7 +10,7 @@ import { TxInfoReceipt } from '../core/txQuery';
 import { Message, MsgReceipt } from '../core/message';
 import { kwilDecode } from '../utils/rlp';
 import { BroadcastSyncType, BytesEncodingStatus, EnvironmentType } from '../core/enums';
-import { AuthInfo, AuthSuccess, AuthenticatedBody, LogoutResponse } from '../core/auth';
+import { AuthInfo, AuthSuccess, AuthenticatedBody, LogoutResponse, PrivateSignature } from '../core/auth';
 import { AxiosResponse } from 'axios';
 import {
   AccountRequest,
@@ -287,13 +287,20 @@ export default class Client extends Api {
 
   protected async callClient(
     msg: Message,
-    autoAuthenticate?: boolean
+    autoAuthenticate?: boolean,
+    privateMode?: boolean,
   ): Promise<GenericResponse<MsgReceipt>> {
 
     const body = this.buildJsonRpcRequest<CallRequest>(JSONRPCMethod.METHOD_CALL, {
       body: msg.body,
       auth_type: msg.auth_type,
       sender: msg.sender || '',
+      signature: {
+        signature: {
+          sig: msg.signature?.signature.sig || '',
+          type: msg.signature?.signature.type || '',
+        }
+      },
     });
 
     const res = await super.post<JsonRPCResponse<CallResponse>>(`rpc/v1`, body);

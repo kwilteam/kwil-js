@@ -10,6 +10,7 @@ import { AnySignatureType, SignatureType, getSignatureType } from '../core/signa
 import { EncodedValue, UnencodedActionPayload } from '../core/payload';
 import { Message } from '../core/message';
 import { DataType } from '../core/database';
+import { PrivateSignature } from '../core/auth';
 
 interface CheckSchema {
   dbid: string;
@@ -43,6 +44,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
   private _description: Nillable<string> = null;
   private _nonce: Nillable<number> = null;
   private _challenge: Nillable<string> = null;
+  private _signature: Nillable<PrivateSignature> = null;
 
   /**
    * Initializes a new `ActionBuilder` instance.
@@ -249,6 +251,17 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
     return this;
   }
 
+    /**
+   * Specifies the signature for the transaction.
+   *
+   * @param {string} signature - The signature for the transaction.
+   * @returns {ActionBuilder} The current `ActionBuilder` instance for chaining.
+   */
+  signature(signature: PrivateSignature): Nillable<ActionBuilder> {
+      this._signature = signature;
+      return this;
+    }
+
   /**
    * Builds a transaction. This will call the kwil network to retrieve the schema and the signer's account.
    *
@@ -349,6 +362,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
       .signer(signer, signatureType)
       .description(this._description)
       .challenge(this._challenge)
+      .signature(this._signature)
       .chainId(chainId)
       .publicKey(identifier);
 
@@ -394,7 +408,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
       // if there are nilArgs, then the first element in the array is the nilArgs.
     };
 
-    let msg: PayloadBuilder = PayloadBuilderImpl.of(this.kwil).payload(payload);
+    let msg: PayloadBuilder = PayloadBuilderImpl.of(this.kwil).payload(payload).challenge(this._challenge).signature(this._signature);
 
     // if a signer is specified, add the signer, signature type, identifier, and description to the message
     if (signer) {

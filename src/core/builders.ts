@@ -5,6 +5,7 @@ import { DeployOrDrop, PayloadType } from './enums';
 import { Message } from './message';
 import { AnySignatureType } from './signature';
 import { AllPayloads, DbPayloadType } from './payload';
+import { PrivateSignature } from './auth';
 
 // Eth Signer is any class with a signMessage() method. This is supported by Ethers v5 and Ethers v6.
 export type EthSigner = {
@@ -82,12 +83,20 @@ export interface PayloadBuilder {
 
 
   /**
-   * Specifies the nonce for the transaction. If this is not specified, the nonce will be retrieved from the Kwil network.
+   * Challenge for the transaction. If this is not specified, the challenge will be retrieved from the Kwil network.
    *
-   * @param {string} challenge- The nonce for the transaction.
+   * @param {string} challenge- The challenge for the transaction.
    * @returns {PayloadBuilder} The current `PayloadBuilder` instance for chaining.
    */
   challenge(challenge: Nillable<string>): NonNil<PayloadBuilder>;
+
+  /**
+   * Signature for the transaction. If this is not specified, the signature is generated via client.
+   *
+   * @param {string} signature- The signature for the transaction.
+   * @returns {PayloadBuilder} The current `PayloadBuilder` instance for chaining.
+   */
+  signature(signature: Nillable<PrivateSignature>): NonNil<PayloadBuilder>;
 
   /**
    * Builds the payload for the `kwil.broadcast()` method (i.e. the broadcast GRPC endpoint - see {@link https://github.com/kwilteam/proto/blob/main/kwil/tx/v1/broadcast.proto})
@@ -312,6 +321,14 @@ export interface ActionBuilder {
    * @returns {ActionBuilder} The current `ActionBuilder` instance for chaining.
    */
   challenge(challenge: string): NonNil<ActionBuilder>;
+
+  /**
+   * Specifies the signature for the transaction.
+   *
+   * @param {string} signature - The signature for the transaction.
+   * @returns {ActionBuilder} The current `ActionBuilder` instance for chaining.
+   */
+  signature(signature: PrivateSignature): Nillable<ActionBuilder>;
 
   /**
    * Builds a transaction. This will call the kwil network to retrieve the schema and the signer's account.

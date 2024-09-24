@@ -6,6 +6,7 @@ import {
   AuthenticatedBody,
   LogoutResponse,
   PrivateModeAuthInfo,
+  PrivateSignature,
   composeAuthMsg,
   generateSignatureText,
   removeTrailingSlash,
@@ -13,7 +14,7 @@ import {
 } from '../core/auth';
 import { BytesEncodingStatus, EnvironmentType } from '../core/enums';
 import { objects } from '../utils/objects';
-import { executeSign } from '../core/signature';
+import { executeSign, Signature } from '../core/signature';
 import { bytesToHex, stringToBytes } from '../utils/serial';
 import { bytesToBase64 } from '../utils/base64';
 import { BaseMessage, Message } from '../core/message';
@@ -51,6 +52,7 @@ export class Auth<T extends EnvironmentType> {
    * @returns A promise that resolves to the authentication success or failure.
    */
   public async authenticate(signer: KwilSigner): Promise<GenericResponse<AuthSuccess<T>>> {
+    // KGW rpc call
     const authParam = await this.authClient.getAuthenticateClient();
 
     const authProperties = objects.requireNonNil(
@@ -76,20 +78,13 @@ export class Auth<T extends EnvironmentType> {
       },
     };
 
+    // KGW rpc call
     const res = await this.authClient.postAuthenticateClient(authBody);
 
     return res;
   }
 
-  public async privateModeAuthenticate(signer: KwilSigner, actionBody: ActionBodyNode, challenge: string, payload: string): Promise<string> {
-
-    const authParam = await this.authClient.getAuthenticateClient();
-    console.log(authParam.data?.nonce)
-
-    const authProperties = objects.requireNonNil(
-      authParam.data,
-      'something went wrong retrieving auth info from KGW'
-    );
+  public async privateModeAuthenticate(signer: KwilSigner, actionBody: ActionBodyNode, challenge: string, payload: string): Promise<PrivateSignature> {
     // create the digest, which is the first bytes of the sha256 hash of the rlp-encoded payload
     const uInt8ArrayPayload = stringToBytes(payload)
     const digest = sha256BytesToBytes(uInt8ArrayPayload).subarray(0, 20);
@@ -97,22 +92,15 @@ export class Auth<T extends EnvironmentType> {
 
     const signature = await executeSign(stringToBytes(msg), signer.signer, signer.signatureType);
     const sig = await bytesToBase64(signature)
-    const sender = await bytesToHex(signer.identifier)
 
-    // ??????
-    const authBody: AuthenticatedBody<BytesEncodingStatus.HEX_ENCODED> = {
-      challenge: challenge,
-      nonce: authProperties.nonce,
-      sender: sender,
+    const privateSignature = {
       signature: {
         sig: sig,
-        type: signer.signatureType,
-      },
-    };
+        type: signer.signatureType
+      }
+    }
 
-    const res = await this.authClient.postAuthenticateClient(authBody);
-    
-    return sig;
+    return privateSignature;
   }
 
   public async logout(signer?: KwilSigner): Promise<GenericResponse<LogoutResponse<T>>> {
