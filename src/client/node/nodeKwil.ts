@@ -76,7 +76,6 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
       .dbid(actionBody.dbid)
       .name(name)
       .description(actionBody.description || '')
-      .challenge(msgChallenge);
 
     if (actionBody.inputs) {
       const inputs =
@@ -94,7 +93,10 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
 
     // message without signature
     let message = await msg1.buildMsg();
+    // @ts-ignore
+    delete message.data.sender;
 
+    console.log(message)
     let res = await this.callClient(message, this.autoAuthenticate, this.privateMode);
 
     const byteChallenge = await hexToBytes(msgChallenge)
@@ -112,8 +114,10 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
     if (this.autoAuthenticate) {
       if (kwilSigner) {
         try {
+          console.log('heere')
           // KGW Authentication
           if (res.authCode === undefined) {
+            console.log('attempting kgw auth')
             const authRes = await this.auth.authenticate(kwilSigner);
             if (authRes.status === 200) {
               if (!this.privateMode) {
@@ -125,7 +129,10 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
             }
           }
           // Private Mode Authentication
+          console.log(res.authCode)
+          console.log(message.body.payload)
           if (res.authCode === -1001 && message.body.payload) {
+            
             const authPrivateModeRes = await this.auth.privateModeAuthenticate(
               kwilSigner,
               actionBody,

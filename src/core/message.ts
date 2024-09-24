@@ -61,10 +61,8 @@ export class BaseMessage<T extends PayloadBytesTypes> implements MsgData<T> {
             auth_type: SignatureType.SECP256K1_PERSONAL,
             sender: null,
             signature:  {
-                signature: {
                     sig: '',
                     type: SignatureType.SECP256K1_PERSONAL,
-                }
             },
         };
     }
@@ -107,10 +105,8 @@ export namespace Msg {
             auth_type: SignatureType.SECP256K1_PERSONAL,
             sender: null,
             signature: {
-                signature: {
                     sig: '',
                     type: SignatureType.SECP256K1_PERSONAL,
-                }
               },
         }
 
