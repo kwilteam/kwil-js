@@ -82,3 +82,8 @@ export enum BroadcastSyncType {
   SYNC = 1,
   COMMIT = 2,
 }
+
+export enum AuthErrorCodes {
+  PrivateMode = -1001,
+  KGW = -901,
+}
