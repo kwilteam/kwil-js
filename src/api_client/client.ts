@@ -9,8 +9,19 @@ import { base64ToHex, bytesToHex, bytesToString, hexToBase64, hexToBytes } from 
 import { TxInfoReceipt } from '../core/txQuery';
 import { Message, MsgReceipt } from '../core/message';
 import { kwilDecode } from '../utils/rlp';
-import { BroadcastSyncType, BytesEncodingStatus, EnvironmentType } from '../core/enums';
-import { AuthInfo, AuthSuccess, AuthenticatedBody, LogoutResponse, PrivateSignature } from '../core/auth';
+import {
+  AuthErrorCodes,
+  BroadcastSyncType,
+  BytesEncodingStatus,
+  EnvironmentType,
+} from '../core/enums';
+import {
+  AuthInfo,
+  AuthSuccess,
+  AuthenticatedBody,
+  LogoutResponse,
+  PrivateSignature,
+} from '../core/auth';
 import { AxiosResponse } from 'axios';
 import {
   AccountRequest,
@@ -47,6 +58,7 @@ import {
   TxQueryRequest,
   TxQueryResponse,
 } from '../core/jsonrpc';
+import { Result } from 'ethers';
 
 export default class Client extends Api {
   private unconfirmedNonce: boolean;
@@ -285,44 +297,24 @@ export default class Client extends Api {
     });
   }
 
-  protected async callClient(
-    msg: Message,
-    autoAuthenticate?: boolean,
-    privateMode?: boolean,
-  ): Promise<GenericResponse<MsgReceipt>> {
-
+  protected async callClient(msg: Message): Promise<GenericResponse<MsgReceipt>> {
     const body = this.buildJsonRpcRequest<CallRequest>(JSONRPCMethod.METHOD_CALL, {
       body: msg.body,
       auth_type: msg.auth_type,
       sender: msg.sender || '',
       signature: {
-          sig: msg.signature?.sig || '',
-          type: msg.signature?.type || '',
+        sig: msg.signature?.sig || '',
+        type: msg.signature?.type || '',
       },
     });
 
     const res = await super.post<JsonRPCResponse<CallResponse>>(`rpc/v1`, body);
 
-    console.log('ferror?')
-    console.log(res.data.error?.code)
-
-    if (
-      res.data.error?.code === -1001
-      // OR whatever error code for KGW
-      // res.data.error?.code === undefined ||
-      // // OR if autoAuthenticated is true
-      // autoAuthenticate
-    ) {
-      return {
-        status: res.status,
-        data: {
-          result: null,
-        },
-        authCode: res.data.error?.code,
-      };
+    const errorResponse = this.handleErrorCodes(res);
+    if (errorResponse) {
+      return errorResponse;
     }
 
-    console.log('we are here')
     return checkRes(res, (r) => {
       return {
         result: JSON.parse(bytesToString(base64ToBytes(r.result.result))),
@@ -337,6 +329,23 @@ export default class Client extends Api {
       method,
       params,
     };
+  }
+
+  // Check for specific error codes and return http status, result of view action, and rpc authError code (if applicable)
+  private handleErrorCodes<T>(
+    res: AxiosResponse<JsonRPCResponse<T>>
+  ): GenericResponse<MsgReceipt> | null {
+    const errorCode = res.data.error?.code;
+    if (errorCode === AuthErrorCodes.PrivateMode || errorCode === AuthErrorCodes.KGW) {
+      return {
+        status: res.status,
+        data: {
+          result: null,
+        },
+        authCode: errorCode,
+      };
+    }
+    return null;
   }
 }
 
