@@ -1,11 +1,10 @@
 import { HexString, Nillable, NonNil, Promisy } from '../utils/types';
 import { Transaction } from './tx';
 import { ActionInput } from './action';
-import { DeployOrDrop, PayloadType } from './enums';
+import { BytesEncodingStatus, DeployOrDrop, PayloadType } from './enums';
 import { Message } from './message';
-import { AnySignatureType } from './signature';
+import { AnySignatureType, Signature } from './signature';
 import { AllPayloads, DbPayloadType } from './payload';
-import { PrivateSignature } from './auth';
 
 // Eth Signer is any class with a signMessage() method. This is supported by Ethers v5 and Ethers v6.
 export type EthSigner = {
@@ -96,7 +95,7 @@ export interface PayloadBuilder {
    * @param {string} signature- The signature for the transaction.
    * @returns {PayloadBuilder} The current `PayloadBuilder` instance for chaining.
    */
-  signature(signature: Nillable<PrivateSignature>): NonNil<PayloadBuilder>;
+  signature(signature: Nillable<Signature<BytesEncodingStatus.BASE64_ENCODED>>): NonNil<PayloadBuilder>;
 
   /**
    * Builds the payload for the `kwil.broadcast()` method (i.e. the broadcast GRPC endpoint - see {@link https://github.com/kwilteam/proto/blob/main/kwil/tx/v1/broadcast.proto})
@@ -328,7 +327,7 @@ export interface ActionBuilder {
    * @param {string} signature - The signature for the transaction.
    * @returns {ActionBuilder} The current `ActionBuilder` instance for chaining.
    */
-  signature(signature: PrivateSignature): Nillable<ActionBuilder>;
+  signature(signature: Signature<BytesEncodingStatus.BASE64_ENCODED>): Nillable<ActionBuilder>;
 
   /**
    * Builds a transaction. This will call the kwil network to retrieve the schema and the signer's account.

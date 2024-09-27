@@ -1,11 +1,10 @@
 import { GenericResponse } from '../core/resreq';
 import { KwilSigner } from '../core/kwilSigner';
 import {
-  AuthInfo,
   AuthSuccess,
   AuthenticatedBody,
+  KGWAuthInfo,
   LogoutResponse,
-  PrivateSignature,
   composeAuthMsg,
   generateSignatureText,
   removeTrailingSlash,
@@ -13,18 +12,20 @@ import {
 } from '../core/auth';
 import { BytesEncodingStatus, EnvironmentType } from '../core/enums';
 import { objects } from '../utils/objects';
-import { executeSign } from '../core/signature';
-import { bytesToHex, stringToBytes } from '../utils/serial';
+import { AuthBody, executeSign, Signature } from '../core/signature';
+import { bytesToHex, hexToBytes, stringToBytes } from '../utils/serial';
 import { base64ToBytes, bytesToBase64 } from '../utils/base64';
 import { ActionBodyNode } from '../core/action';
 import { sha256BytesToBytes } from '../utils/crypto';
+import { kwilEncode } from '../utils/rlp';
 
 interface AuthClient {
-  getAuthenticateClient(): Promise<GenericResponse<AuthInfo>>;
+  getAuthenticateClient(): Promise<GenericResponse<KGWAuthInfo>>;
   postAuthenticateClient<T extends EnvironmentType>(
     body: AuthenticatedBody<BytesEncodingStatus.HEX_ENCODED>
   ): Promise<GenericResponse<AuthSuccess<T>>>;
   logoutClient<T extends EnvironmentType>(identifier?: Uint8Array): Promise<GenericResponse<LogoutResponse<T>>>;
+  challengeClient(): Promise<GenericResponse<string>>
 }
 
 export class Auth<T extends EnvironmentType> {
@@ -88,11 +89,19 @@ export class Auth<T extends EnvironmentType> {
    * @param {KwilSigner} signer - The signer for the authentication.
    * @returns A promise that resolves a privateSignature => privateSignature = {sig: string (Base64), type: AnySignatureType}
    */
-  public async privateModeAuthenticate(signer: KwilSigner, actionBody: ActionBodyNode, challenge: string, payload: string): Promise<PrivateSignature> {
+  public async privateModeAuthenticate(signer: KwilSigner, actionBody: ActionBodyNode, payload: string): Promise<AuthBody> {
+    // get Challenge
+    const challenge = await this.authClient.challengeClient();
+    let msgChallenge = challenge.data as string;
+
+    const samplePayload = kwilEncode(actionBody)
+    console.log(samplePayload)
+
     // create the digest, which is the first bytes of the sha256 hash of the rlp-encoded payload
     const uInt8ArrayPayload = base64ToBytes(payload);
-    const digest = sha256BytesToBytes(uInt8ArrayPayload).subarray(0, 20);
-    const msg = generateSignatureText(actionBody.dbid, actionBody.name, bytesToHex(digest), challenge)
+    console.log(uInt8ArrayPayload)
+    const digest = sha256BytesToBytes(samplePayload).subarray(0, 20);
+    const msg = generateSignatureText(actionBody.dbid, actionBody.name, bytesToHex(digest), msgChallenge)
 
     const signature = await executeSign(stringToBytes(msg), signer.signer, signer.signatureType);
     const sig = await bytesToBase64(signature)
@@ -101,7 +110,15 @@ export class Auth<T extends EnvironmentType> {
         sig: sig,
         type: signer.signatureType
     }
-    return privateSignature;
+
+    const byteChallenge = hexToBytes(msgChallenge);
+    const base64Challenge = bytesToBase64(byteChallenge); // Challenge needs to be Base64 in the message
+
+    const res = {
+      signature: privateSignature,
+      challenge: base64Challenge,
+    }
+    return res;
   }
 
   public async logout(signer?: KwilSigner): Promise<GenericResponse<LogoutResponse<T>>> {

@@ -1,4 +1,4 @@
-import { base64ToBytes, bytesToBase64 } from '../utils/base64';
+import { base64ToBytes } from '../utils/base64';
 import { Account, ChainInfo, DatasetInfo } from '../core/network';
 import { Database, SelectQuery } from '../core/database';
 import { Transaction, TxReceipt } from '../core/tx';
@@ -16,11 +16,10 @@ import {
   EnvironmentType,
 } from '../core/enums';
 import {
-  AuthInfo,
+  KGWAuthInfo,
   AuthSuccess,
   AuthenticatedBody,
   LogoutResponse,
-  PrivateSignature,
 } from '../core/auth';
 import { AxiosResponse } from 'axios';
 import {
@@ -58,7 +57,6 @@ import {
   TxQueryRequest,
   TxQueryResponse,
 } from '../core/jsonrpc';
-import { Result } from 'ethers';
 
 export default class Client extends Api {
   private unconfirmedNonce: boolean;
@@ -82,7 +80,7 @@ export default class Client extends Api {
     });
   }
 
-  protected async getAuthenticateClient(): Promise<GenericResponse<AuthInfo>> {
+  protected async getAuthenticateClient(): Promise<GenericResponse<KGWAuthInfo>> {
     const body = this.buildJsonRpcRequest<AuthParamRequest>(JSONRPCMethod.METHOD_KGW_PARAM, {});
 
     const res = await super.post<JsonRPCResponse<AuthParamResponse>>(`/rpc/v1`, body);
@@ -241,7 +239,7 @@ export default class Client extends Api {
     return checkRes(res, (r) => r.result);
   }
 
-  protected async healthModeCheck(): Promise<GenericResponse<String>> {
+  protected async healthModeCheckClient(): Promise<GenericResponse<string>> {
     // JsonRPCRequest to Determine mode (KGW or Private)
     const body = this.buildJsonRpcRequest<HealthRequest>(JSONRPCMethod.METHOD_HEALTH, {});
 
@@ -250,7 +248,7 @@ export default class Client extends Api {
     return checkRes(res, (r) => r.result.mode);
   }
 
-  protected async challengeClient(): Promise<GenericResponse<String>> {
+  protected async challengeClient(): Promise<GenericResponse<string>> {
     // JsonRPCRequest to generate a challenge
     const body = this.buildJsonRpcRequest<ChallengeRequest>(JSONRPCMethod.METHOD_CHALLENGE, {});
 
@@ -310,7 +308,7 @@ export default class Client extends Api {
 
     const res = await super.post<JsonRPCResponse<CallResponse>>(`rpc/v1`, body);
 
-    const errorResponse = this.handleErrorCodes(res);
+    const errorResponse = this.checkAuthError(res);
     if (errorResponse) {
       return errorResponse;
     }
@@ -332,11 +330,11 @@ export default class Client extends Api {
   }
 
   // Check for specific error codes and return http status, result of view action, and rpc authError code (if applicable)
-  private handleErrorCodes<T>(
+  private checkAuthError<T>(
     res: AxiosResponse<JsonRPCResponse<T>>
   ): GenericResponse<MsgReceipt> | null {
     const errorCode = res.data.error?.code;
-    if (errorCode === AuthErrorCodes.PrivateMode || errorCode === AuthErrorCodes.KGW) {
+    if (errorCode === AuthErrorCodes.PRIVATE_MODE || errorCode === AuthErrorCodes.KGW_MODE) {
       return {
         status: res.status,
         data: {

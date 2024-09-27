@@ -1,23 +1,26 @@
 import { Config } from '../../api_client/config';
 import { ActionBuilderImpl } from '../../builders/action_builder';
 import { ActionInput, Entries, ActionBodyNode } from '../../core/action';
-import { EnvironmentType } from '../../core/enums';
+import { AuthenticationMode, BytesEncodingStatus, EnvironmentType } from '../../core/enums';
 import { KwilSigner } from '../../core/kwilSigner';
 import { BaseMessage, Message, MsgReceipt } from '../../core/message';
 import { GenericResponse } from '../../core/resreq';
 import { bytesToBase64 } from '../../utils/base64';
 import { hexToBytes } from '../../utils/serial';
 import { Kwil } from '../kwil';
+import { AuthSuccess } from '../../core/auth';
+import { Signature } from '../../core/signature';
 
 export class NodeKwil extends Kwil<EnvironmentType.NODE> {
   private autoAuthenticate: boolean;
-  private privateMode: boolean;
+  // private privateMode: boolean;
+  private authMode: string | undefined // To store the mode on the class for subsequent requests
 
   constructor(opts: Config) {
     super(opts);
 
     this.autoAuthenticate = opts.autoAuthenticate !== undefined ? opts.autoAuthenticate : true;
-    this.privateMode = false;
+    // this.privateMode = false;
   }
 
   /**
@@ -49,18 +52,14 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
       return await this.callClient(actionBody);
     }
 
-    // Private or KGW
-    const mode = await this.healthModeCheck();
-
-    if (mode.data === 'private') {
-      this.privateMode = true;
+    // Check if authMode is already set, if not call healthModeCheckClient
+    if (!this.authMode) {
+      const mode = await this.healthModeCheckClient();
+      this.authMode = mode.data;
     }
 
-    const challenge = await this.challengeClient();
-    let msgChallenge = challenge.data as string;
-
     let tempCookie: string | undefined;
-    if (!this.privateMode) {
+    if (this.authMode === AuthenticationMode.OPEN) {
       if (actionBody.cookie) {
         // set the temp cookie so we can reset it after the call
         tempCookie = this.cookie;
@@ -98,11 +97,7 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
 
     let res = await this.callClient(message);
 
-    const byteChallenge = await hexToBytes(msgChallenge);
-    const base64Challenge = await bytesToBase64(byteChallenge);
-    msg1.challenge(base64Challenge);
-
-    if (!this.privateMode) {
+    if (this.authMode === AuthenticationMode.OPEN) {
       // reset the cookie
       if (tempCookie) {
         this.cookie = tempCookie;
@@ -117,7 +112,7 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
           if (res.authCode === undefined) {
             const authRes = await this.auth.authenticate(kwilSigner);
             if (authRes.status === 200) {
-              if (!this.privateMode) {
+              if (this.authMode === AuthenticationMode.OPEN) {
                 // set the cookie
                 this.cookie = authRes.data?.cookie;
               }
@@ -130,11 +125,11 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
             const authPrivateModeRes = await this.auth.privateModeAuthenticate(
               kwilSigner,
               actionBody,
-              msgChallenge,
               message.body.payload
             );
             // message with signature to be passed
-            msg1.signature(authPrivateModeRes);
+            msg1.challenge(authPrivateModeRes.challenge);
+            msg1.signature(authPrivateModeRes.signature);
             message = await msg1.buildMsg();
             res = await this.callClient(message);
           }
