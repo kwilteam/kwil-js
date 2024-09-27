@@ -57,6 +57,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       {
         getAuthenticateClient: this.getAuthenticateClient.bind(this),
         postAuthenticateClient: this.postAuthenticateClient.bind(this),
+        challengeClient: this.challengeClient.bind(this),
         logoutClient: this.logoutClient.bind(this),
       },
       this.config.kwilProvider,

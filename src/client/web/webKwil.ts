@@ -47,9 +47,6 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
       return await this.callClient(actionBody);
     }
 
-    const challenge = await this.challengeClient();
-    let msgChallenge = challenge.data as string;
-
     const name = !actionBody.name && actionBody.action ? actionBody.action : actionBody.name;
 
     // pre Challenge message
@@ -80,10 +77,6 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
 
     let res = await this.callClient(message);
 
-    const byteChallenge = await hexToBytes(msgChallenge);
-    const base64Challenge = await bytesToBase64(byteChallenge);
-    msg1.challenge(base64Challenge);
-
     // Need to check authentication errors, sign message and retry request/response
     if (this.autoAuthenticate) {
       if (kwilSigner) {
@@ -101,11 +94,11 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
             const authPrivateModeRes = await this.auth.privateModeAuthenticate(
               kwilSigner,
               actionBody,
-              msgChallenge,
               message.body.payload
             );
             // message with signature to be passed
-            msg1.signature(authPrivateModeRes);
+            msg1.challenge(authPrivateModeRes.challenge);
+            msg1.signature(authPrivateModeRes.signature);
             message = await msg1.buildMsg();
             res = await this.callClient(message);
           }

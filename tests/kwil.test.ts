@@ -4,7 +4,6 @@ const logSpy = jest.spyOn(console, 'log').mockImplementation((...args) => {
 });
 jest.resetModules();
 import {
-  AmntObject,
   deployBaseSchema,
   deployIfNoTestDb,
   deployTempSchema,

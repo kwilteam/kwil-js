@@ -1,8 +1,7 @@
 import { Base64String, HexString, Nillable, NonNil } from "../utils/types";
-import { PrivateSignature } from "./auth";
 import { BytesEncodingStatus, PayloadBytesTypes, PayloadType } from "./enums";
 import { UnencodedActionPayload } from "./payload";
-import { AnySignatureType, SignatureType } from "./signature";
+import { AnySignatureType, Signature, SignatureType } from "./signature";
 
 /**
  * `MsgReceipt` is the interface for a payload structure for a response from the Kwil `call` GRPC endpoint {@link https://github.com/kwilteam/proto/blob/main/kwil/tx/v1/call.proto}.
@@ -19,12 +18,12 @@ export interface MsgData<T extends PayloadBytesTypes> {
     auth_type: AnySignatureType;
     // when the other bytes are base64, it means it is time to turn the sender bytes to hex string
     sender: Nillable<T extends BytesEncodingStatus.BASE64_ENCODED ? HexString : Uint8Array>;
-    signature: Nillable<PrivateSignature>;
+    signature: Nillable<Signature<BytesEncodingStatus.BASE64_ENCODED>>;
 }
 
 interface MsgBody<T extends PayloadBytesTypes> {
     payload: Nillable<T extends BytesEncodingStatus.BASE64_ENCODED ? Base64String : UnencodedActionPayload<PayloadType.CALL_ACTION>>;
-    challenge?: Nillable<String>;
+    challenge?: Nillable<HexString>;
 }
 
 /**
@@ -73,7 +72,7 @@ export class BaseMessage<T extends PayloadBytesTypes> implements MsgData<T> {
         return this.data.sender;
     }
 
-    public get signature(): Nillable<PrivateSignature> {
+    public get signature(): Nillable<Signature<BytesEncodingStatus.BASE64_ENCODED>> {
         return this.data.signature;
     }
 }

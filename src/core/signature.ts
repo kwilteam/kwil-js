@@ -14,6 +14,11 @@ export enum SignatureType {
     ED25519 = 'ed25519'
 }
 
+export interface AuthBody {
+    signature: Signature<BytesEncodingStatus.BASE64_ENCODED>;
+    challenge: string;
+}
+
 export type CustomSignatureType = string;
 
 export type AnySignatureType = SignatureType | CustomSignatureType;

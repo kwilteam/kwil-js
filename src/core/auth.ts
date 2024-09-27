@@ -1,7 +1,7 @@
-import { Base64String, HexString } from '../utils/types';
-import { ActionBody } from './action';
-import { BytesEncodingStatus, EnvironmentType } from './enums';
-import { AnySignatureType, Signature, SignatureType } from './signature';
+import { HexString } from '../utils/types';
+import { AuthenticationMode, BytesEncodingStatus, EnvironmentType } from './enums';
+import { GenericResponse } from './resreq';
+import { Signature } from './signature';
 
 export interface AuthenticatedBody<
   T extends BytesEncodingStatus.HEX_ENCODED | BytesEncodingStatus.UINT8_ENCODED
@@ -11,7 +11,7 @@ export interface AuthenticatedBody<
   signature: Signature<T extends BytesEncodingStatus.HEX_ENCODED ? BytesEncodingStatus.BASE64_ENCODED : BytesEncodingStatus.UINT8_ENCODED>;
 }
 
-export interface AuthInfo {
+export interface KGWAuthInfo {
   nonce: string;
   statement: string;
   issue_at: string;
@@ -28,18 +28,13 @@ export interface PrivateModeAuthInfo {
   challenge: string;
 }
 
-export interface PrivateSignature {
-  sig: string;
-  type: AnySignatureType;
-}
-
 export type AuthSuccess<T extends EnvironmentType> = T extends EnvironmentType.BROWSER ? BrowserAuthSuccess : NodeAuthSuccess;
 
-interface BrowserAuthSuccess {
+export interface BrowserAuthSuccess {
   result: string;
 }
 
-interface NodeAuthSuccess {
+export interface NodeAuthSuccess {
   result: string;
   cookie?: string;
 }
@@ -55,8 +50,10 @@ interface LogoutResponseNode {
   cookie?: string;
 }
 
+export type AuthenticationResponse<T extends AuthenticationMode> = T extends AuthenticationMode.OPEN ? GenericResponse<BrowserAuthSuccess | NodeAuthSuccess> : Signature<BytesEncodingStatus.BASE64_ENCODED>;
+
 export function composeAuthMsg(
-  authParam: AuthInfo,
+  authParam: KGWAuthInfo,
   domain: string,
   version: string,
   chainId: string,
@@ -101,7 +98,7 @@ export function removeTrailingSlash(url: string): string {
 }
 
 export function verifyAuthProperties(
-  authParm: AuthInfo,
+  authParm: KGWAuthInfo,
   domain: string,
   version: string,
   chainId: string,

@@ -16,11 +16,10 @@ import {
 } from '../core/enums';
 import { kwilEncode } from '../utils/rlp';
 import { bytesToHex, hexToBytes, stringToBytes } from '../utils/serial';
-import { AnySignatureType, SignatureType, executeSign } from '../core/signature';
+import { AnySignatureType, Signature, SignatureType, executeSign } from '../core/signature';
 import { BaseMessage, Message, Msg } from '../core/message';
 import { isNearPubKey, nearB58ToHex } from '../utils/keys';
 import { AllPayloads, UnencodedActionPayload } from '../core/payload';
-import { PrivateSignature } from '../core/auth';
 
 /**
  * PayloadBuilderImpl is the default implementation of PayloadBuilder. It allows for building transaction and call payloads that can be sent over GRPC.
@@ -37,7 +36,7 @@ export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBui
   private _description: NonNil<string> = '';
   private _nonce: Nillable<number> = null;
   private _challenge: NonNil<string> = '';
-  private _signature: Nillable<PrivateSignature> = null;
+  private _signature: Nillable<Signature<BytesEncodingStatus.BASE64_ENCODED>> = null;
 
   /**
    * Initializes a new `PayloadBuilder` instance.
@@ -202,7 +201,7 @@ export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBui
    * @param {string} signature - The signature for the transaction.
    * @returns {PayloadBuilder} The current `PayloadBuilder` instance for chaining.
    */
-  signature(signature: NonNil<PrivateSignature>): NonNil<PayloadBuilder> {
+  signature(signature: NonNil<Signature<BytesEncodingStatus.BASE64_ENCODED>>): NonNil<PayloadBuilder> {
     this._signature = signature;
     return this;
   }
@@ -308,7 +307,7 @@ export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBui
     let msg = Msg.create<BytesEncodingStatus.UINT8_ENCODED>((msg) => {
       msg.body.payload = resolvedPayload as UnencodedActionPayload<PayloadType.CALL_ACTION>;
       msg.body.challenge = this._challenge as string;
-      msg.signature = this._signature as unknown as PrivateSignature;
+      msg.signature = this._signature;
 
     });
 
