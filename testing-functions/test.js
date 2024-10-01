@@ -100,8 +100,15 @@ async function test() {
         $username: "Tyler",
         $age: 4
     }
-    // executeGeneralAction(kwil, dbid, "create_user", kwilSigner, user)
-    executeGeneralView(kwil, dbid, "check_user", null, kwilSigner)
+
+    const post = {
+        $id: 1,
+        $title: "Tyler post",
+        $content: "Some Content",
+        $date_string: "10-1-2024"
+    }
+    // executeGeneralAction(kwil, dbid, "create_post", kwilSigner, post)
+    executeGeneralView(kwil, dbid, "get_posts", {$user_id: 1}, kwilSigner)
 }
 
 test()
@@ -114,7 +121,6 @@ async function executeGeneralView(kwil, dbid, name, input, signer ) {
     }
 
     const res = await kwil.call(body, signer)
-
     logger(res)
 
 }

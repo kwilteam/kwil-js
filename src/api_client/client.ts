@@ -7,7 +7,7 @@ import { ClientConfig } from './config';
 import { GenericResponse } from '../core/resreq';
 import { base64ToHex, bytesToHex, bytesToString, hexToBase64, hexToBytes } from '../utils/serial';
 import { TxInfoReceipt } from '../core/txQuery';
-import { Message, MsgReceipt } from '../core/message';
+import { CallClientResponse, Message, MsgReceipt } from '../core/message';
 import { kwilDecode } from '../utils/rlp';
 import {
   AuthErrorCodes,
@@ -301,7 +301,7 @@ export default class Client extends Api {
     });
   }
 
-  protected async callClient(msg: Message): Promise<GenericResponse<MsgReceipt>> {
+  protected async callClient(msg: Message): Promise<CallClientResponse<MsgReceipt>> {
     const body = this.buildJsonRpcRequest<CallRequest>(JSONRPCMethod.METHOD_CALL, {
       body: msg.body,
       auth_type: msg.auth_type,
@@ -338,7 +338,7 @@ export default class Client extends Api {
   // Check for specific error codes and return http status, result of view action, and rpc authError code (if applicable)
   private checkAuthError<T>(
     res: AxiosResponse<JsonRPCResponse<T>>
-  ): GenericResponse<MsgReceipt> | null {
+  ): CallClientResponse<MsgReceipt> | null {
     const errorCode = res.data.error?.code;
     if (errorCode === AuthErrorCodes.PRIVATE_MODE || errorCode === AuthErrorCodes.KGW_MODE) {
       return {

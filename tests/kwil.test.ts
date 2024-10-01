@@ -4,6 +4,7 @@ const logSpy = jest.spyOn(console, 'log').mockImplementation((...args) => {
 });
 jest.resetModules();
 import {
+  AmntObject,
   deployBaseSchema,
   deployIfNoTestDb,
   deployTempSchema,
@@ -698,7 +699,7 @@ describe('Testing simple actions and db deploy / drop (builder pattern alternati
 
       expect(result.data).toBeDefined();
       expect(result.data).toMatchObject<MsgReceipt>({
-        result: expect.any(Array),
+        result: expect.any(Object),
       });
     });
   });
