@@ -33,6 +33,12 @@ interface MsgBody<T extends PayloadBytesTypes> {
  */
 export type Message = BaseMessage<BytesEncodingStatus.BASE64_ENCODED>
 
+export interface CallClientResponse<T> {
+    status: number;
+    data?: T;
+    authCode?: number;
+}
+
 /**
  * `BaseMessage` is the bass class for the payload structure for a request to the Kwil `call` GRPC endpoint {@link https://github.com/kwilteam/proto/blob/main/kwil/tx/v1/call.proto}.
  * 

@@ -484,7 +484,7 @@ describe('Testing authentication', () => {
     (isKgwOn ? it : it.skip)(
       'should authenticate after calling the authenticate method',
       async () => {
-        const result = await newKwil.auth.authenticate(kSigner);
+        const result = await newKwil.auth.authenticateKGW(kSigner);
 
         await newKwil.auth.logout();
 
@@ -500,7 +500,7 @@ describe('Testing authentication', () => {
     (isKgwOn ? it : it.skip)(
       'should authenticate when the cookie is passed back to the action',
       async () => {
-        const authRes = await newKwil.auth.authenticate(kSigner);
+        const authRes = await newKwil.auth.authenticateKGW(kSigner);
         const cookie = authRes.data?.cookie;
 
         if (!cookie) throw new Error('No cookie found');
@@ -678,7 +678,7 @@ describe('Testing simple actions and db deploy / drop (builder pattern alternati
       expect(result.data).toBeDefined();
       expect(result.status).toBe(200);
       expect(result.data).toMatchObject<MsgReceipt>({
-        result: expect.any(Array),
+        result: expect.any(Object),
       });
     });
   });

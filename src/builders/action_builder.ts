@@ -5,7 +5,13 @@ import { Kwil } from '../client/kwil';
 import { ActionBuilder, SignerSupplier, PayloadBuilder } from '../core/builders';
 import { PayloadBuilderImpl } from './payload_builder';
 import { ActionInput } from '../core/action';
-import { BytesEncodingStatus, EnvironmentType, PayloadType, ValueType, VarType } from '../core/enums';
+import {
+  BytesEncodingStatus,
+  EnvironmentType,
+  PayloadType,
+  ValueType,
+  VarType,
+} from '../core/enums';
 import { AnySignatureType, Signature, SignatureType, getSignatureType } from '../core/signature';
 import { EncodedValue, UnencodedActionPayload } from '../core/payload';
 import { Message } from '../core/message';
@@ -250,16 +256,16 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
     return this;
   }
 
-    /**
+  /**
    * Specifies the signature for the transaction.
    *
    * @param {string} signature - The signature for the transaction.
    * @returns {ActionBuilder} The current `ActionBuilder` instance for chaining.
    */
   signature(signature: Signature<BytesEncodingStatus.BASE64_ENCODED>): Nillable<ActionBuilder> {
-      this._signature = signature;
-      return this;
-    }
+    this._signature = signature;
+    return this;
+  }
 
   /**
    * Builds a transaction. This will call the kwil network to retrieve the schema and the signer's account.
@@ -407,7 +413,10 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
       // if there are nilArgs, then the first element in the array is the nilArgs.
     };
 
-    let msg: PayloadBuilder = PayloadBuilderImpl.of(this.kwil).payload(payload).challenge(this._challenge).signature(this._signature);
+    let msg: PayloadBuilder = PayloadBuilderImpl.of(this.kwil)
+      .payload(payload)
+      .challenge(this._challenge)
+      .signature(this._signature);
 
     // if a signer is specified, add the signer, signature type, identifier, and description to the message
     if (signer) {
@@ -572,6 +581,10 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
       throw new Error(`Inputs are missing for actions: ${Array.from(missingInputs)}`);
     }
 
+    return this.constructEncodedValues(preparedActions);
+  }
+
+  public constructEncodedValues(preparedActions: ValueType[][]): EncodedValue[][] {
     let encodedValues: EncodedValue[][] = [];
 
     // construct the encoded value
