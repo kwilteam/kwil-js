@@ -82,7 +82,7 @@ export interface PayloadBuilder {
 
 
   /**
-   * Challenge for the transaction. If this is not specified, the challenge will be retrieved from the Kwil network.
+   * Challenge for the transaction.
    *
    * @param {string} challenge- The challenge for the transaction.
    * @returns {PayloadBuilder} The current `PayloadBuilder` instance for chaining.
@@ -90,7 +90,7 @@ export interface PayloadBuilder {
   challenge(challenge: Nillable<string>): NonNil<PayloadBuilder>;
 
   /**
-   * Signature for the transaction. If this is not specified, the signature is generated via client.
+   * Signature for the transaction.
    *
    * @param {string} signature- The signature for the transaction.
    * @returns {PayloadBuilder} The current `PayloadBuilder` instance for chaining.

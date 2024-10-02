@@ -55,7 +55,7 @@ describe('Kwil Integration Tests', () => {
     logSpy.mockRestore();
   });
 
-  it.only('should return the correct value on getDBID()', () => {
+  it('should return the correct value on getDBID()', () => {
     const result = kwil.getDBID(address, 'mydb');
     expect(result).toBe(dbid);
   });

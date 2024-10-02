@@ -142,8 +142,6 @@ export type QueryResponse = Result;
 
 interface Result {
   result: Base64String;
-  challenge?: string;
-  mode?: string;
 }
 
 export interface ListDatabasesResponse {

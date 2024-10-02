@@ -70,8 +70,8 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
    */
   private async ensureAuthenticationMode(): Promise<void> {
     if (!this.authMode) {
-      const mode = await this.healthModeCheckClient();
-      this.authMode = mode.data;
+      const health = await this.healthModeCheckClient();
+      this.authMode = health.data?.mode;
     }
   }
 

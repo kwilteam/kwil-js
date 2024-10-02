@@ -5,17 +5,11 @@ import { Kwil } from '../client/kwil';
 import { ActionBuilder, SignerSupplier, PayloadBuilder } from '../core/builders';
 import { PayloadBuilderImpl } from './payload_builder';
 import { ActionInput } from '../core/action';
-import {
-  BytesEncodingStatus,
-  EnvironmentType,
-  PayloadType,
-  ValueType,
-  VarType,
-} from '../core/enums';
+import { BytesEncodingStatus, EnvironmentType, PayloadType, ValueType } from '../core/enums';
 import { AnySignatureType, Signature, SignatureType, getSignatureType } from '../core/signature';
 import { EncodedValue, UnencodedActionPayload } from '../core/payload';
 import { Message } from '../core/message';
-import { DataType } from '../core/database';
+import { constructEncodedValues } from '../utils/rlp';
 
 interface CheckSchema {
   dbid: string;
@@ -581,48 +575,8 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
       throw new Error(`Inputs are missing for actions: ${Array.from(missingInputs)}`);
     }
 
-    return this.constructEncodedValues(preparedActions);
-  }
-
-  public constructEncodedValues(preparedActions: ValueType[][]): EncodedValue[][] {
-    let encodedValues: EncodedValue[][] = [];
-
-    // construct the encoded value
-    preparedActions.forEach((action) => {
-      let singleEncodedValues: EncodedValue[] = [];
-      action.forEach((val) => {
-        const { metadata, varType } = analyzeVariable(val);
-
-        const metadataSpread = metadata ? { metadata } : {};
-
-        const dataType: DataType = {
-          name: varType,
-          is_array: Array.isArray(val),
-          ...metadataSpread,
-        };
-
-        let data: string[] | Uint8Array[] = [];
-
-        if (Array.isArray(val) && !(val instanceof Uint8Array)) {
-          data = val.map((v) => {
-            return v?.toString() || '';
-          });
-        } else if (val instanceof Uint8Array) {
-          data = [val];
-        } else {
-          data = [val?.toString() || ''];
-        }
-
-        singleEncodedValues.push({
-          type: dataType,
-          data,
-        });
-      });
-
-      encodedValues.push(singleEncodedValues);
-    });
-
-    return encodedValues;
+    // return this.constructEncodedValues(preparedActions);
+    return constructEncodedValues(preparedActions);
   }
 
   private assertNotBuilding(): void {
@@ -630,74 +584,4 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
       throw new Error('Cannot modify the builder while a transaction is being built.');
     }
   }
-}
-
-function analyzeNumber(num: number) {
-  // Convert the number to a string and handle potential negative sign
-  const numStr = Math.abs(num).toString();
-
-  // Check for the presence of a decimal point
-  const decimalIndex = numStr.indexOf('.');
-  const hasDecimal = decimalIndex !== -1;
-
-  // Calculate total digits (excluding the decimal point)
-  const totalDigits = hasDecimal ? numStr.length - 1 : numStr.length;
-
-  // Analysis object to hold the results
-  const analysis = {
-    hasDecimal: hasDecimal,
-    totalDigits: totalDigits,
-    decimalPosition: hasDecimal ? decimalIndex : -1,
-  };
-
-  return analysis;
-}
-
-function analyzeVariable(val: ValueType): {
-  metadata: [number, number] | undefined;
-  varType: VarType;
-} {
-  if (Array.isArray(val)) {
-    // In Kwil, if there is an array of values, each value in the array must be of the same type.
-    return analyzeVariable(val[0]);
-  }
-
-  let metadata: [number, number] | undefined;
-  // Default to text string
-  // Only other types are null or blob. For client-side tooling, everything else can be sent as a string, and Kwil will handle the conversion.
-  let varType: VarType = VarType.TEXT;
-
-  switch (typeof val) {
-    case 'string':
-      break;
-    case 'number':
-      const numAnalysis = analyzeNumber(val);
-      if (numAnalysis.hasDecimal) {
-        metadata = [numAnalysis.totalDigits, numAnalysis.decimalPosition];
-      }
-      break;
-    case 'boolean':
-      break;
-    case 'object':
-      if (val instanceof Uint8Array) {
-        varType = VarType.BLOB;
-        break;
-      }
-      if (val === null) {
-        varType = VarType.NULL;
-        break;
-      }
-    case 'undefined':
-      varType = VarType.NULL;
-      break;
-    default:
-      throw new Error(
-        `Unsupported type: ${typeof val}. If using a uuid, blob, or uint256, please convert to a JavaScript string.`
-      );
-  }
-
-  return {
-    metadata,
-    varType,
-  };
 }
