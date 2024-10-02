@@ -15,12 +15,7 @@ import {
   BytesEncodingStatus,
   EnvironmentType,
 } from '../core/enums';
-import {
-  KGWAuthInfo,
-  AuthSuccess,
-  AuthenticatedBody,
-  LogoutResponse,
-} from '../core/auth';
+import { KGWAuthInfo, AuthSuccess, AuthenticatedBody, LogoutResponse } from '../core/auth';
 import { AxiosResponse } from 'axios';
 import {
   AccountRequest,
@@ -57,6 +52,7 @@ import {
   TxQueryRequest,
   TxQueryResponse,
 } from '../core/jsonrpc';
+import { HexString } from '../utils/types';
 
 export default class Client extends Api {
   private unconfirmedNonce: boolean;
@@ -245,16 +241,16 @@ export default class Client extends Api {
     });
   }
 
-  protected async healthModeCheckClient(): Promise<GenericResponse<string>> {
+  protected async healthModeCheckClient(): Promise<GenericResponse<HealthResponse>> {
     // JsonRPCRequest to Determine mode (KGW or Private)
     const body = this.buildJsonRpcRequest<HealthRequest>(JSONRPCMethod.METHOD_HEALTH, {});
 
     const res = await super.post<JsonRPCResponse<HealthResponse>>(`rpc/v1`, body);
 
-    return checkRes(res, (r) => r.result.mode);
+    return checkRes(res, (r) => r.result);
   }
 
-  protected async challengeClient(): Promise<GenericResponse<string>> {
+  protected async challengeClient(): Promise<GenericResponse<HexString>> {
     // JsonRPCRequest to generate a challenge
     const body = this.buildJsonRpcRequest<ChallengeRequest>(JSONRPCMethod.METHOD_CHALLENGE, {});
 

@@ -78,8 +78,8 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
    */
   private async ensureAuthenticationMode(): Promise<void> {
     if (!this.authMode) {
-      const mode = await this.healthModeCheckClient();
-      this.authMode = mode.data;
+      const health = await this.healthModeCheckClient();
+      this.authMode = health.data?.mode;
     }
   }
 
@@ -106,7 +106,8 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
    */
   private resetCookie(tempCookie?: string): void {
     if (this.authMode === AuthenticationMode.OPEN && tempCookie) {
-      this.cookie = tempCookie;
+      // reset cookie to undefined
+      this.cookie = undefined;
     }
   }
 

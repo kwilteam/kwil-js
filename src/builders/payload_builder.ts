@@ -201,7 +201,9 @@ export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBui
    * @param {string} signature - The signature for the transaction.
    * @returns {PayloadBuilder} The current `PayloadBuilder` instance for chaining.
    */
-  signature(signature: NonNil<Signature<BytesEncodingStatus.BASE64_ENCODED>>): NonNil<PayloadBuilder> {
+  signature(
+    signature: NonNil<Signature<BytesEncodingStatus.BASE64_ENCODED>>
+  ): NonNil<PayloadBuilder> {
     this._signature = signature;
     return this;
   }
@@ -308,7 +310,6 @@ export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBui
       msg.body.payload = resolvedPayload as UnencodedActionPayload<PayloadType.CALL_ACTION>;
       msg.body.challenge = this._challenge as string;
       msg.signature = this._signature;
-
     });
 
     // if a signer has been provided, execute a signed `view` action
@@ -378,7 +379,6 @@ export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBui
   ): Promise<Transaction> {
     // create the digest, which is the first bytes of the sha256 hash of the rlp-encoded payload
     const digest = sha256BytesToBytes(tx.body.payload as Uint8Array).subarray(0, 20);
-    console.log("Payload" + tx.body.payload)
 
     // create the signature message
     const signatureMessage = `${description}

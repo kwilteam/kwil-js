@@ -1,6 +1,5 @@
 import { HexString } from '../utils/types';
-import { AuthenticationMode, BytesEncodingStatus, EnvironmentType } from './enums';
-import { GenericResponse } from './resreq';
+import { BytesEncodingStatus, EnvironmentType } from './enums';
 import { Signature } from './signature';
 
 export interface AuthenticatedBody<
@@ -8,7 +7,11 @@ export interface AuthenticatedBody<
 > {
   nonce: string;
   sender: HexString;
-  signature: Signature<T extends BytesEncodingStatus.HEX_ENCODED ? BytesEncodingStatus.BASE64_ENCODED : BytesEncodingStatus.UINT8_ENCODED>;
+  signature: Signature<
+    T extends BytesEncodingStatus.HEX_ENCODED
+      ? BytesEncodingStatus.BASE64_ENCODED
+      : BytesEncodingStatus.UINT8_ENCODED
+  >;
 }
 
 export interface KGWAuthInfo {
@@ -22,13 +25,9 @@ export interface KGWAuthInfo {
   uri: string;
 }
 
-export interface PrivateModeAuthInfo {
-  dbid: string;
-  action: string;
-  challenge: string;
-}
-
-export type AuthSuccess<T extends EnvironmentType> = T extends EnvironmentType.BROWSER ? BrowserAuthSuccess : NodeAuthSuccess;
+export type AuthSuccess<T extends EnvironmentType> = T extends EnvironmentType.BROWSER
+  ? BrowserAuthSuccess
+  : NodeAuthSuccess;
 
 export interface BrowserAuthSuccess {
   result: string;
@@ -39,7 +38,9 @@ export interface NodeAuthSuccess {
   cookie?: string;
 }
 
-export type LogoutResponse<T extends EnvironmentType> = T extends EnvironmentType.BROWSER ? LogoutResponseWeb : LogoutResponseNode;
+export type LogoutResponse<T extends EnvironmentType> = T extends EnvironmentType.BROWSER
+  ? LogoutResponseWeb
+  : LogoutResponseNode;
 
 interface LogoutResponseWeb {
   result: string;
@@ -50,13 +51,11 @@ interface LogoutResponseNode {
   cookie?: string;
 }
 
-export type AuthenticationResponse<T extends AuthenticationMode> = T extends AuthenticationMode.OPEN ? GenericResponse<BrowserAuthSuccess | NodeAuthSuccess> : Signature<BytesEncodingStatus.BASE64_ENCODED>;
-
 export function composeAuthMsg(
   authParam: KGWAuthInfo,
   domain: string,
   version: string,
-  chainId: string,
+  chainId: string
 ): string {
   let msg = '';
   msg += `${domain} wants you to sign in with your account:\n`;
@@ -79,7 +78,7 @@ export function generateSignatureText(
   dbid: string,
   action: string,
   digest: HexString,
-  challenge: string,
+  challenge: string
 ): string {
   let sigText = 'Kwil view call.\n';
   sigText += '\n';
@@ -101,7 +100,7 @@ export function verifyAuthProperties(
   authParm: KGWAuthInfo,
   domain: string,
   version: string,
-  chainId: string,
+  chainId: string
 ): void {
   if (authParm.domain && authParm.domain !== domain) {
     throw new Error(`Domain mismatch: ${authParm.domain} !== ${domain}`);
