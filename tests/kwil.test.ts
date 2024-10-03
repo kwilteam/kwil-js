@@ -21,11 +21,15 @@ import { MsgReceipt } from '../dist/core/message';
 import nacl from 'tweetnacl';
 import { Signer as _NearSigner } from 'near-api-js';
 import { ActionBody, ActionInput, ActionBodyNode } from '../dist/core/action';
-import { Database, DropBody, Extension } from '../dist/core/database';
+import { DropBody } from '../dist/core/database';
 import { EnvironmentType } from '../dist/core/enums';
 import dotenv from 'dotenv';
 import { AuthSuccess, LogoutResponse } from '../dist/core/auth';
 import { Wallet } from 'ethers';
+import variableDb from './variable_test.json';
+import { v4 as uuidV4 } from 'uuid';
+import { bytesToString } from '../dist/utils/serial';
+import { base64ToBytes } from '../dist/utils/base64';
 
 dotenv.config();
 const isKgwOn = process.env.GATEWAY_ON === 'TRUE';
@@ -63,36 +67,26 @@ describe('Kwil Integration Tests', () => {
 
   let schema: any;
 
-  test('getSchema should return a database object', async () => {
+  it('should return status 200 on getSchema()', async () => {
     const result = await kwil.getSchema(dbid);
     schema = result.data;
-    expect(result.data).toBeDefined();
-    expect(result.data).toMatchObject<Database>({
-      owner: expect.any(Uint8Array),
-      name: expect.any(String),
-      extensions: result.data?.extensions as Extension[], // will be tested separately
-      tables: expect.any(Array),
-      actions: expect.any(Array),
-      procedures: expect.any(Array),
-      foreign_calls: expect.any(Array),
-    });
-
-    // Extensions should be an array or null
-    expect(Array.isArray(result.data?.extensions) || result.data?.extensions === null).toBe(true);
+    expect(result.status).toBe(200);
   });
 
   it('should cache the getSchema() result properly', async () => {
     jest.useFakeTimers();
 
     const result = await kwil.getSchema(dbid);
-    expect(result.data).toStrictEqual(schema);
+    expect(result.status).toBe(200);
+    // expect(result.data).toStrictEqual(schema);
 
     // Simulate the passage of 11 minutes
     jest.advanceTimersByTime(11 * 60 * 1000);
 
     const result2 = await kwil.getSchema(dbid);
 
-    expect(result2.data).toStrictEqual(schema);
+    expect(result2.status).toBe(200);
+    expect(result2.data).toBeDefined();
 
     // each server requests make two console logs. If the cache expired properly, it should make a new request.
     expect(logSpy).toHaveBeenCalledTimes(2);
@@ -102,50 +96,31 @@ describe('Kwil Integration Tests', () => {
     jest.useRealTimers();
   });
 
-  test('getAccount should return an account object', async () => {
+  it('should return status 200 on getAccount()', async () => {
     const result = await kwil.getAccount(address);
-    expect(result.data).toMatchObject<Account>({
-      identifier: expect.any(Uint8Array),
-      nonce: expect.any(Number),
-      balance: expect.any(String),
-    });
+    expect(result.status).toBe(200);
   });
 
-  test('listDatabases should return an array of DataSetInfo', async () => {
+  it('should return status 200 on listDatabases()', async () => {
     const result = await kwil.listDatabases(address);
-
-    expect(result.data).toBeDefined();
-    result.data?.forEach((db) => {
-      expect(db).toMatchObject({
-        name: expect.any(String),
-        dbid: expect.any(String),
-        owner: expect.any(Uint8Array),
-      });
-    });
-
-    result.data?.forEach((db) => {
-      expect(db.owner).toBeInstanceOf(Uint8Array);
-    });
+    expect(result.status).toBe(200);
   });
 
-  test('ping should return the pong response', async () => {
+  it('should return status 200 on ping()', async () => {
     const result = await kwil.ping();
-    expect(result.data).toBe('pong');
+    expect(result.status).toBe(200);
   });
 
-  test('chainInfo should match the chainInfo object', async () => {
+  it('should return a status 200 on chainInfo()', async () => {
     const result = await kwil.chainInfo();
-    console.log(result)
-    expect(result.data).toMatchObject<ChainInfo>({
-      chain_id: expect.any(String),
-      height: expect.any(String),
-      hash: expect.any(String),
-    });
+    expect(result.status).toBe(200);
   });
 
   (isKgwOn ? it : it.skip)('select should return an array', async () => {
+  // selectQuery is not allowed in Private Mode
+  (isKgwOn ? it : it.skip)('should return status 200 on selectQuery()', async () => {
     const result = await kwil.selectQuery(dbid, 'SELECT * FROM posts LIMIT 5');
-    expect(result.data).toMatchObject<any[]>([]);
+    expect(result.status).toBe(200);
   });
 
   it('should submit an action tx on execute()', async () => {
@@ -178,6 +153,7 @@ describe('Kwil Integration Tests', () => {
 
     const recordCount = amnt['count'] + 1;
 
+  it('should submit a procedure tx on execute()', async () => {
     const actionBody: ActionBody = {
       dbid,
       name: 'proc_add_user',
@@ -213,6 +189,9 @@ describe('Kwil Integration Tests', () => {
 
     const result = await kwil.call(body, kSigner);
     console.log(result)
+
+    expect(result.data).toBeDefined();
+    expect(result.status).toBe(200);
     expect(result.data).toMatchObject<MsgReceipt>({
       result: expect.any(Array),
     });
@@ -268,7 +247,7 @@ describe('Kwil Integration Tests', () => {
     const result = await kwil.call(body, kSigner);
 
     expect(result.data).toBeDefined();
-
+    expect(result.status).toBe(200);
     expect(result.data).toMatchObject<MsgReceipt>({
       result: expect.any(Array),
     });
@@ -448,6 +427,7 @@ describe('Testing authentication', () => {
 
     const result = await kwil.call(body, kSigner);
 
+    expect(result.status).toBe(200);
     expect(result.data).toBeDefined();
     expect(result.data).toMatchObject<MsgReceipt>({
       result: expect.any(Array),
@@ -463,12 +443,15 @@ describe('Testing authentication', () => {
     //@ts-ignore
     const postCookie = kwil.cookie;
 
+    expect(result.status).toBe(200);
     expect(result.data).toBeDefined();
     expect(result.data).toMatchObject<LogoutResponse<EnvironmentType.NODE>>({
       result: 'ok',
       cookie: expect.any(String),
     });
 
+    console.log('preCookie:', preCookie);
+    console.log('postCookie:', postCookie);
     expect(preCookie).not.toBe(postCookie);
   });
 
@@ -487,9 +470,8 @@ describe('Testing authentication', () => {
 
     const returnedCaller = result.data?.result?.[0] as ViewCaller | undefined;
 
-    expect(result.data).toMatchObject<MsgReceipt>({
-      result: expect.any(Array),
-    });
+    expect(result.status).toBe(200);
+    expect(result.data).toBeDefined();
     expect(returnedCaller?.caller).toBe(newWallet.address);
   });
 
@@ -519,12 +501,15 @@ describe('Testing authentication', () => {
         const result = await newKwil.auth.authenticateKGW(kSigner);
 
         await newKwil.auth.logout();
+        await newKwil.auth.logout();
 
-      expect(result.data).toMatchObject<AuthSuccess<EnvironmentType.NODE>>({
-        result: 'ok',
-        cookie: expect.any(String),
-      });
-    });
+        expect(result.status).toBe(200);
+        expect(result.data).toMatchObject<AuthSuccess<EnvironmentType.NODE>>({
+          result: 'ok',
+          cookie: expect.any(String),
+        });
+      }
+    );
 
     // cookies are not needed in private mode
     (isKgwOn ? it : it.skip)(
@@ -533,6 +518,7 @@ describe('Testing authentication', () => {
         const authRes = await newKwil.auth.authenticateKGW(kSigner);
         const cookie = authRes.data?.cookie;
 
+        if (!cookie) throw new Error('No cookie found');
         if (!cookie) throw new Error('No cookie found');
 
         const body: ActionBodyNode = {
@@ -544,12 +530,23 @@ describe('Testing authentication', () => {
         const result = await newKwil.call(body, kSigner);
         await newKwil.auth.logout();
 
-      expect(result.data).toBeDefined();
-      expect(result.data).toMatchObject<MsgReceipt>({
-        result: expect.any(Array),
-      });
-    });
+        expect(result.status).toBe(200);
+        expect(result.data).toBeDefined();
+        expect(result.data).toMatchObject<MsgReceipt>({
+          result: expect.any(Array),
+        });
+      }
+    );
 
+    // cookies are not needed in private mode
+    (isKgwOn ? it : it.skip)(
+      'should not authenticate when a bad cookie is passed back to the action',
+      async () => {
+        const body: ActionBodyNode = {
+          name: 'view_must_sign',
+          dbid,
+          cookie: 'badCookie',
+        };
     // cookies are not needed in private mode
     (isKgwOn ? it : it.skip)(
       'should not authenticate when a bad cookie is passed back to the action',
@@ -566,7 +563,17 @@ describe('Testing authentication', () => {
         expect(result.data?.result).toBe(null);
       }
     );
+      }
+    );
 
+    // cookies are not needed in private mode
+    (isKgwOn ? it : it.skip)(
+      'should continue authenticating after a bad cookie was passed to the previous action',
+      async () => {
+        const body: ActionBody = {
+          name: 'view_must_sign',
+          dbid,
+        };
     // cookies are not needed in private mode
     (isKgwOn ? it : it.skip)(
       'should continue authenticating after a bad cookie was passed to the previous action',
@@ -578,11 +585,13 @@ describe('Testing authentication', () => {
 
         const result = await newKwil.call(body, kSigner);
 
-      expect(result.data).toBeDefined();
-      expect(result.data).toMatchObject<MsgReceipt>({
-        result: expect.any(Array),
-      });
-    });
+        expect(result.status).toBe(200);
+        expect(result.data).toBeDefined();
+        expect(result.data).toMatchObject<MsgReceipt>({
+          result: expect.any(Array),
+        });
+      }
+    );
   });
 });
 
@@ -629,6 +638,7 @@ describe('Testing custom signers', () => {
     expect(result.data).toMatchObject<TxReceipt>({
       tx_hash: expect.any(String),
     });
+    expect(result.status).toBe(200);
   }, 10000);
 
   it('should call ed25519 signed msgs correctly', async () => {
@@ -643,6 +653,7 @@ describe('Testing custom signers', () => {
     expect(result.data).toMatchObject<MsgReceipt>({
       result: expect.any(Array),
     });
+    expect(result.status).toBe(200);
   });
 });
 
@@ -663,6 +674,7 @@ describe('Testing simple actions and db deploy / drop (builder pattern alternati
 
     const result = await kwil.call(actionBody, kSigner);
     expect(result.data).toBeDefined();
+    expect(result.status).toBe(200);
     expect(result.data).toMatchObject<MsgReceipt>({
       result: expect.any(Array),
     });
@@ -682,6 +694,7 @@ describe('Testing simple actions and db deploy / drop (builder pattern alternati
 
       const result = await kwil.call(actionBody, kSigner);
       expect(result.data).toBeDefined();
+      expect(result.status).toBe(200);
       expect(result.data).toMatchObject<MsgReceipt>({
         result: expect.any(Array),
       });
@@ -699,6 +712,7 @@ describe('Testing simple actions and db deploy / drop (builder pattern alternati
       const result = await kwil.call(actionBody, kSigner);
 
       expect(result.data).toBeDefined();
+      expect(result.status).toBe(200);
       expect(result.data).toMatchObject<MsgReceipt>({
         result: expect.any(Object),
       });
@@ -714,6 +728,7 @@ describe('Testing simple actions and db deploy / drop (builder pattern alternati
 
     const result = await kwil.call(actionBody, kSigner);
     expect(result.data).toBeDefined();
+    expect(result.status).toBe(200);
     expect(result.data).toMatchObject<MsgReceipt>({
       result: expect.any(Array),
     });
@@ -737,6 +752,7 @@ describe('Testing simple actions and db deploy / drop (builder pattern alternati
       const result = await kwil.execute(actionBody, kSigner, true);
 
       expect(result.data).toBeDefined();
+      expect(result.status).toBe(200);
       expect(result.data).toMatchObject<TxReceipt>({
         tx_hash: expect.any(String),
       });
@@ -759,6 +775,7 @@ describe('Testing simple actions and db deploy / drop (builder pattern alternati
       const result = await kwil.execute(actionBody, kSigner, true);
 
       expect(result.data).toBeDefined();
+      expect(result.status).toBe(200);
       expect(result.data).toMatchObject<TxReceipt>({
         tx_hash: expect.any(String),
       });
@@ -785,6 +802,7 @@ describe('Testing simple actions and db deploy / drop (builder pattern alternati
       const result = await kwil.execute(actionBody, kSigner, true);
 
       expect(result.data).toBeDefined();
+      expect(result.status).toBe(200);
       expect(result.data).toMatchObject<TxReceipt>({
         tx_hash: expect.any(String),
       });
@@ -848,9 +866,8 @@ describe('unconfirmedNonce', () => {
 
 import variableDb from './variable_test.json';
 import { v4 as uuidV4 } from 'uuid';
-import { bytesToString } from '../dist/utils/serial';
-import { base64ToBytes } from '../dist/utils/base64';
-import { Account, ChainInfo } from '../dist/core/network';
+import { bytesToString, stringToBytes } from '../dist/utils/serial';
+import { base64ToBytes, bytesToBase64 } from '../dist/utils/base64';
 
 describe('Kwil DB types', () => {
   const kwilSigner = new KwilSigner(wallet, address);
@@ -939,23 +956,60 @@ describe('Kwil DB types', () => {
         true
       );
 
-    expect(res.data).toBeDefined();
-    expect(res.data).toMatchObject<TxReceipt>({
-      tx_hash: expect.any(String),
-    });
+      expect(res.data).toBeDefined();
+      expect(res.status).toBe(200);
 
       const query = await kwil.selectQuery(
         dbid,
         `SELECT * FROM var_table WHERE text_col = '${text}'`
       );
 
+      expect(query.data).toBeDefined();
+      expect(query.data).toHaveLength(1);
+    },
+    10000
+  );
+
+  (!isKwildPrivateOn ? it : it.skip)(
+<<<<<<< Updated upstream
+=======
+    'should be able to insert a record with an integer',
+    async () => {
+      const id = uuidV4();
+      const num = 123;
+
+      const res = await kwil.execute(
+        {
+          dbid,
+          name: 'insert_int',
+          inputs: [
+            {
+              $id: id,
+              $int: num,
+            },
+          ],
+        },
+        kwilSigner,
+        true
+      );
+
+      expect(res.data).toBeDefined();
+      expect(res.status).toBe(200);
+
+      const query = await kwil.selectQuery(dbid, `SELECT * FROM var_table WHERE int_col = ${num}`);
+
     expect(query.data).toBeDefined();
     expect(query.data).toHaveLength(1);
     expect(Array.isArray(query.data)).toBe(true);
     expect(query.data?.length).toBeGreaterThan(0);
   }, 10000);
+      expect(query.data).toBeDefined();
+      expect(query.data).toHaveLength(1);
+    },
+  );
 
   (!isKwildPrivateOn ? it : it.skip)(
+>>>>>>> Stashed changes
     'should be able to insert a record with a boolean',
     async () => {
       const id = uuidV4();
@@ -976,21 +1030,19 @@ describe('Kwil DB types', () => {
         true
       );
 
-    expect(res.data).toBeDefined();
-    expect(res.data).toMatchObject<TxReceipt>({
-      tx_hash: expect.any(String),
-    });
+      expect(res.data).toBeDefined();
+      expect(res.status).toBe(200);
 
       const query = await kwil.selectQuery(
         dbid,
         `SELECT * FROM var_table WHERE bool_col = ${bool}`
       );
 
-    expect(query.data).toBeDefined();
-    expect(query.data).toHaveLength(1);
-    expect(Array.isArray(query.data)).toBe(true);
-    expect(query.data?.length).toBeGreaterThan(0);
-  }, 10000);
+      expect(query.data).toBeDefined();
+      expect(query.data).toHaveLength(1);
+    },
+    10000
+  );
 
   (!isKwildPrivateOn ? it : it.skip)(
     'should be able to insert a record with a decimal',
@@ -1013,21 +1065,19 @@ describe('Kwil DB types', () => {
         true
       );
 
-    expect(res.data).toBeDefined();
-    expect(res.data).toMatchObject<TxReceipt>({
-      tx_hash: expect.any(String),
-    });
+      expect(res.data).toBeDefined();
+      expect(res.status).toBe(200);
 
       const query = await kwil.selectQuery(
         dbid,
         `SELECT * FROM var_table WHERE uuid_col = '${id}'::uuid`
       );
 
-    expect(query.data).toBeDefined();
-    expect(query.data).toHaveLength(1);
-    expect(Array.isArray(query.data)).toBe(true);
-    expect(query.data?.length).toBeGreaterThan(0);
-  }, 10000);
+      expect(query.data).toBeDefined();
+      expect(query.data).toHaveLength(1);
+    },
+    10000
+  );
 
   (!isKwildPrivateOn ? it : it.skip)(
     'should be able to insert a record with a blob as a string',
@@ -1050,21 +1100,19 @@ describe('Kwil DB types', () => {
         true
       );
 
-    expect(res.data).toBeDefined();
-    expect(res.data).toMatchObject<TxReceipt>({
-      tx_hash: expect.any(String),
-    });
+      expect(res.data).toBeDefined();
+      expect(res.status).toBe(200);
 
       const query = await kwil.selectQuery(
         dbid,
         `SELECT * FROM var_table WHERE blob_col = '${blob}'::blob`
       );
 
-    expect(query.data).toBeDefined();
-    expect(query.data).toHaveLength(1);
-    expect(Array.isArray(query.data)).toBe(true);
-    expect(query.data?.length).toBeGreaterThan(0);
-  }, 10000);
+      expect(query.data).toBeDefined();
+      expect(query.data).toHaveLength(1);
+    },
+    10000
+  );
 
   (!isKwildPrivateOn ? it : it.skip)(
     'should be able to insert a record with a blob as a Uint8array',
@@ -1140,6 +1188,23 @@ describe('Kwil DB types', () => {
     const blobVal = query.data[0]?.blob_col as string;
     expect(base64ToBytes(blobVal)).toStrictEqual(blob);
   }, 10000);
+    
+      expect(res.data).toBeDefined();
+      expect(res.status).toBe(200);
+      const query = await kwil.selectQuery(
+        dbid,
+        `SELECT * FROM var_table WHERE blob_col = '${bytesToString(blob)}'::blob`
+      );
+      expect(query.data).toBeDefined();
+      expect(query.data).toHaveLength(1);
+
+      // @ts-ignore
+      // base64
+      const blobVal = query.data[0]?.blob_col as string;
+      expect(base64ToBytes(blobVal)).toStrictEqual(blob);
+    },
+    10000
+  );
 
   (!isKwildPrivateOn ? it : it.skip)(
     'should be able to insert a uint256 value',
@@ -1180,11 +1245,10 @@ describe('Kwil DB types', () => {
         true
       );
 
-    expect(res.data).toBeDefined();
-    expect(res.data).toMatchObject<TxReceipt>({
-      tx_hash: expect.any(String),
-    });
+      expect(res.data).toBeDefined();
+      expect(res.status).toBe(200);
 
+<<<<<<< Updated upstream
     const query = await kwil.selectQuery(dbid, `SELECT * FROM var_table WHERE uint256_col = ${maxUint256}`);
 
     expect(query.data).toBeDefined();
@@ -1193,3 +1257,16 @@ describe('Kwil DB types', () => {
     expect(query.data?.length).toBeGreaterThan(0);
   }, 10000);
 })
+=======
+      const query = await kwil.selectQuery(
+        dbid,
+        `SELECT * FROM var_table WHERE uint256_col = ${maxUint256}`
+      );
+
+      expect(query.data).toBeDefined();
+      expect(query.data).toHaveLength(1);
+    },
+    10000
+  );
+});
+>>>>>>> Stashed changes

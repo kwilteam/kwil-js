@@ -76,6 +76,30 @@ jobs:
           echo "run KWIL-JS TEST against kwild(http:localhost:8484),  with $chain_id"
           PRIVATE_KEY=0000000000000000000000000000000000000000000000000000000000000001 CHAIN_ID=$chain_id GATEWAY_ON=false GAS_ON=false KWIL_PROVIDER=http://localhost:8484 npm run integration
       
+      - name: Cleanup Docker
+        if: always()
+        run: |
+          docker compose -f /tmp/kwil-db/deployments/compose/kwil/docker-compose.yml down
+          docker system prune -af
+
+      - name: Set up KwilDB Docker in Private mode
+        run: |
+          git clone https://github.com/kwilteam/kwil-db.git /tmp/kwil-db
+          cd /tmp/kwil-db
+          go work init && go work use . ./test ./core
+          task build:docker
+          cd deployments/compose/kwil
+          echo "Starting kwil docker"
+          sed -i -e '/--autogen/a\
+          --app.private-rpc' docker-compose.yml 
+          docker compose up -d
+          cd -
+
+      - name: Install and build kwiljs
+        run: |
+          npm install
+          npm run build
+
       - name: Run integration tests in private mode
         run: |
           chain_id=`curl -X POST http://localhost:8484/rpc/v1 -H "Content-Type: application/json" -d '{"jsonrpc": "2.0", "id": 1, "method": "user.chain_info", "params": {}}' | jq -r '.result.chain_id'`
