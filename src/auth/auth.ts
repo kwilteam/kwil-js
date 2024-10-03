@@ -12,12 +12,12 @@ import {
 } from '../core/auth';
 import { BytesEncodingStatus, EnvironmentType, PayloadType } from '../core/enums';
 import { objects } from '../utils/objects';
-import { AuthBody, executeSign, PrivateSignature } from '../core/signature';
+import { AuthBody, executeSign, Signature } from '../core/signature';
 import { bytesToHex, hexToBytes, stringToBytes } from '../utils/serial';
 import { base64ToBytes, bytesToBase64 } from '../utils/base64';
 import { ActionBody } from '../core/action';
 import { sha256BytesToBytes } from '../utils/crypto';
-import { constructEncodedValues, encodeArguments, kwilEncode } from '../utils/rlp';
+import { encodeArguments, kwilEncode } from '../utils/rlp';
 import { UnencodedActionPayload } from '../core/payload';
 
 interface AuthClient {
@@ -100,6 +100,11 @@ export class Auth<T extends EnvironmentType> {
     const challenge = await this.authClient.challengeClient();
     let msgChallenge = challenge.data as string;
 
+    // Check if challenge.data is undefined
+    if (!msgChallenge) {
+      throw new Error('Challenge data is undefined. Unable to authenticate in private mode.');
+    }
+
     // create payload
     const payload: UnencodedActionPayload<PayloadType.CALL_ACTION> = {
       dbid: actionBody.dbid,
@@ -123,7 +128,7 @@ export class Auth<T extends EnvironmentType> {
     const signature = await executeSign(stringToBytes(msg), signer.signer, signer.signatureType);
     const sig = bytesToBase64(signature);
 
-    const privateSignature: PrivateSignature = {
+    const privateSignature: Signature<BytesEncodingStatus.BASE64_ENCODED> = {
       sig: sig,
       type: signer.signatureType,
     };

@@ -144,7 +144,7 @@ export function constructEncodedValues(preparedActions: ValueType[][]): EncodedV
   return encodedValues;
 }
 
-export function analyzeNumber(num: number) {
+function analyzeNumber(num: number) {
   // Convert the number to a string and handle potential negative sign
   const numStr = Math.abs(num).toString();
 
@@ -165,7 +165,7 @@ export function analyzeNumber(num: number) {
   return analysis;
 }
 
-export function analyzeVariable(val: ValueType): {
+function analyzeVariable(val: ValueType): {
   metadata: [number, number] | undefined;
   varType: VarType;
 } {
@@ -224,6 +224,53 @@ export function encodeArguments(actionBody: ActionBody): EncodedValue[] {
   const inputs = actionBody?.inputs ? Object.values(actionBody.inputs[0]) : [];
 
   // Construct encoded values from inputs => (see src/utils/rlp.ts/constructEncodedValues above)
-  const encodedArguments = inputs.length > 0 ? constructEncodedValues([inputs])[0] : [];
+  const encodedArguments = encodeNestedArguments([inputs])[0];
   return encodedArguments;
+}
+
+/**
+ *
+ * @param {ValueType[][]} preparedActions - The values of the actions to be executed.
+ * @returns nested values used for actions (ActionBuilder)
+ */
+export function encodeNestedArguments(preparedAction: ValueType[][]): EncodedValue[][] {
+  return preparedAction.map((action) => {
+    return encodeSingleArguments(action);
+  });
+}
+
+/**
+ *
+ * @param {ValueType[]} preparedAction - The values of the actions to be executed.
+ * @returns single EncodedValue (authenticatePrivateMode())
+ */
+export function encodeSingleArguments(preparedAction: ValueType[]): EncodedValue[] {
+  return preparedAction.map((val) => {
+    const { metadata, varType } = analyzeVariable(val);
+
+    const metadataSpread = metadata ? { metadata } : {};
+
+    const dataType: DataType = {
+      name: varType,
+      is_array: Array.isArray(val),
+      ...metadataSpread,
+    };
+
+    let data: string[] | Uint8Array[] = [];
+
+    if (Array.isArray(val) && !(val instanceof Uint8Array)) {
+      data = val.map((v) => {
+        return v?.toString() || '';
+      });
+    } else if (val instanceof Uint8Array) {
+      data = [val];
+    } else {
+      data = [val?.toString() || ''];
+    }
+
+    return {
+      type: dataType,
+      data,
+    };
+  });
 }

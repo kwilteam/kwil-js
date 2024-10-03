@@ -90,7 +90,7 @@ export interface PayloadBuilder {
   challenge(challenge: Nillable<string>): NonNil<PayloadBuilder>;
 
   /**
-   * Signature for the transaction.
+   * Signature used to authenticate call requests (non-state changing).
    *
    * @param {string} signature- The signature for the transaction.
    * @returns {PayloadBuilder} The current `PayloadBuilder` instance for chaining.
