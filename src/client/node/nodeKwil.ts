@@ -60,9 +60,9 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
     // kwil.call()
     let response = await this.callClient(message);
 
-    // Reset Cookie
-    if (this.authMode === AuthenticationMode.OPEN) {
-      this.resetCookie(tempCookie);
+    // Reset Cookie if in PUBLIC mode
+    if (this.authMode === AuthenticationMode.OPEN && tempCookie) {
+      this.resetCookie();
     }
 
     // Handle Authentication if error
@@ -100,15 +100,12 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
   }
 
   /**
-   * Resets the temporary if in PUBLIC mode
+   * Resets the temporary cookie
    *
    * @param tempCookie
    */
-  private resetCookie(tempCookie?: string): void {
-    if (this.authMode === AuthenticationMode.OPEN && tempCookie) {
-      // reset cookie to undefined
-      this.cookie = undefined;
-    }
+  private resetCookie(): void {
+    this.cookie = undefined;
   }
 
   /**

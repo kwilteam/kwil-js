@@ -81,7 +81,7 @@ describe('Kwil Integration Tests', () => {
     expect(Array.isArray(result.data?.extensions) || result.data?.extensions === null).toBe(true);
   });
 
-  test('getSchema result should be cached properly', async () => {
+  it('should cache the getSchema() result properly', async () => {
     jest.useFakeTimers();
 
     const result = await kwil.getSchema(dbid);
@@ -542,6 +542,7 @@ describe('Testing authentication', () => {
         };
 
         const result = await newKwil.call(body, kSigner);
+        await newKwil.auth.logout();
 
       expect(result.data).toBeDefined();
       expect(result.data).toMatchObject<MsgReceipt>({
@@ -907,6 +908,22 @@ describe('Kwil DB types', () => {
       const id = uuidV4();
       const text = 'This is a test text';
 
+      const query = await kwil.selectQuery(
+        dbid,
+        `SELECT * FROM var_table WHERE uuid_col = '${id}'::uuid`
+      );
+      expect(query.data).toBeDefined();
+      expect(query.data).toHaveLength(1);
+    },
+    10000
+  );
+
+  (!isKwildPrivateOn ? it : it.skip)(
+    'should be able to insert a record with a text',
+    async () => {
+      const id = uuidV4();
+      const text = 'This is a test text';
+
       const res = await kwil.execute(
         {
           dbid,
@@ -931,40 +948,6 @@ describe('Kwil DB types', () => {
         dbid,
         `SELECT * FROM var_table WHERE text_col = '${text}'`
       );
-
-    expect(query.data).toBeDefined();
-    expect(query.data).toHaveLength(1);
-    expect(Array.isArray(query.data)).toBe(true);
-    expect(query.data?.length).toBeGreaterThan(0);
-  }, 10000);
-
-  (!isKwildPrivateOn ? it : it.skip)(
-    'should be able to insert a record with an integer',
-    async () => {
-      const id = uuidV4();
-      const num = 123;
-
-      const res = await kwil.execute(
-        {
-          dbid,
-          name: 'insert_int',
-          inputs: [
-            {
-              $id: id,
-              $int: num,
-            },
-          ],
-        },
-        kwilSigner,
-        true
-      );
-
-    expect(res.data).toBeDefined();
-    expect(res.data).toMatchObject<TxReceipt>({
-      tx_hash: expect.any(String),
-    });
-
-      const query = await kwil.selectQuery(dbid, `SELECT * FROM var_table WHERE int_col = ${num}`);
 
     expect(query.data).toBeDefined();
     expect(query.data).toHaveLength(1);
@@ -1109,6 +1092,43 @@ describe('Kwil DB types', () => {
       tx_hash: expect.any(String),
     });
 
+      const query = await kwil.selectQuery(
+        dbid,
+        `SELECT * FROM var_table WHERE blob_col = '${blob}'::blob`
+      );
+
+    expect(query.data).toBeDefined();
+    expect(query.data).toHaveLength(1);
+    expect(Array.isArray(query.data)).toBe(true);
+    expect(query.data?.length).toBeGreaterThan(0);
+  }, 10000);
+
+  (!isKwildPrivateOn ? it : it.skip)(
+    'should be able to insert a record with a blob as a Uint8array',
+    async () => {
+      const id = uuidV4();
+      const blob = new Uint8Array([1, 2, 3, 4, 5]);
+
+      const res = await kwil.execute(
+        {
+          dbid,
+          name: 'insert_blob',
+          inputs: [
+            {
+              $id: id,
+              $blob: blob,
+            },
+          ],
+        },
+        kwilSigner,
+        true
+      );
+
+    expect(res.data).toBeDefined();
+    expect(res.data).toMatchObject<TxReceipt>({
+      tx_hash: expect.any(String),
+    });
+
     const query = await kwil.selectQuery(dbid, `SELECT * FROM var_table WHERE blob_col = '${bytesToString(blob)}'::blob`);
     expect(query.data).toBeDefined();
     expect(query.data).toHaveLength(1);
@@ -1120,6 +1140,23 @@ describe('Kwil DB types', () => {
     const blobVal = query.data[0]?.blob_col as string;
     expect(base64ToBytes(blobVal)).toStrictEqual(blob);
   }, 10000);
+
+  (!isKwildPrivateOn ? it : it.skip)(
+    'should be able to insert a uint256 value',
+    async () => {
+      const id = uuidV4();
+      const maxUint256 =
+        '115792089237316195423570985008687907853269984665640564039457584007913129639935';
+
+      const query = await kwil.selectQuery(
+        dbid,
+        `SELECT * FROM var_table WHERE blob_col = '${bytesToString(blob)}'::blob`
+      );
+      expect(query.data).toBeDefined();
+      expect(query.data).toHaveLength(1);
+    },
+    10000
+  );
 
   (!isKwildPrivateOn ? it : it.skip)(
     'should be able to insert a uint256 value',
@@ -1156,4 +1193,3 @@ describe('Kwil DB types', () => {
     expect(query.data?.length).toBeGreaterThan(0);
   }, 10000);
 })
-

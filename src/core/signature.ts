@@ -23,11 +23,6 @@ export type CustomSignatureType = string;
 
 export type AnySignatureType = SignatureType | CustomSignatureType;
 
-export interface PrivateSignature {
-  sig: string;
-  type: string;
-}
-
 export function getSignatureType(signer: SignerSupplier): SignatureType {
   if (isEthersSigner(signer)) {
     return SignatureType.SECP256K1_PERSONAL;
