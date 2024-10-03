@@ -119,7 +119,11 @@ export interface BroadcastResponse {
 
 export type CallResponse = Result;
 
-export type ChainInfoResponse = ChainInfo;
+export interface ChainInfoResponse {
+    chain_id: string;
+    block_height: number;
+    block_hash: string;
+}
 
 export interface ChallengeResponse {
   challenge: HexString;

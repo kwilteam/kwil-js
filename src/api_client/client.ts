@@ -232,7 +232,13 @@ export default class Client extends Api {
 
     const res = await super.post<JsonRPCResponse<ChainInfoResponse>>(`/rpc/v1`, body);
 
-    return checkRes(res, (r) => r.result);
+    return checkRes(res, (r) => {
+      return {
+        chain_id: r.result.chain_id,
+        height: r.result.block_height.toString(),
+        hash: r.result.block_hash
+      }
+    });
   }
 
   protected async healthModeCheckClient(): Promise<GenericResponse<HealthResponse>> {
