@@ -5,6 +5,7 @@ import { RlpStructuredData, decodeRlp, encodeRlp } from 'ethers';
 import { EncodingType, ValueType, VarType } from '../core/enums';
 import { EncodedValue } from '../core/payload';
 import { DataType } from '../core/database';
+import { ActionBody } from '../core/action';
 
 function _objToNestedArray(input: NonNil<object>): any[] | HexString {
   if (Array.isArray(input) && !(input instanceof Uint8Array)) {
@@ -211,4 +212,18 @@ export function analyzeVariable(val: ValueType): {
     metadata,
     varType,
   };
+}
+
+/**
+ *
+ * @param {ActionBody} actionBody - The body of the action to send. This should use the `ActionBody` interface.
+ * @returns - an array of values to be executed
+ */
+export function encodeArguments(actionBody: ActionBody): EncodedValue[] {
+  // Extract inputs if available
+  const inputs = actionBody?.inputs ? Object.values(actionBody.inputs[0]) : [];
+
+  // Construct encoded values from inputs => (see src/utils/rlp.ts/constructEncodedValues above)
+  const encodedArguments = inputs.length > 0 ? constructEncodedValues([inputs])[0] : [];
+  return encodedArguments;
 }

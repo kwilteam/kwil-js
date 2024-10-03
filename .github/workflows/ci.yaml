@@ -76,6 +76,13 @@ jobs:
           echo "run KWIL-JS TEST against kwild(http:localhost:8484),  with $chain_id"
           PRIVATE_KEY=0000000000000000000000000000000000000000000000000000000000000001 CHAIN_ID=$chain_id GATEWAY_ON=false GAS_ON=false KWIL_PROVIDER=http://localhost:8484 npm run integration
       
+      - name: Run integration tests in private mode
+        run: |
+          chain_id=`curl -X POST http://localhost:8484/rpc/v1 -H "Content-Type: application/json" -d '{"jsonrpc": "2.0", "id": 1, "method": "user.chain_info", "params": {}}' | jq -r '.result.chain_id'`
+          echo "Chain ID: $chain_id"
+          echo "run KWIL-JS TEST in private mode against kwild(http:localhost:8484),  with $chain_id"
+          PRIVATE_KEY=0000000000000000000000000000000000000000000000000000000000000001 CHAIN_ID=$chain_id GATEWAY_ON=false GAS_ON=false PRIVATE_MODE=true KWIL_PROVIDER=http://localhost:8484 npm run integration
+      
       - name: Cleanup Docker
         if: always()
         run: |
