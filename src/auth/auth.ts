@@ -17,7 +17,7 @@ import { bytesToHex, hexToBytes, stringToBytes } from '../utils/serial';
 import { base64ToBytes, bytesToBase64 } from '../utils/base64';
 import { ActionBody } from '../core/action';
 import { sha256BytesToBytes } from '../utils/crypto';
-import { constructEncodedValues, kwilEncode } from '../utils/rlp';
+import { constructEncodedValues, encodeArguments, kwilEncode } from '../utils/rlp';
 import { UnencodedActionPayload } from '../core/payload';
 
 interface AuthClient {
@@ -100,17 +100,11 @@ export class Auth<T extends EnvironmentType> {
     const challenge = await this.authClient.challengeClient();
     let msgChallenge = challenge.data as string;
 
-    // Extract inputs if available
-    const inputs = actionBody?.inputs ? Object.values(actionBody.inputs[0]) : [];
-
-    // Construct encoded values from inputs => (see src/utils/rlp.ts/constructEncodedValues)
-    const encodedArguments = inputs.length > 0 ? constructEncodedValues([inputs])[0] : [];
-
     // create payload
     const payload: UnencodedActionPayload<PayloadType.CALL_ACTION> = {
       dbid: actionBody.dbid,
       action: actionBody.name,
-      arguments: encodedArguments,
+      arguments: encodeArguments(actionBody),
     };
 
     const encodedPayload = kwilEncode(payload);
