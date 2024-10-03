@@ -15,7 +15,6 @@ import {
   wallet,
 } from './testingUtils';
 import { TxReceipt } from '../dist/core/tx';
-import schema from './test_schema2.json';
 import { KwilSigner, NodeKwil, Types, Utils } from '../dist/index';
 import { MsgReceipt } from '../dist/core/message';
 import nacl from 'tweetnacl';
@@ -864,11 +863,6 @@ describe('unconfirmedNonce', () => {
   });
 });
 
-import variableDb from './variable_test.json';
-import { v4 as uuidV4 } from 'uuid';
-import { bytesToString, stringToBytes } from '../dist/utils/serial';
-import { base64ToBytes, bytesToBase64 } from '../dist/utils/base64';
-
 describe('Kwil DB types', () => {
   const kwilSigner = new KwilSigner(wallet, address);
   const dbid = kwil.getDBID(address, 'variable_test');
@@ -971,45 +965,6 @@ describe('Kwil DB types', () => {
   );
 
   (!isKwildPrivateOn ? it : it.skip)(
-<<<<<<< Updated upstream
-=======
-    'should be able to insert a record with an integer',
-    async () => {
-      const id = uuidV4();
-      const num = 123;
-
-      const res = await kwil.execute(
-        {
-          dbid,
-          name: 'insert_int',
-          inputs: [
-            {
-              $id: id,
-              $int: num,
-            },
-          ],
-        },
-        kwilSigner,
-        true
-      );
-
-      expect(res.data).toBeDefined();
-      expect(res.status).toBe(200);
-
-      const query = await kwil.selectQuery(dbid, `SELECT * FROM var_table WHERE int_col = ${num}`);
-
-    expect(query.data).toBeDefined();
-    expect(query.data).toHaveLength(1);
-    expect(Array.isArray(query.data)).toBe(true);
-    expect(query.data?.length).toBeGreaterThan(0);
-  }, 10000);
-      expect(query.data).toBeDefined();
-      expect(query.data).toHaveLength(1);
-    },
-  );
-
-  (!isKwildPrivateOn ? it : it.skip)(
->>>>>>> Stashed changes
     'should be able to insert a record with a boolean',
     async () => {
       const id = uuidV4();
@@ -1188,41 +1143,7 @@ describe('Kwil DB types', () => {
     const blobVal = query.data[0]?.blob_col as string;
     expect(base64ToBytes(blobVal)).toStrictEqual(blob);
   }, 10000);
-    
-      expect(res.data).toBeDefined();
-      expect(res.status).toBe(200);
-      const query = await kwil.selectQuery(
-        dbid,
-        `SELECT * FROM var_table WHERE blob_col = '${bytesToString(blob)}'::blob`
-      );
-      expect(query.data).toBeDefined();
-      expect(query.data).toHaveLength(1);
-
-      // @ts-ignore
-      // base64
-      const blobVal = query.data[0]?.blob_col as string;
-      expect(base64ToBytes(blobVal)).toStrictEqual(blob);
-    },
-    10000
-  );
-
-  (!isKwildPrivateOn ? it : it.skip)(
-    'should be able to insert a uint256 value',
-    async () => {
-      const id = uuidV4();
-      const maxUint256 =
-        '115792089237316195423570985008687907853269984665640564039457584007913129639935';
-
-      const query = await kwil.selectQuery(
-        dbid,
-        `SELECT * FROM var_table WHERE blob_col = '${bytesToString(blob)}'::blob`
-      );
-      expect(query.data).toBeDefined();
-      expect(query.data).toHaveLength(1);
-    },
-    10000
-  );
-
+  
   (!isKwildPrivateOn ? it : it.skip)(
     'should be able to insert a uint256 value',
     async () => {
@@ -1248,7 +1169,6 @@ describe('Kwil DB types', () => {
       expect(res.data).toBeDefined();
       expect(res.status).toBe(200);
 
-<<<<<<< Updated upstream
     const query = await kwil.selectQuery(dbid, `SELECT * FROM var_table WHERE uint256_col = ${maxUint256}`);
 
     expect(query.data).toBeDefined();
@@ -1256,17 +1176,4 @@ describe('Kwil DB types', () => {
     expect(Array.isArray(query.data)).toBe(true);
     expect(query.data?.length).toBeGreaterThan(0);
   }, 10000);
-})
-=======
-      const query = await kwil.selectQuery(
-        dbid,
-        `SELECT * FROM var_table WHERE uint256_col = ${maxUint256}`
-      );
-
-      expect(query.data).toBeDefined();
-      expect(query.data).toHaveLength(1);
-    },
-    10000
-  );
-});
->>>>>>> Stashed changes
+}
