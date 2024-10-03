@@ -118,7 +118,11 @@ interface Result {
     result: Base64String;
 }
 
-export type ChainInfoResponse = ChainInfo;
+export interface ChainInfoResponse {
+    chain_id: string;
+    block_height: number;
+    block_hash: string;
+}
 
 export interface ListDatabasesResponse {
     databases?: DatasetInfoServer[];
