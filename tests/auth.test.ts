@@ -47,7 +47,7 @@ describe('Authentication Tests', () => {
     });
 
     it('should return a cookie', async () => {
-      const res = await kwil.auth.authenticate(kSigner);
+      const res = await kwil.auth.authenticateKGW(kSigner);
 
       expect(res.status).toBe(200);
       expect(res.data?.cookie).toBeDefined();
