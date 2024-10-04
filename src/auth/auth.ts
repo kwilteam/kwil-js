@@ -1,26 +1,34 @@
 import { GenericResponse } from '../core/resreq';
 import { KwilSigner } from '../core/kwilSigner';
 import {
-  AuthInfo,
   AuthSuccess,
   AuthenticatedBody,
+  KGWAuthInfo,
   LogoutResponse,
   composeAuthMsg,
+  generateSignatureText,
   removeTrailingSlash,
   verifyAuthProperties,
 } from '../core/auth';
-import { BytesEncodingStatus, EnvironmentType } from '../core/enums';
+import { BytesEncodingStatus, EnvironmentType, PayloadType } from '../core/enums';
 import { objects } from '../utils/objects';
-import { executeSign } from '../core/signature';
-import { bytesToHex, stringToBytes } from '../utils/serial';
-import { bytesToBase64 } from '../utils/base64';
+import { AuthBody, executeSign, Signature } from '../core/signature';
+import { bytesToHex, hexToBytes, stringToBytes } from '../utils/serial';
+import { base64ToBytes, bytesToBase64 } from '../utils/base64';
+import { ActionBody } from '../core/action';
+import { sha256BytesToBytes } from '../utils/crypto';
+import { encodeArguments, kwilEncode } from '../utils/rlp';
+import { UnencodedActionPayload } from '../core/payload';
 
 interface AuthClient {
-  getAuthenticateClient(): Promise<GenericResponse<AuthInfo>>;
+  getAuthenticateClient(): Promise<GenericResponse<KGWAuthInfo>>;
   postAuthenticateClient<T extends EnvironmentType>(
     body: AuthenticatedBody<BytesEncodingStatus.HEX_ENCODED>
   ): Promise<GenericResponse<AuthSuccess<T>>>;
-  logoutClient<T extends EnvironmentType>(identifier?: Uint8Array): Promise<GenericResponse<LogoutResponse<T>>>;
+  logoutClient<T extends EnvironmentType>(
+    identifier?: Uint8Array
+  ): Promise<GenericResponse<LogoutResponse<T>>>;
+  challengeClient(): Promise<GenericResponse<string>>;
 }
 
 export class Auth<T extends EnvironmentType> {
@@ -42,7 +50,8 @@ export class Auth<T extends EnvironmentType> {
    * @param {KwilSigner} signer - The signer for the authentication.
    * @returns A promise that resolves to the authentication success or failure.
    */
-  public async authenticate(signer: KwilSigner): Promise<GenericResponse<AuthSuccess<T>>> {
+  public async authenticateKGW(signer: KwilSigner): Promise<GenericResponse<AuthSuccess<T>>> {
+    // KGW rpc call
     const authParam = await this.authClient.getAuthenticateClient();
 
     const authProperties = objects.requireNonNil(
@@ -68,8 +77,69 @@ export class Auth<T extends EnvironmentType> {
       },
     };
 
+    // KGW rpc call
     const res = await this.authClient.postAuthenticateClient(authBody);
 
+    return res;
+  }
+
+  /**
+   * Authenticates a user in private mode.
+   *
+   * This method should only be used if your Kwil Network is in private mode.
+   *
+   * @param {KwilSigner} signer - The signer for the authentication.
+   * @param {ActionBody} actionBody - The body of the action to send. This should use the `ActionBody` interface.
+   * @returns A promise that resolves a privateSignature => privateSignature = {sig: string (Base64), type: AnySignatureType}
+   */
+  public async authenticatePrivateMode(
+    signer: KwilSigner,
+    actionBody: ActionBody
+  ): Promise<AuthBody> {
+    // get Challenge
+    const challenge = await this.authClient.challengeClient();
+    let msgChallenge = challenge.data as string;
+
+    // Check if challenge.data is undefined
+    if (!msgChallenge) {
+      throw new Error('Challenge data is undefined. Unable to authenticate in private mode.');
+    }
+
+    // create payload
+    const payload: UnencodedActionPayload<PayloadType.CALL_ACTION> = {
+      dbid: actionBody.dbid,
+      action: actionBody.name,
+      arguments: encodeArguments(actionBody),
+    };
+
+    const encodedPayload = kwilEncode(payload);
+    const base64Payload = bytesToBase64(encodedPayload);
+
+    // create the digest, which is the first bytes of the sha256 hash of the rlp-encoded payload
+    const uInt8ArrayPayload = base64ToBytes(base64Payload);
+    const digest = sha256BytesToBytes(uInt8ArrayPayload).subarray(0, 20);
+    const msg = generateSignatureText(
+      actionBody.dbid,
+      actionBody.name,
+      bytesToHex(digest),
+      msgChallenge
+    );
+
+    const signature = await executeSign(stringToBytes(msg), signer.signer, signer.signatureType);
+    const sig = bytesToBase64(signature);
+
+    const privateSignature: Signature<BytesEncodingStatus.BASE64_ENCODED> = {
+      sig: sig,
+      type: signer.signatureType,
+    };
+
+    const byteChallenge = hexToBytes(msgChallenge);
+    const base64Challenge = bytesToBase64(byteChallenge); // Challenge needs to be Base64 in the message
+
+    const res = {
+      signature: privateSignature,
+      challenge: base64Challenge,
+    };
     return res;
   }
 

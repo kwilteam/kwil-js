@@ -8,7 +8,7 @@
       "columns": [
         {
           "name": "id",
-          "type": { "name": "int", "is_array": false, "metadata": null },
+          "type": { "name": "uuid", "is_array": false, "metadata": [0, 0] },
           "attributes": [
             { "type": "PRIMARY_KEY", "value": "" },
             { "type": "NOT_NULL", "value": "" }
@@ -16,17 +16,17 @@
         },
         {
           "name": "name",
-          "type": { "name": "text", "is_array": false, "metadata": null },
+          "type": { "name": "text", "is_array": false, "metadata": [0, 0] },
           "attributes": [{ "type": "NOT_NULL", "value": "" }]
         },
         {
           "name": "post_title",
-          "type": { "name": "text", "is_array": false, "metadata": null },
+          "type": { "name": "text", "is_array": false, "metadata": [0, 0] },
           "attributes": [{ "type": "NOT_NULL", "value": "" }]
         },
         {
           "name": "post_body",
-          "type": { "name": "text", "is_array": false, "metadata": null },
+          "type": { "name": "text", "is_array": false, "metadata": [0, 0] },
           "attributes": [{ "type": "NOT_NULL", "value": "" }]
         }
       ],
@@ -35,14 +35,6 @@
     }
   ],
   "actions": [
-    {
-      "name": "add_post",
-      "annotations": null,
-      "parameters": ["$id", "$user", "$title", "$body"],
-      "public": true,
-      "modifiers": null,
-      "body": "INSERT INTO posts VALUES ( $id , $user , $title , $body );"
-    },
     {
       "name": "update_post",
       "annotations": null,
@@ -70,10 +62,10 @@
     {
       "name": "view_with_param",
       "annotations": null,
-      "parameters": ["$id"],
+      "parameters": ["$title"],
       "public": true,
       "modifiers": ["VIEW"],
-      "body": "SELECT * from posts WHERE id = $id;"
+      "body": "SELECT * from posts WHERE post_title = $title;"
     },
     {
       "name": "view_must_sign",
@@ -94,31 +86,71 @@
   ],
   "procedures": [
     {
-      "name": "proc_add_user",
+      "name": "add_post",
       "parameters": [
-        { "name": "$user", "type": { "name": "text", "is_array": false, "metadata": null } },
-        { "name": "$title", "type": { "name": "text", "is_array": false, "metadata": null } },
-        { "name": "$body", "type": { "name": "text", "is_array": false, "metadata": null } }
+        {
+          "name": "$user",
+          "type": { "name": "text", "is_array": false, "metadata": [0, 0] }
+        },
+        {
+          "name": "$title",
+          "type": { "name": "text", "is_array": false, "metadata": [0, 0] }
+        },
+        {
+          "name": "$body",
+          "type": { "name": "text", "is_array": false, "metadata": [0, 0] }
+        }
       ],
       "public": true,
       "modifiers": null,
-      "body": "$count int;\n  for $amnt in SELECT count(*) AS count FROM posts {\n    $count := $amnt.count + 1;\n  }\n\n  INSERT INTO posts (id, name, post_title, post_body)\n  VALUES ($count, $user, $title, $body);",
+      "body": "$id uuid := uuid_generate_v5('455f60aa-0569-4aaa-8469-63be2ec4dd96'::uuid, @txid);\n    INSERT INTO posts (id, name, post_title, post_body) VALUES ($id, $user, $title, $body);",
       "return_types": null,
       "annotations": null
     },
     {
-      "name": "get_post_by_id",
+      "name": "proc_add_user",
       "parameters": [
-        { "name": "$id", "type": { "name": "int", "is_array": false, "metadata": null } }
+        {
+          "name": "$user",
+          "type": { "name": "text", "is_array": false, "metadata": [0, 0] }
+        },
+        {
+          "name": "$title",
+          "type": { "name": "text", "is_array": false, "metadata": [0, 0] }
+        },
+        {
+          "name": "$body",
+          "type": { "name": "text", "is_array": false, "metadata": [0, 0] }
+        }
+      ],
+      "public": true,
+      "modifiers": null,
+      "body": "$count int;\n  for $amnt in SELECT count(*) AS count FROM posts {\n    $count := $amnt.count + 1;\n  }\n  $id uuid := uuid_generate_v5('455f60aa-0569-4aaa-8469-63be2ec4dd96'::uuid, @txid);\n  INSERT INTO posts (id, name, post_title, post_body)\n  VALUES ($id, $user, $title, $body);",
+      "return_types": null,
+      "annotations": null
+    },
+    {
+      "name": "get_post_by_title",
+      "parameters": [
+        {
+          "name": "$title",
+          "type": { "name": "text", "is_array": false, "metadata": [0, 0] }
+        }
       ],
       "public": true,
       "modifiers": ["VIEW"],
-      "body": "for $row in SELECT post_title, post_body FROM posts WHERE id = $id {\n        return $row.post_title, $row.post_body; // will return on the first iteration\n    }\n\n    error(format('record with id = \"%s\" not found', $id));",
+      "body": "for $row in SELECT post_title, post_body FROM posts WHERE post_title = $title {\n        return $row.post_title, $row.post_body; // will return on the first iteration\n    }\n\n    error(format('record with title = \"%s\" not found', $title));",
       "return_types": {
         "is_table": false,
         "fields": [
-          { "name": "title", "type": { "name": "text", "is_array": false, "metadata": null } },
-          { "name": "body", "type": { "name": "text", "is_array": false, "metadata": null } }
+          {
+            "name": "post_title",
+            "type": { "name": "text", "is_array": false, "metadata": [0, 0] }
+          },
+          {
+            "name": "post_body",
+            "type": { "name": "text", "is_array": false, "metadata": [0, 0] }
+          }
         ]
       },
       "annotations": null
@@ -126,7 +158,10 @@
     {
       "name": "proc_call_base",
       "parameters": [
-        { "name": "$dbid", "type": { "name": "text", "is_array": false, "metadata": null } }
+        {
+          "name": "$dbid",
+          "type": { "name": "text", "is_array": false, "metadata": [0, 0] }
+        }
       ],
       "public": true,
       "modifiers": ["VIEW"],
@@ -134,7 +169,10 @@
       "return_types": {
         "is_table": false,
         "fields": [
-          { "name": "original", "type": { "name": "text", "is_array": false, "metadata": null } }
+          {
+            "name": "original",
+            "type": { "name": "text", "is_array": false, "metadata": [0, 0] }
+          }
         ]
       },
       "annotations": null
@@ -142,7 +180,10 @@
     {
       "name": "proc_insert_base",
       "parameters": [
-        { "name": "$dbid", "type": { "name": "text", "is_array": false, "metadata": null } }
+        {
+          "name": "$dbid",
+          "type": { "name": "text", "is_array": false, "metadata": [0, 0] }
+        }
       ],
       "public": true,
       "modifiers": null,
@@ -158,7 +199,10 @@
       "return_types": {
         "is_table": false,
         "fields": [
-          { "name": "col0", "type": { "name": "text", "is_array": false, "metadata": null } }
+          {
+            "name": "col0",
+            "type": { "name": "text", "is_array": false, "metadata": [0, 0] }
+          }
         ]
       }
     },
