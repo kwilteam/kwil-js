@@ -9,7 +9,7 @@ import { BytesEncodingStatus, EnvironmentType, PayloadType, ValueType } from '..
 import { AnySignatureType, Signature, SignatureType, getSignatureType } from '../core/signature';
 import { EncodedValue, UnencodedActionPayload } from '../core/payload';
 import { Message } from '../core/message';
-import { constructEncodedValues } from '../utils/rlp';
+import { encodeNestedArguments } from '../utils/rlp';
 
 interface CheckSchema {
   dbid: string;
@@ -576,7 +576,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
     }
 
     // return this.constructEncodedValues(preparedActions);
-    return constructEncodedValues(preparedActions);
+    return encodeNestedArguments(preparedActions);
   }
 
   private assertNotBuilding(): void {

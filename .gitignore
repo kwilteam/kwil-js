@@ -12,3 +12,4 @@ yarn.lock
 testapp/node_modules
 /.husky
 .DS_Store
+.npmrc

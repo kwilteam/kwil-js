@@ -135,7 +135,6 @@ describe('Kwil Integration Tests', () => {
 
   test('chainInfo should match the chainInfo object', async () => {
     const result = await kwil.chainInfo();
-    console.log(result);
     expect(result.data).toMatchObject<ChainInfo>({
       chain_id: expect.any(String),
       height: expect.any(String),
@@ -143,12 +142,12 @@ describe('Kwil Integration Tests', () => {
     });
   });
 
-  (!isKwildPrivateOn? test : test.skip)('select should return an array', async () => {
+  (!isKwildPrivateOn ? test : test.skip)('select should return an array', async () => {
     const result = await kwil.selectQuery(dbid, 'SELECT * FROM posts LIMIT 5');
     expect(result.data).toMatchObject<any[]>([]);
   });
 
-  it('should submit an action tx on execute()', async () => {
+  it('should submit a tx on execute()', async () => {
     const actionBody: ActionBody = {
       dbid,
       name: 'add_post',
@@ -170,14 +169,7 @@ describe('Kwil Integration Tests', () => {
     });
   }, 10000);
 
-  (!isKwildPrivateOn ? it : it.skip)('execute should submit a procedure tx', async () => {
-    const records = await kwil.selectQuery(dbid, 'SELECT COUNT(*) FROM posts');
-    if (!records.status || !records.data) throw new Error('No posts found');
-
-    const amnt = records.data[0] as AmntObject;
-
-    const recordCount = amnt['count'] + 1;
-
+  it('execute should submit a procedure tx', async () => {
     const actionBody: ActionBody = {
       dbid,
       name: 'proc_add_user',
@@ -217,13 +209,13 @@ describe('Kwil Integration Tests', () => {
     });
   }, 10000);
 
-  test.skip('call should submit a view procedure', async () => {
+  it('call should submit a view procedure', async () => {
     const body: ActionBody = {
       dbid,
-      name: 'get_posts',
+      name: 'get_post_by_title',
       inputs: [
         {
-          $id: 1,
+          $title: 'Test Post',
         },
       ],
     };
@@ -250,7 +242,7 @@ describe('Kwil Integration Tests', () => {
       description: 'This is a test procedure',
     };
 
-    const result = await kwil.execute(actionBody, kSigner, true);
+    await kwil.execute(actionBody, kSigner, true);
 
     const body: ActionBody = {
       dbid,
@@ -280,8 +272,7 @@ describe('Kwil Integration Tests', () => {
         {
           $dbid: baseDbid,
         },
-      ],
-      challenge: '',
+      ]
     };
 
     const result = await kwil.call(body, kSigner);
@@ -450,7 +441,7 @@ describe('Testing case sensitivity on test_db', () => {
   }, 10000);
 });
 
-describe('Testing authentication', () => {
+(isKgwOn ? describe : describe.skip)('Testing authentication', () => {
   beforeAll(async () => {
     await deployIfNoTestDb(kSigner);
   }, 10000);
@@ -474,10 +465,10 @@ describe('Testing authentication', () => {
   });
 
   // cookies are not needed in private mode
-  (isKgwOn ? it : it.skip)('should return an expired cookie when logging out', async () => {
+  it('should return an expired cookie when logging out', async () => {
     // @ts-ignore
     const preCookie = kwil.cookie;
-    const result = await kwil.auth.logout();
+    const result = await kwil.auth.logoutKGW();
 
     //@ts-ignore
     const postCookie = kwil.cookie;
@@ -491,18 +482,21 @@ describe('Testing authentication', () => {
     expect(preCookie).not.toBe(postCookie);
   });
 
-  (isKgwOn ? it : it.skip)('should allow a new signer after logging out', async () => {
+  it('should allow a new signer after logging out', async () => {
     // Log out
-    await kwil.auth.logout();
+    await kwil.auth.logoutKGW();
 
+  // Create a new signer
     const newWallet = Wallet.createRandom();
+    
+    const newSigner = new KwilSigner(newWallet, newWallet.address);
 
     const body: ActionBody = {
       name: 'view_caller',
       dbid,
     };
 
-    const result = await kwil.call(body, kSigner);
+    const result = await kwil.call(body, newSigner);
 
     const returnedCaller = result.data?.result?.[0] as ViewCaller | undefined;
 
@@ -512,15 +506,14 @@ describe('Testing authentication', () => {
     expect(returnedCaller?.caller).toBe(newWallet.address);
   });
 
-  describe('Testing authentication without autoAuthenticate', () => {
+  describe('Testing authentication without autoAuthenticate in KGW', () => {
     const newKwil = new NodeKwil({
       kwilProvider: process.env.KWIL_PROVIDER || '',
       chainId: process.env.CHAIN_ID || '',
       autoAuthenticate: false,
     });
 
-    // TODO => look into this. May be related to private mode implementation
-    it.skip('should not authenticate automatically', async () => {
+    it('should not authenticate automatically', async () => {
       const body: ActionBody = {
         name: 'view_must_sign',
         dbid,
@@ -532,12 +525,10 @@ describe('Testing authentication', () => {
       expect(result.data?.result).toBe(null);
     });
 
-    (isKgwOn ? it : it.skip)(
-      'should authenticate after calling the authenticate method',
-      async () => {
+    it('should authenticate after calling the authenticate method', async () => {
         const result = await newKwil.auth.authenticateKGW(kSigner);
 
-        await newKwil.auth.logout();
+        await newKwil.auth.logoutKGW();
 
         expect(result.data).toMatchObject<AuthSuccess<EnvironmentType.NODE>>({
           result: 'ok',
@@ -546,10 +537,7 @@ describe('Testing authentication', () => {
       }
     );
 
-    // cookies are not needed in private mode
-    (isKgwOn ? it : it.skip)(
-      'should authenticate when the cookie is passed back to the action',
-      async () => {
+    it('should authenticate when the cookie is passed back to the action', async () => {
         const authRes = await newKwil.auth.authenticateKGW(kSigner);
         const cookie = authRes.data?.cookie;
 
@@ -570,10 +558,7 @@ describe('Testing authentication', () => {
       }
     );
 
-    // cookies are not needed in private mode
-    (isKgwOn ? it : it.skip)(
-      'should not authenticate when a bad cookie is passed back to the action',
-      async () => {
+    it('should not authenticate when a bad cookie is passed back to the action', async () => {
         const body: ActionBodyNode = {
           name: 'view_must_sign',
           dbid,
@@ -588,9 +573,7 @@ describe('Testing authentication', () => {
     );
 
     // cookies are not needed in private mode
-    (isKgwOn ? it : it.skip)(
-      'should continue authenticating after a bad cookie was passed to the previous action',
-      async () => {
+    it('should continue authenticating after a bad cookie was passed to the previous action', async () => {
         const body: ActionBody = {
           name: 'view_must_sign',
           dbid,
@@ -873,7 +856,7 @@ import { bytesToString } from '../dist/utils/serial';
 import { base64ToBytes } from '../dist/utils/base64';
 import { Account, ChainInfo } from '../dist/core/network';
 
-describe('Kwil DB types', () => {
+(!isKwildPrivateOn ? describe : describe.skip)('Kwil DB types', () => {
   const kwilSigner = new KwilSigner(wallet, address);
   const dbid = kwil.getDBID(address, 'variable_test');
 
@@ -892,7 +875,7 @@ describe('Kwil DB types', () => {
   }, 10000);
 
   // Will run in either KGW or Public mode
-  (!isKwildPrivateOn ? it : it.skip)(
+  it(
     'should be able to insert a record with a UUID',
     async () => {
       const uuid = uuidV4();
@@ -928,7 +911,7 @@ describe('Kwil DB types', () => {
     10000
   );
 
-  (!isKwildPrivateOn ? it : it.skip)(
+  it(
     'should be able to insert a record with a text',
     async () => {
       const id = uuidV4();
@@ -967,7 +950,7 @@ describe('Kwil DB types', () => {
     10000
   );
 
-  (!isKwildPrivateOn ? it : it.skip)(
+  it(
     'should be able to insert a record with an integer',
     async () => {
       const id = uuidV4();
@@ -1003,7 +986,7 @@ describe('Kwil DB types', () => {
     10000
   );
 
-  (!isKwildPrivateOn ? it : it.skip)(
+  it(
     'should be able to insert a record with a boolean',
     async () => {
       const id = uuidV4();
@@ -1042,7 +1025,7 @@ describe('Kwil DB types', () => {
     10000
   );
 
-  (!isKwildPrivateOn ? it : it.skip)(
+  it(
     'should be able to insert a record with a decimal',
     async () => {
       const id = uuidV4();
@@ -1081,7 +1064,7 @@ describe('Kwil DB types', () => {
     10000
   );
 
-  (!isKwildPrivateOn ? it : it.skip)(
+  it(
     'should be able to insert a record with a blob as a string',
     async () => {
       const id = uuidV4();
@@ -1120,7 +1103,7 @@ describe('Kwil DB types', () => {
     10000
   );
 
-  (!isKwildPrivateOn ? it : it.skip)(
+  it(
     'should be able to insert a record with a blob as a Uint8array',
     async () => {
       const id = uuidV4();
@@ -1163,7 +1146,7 @@ describe('Kwil DB types', () => {
     10000
   );
 
-  (!isKwildPrivateOn ? it : it.skip)(
+  it(
     'should be able to insert a uint256 value',
     async () => {
       const id = uuidV4();

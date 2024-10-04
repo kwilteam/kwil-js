@@ -97,53 +97,6 @@ function _convertDecodedType(val: string): KwilRlpDecoded {
   return val;
 }
 
-/**
- * Constructs encoded values based on actions given to it
- *
- * @param {ValueType[][]} preparedActions - The values of the actions to be executed.
- * @returns {EncodedValue[][]} - An array of arrays of values to be executed.
- */
-export function constructEncodedValues(preparedActions: ValueType[][]): EncodedValue[][] {
-  let encodedValues: EncodedValue[][] = [];
-
-  // construct the encoded value
-  preparedActions.forEach((action) => {
-    let singleEncodedValues: EncodedValue[] = [];
-    action.forEach((val) => {
-      const { metadata, varType } = analyzeVariable(val);
-
-      const metadataSpread = metadata ? { metadata } : {};
-
-      const dataType: DataType = {
-        name: varType,
-        is_array: Array.isArray(val),
-        ...metadataSpread,
-      };
-
-      let data: string[] | Uint8Array[] = [];
-
-      if (Array.isArray(val) && !(val instanceof Uint8Array)) {
-        data = val.map((v) => {
-          return v?.toString() || '';
-        });
-      } else if (val instanceof Uint8Array) {
-        data = [val];
-      } else {
-        data = [val?.toString() || ''];
-      }
-
-      singleEncodedValues.push({
-        type: dataType,
-        data,
-      });
-    });
-
-    encodedValues.push(singleEncodedValues);
-  });
-
-  return encodedValues;
-}
-
 function analyzeNumber(num: number) {
   // Convert the number to a string and handle potential negative sign
   const numStr = Math.abs(num).toString();
@@ -212,20 +165,6 @@ function analyzeVariable(val: ValueType): {
     metadata,
     varType,
   };
-}
-
-/**
- *
- * @param {ActionBody} actionBody - The body of the action to send. This should use the `ActionBody` interface.
- * @returns - an array of values to be executed
- */
-export function encodeArguments(actionBody: ActionBody): EncodedValue[] {
-  // Extract inputs if available
-  const inputs = actionBody?.inputs ? Object.values(actionBody.inputs[0]) : [];
-
-  // Construct encoded values from inputs => (see src/utils/rlp.ts/constructEncodedValues above)
-  const encodedArguments = encodeNestedArguments([inputs])[0];
-  return encodedArguments;
 }
 
 /**

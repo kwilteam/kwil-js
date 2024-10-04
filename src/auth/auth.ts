@@ -17,7 +17,7 @@ import { bytesToHex, hexToBytes, stringToBytes } from '../utils/serial';
 import { base64ToBytes, bytesToBase64 } from '../utils/base64';
 import { ActionBody } from '../core/action';
 import { sha256BytesToBytes } from '../utils/crypto';
-import { encodeArguments, kwilEncode } from '../utils/rlp';
+import { encodeSingleArguments, kwilEncode } from '../utils/rlp';
 import { UnencodedActionPayload } from '../core/payload';
 
 interface AuthClient {
@@ -105,11 +105,13 @@ export class Auth<T extends EnvironmentType> {
       throw new Error('Challenge data is undefined. Unable to authenticate in private mode.');
     }
 
+    const actionValues = actionBody?.inputs ? Object.values(actionBody.inputs[0]) : [];
+
     // create payload
     const payload: UnencodedActionPayload<PayloadType.CALL_ACTION> = {
       dbid: actionBody.dbid,
       action: actionBody.name,
-      arguments: encodeArguments(actionBody),
+      arguments: encodeSingleArguments(actionValues),
     };
 
     const encodedPayload = kwilEncode(payload);
@@ -143,7 +145,7 @@ export class Auth<T extends EnvironmentType> {
     return res;
   }
 
-  public async logout(signer?: KwilSigner): Promise<GenericResponse<LogoutResponse<T>>> {
+  public async logoutKGW(signer?: KwilSigner): Promise<GenericResponse<LogoutResponse<T>>> {
     const identifier = signer?.identifier || undefined;
     return await this.authClient.logoutClient(identifier);
   }
