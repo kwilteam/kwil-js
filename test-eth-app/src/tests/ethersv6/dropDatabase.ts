@@ -1,4 +1,4 @@
-import { KwilSigner, WebKwil } from '@kwilteam/kwil-js'
+import { KwilSigner, WebKwil } from '../../../../src'
 
 export async function dropDatabase(kwil: WebKwil, dbid: string, signer: KwilSigner) {
     const res = await kwil.drop({

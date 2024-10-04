@@ -30,7 +30,7 @@ async function test() {
     const provider = new ethers.JsonRpcProvider(process.env.ETH_PROVIDER)
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider) // signer
     const txHash = '90a922292d2a057c0ea9d8f34162a4ba1673c8c7146a565ca66c90b40b42b150'
-    const address = await wallet.address // address
+    const address = wallet.address // address
     
 
     const getEdKeys = async () => {
@@ -108,7 +108,7 @@ async function test() {
         $date_string: "10-1-2024"
     }
     // executeGeneralAction(kwil, dbid, "create_post", kwilSigner, post)
-    executeGeneralView(kwil, dbid, "get_posts", {$user_id: 1}, kwilSigner)
+    executeGeneralView(kwil, dbid, "get_posts", {$user_id: 1,}, kwilSigner)
 }
 
 test()

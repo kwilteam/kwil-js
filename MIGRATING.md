@@ -137,7 +137,7 @@ const res = await kwil.getAccount('account_identifier');
 
 /*
     res.data = {
-        identifier: Array(),
+        identifier: Uint8Array(),
         balance: '###',
         nonce: '###'
     }

@@ -21,7 +21,7 @@ describe('Authentication Tests', () => {
         name: 'view_must_sign',
       };
 
-      const res = await kwil.auth.authenticatePrivateMode(kSigner, body);
+      const res = await kwil.auth.authenticatePrivateMode(body, kSigner);
 
       expect(res.signature).toBeDefined();
       expect(res.signature).toHaveProperty('sig');
@@ -54,13 +54,6 @@ describe('Authentication Tests', () => {
       expect(res.data?.result).toBeDefined();
       cookie = objects.requireNonNil(res.data?.cookie);
     });
-
-    // TODO => need a fix for cookie setting
-    // it("should set the cookie in the request headers", () => {
-    //     kwil.setTemporaryCookie(cookie);
-    //     // @ts-ignore
-    //     expect(kwil.client.cookie).toBe(cookie);
-    // })
 
     it('should execute a mustsign action and succeed', async () => {
       const body: ActionBody = {

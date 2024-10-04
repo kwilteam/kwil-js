@@ -26,7 +26,6 @@ describe('Api', () => {
     it('should merge default options', () => {
       const api = new TestApi('http://test.com', defaultConfig);
       const result = api['mergeDefaults'](defaultConfig);
-      console.log(result)
       expect(result).toEqual(defaultConfig);
     });
   });

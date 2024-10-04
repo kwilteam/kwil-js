@@ -15,9 +15,9 @@ import { objects } from '../utils/objects';
 import { AuthBody, executeSign, Signature } from '../core/signature';
 import { bytesToHex, hexToBytes, stringToBytes } from '../utils/serial';
 import { base64ToBytes, bytesToBase64 } from '../utils/base64';
-import { ActionBody } from '../core/action';
+import { ActionBody, ActionInput } from '../core/action';
 import { sha256BytesToBytes } from '../utils/crypto';
-import { encodeArguments, kwilEncode } from '../utils/rlp';
+import { encodeSingleArguments, kwilEncode } from '../utils/rlp';
 import { UnencodedActionPayload } from '../core/payload';
 
 interface AuthClient {
@@ -92,9 +92,10 @@ export class Auth<T extends EnvironmentType> {
    * @param {ActionBody} actionBody - The body of the action to send. This should use the `ActionBody` interface.
    * @returns A promise that resolves a privateSignature => privateSignature = {sig: string (Base64), type: AnySignatureType}
    */
+
   public async authenticatePrivateMode(
-    signer: KwilSigner,
-    actionBody: ActionBody
+    actionBody: ActionBody,
+    signer: KwilSigner
   ): Promise<AuthBody> {
     // get Challenge
     const challenge = await this.authClient.challengeClient();
@@ -105,11 +106,24 @@ export class Auth<T extends EnvironmentType> {
       throw new Error('Challenge data is undefined. Unable to authenticate in private mode.');
     }
 
+    // Check if multiple inputs were provided
+    if (actionBody.inputs && actionBody.inputs.length > 1) {
+      throw new Error('Only one input is allowed for call requests. Please pass only one input and try again.');
+    }
+
+    // handle if the inputs are an array of ActionInput objects or an array of Entries objects
+    const cleanActionValues = actionBody?.inputs ? 
+      actionBody.inputs.map((input) => {
+        return input instanceof ActionInput ? input.toEntries() : input;
+      }) : [];
+
+    const actionValues = actionBody?.inputs ? Object.values(cleanActionValues[0]) : [];
+
     // create payload
     const payload: UnencodedActionPayload<PayloadType.CALL_ACTION> = {
       dbid: actionBody.dbid,
       action: actionBody.name,
-      arguments: encodeArguments(actionBody),
+      arguments: encodeSingleArguments(actionValues),
     };
 
     const encodedPayload = kwilEncode(payload);
@@ -142,8 +156,60 @@ export class Auth<T extends EnvironmentType> {
     };
     return res;
   }
+  // public async authenticatePrivateMode(
+  //   signer: KwilSigner,
+  //   actionBody: ActionBody
+  // ): Promise<AuthBody> {
+  //   // get Challenge
+  //   const challenge = await this.authClient.challengeClient();
+  //   let msgChallenge = challenge.data as string;
 
-  public async logout(signer?: KwilSigner): Promise<GenericResponse<LogoutResponse<T>>> {
+  //   // Check if challenge.data is undefined
+  //   if (!msgChallenge) {
+  //     throw new Error('Challenge data is undefined. Unable to authenticate in private mode.');
+  //   }
+
+  //   const actionValues = actionBody?.inputs ? Object.values(actionBody.inputs[0]) : [];
+
+  //   // create payload
+  //   const payload: UnencodedActionPayload<PayloadType.CALL_ACTION> = {
+  //     dbid: actionBody.dbid,
+  //     action: actionBody.name,
+  //     arguments: encodeSingleArguments(actionValues),
+  //   };
+
+  //   const encodedPayload = kwilEncode(payload);
+  //   const base64Payload = bytesToBase64(encodedPayload);
+
+  //   // create the digest, which is the first bytes of the sha256 hash of the rlp-encoded payload
+  //   const uInt8ArrayPayload = base64ToBytes(base64Payload);
+  //   const digest = sha256BytesToBytes(uInt8ArrayPayload).subarray(0, 20);
+  //   const msg = generateSignatureText(
+  //     actionBody.dbid,
+  //     actionBody.name,
+  //     bytesToHex(digest),
+  //     msgChallenge
+  //   );
+
+  //   const signature = await executeSign(stringToBytes(msg), signer.signer, signer.signatureType);
+  //   const sig = bytesToBase64(signature);
+
+  //   const privateSignature: Signature<BytesEncodingStatus.BASE64_ENCODED> = {
+  //     sig: sig,
+  //     type: signer.signatureType,
+  //   };
+
+  //   const byteChallenge = hexToBytes(msgChallenge);
+  //   const base64Challenge = bytesToBase64(byteChallenge); // Challenge needs to be Base64 in the message
+
+  //   const res = {
+  //     signature: privateSignature,
+  //     challenge: base64Challenge,
+  //   };
+  //   return res;
+  // }
+
+  public async logoutKGW(signer?: KwilSigner): Promise<GenericResponse<LogoutResponse<T>>> {
     const identifier = signer?.identifier || undefined;
     return await this.authClient.logoutClient(identifier);
   }
