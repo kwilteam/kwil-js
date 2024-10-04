@@ -1,4 +1,4 @@
-import { Base64String, HexString } from '../utils/types';
+import { HexString } from '../utils/types';
 import { BytesEncodingStatus, EnvironmentType } from './enums';
 import { Signature } from './signature';
 
@@ -7,10 +7,14 @@ export interface AuthenticatedBody<
 > {
   nonce: string;
   sender: HexString;
-  signature: Signature<T extends BytesEncodingStatus.HEX_ENCODED ? BytesEncodingStatus.BASE64_ENCODED : BytesEncodingStatus.UINT8_ENCODED>;
+  signature: Signature<
+    T extends BytesEncodingStatus.HEX_ENCODED
+      ? BytesEncodingStatus.BASE64_ENCODED
+      : BytesEncodingStatus.UINT8_ENCODED
+  >;
 }
 
-export interface AuthInfo {
+export interface KGWAuthInfo {
   nonce: string;
   statement: string;
   issue_at: string;
@@ -21,18 +25,22 @@ export interface AuthInfo {
   uri: string;
 }
 
-export type AuthSuccess<T extends EnvironmentType> = T extends EnvironmentType.BROWSER ? BrowserAuthSuccess : NodeAuthSuccess; 
+export type AuthSuccess<T extends EnvironmentType> = T extends EnvironmentType.BROWSER
+  ? BrowserAuthSuccess
+  : NodeAuthSuccess;
 
-interface BrowserAuthSuccess {
+export interface BrowserAuthSuccess {
   result: string;
 }
 
-interface NodeAuthSuccess {
+export interface NodeAuthSuccess {
   result: string;
   cookie?: string;
 }
 
-export type LogoutResponse<T extends EnvironmentType> = T extends EnvironmentType.BROWSER ? LogoutResponseWeb : LogoutResponseNode;
+export type LogoutResponse<T extends EnvironmentType> = T extends EnvironmentType.BROWSER
+  ? LogoutResponseWeb
+  : LogoutResponseNode;
 
 interface LogoutResponseWeb {
   result: string;
@@ -44,10 +52,10 @@ interface LogoutResponseNode {
 }
 
 export function composeAuthMsg(
-  authParam: AuthInfo,
+  authParam: KGWAuthInfo,
   domain: string,
   version: string,
-  chainId: string,
+  chainId: string
 ): string {
   let msg = '';
   msg += `${domain} wants you to sign in with your account:\n`;
@@ -66,6 +74,21 @@ export function composeAuthMsg(
   return msg;
 }
 
+export function generateSignatureText(
+  dbid: string,
+  action: string,
+  digest: HexString,
+  challenge: string
+): string {
+  let sigText = 'Kwil view call.\n';
+  sigText += '\n';
+  sigText += `DBID: ${dbid}\n`;
+  sigText += `Method: ${action}\n`;
+  sigText += `Digest: ${digest}\n`;
+  sigText += `Challenge: ${challenge}\n`;
+  return sigText;
+}
+
 export function removeTrailingSlash(url: string): string {
   if (url.endsWith('/')) {
     return url.slice(0, -1);
@@ -74,12 +97,12 @@ export function removeTrailingSlash(url: string): string {
 }
 
 export function verifyAuthProperties(
-  authParm: AuthInfo,
+  authParm: KGWAuthInfo,
   domain: string,
   version: string,
-  chainId: string,
+  chainId: string
 ): void {
-  if (authParm.domain && authParm.domain!== domain) {
+  if (authParm.domain && authParm.domain !== domain) {
     throw new Error(`Domain mismatch: ${authParm.domain} !== ${domain}`);
   }
   if (authParm.version && authParm.version !== version) {

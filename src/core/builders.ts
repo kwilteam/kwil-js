@@ -1,9 +1,9 @@
 import { HexString, Nillable, NonNil, Promisy } from '../utils/types';
 import { Transaction } from './tx';
 import { ActionInput } from './action';
-import { DeployOrDrop, PayloadType } from './enums';
+import { BytesEncodingStatus, DeployOrDrop, PayloadType } from './enums';
 import { Message } from './message';
-import { AnySignatureType } from './signature';
+import { AnySignatureType, Signature } from './signature';
 import { AllPayloads, DbPayloadType } from './payload';
 
 // Eth Signer is any class with a signMessage() method. This is supported by Ethers v5 and Ethers v6.
@@ -79,6 +79,23 @@ export interface PayloadBuilder {
    * @returns {PayloadBuilder} The current `PayloadBuilder` instance for chaining.
    */
   nonce(nonce: number): NonNil<PayloadBuilder>;
+
+
+  /**
+   * Challenge for the transaction.
+   *
+   * @param {string} challenge- The challenge for the transaction.
+   * @returns {PayloadBuilder} The current `PayloadBuilder` instance for chaining.
+   */
+  challenge(challenge: Nillable<string>): NonNil<PayloadBuilder>;
+
+  /**
+   * Signature used to authenticate call requests (non-state changing).
+   *
+   * @param {string} signature- The signature for the transaction.
+   * @returns {PayloadBuilder} The current `PayloadBuilder` instance for chaining.
+   */
+  signature(signature: Nillable<Signature<BytesEncodingStatus.BASE64_ENCODED>>): NonNil<PayloadBuilder>;
 
   /**
    * Builds the payload for the `kwil.broadcast()` method (i.e. the broadcast GRPC endpoint - see {@link https://github.com/kwilteam/proto/blob/main/kwil/tx/v1/broadcast.proto})
@@ -295,6 +312,22 @@ export interface ActionBuilder {
    * @returns {ActionBuilder} The current `ActionBuilder` instance for chaining.
    */
   nonce(nonce: number): NonNil<ActionBuilder>;
+
+  /**
+   * Specifies the challenge for the transaction.
+   *
+   * @param {string} challenge - The challenge for the transaction.
+   * @returns {ActionBuilder} The current `ActionBuilder` instance for chaining.
+   */
+  challenge(challenge: string): NonNil<ActionBuilder>;
+
+  /**
+   * Specifies the signature for the transaction.
+   *
+   * @param {string} signature - The signature for the transaction.
+   * @returns {ActionBuilder} The current `ActionBuilder` instance for chaining.
+   */
+  signature(signature: Signature<BytesEncodingStatus.BASE64_ENCODED>): Nillable<ActionBuilder>;
 
   /**
    * Builds a transaction. This will call the kwil network to retrieve the schema and the signer's account.
