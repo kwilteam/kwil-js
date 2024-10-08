@@ -55,13 +55,6 @@ describe('Authentication Tests', () => {
       cookie = objects.requireNonNil(res.data?.cookie);
     });
 
-    // TODO => need a fix for cookie setting
-    // it("should set the cookie in the request headers", () => {
-    //     kwil.setTemporaryCookie(cookie);
-    //     // @ts-ignore
-    //     expect(kwil.client.cookie).toBe(cookie);
-    // })
-
     it('should execute a mustsign action and succeed', async () => {
       const body: ActionBody = {
         dbid,

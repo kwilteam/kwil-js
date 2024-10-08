@@ -108,7 +108,7 @@ async function test() {
         $date_string: "10-1-2024"
     }
     // executeGeneralAction(kwil, dbid, "create_post", kwilSigner, post)
-    executeGeneralView(kwil, dbid, "get_posts", {$user_id: 1}, kwilSigner)
+    executeGeneralView(kwil, dbid, "get_posts", {$user_id: 1,}, kwilSigner)
 }
 
 test()
