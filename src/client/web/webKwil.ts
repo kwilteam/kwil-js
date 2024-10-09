@@ -52,15 +52,15 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
     await this.ensureAuthenticationMode();
 
     if (this.authMode === AuthenticationMode.OPEN) {
-      let response = await this.handlePublicMode(actionBody, kwilSigner);
+      const message = await this.buildMessage(actionBody, kwilSigner);
+      const response = await this.callClient(message);
       if (response.authCode === -901) {
-        let kgwResponse = await this.handleKGW(actionBody, kwilSigner);
-        return kgwResponse
+        await this.handleAuthenticateKGW(kwilSigner)
+        return await this.callClient(message);
       }
       return response;
     } else if (this.authMode === AuthenticationMode.PRIVATE) {
-      let privateResponse = await this.handlePrivateMode(actionBody, kwilSigner)
-      return privateResponse;
+      return await this.handleAuthenticatePrivate(actionBody, kwilSigner);
     }
 
     throw new Error("Unexpected authentication mode or action body type."); 
@@ -95,42 +95,7 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
       this.authMode = health.data?.mode;
     }
   }
-
-  private async handlePublicMode(
-    actionBody: ActionBodyNode,
-    kwilSigner?: KwilSigner
-  ): Promise<CallClientResponse<MsgReceipt>> {
-    // Build Message
-    const message = await this.buildMessage(actionBody, kwilSigner);
-    // kwil.call()
-    const response = await this.callClient(message);
-
-    return response;
-  }
-
-  private async handleKGW(
-    actionBody: ActionBodyNode,
-    kwilSigner?: KwilSigner
-  ): Promise<CallClientResponse<MsgReceipt>> {
-    // Build Message
-    const message = await this.buildMessage(actionBody, kwilSigner);
-    // kwil.call()
-    const response = await this.callClient(message);
-
-    // authenticate kgw on failure
-    const kgwResponse = await this.handleAuthenticateKGW(response, message, kwilSigner);
-
-    return kgwResponse;
-  }
-
-  private async handlePrivateMode(
-    actionBody: ActionBodyNode,
-    kwilSigner?: KwilSigner
-  ): Promise<CallClientResponse<MsgReceipt>> {
-    const privateResponse = await this.handleAuthenticatePrivate(actionBody, kwilSigner)
-    return privateResponse;
-  }
-
+  
   /**
    * Builds a message with a chainId, dbid, name, and description of the action.
    * NOT INCLUDED => challenge, sender, signature
@@ -217,29 +182,19 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
    */
 
   private async handleAuthenticateKGW(
-    response: CallClientResponse<MsgReceipt>,
-    message: Message,
     kwilSigner?: KwilSigner
-  ): Promise<CallClientResponse<MsgReceipt>> {
+  ) {
     if (this.autoAuthenticate) {
       try {
         // KGW AUTHENTICATION
-        if (response.authCode === -901) {
           if (!kwilSigner) {
             throw new Error('KGW authentication requires a KwilSigner.');
           }
-
-          const authRes = await this.auth.authenticateKGW(kwilSigner);
-          if (authRes.status === 200 && this.authMode === AuthenticationMode.OPEN) {
-            // call the message again
-            response = await this.callClient(message);
-          }
-        }
+          await this.auth.authenticateKGW(kwilSigner);
       } catch (error) {
         console.error('Authentication failed:', error);
       }
     }
-    return response;
   }
 
   /**
@@ -284,62 +239,5 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
     }
 
     throw new Error('Authentication process did not complete successfully')
-  }
-
-  /**
-   * Checks authentication errors for either PUBLIC (KGW) or PRIVATE mode
-   * Signs message and then retries request for successful response
-   *
-   * @param response
-   * @param message
-   * @param actionBody
-   * @param kwilSigner
-   * @returns
-   */
-  private async handleAuthentication(
-    response: CallClientResponse<MsgReceipt>,
-    message: Message,
-    actionBody: ActionBodyNode,
-    kwilSigner?: KwilSigner
-  ): Promise<CallClientResponse<MsgReceipt>> {
-    if (this.autoAuthenticate) {
-      try {
-        // KGW AUTHENTICATION
-        if (response.authCode === -901) {
-          if (!kwilSigner) {
-            throw new Error('Private mode authentication requires a KwilSigner.');
-          }
-
-          const authRes = await this.auth.authenticateKGW(kwilSigner);
-          if (authRes.status === 200 && this.authMode === AuthenticationMode.OPEN) {
-            response = await this.callClient(message);
-          }
-        }
-
-        // PRIVATE MODE AUTHENTICATION
-        if (this.authMode === AuthenticationMode.PRIVATE && message.body.payload) {
-          if (!kwilSigner) {
-            throw new Error('Private mode authentication requires a KwilSigner.');
-          }
-
-          const authPrivateModeRes = await this.auth.authenticatePrivateMode(
-            kwilSigner,
-            actionBody
-          );
-          message = await this.buildMessage(
-            actionBody,
-            kwilSigner,
-            authPrivateModeRes.challenge,
-            authPrivateModeRes.signature
-          );
-
-          response = await this.callClient(message);
-        }
-      } catch (error) {
-        console.error('Authentication failed:', error);
-      }
-    }
-
-    return response;
   }
 }
