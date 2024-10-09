@@ -82,6 +82,13 @@ jobs:
           docker compose -f /tmp/kwil-db/deployments/compose/kwil/docker-compose.yml down
           docker system prune -af
 
+      - name: Cleanup previous KwilDB clone
+        run: |
+          if [ -d "/tmp/kwil-db" ]; then
+            echo "Removing previous /tmp/kwil-db directory"
+            rm -rf /tmp/kwil-db
+          fi
+
       - name: Set up KwilDB Docker in Private mode
         run: |
           git clone https://github.com/kwilteam/kwil-db.git /tmp/kwil-db
