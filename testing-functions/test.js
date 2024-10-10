@@ -70,7 +70,7 @@ async function test() {
 
     // testMultiLogout()
 
-    const dbid = kwil.getDBID(address, "sample")
+    const dbid = kwil.getDBID(address, "mydb")
     // await authenticate(kwil, kwilSigner)
     // broadcast(kwil, testDB, kwilSigner)
     // broadcastEd25519(kwil, testDB)
@@ -108,7 +108,8 @@ async function test() {
         $date_string: "10-1-2024"
     }
     // executeGeneralAction(kwil, dbid, "create_post", kwilSigner, post)
-    executeGeneralView(kwil, dbid, "get_posts", {$user_id: 1,}, kwilSigner)
+    await executeGeneralView(kwil, dbid, "view_must_sign", null, kwilSigner)
+    await executeGeneralView(kwil, dbid, "view_must_sign", null, kwilSigner)
 }
 
 test()

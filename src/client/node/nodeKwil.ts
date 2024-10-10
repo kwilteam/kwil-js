@@ -51,29 +51,24 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
     // Ensure auth mode is set
     await this.ensureAuthenticationMode();
 
-    // Set Temporary Cookie
-    const tempCookie = this.setTemporaryCookie(actionBody);
-
+    // kwil.call()
     if (this.authMode === AuthenticationMode.OPEN) {
-      // let response = await this.handlePublicMode(actionBody, kwilSigner);
+      const tempCookie = this.setTemporaryCookie(actionBody?.cookie)
       const message = await this.buildMessage(actionBody, kwilSigner);
       const response = await this.callClient(message);
       if (tempCookie) {
-        this.resetCookie();
+        this.resetTempCookie(tempCookie)
       }
-      if (response.authCode === -901) {
-        // let kgwResponse = await this.handleKGW(actionBody, kwilSigner);
-        // return kgwResponse
-        await this.handleAuthenticateKGW(kwilSigner);
+      if (response.authCode === -901 && this.autoAuthenticate) {
+        await this.handleAuthenticateKGW(kwilSigner)
         return await this.callClient(message);
       }
       return response;
     } else if (this.authMode === AuthenticationMode.PRIVATE) {
-      return await this.handleAuthenticatePrivate(actionBody, kwilSigner);
-      // return privateResponse;
+      return await this.handleAuthenticatePrivate(actionBody, kwilSigner)
     }
 
-    throw new Error('Unexpected authentication mode or action body type.');
+    throw new Error("Unexpected authentication mode or action body type.");
   }
 
   /**
@@ -95,57 +90,22 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
    * @returns the temporary cookie to handle for Node
    * @returns undefined if in PRIVATE mode
    */
-  private setTemporaryCookie(actionBody: ActionBodyNode): string | undefined {
-    if (this.authMode === AuthenticationMode.OPEN && actionBody.cookie) {
+  private setTemporaryCookie(cookie?: string): string | undefined {
+    if (this.authMode === AuthenticationMode.OPEN && cookie) {
       const tempCookie = this.cookie;
-      this.cookie = actionBody.cookie;
+      this.cookie = cookie;
       return tempCookie;
     }
     return undefined;
   }
-
-  // private async handlePublicMode(
-  //   actionBody: ActionBodyNode,
-  //   kwilSigner?: KwilSigner
-  // ): Promise<CallClientResponse<MsgReceipt>> {
-  //   // Build Message
-  //   const message = await this.buildMessage(actionBody, kwilSigner);
-  //   // kwil.call()
-  //   const response = await this.callClient(message);
-
-  //   return response;
-  // }
-
-  // private async handleKGW(
-  //   actionBody: ActionBodyNode,
-  //   kwilSigner?: KwilSigner
-  // ): Promise<CallClientResponse<MsgReceipt>> {
-  //   // Build Message
-  //   const message = await this.buildMessage(actionBody, kwilSigner);
-  //   // kwil.call()
-  //   const response = await this.callClient(message);
-
-  //   // authenticate kgw on failure
-  //   const kgwResponse = await this.handleAuthenticateKGW(response, message, kwilSigner);
-
-  //   return kgwResponse;
-  // }
-
-  // private async handlePrivateMode(
-  //   actionBody: ActionBodyNode,
-  //   kwilSigner?: KwilSigner
-  // ): Promise<CallClientResponse<MsgReceipt>> {
-  //   const privateResponse = await this.handleAuthenticatePrivate(actionBody, kwilSigner)
-  //   return privateResponse;
-  // }
 
   /**
    * Resets the temporary cookie
    *
    * @param tempCookie
    */
-  private resetCookie(): void {
-    this.cookie = undefined;
+  private resetTempCookie(tempCookie: string): void {
+    this.cookie = tempCookie;
   }
 
   /**
@@ -233,18 +193,20 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
    * @returns
    */
 
-  private async handleAuthenticateKGW(kwilSigner?: KwilSigner) {
-    if (this.autoAuthenticate) {
-      try {
-        // KGW AUTHENTICATION
-        if (!kwilSigner) {
-          throw new Error('KGW authentication requires a KwilSigner.');
-        }
-
-        await this.auth.authenticateKGW(kwilSigner);
-      } catch (error) {
-        console.error('Authentication failed:', error);
+  private async handleAuthenticateKGW(
+    kwilSigner?: KwilSigner
+  ) {
+    try {
+      // KGW AUTHENTICATION
+      if (!kwilSigner) {
+        throw new Error('KGW authentication requires a KwilSigner.');
       }
+
+      // set the cookie
+      const res = await this.auth.authenticateKGW(kwilSigner)
+      this.cookie = res.data?.cookie
+    } catch (error) {
+      throw new Error(`Authentication failed: ${error}`)
     }
   }
 
@@ -280,75 +242,13 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
             authPrivateModeRes.signature
           );
 
-          const response = await this.callClient(message);
-          return response;
+          return await this.callClient(message);
         }
       } catch (error) {
-        console.error('Authentication failed:', error);
-        throw new Error('Authentication failed');
+        throw new Error(`Authentication failed: ${error}`);
       }
     }
 
-    throw new Error('Authentication process did not complete successfully');
+    throw new Error('Authentication process did not complete successfully')
   }
-
-  /**
-   * Checks authentication errors for either PUBLIC (KGW) or PRIVATE mode
-   * Signs message and then retries request for successful response
-   *
-   * @param response
-   * @param message
-   * @param actionBody
-   * @param kwilSigner
-   * @returns
-   */
-  // private async handleAuthentication(
-  //   response: CallClientResponse<MsgReceipt>,
-  //   message: Message,
-  //   actionBody: ActionBodyNode,
-  //   kwilSigner?: KwilSigner
-  // ): Promise<CallClientResponse<MsgReceipt>> {
-  //   if (this.autoAuthenticate) {
-  //     try {
-  //       // KGW AUTHENTICATION
-  //       if (response.authCode === -901) {
-  //         if (!kwilSigner) {
-  //           throw new Error('KGW authentication requires a KwilSigner.');
-  //         }
-
-  //         const authRes = await this.auth.authenticateKGW(kwilSigner);
-  //         if (authRes.status === 200 && this.authMode === AuthenticationMode.OPEN) {
-  //           // set the cookie
-  //           this.cookie = authRes.data?.cookie;
-  //           // call the message again
-  //           response = await this.callClient(message);
-  //         }
-  //       }
-
-  //       // PRIVATE MODE AUTHENTICATION
-  //       if (this.authMode === AuthenticationMode.PRIVATE && message.body.payload) {
-  //         if (!kwilSigner) {
-  //           throw new Error('Private mode authentication requires a KwilSigner.');
-  //         }
-
-  //         const authPrivateModeRes = await this.auth.authenticatePrivateMode(
-  //           kwilSigner,
-  //           actionBody
-  //         );
-  //         message = await this.buildMessage(
-  //           actionBody,
-  //           kwilSigner,
-  //           authPrivateModeRes.challenge,
-  //           authPrivateModeRes.signature
-  //         );
-
-  //         response = await this.callClient(message);
-  //       }
-  //     } catch (error) {
-  //       console.error('Authentication failed:', error);
-  //     }
-  //   }
-
-  //   return response;
-  // }
 }

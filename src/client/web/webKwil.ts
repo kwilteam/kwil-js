@@ -64,24 +64,6 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
     }
 
     throw new Error("Unexpected authentication mode or action body type."); 
-
-    /**
-     * Call buildMessage() and callClient() if in Public Mode or running KGW in Public Mode
-     * buildMessage() and callClient() are called in handleAuthenticate() for Private Mode
-     */
-
-    // Build Message
-    // const message = await this.buildMessage(actionBody, kwilSigner);
-
-    // kwil.call()
-    // let response = await this.callClient(message);
-
-    // Handle Authentication if error
-    // if (this.authMode === AuthenticationMode.PRIVATE || response.authCode === -901) {
-    //   response = await this.handleAuthentication(response, message, actionBody, kwilSigner);
-    // }
-
-    // return response;
   }
 
   /**
@@ -95,7 +77,7 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
       this.authMode = health.data?.mode;
     }
   }
-  
+
   /**
    * Builds a message with a chainId, dbid, name, and description of the action.
    * NOT INCLUDED => challenge, sender, signature
@@ -229,8 +211,7 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
             authPrivateModeRes.signature
           );
 
-          const response = await this.callClient(message);
-          return response;
+          return await this.callClient(message);
         }
       } catch (error) {
         console.error('Authentication failed:', error);

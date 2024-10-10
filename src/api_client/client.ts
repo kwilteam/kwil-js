@@ -245,7 +245,7 @@ export default class Client extends Api {
     // JsonRPCRequest to Determine mode (KGW or Private)
     const body = this.buildJsonRpcRequest<HealthRequest>(JSONRPCMethod.METHOD_HEALTH, {});
 
-    const res = await super.post<JsonRPCResponse<HealthResponse>>(`rpc/v1`, body);
+    const res = await super.post<JsonRPCResponse<HealthResponse>>(`/rpc/v1`, body);
 
     return checkRes(res, (r) => r.result);
   }
@@ -254,7 +254,7 @@ export default class Client extends Api {
     // JsonRPCRequest to generate a challenge
     const body = this.buildJsonRpcRequest<ChallengeRequest>(JSONRPCMethod.METHOD_CHALLENGE, {});
 
-    const res = await super.post<JsonRPCResponse<ChallengeResponse>>(`rpc/v1`, body);
+    const res = await super.post<JsonRPCResponse<ChallengeResponse>>(`/rpc/v1`, body);
 
     return checkRes(res, (r) => r.result.challenge);
   }
@@ -308,7 +308,7 @@ export default class Client extends Api {
       },
     });
 
-    const res = await super.post<JsonRPCResponse<CallResponse>>(`rpc/v1`, body);
+    const res = await super.post<JsonRPCResponse<CallResponse>>(`/rpc/v1`, body);
 
     const errorResponse = this.checkAuthError(res);
     if (errorResponse) {
