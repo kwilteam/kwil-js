@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.8.0](https://github.com/kwilteam/kwil-js/compare/v0.7.1...v0.8.0) (2024-10-10)
+
+
+### ⚠ BREAKING CHANGES
+
+* **auth:** `auth.logout` is now `auth.logoutKGW`
+
+Kwil.call refactor for public, kgw, private.
+
+Signed-off-by: Ty D'Angelo <tydangelo18@gmail.com>
+
+### Features
+
+* kwild private mode authentication ([5a926e2](https://github.com/kwilteam/kwil-js/commit/5a926e25bae07b9ff969e7225a6d731d64e10b47))
+
+
+### Bug Fixes
+
+* **kwil:** chain info shape ([e8b9dfd](https://github.com/kwilteam/kwil-js/commit/e8b9dfd69447862fa8ee7a6af2132ddb9268b262))
+
+
+* **auth:** change `logout` to `logoutKGW` ([c5d89e4](https://github.com/kwilteam/kwil-js/commit/c5d89e4405d17491a01030167004037fcedb49cc)), closes [#94](https://github.com/kwilteam/kwil-js/issues/94)
+
 ### [0.7.1](https://github.com/kwilteam/kwil-js/compare/v0.7.0...v0.7.1) (2024-06-10)
 
 
