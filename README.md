@@ -8,7 +8,7 @@ Make sure to use the correct version of the Kwil-JS SDK for the version of the [
 
 | Kwil-JS Version | Kwil-DB Version |
 | :-------------: | :-------------: |
-| v0.9            | v0.8            |
+| v0.8            | v0.9            |
 | v0.7            | v0.8            |
 | v0.6            | v.0.7 only      |
 
