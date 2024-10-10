@@ -1,12 +1,12 @@
 import { mockedAxios, getMock, postMock, requestInterceptors } from './api-utils';
 import { Api } from '../../../src/api_client/api';
-import { ApiConfig, Config } from '../../../src/api_client/config';
+import { ApiConfig } from '../../../src/api_client/config';
 require('dotenv').config();
 
 
 class TestApi extends Api {
     public constructor(host: string, opts: ApiConfig) {
-        super(host, opts);
+        super(opts);
     }
 }
 

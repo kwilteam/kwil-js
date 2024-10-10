@@ -5,11 +5,11 @@ import { Kwil } from '../client/kwil';
 import { ActionBuilder, SignerSupplier, PayloadBuilder } from '../core/builders';
 import { PayloadBuilderImpl } from './payload_builder';
 import { ActionInput } from '../core/action';
-import { EnvironmentType, PayloadType, ValueType, VarType } from '../core/enums';
-import { AnySignatureType, SignatureType, getSignatureType } from '../core/signature';
+import { BytesEncodingStatus, EnvironmentType, PayloadType, ValueType } from '../core/enums';
+import { AnySignatureType, Signature, SignatureType, getSignatureType } from '../core/signature';
 import { EncodedValue, UnencodedActionPayload } from '../core/payload';
 import { Message } from '../core/message';
-import { DataType } from '../core/database';
+import { encodeNestedArguments } from '../utils/rlp';
 
 interface CheckSchema {
   dbid: string;
@@ -42,6 +42,8 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
   private _chainId: Nillable<string>;
   private _description: Nillable<string> = null;
   private _nonce: Nillable<number> = null;
+  private _challenge: Nillable<string> = null;
+  private _signature: Nillable<Signature<BytesEncodingStatus.BASE64_ENCODED>> = null;
 
   /**
    * Initializes a new `ActionBuilder` instance.
@@ -237,6 +239,29 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
   }
 
   /**
+   * Specifies the challenge for the transaction.
+   *
+   * @param {string} challenge - The challenge for the transaction.
+   * @returns {ActionBuilder} The current `ActionBuilder` instance for chaining.
+   */
+  challenge(challenge: string): NonNil<ActionBuilder> {
+    // this._challenge = objects.requireNonNil(challenge, 'challenge cannot be null or undefined.');
+    this._challenge = challenge;
+    return this;
+  }
+
+  /**
+   * Specifies the signature for the transaction.
+   *
+   * @param {string} signature - The signature for the transaction.
+   * @returns {ActionBuilder} The current `ActionBuilder` instance for chaining.
+   */
+  signature(signature: Signature<BytesEncodingStatus.BASE64_ENCODED>): Nillable<ActionBuilder> {
+    this._signature = signature;
+    return this;
+  }
+
+  /**
    * Builds a transaction. This will call the kwil network to retrieve the schema and the signer's account.
    *
    * @returns {Promise<Transaction>} - A promise that resolves to a Transaction object. This transaction can be broadcasted to the Kwil network with the `kwil.broadcast()` api.
@@ -335,6 +360,8 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
       .payload(payload)
       .signer(signer, signatureType)
       .description(this._description)
+      .challenge(this._challenge)
+      .signature(this._signature)
       .chainId(chainId)
       .publicKey(identifier);
 
@@ -380,7 +407,10 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
       // if there are nilArgs, then the first element in the array is the nilArgs.
     };
 
-    let msg: PayloadBuilder = PayloadBuilderImpl.of(this.kwil).payload(payload);
+    let msg: PayloadBuilder = PayloadBuilderImpl.of(this.kwil)
+      .payload(payload)
+      .challenge(this._challenge)
+      .signature(this._signature);
 
     // if a signer is specified, add the signer, signature type, identifier, and description to the message
     if (signer) {
@@ -420,8 +450,8 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
     }
 
     // validate the the name exists on the schema.
-    const actionSchema = schema.data.actions?.find((a) => a.name === name)
-    const procedureSchema = schema.data.procedures?.find((p) => p.name === name)
+    const actionSchema = schema.data.actions?.find((a) => a.name === name);
+    const procedureSchema = schema.data.procedures?.find((p) => p.name === name);
 
     const foundActionOrProcedure = actionSchema || procedureSchema;
 
@@ -431,31 +461,30 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
       );
     }
 
-    const execSchema: ExecSchema = actionSchema ?
-      {
-        name: actionSchema.name,
-        public: actionSchema.public,
-        parameters: actionSchema.parameters,
-        modifiers: actionSchema.modifiers,
-      } : {
-        // if we have reached this point and actionSchema is null, then we know that procedureSchema is not null.
-        name: procedureSchema?.name as string,
-        public: procedureSchema?.public as boolean,
-        parameters: procedureSchema?.parameters?.map(p => p.name) as string[] || [],
-        modifiers: procedureSchema?.modifiers as string[],
-      }
-
+    const execSchema: ExecSchema = actionSchema
+      ? {
+          name: actionSchema.name,
+          public: actionSchema.public,
+          parameters: actionSchema.parameters,
+          modifiers: actionSchema.modifiers,
+        }
+      : {
+          // if we have reached this point and actionSchema is null, then we know that procedureSchema is not null.
+          name: procedureSchema?.name as string,
+          public: procedureSchema?.public as boolean,
+          parameters: (procedureSchema?.parameters?.map((p) => p.name) as string[]) || [],
+          modifiers: procedureSchema?.modifiers as string[],
+        };
 
     if (actions) {
       // ensure that no action inputs or values are missing
       const preparedActions = this.prepareActions(actions, execSchema, name);
-     
 
       return {
         dbid: dbid,
         name: name,
         modifiers: execSchema.modifiers,
-        preparedActions
+        preparedActions,
       };
     }
 
@@ -465,7 +494,7 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
       modifiers: execSchema.modifiers,
       preparedActions: [],
     };
-  };
+  }
 
   /**
    * Validates that the action is not missing any inputs.
@@ -531,14 +560,14 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
         copy.put(p, val);
       });
 
-      
       if (missingInputs.size === 0) {
-        execSchema.parameters && preparedActions.push(
-          execSchema.parameters.map((p) => {
-            const val = copy.get(p);
-            return val
-          })
-        );
+        execSchema.parameters &&
+          preparedActions.push(
+            execSchema.parameters.map((p) => {
+              const val = copy.get(p);
+              return val;
+            })
+          );
       }
     });
 
@@ -546,114 +575,13 @@ export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuild
       throw new Error(`Inputs are missing for actions: ${Array.from(missingInputs)}`);
     }
 
-    let encodedValues: EncodedValue[][] = [];
-
-    // construct the encoded value
-    preparedActions.forEach((action) => {
-      let singleEncodedValues: EncodedValue[] = [];
-      action.forEach((val) => {
-        const { metadata, varType } = analyzeVariable(val);
-
-        const metadataSpread = metadata ? { metadata } : {}
-
-        const dataType: DataType = {
-          name: varType,
-          is_array: Array.isArray(val),
-          ...metadataSpread
-        }
-
-        let data: string[] | Uint8Array[] = []
-
-        if(Array.isArray(val) && !(val instanceof Uint8Array)) {
-          data = val.map((v) => {
-            return v?.toString() || ''
-          })
-        } else if(val instanceof Uint8Array) {
-          data = [val]
-        } else { 
-          data = [val?.toString() || '']
-        }
-
-        singleEncodedValues.push({
-          type: dataType,
-          data
-        })
-      })
-
-      encodedValues.push(singleEncodedValues)
-    })
-
-    return encodedValues;
+    // return this.constructEncodedValues(preparedActions);
+    return encodeNestedArguments(preparedActions);
   }
 
   private assertNotBuilding(): void {
     if (this._actions === TXN_BUILD_IN_PROGRESS) {
       throw new Error('Cannot modify the builder while a transaction is being built.');
     }
-  }
-}
-
-function analyzeNumber(num: number) {
-  // Convert the number to a string and handle potential negative sign
-  const numStr = Math.abs(num).toString();
-
-  // Check for the presence of a decimal point
-  const decimalIndex = numStr.indexOf('.');
-  const hasDecimal = decimalIndex !== -1;
-
-  // Calculate total digits (excluding the decimal point)
-  const totalDigits = hasDecimal ? numStr.length - 1 : numStr.length;
-
-  // Analysis object to hold the results
-  const analysis = {
-    hasDecimal: hasDecimal,
-    totalDigits: totalDigits,
-    decimalPosition: hasDecimal ? decimalIndex : -1
-  };
-
-  return analysis;
-}
-
-function analyzeVariable(val: ValueType): { metadata: [number, number] | undefined, varType: VarType } {
-  if(Array.isArray(val)) {
-    // In Kwil, if there is an array of values, each value in the array must be of the same type.
-    return analyzeVariable(val[0])
-  }
-
-  let metadata: [number, number] | undefined;
-  // Default to text string
-  // Only other types are null or blob. For client-side tooling, everything else can be sent as a string, and Kwil will handle the conversion.
-  let varType: VarType = VarType.TEXT;
-
-  switch (typeof val) {
-    case 'string':
-      break;
-    case 'number':
-      const numAnalysis = analyzeNumber(val);
-      if (numAnalysis.hasDecimal) {
-        metadata = [numAnalysis.totalDigits, numAnalysis.decimalPosition];
-      }
-      break;
-    case 'boolean':
-      break;
-    case 'object':
-      if(val instanceof Uint8Array) {
-        varType = VarType.BLOB;
-        break;
-      }
-      if(val === null) {
-        varType = VarType.NULL;
-        break;
-      }
-    case 'undefined':
-      varType = VarType.NULL;
-      break;
-    default:
-      throw new Error(`Unsupported type: ${typeof val}. If using a uuid, blob, or uint256, please convert to a JavaScript string.`);
-  }
-
-  return {
-    metadata,
-    varType
   }
 }

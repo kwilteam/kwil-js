@@ -4,13 +4,13 @@ const logSpy = jest.spyOn(console, 'log').mockImplementation((...args) => {
 });
 jest.resetModules();
 import {
-  AmntObject,
   deployBaseSchema,
   deployIfNoTestDb,
   deployTempSchema,
   deriveKeyPair64,
   dropTestDb,
   kwil,
+  ViewCaller,
   wallet,
 } from './testingUtils';
 import { TxReceipt } from '../dist/core/tx';
@@ -28,6 +28,7 @@ import { Wallet } from 'ethers';
 
 dotenv.config();
 const isKgwOn = process.env.GATEWAY_ON === 'TRUE';
+const isKwildPrivateOn = process.env.PRIVATE_MODE === 'TRUE';
 const isGasOn = process.env.GAS_ON === 'TRUE';
 const address = wallet.address;
 const dbid: string = kwil.getDBID(address, 'mydb');
@@ -44,7 +45,7 @@ describe('Kwil Integration Tests', () => {
   afterAll(async () => {
     await dropTestDb(dbid, kSigner);
     await dropTestDb(baseDbid, kSigner);
-  }, 20000)
+  }, 20000);
 
   afterEach(() => {
     logSpy.mockClear();
@@ -54,14 +55,14 @@ describe('Kwil Integration Tests', () => {
     logSpy.mockRestore();
   });
 
-  test('getDBID should return the correct value', () => {
+  it('should return the correct value on getDBID()', () => {
     const result = kwil.getDBID(address, 'mydb');
-    expect(result).toBe('xc7d4d1d0a43a3692fab62a0be08af1d5de5709792280cabb67c52f3a');
+    expect(result).toBe(dbid);
   });
 
   let schema: any;
 
-  test('getSchema should return a database object', async () => {
+  it('getSchema should return a database object', async () => {
     const result = await kwil.getSchema(dbid);
     schema = result.data;
     expect(result.data).toBeDefined();
@@ -79,7 +80,7 @@ describe('Kwil Integration Tests', () => {
     expect(Array.isArray(result.data?.extensions) || result.data?.extensions === null).toBe(true);
   });
 
-  test('getSchema result should be cached properly', async () => {
+  it('should cache the getSchema() result properly', async () => {
     jest.useFakeTimers();
 
     const result = await kwil.getSchema(dbid);
@@ -100,7 +101,7 @@ describe('Kwil Integration Tests', () => {
     jest.useRealTimers();
   });
 
-  test('getAccount should return an account object', async () => {
+  it('getAccount should return an account object', async () => {
     const result = await kwil.getAccount(address);
     expect(result.data).toMatchObject<Account>({
       identifier: expect.any(Uint8Array),
@@ -109,7 +110,7 @@ describe('Kwil Integration Tests', () => {
     });
   });
 
-  test('listDatabases should return an array of DataSetInfo', async () => {
+  it('listDatabases should return an array of DataSetInfo', async () => {
     const result = await kwil.listDatabases(address);
 
     expect(result.data).toBeDefined();
@@ -126,14 +127,13 @@ describe('Kwil Integration Tests', () => {
     });
   });
 
-  test('ping should return the pong response', async () => {
+  it('ping should return the pong response', async () => {
     const result = await kwil.ping();
     expect(result.data).toBe('pong');
   });
 
-  test('chainInfo should match the chainInfo object', async () => {
+  it('chainInfo should match the chainInfo object', async () => {
     const result = await kwil.chainInfo();
-    console.log(result)
     expect(result.data).toMatchObject<ChainInfo>({
       chain_id: expect.any(String),
       height: expect.any(String),
@@ -141,25 +141,17 @@ describe('Kwil Integration Tests', () => {
     });
   });
 
-  test('select should return an array', async () => {
+  (!isKwildPrivateOn ? it : it.skip)('select should return an array', async () => {
     const result = await kwil.selectQuery(dbid, 'SELECT * FROM posts LIMIT 5');
     expect(result.data).toMatchObject<any[]>([]);
   });
 
-  it('execute should submit an action tx', async () => {
-    const records = await kwil.selectQuery(dbid, 'SELECT COUNT(*) FROM posts');
-    if (!records.status || !records.data) throw new Error('No posts found');
-
-    const amnt = records.data[0] as AmntObject;
-
-    const recordCount = amnt['count'] + 1;
-
+  it('should submit a tx on execute()', async () => {
     const actionBody: ActionBody = {
       dbid,
       name: 'add_post',
       inputs: [
         {
-          $id: recordCount,
           $user: 'Luke',
           $title: 'Test Post',
           $body: 'This is a test post',
@@ -177,19 +169,11 @@ describe('Kwil Integration Tests', () => {
   }, 10000);
 
   it('execute should submit a procedure tx', async () => {
-    const records = await kwil.selectQuery(dbid, 'SELECT COUNT(*) FROM posts');
-    if (!records.status || !records.data) throw new Error('No posts found');
-
-    const amnt = records.data[0] as AmntObject;
-
-    const recordCount = amnt['count'] + 1;
-
     const actionBody: ActionBody = {
       dbid,
       name: 'proc_add_user',
       inputs: [
         {
-          $id: recordCount,
           $user: 'Luke',
           $title: 'Test Post',
           $body: 'This is a test post',
@@ -204,54 +188,129 @@ describe('Kwil Integration Tests', () => {
     expect(result.data).toMatchObject<TxReceipt>({
       tx_hash: expect.any(String),
     });
-  }, 10000)
+  }, 10000);
 
   // Todo: Implement this test once this issue is resolved: https://github.com/kwilteam/kwil-db/issues/740
-  // test('execute should execute a procedure with a foreign call to another schema', async() => {
+  // it('should execute a procedure with a foreign call to another schema on execute()', async() => {
 
   // })
 
-  test('call should submit a view action', async () => {
+  it('should submit a read_posts action on call()', async () => {
     const body: ActionBody = {
       dbid,
       name: 'read_posts',
+      challenge: '',
     };
 
-    const result = await kwil.call(body);
+    let result;
+    if (isKwildPrivateOn || isKgwOn) {
+      result = await kwil.call(body, kSigner);
+    } else {
+      result = await kwil.call(body);
+    }
+
     expect(result.data).toMatchObject<MsgReceipt>({
       result: expect.any(Array),
     });
   }, 10000);
 
-  test('call should submit a view procedure', async () => {
-    const body: ActionBody = {
+  it('call should submit a view procedure', async () => {
+    const actionBody: ActionBody = {
       dbid,
-      name: 'get_post_by_id',
+      name: 'add_post',
       inputs: [
         {
-          $id: 1,
+          $user: 'Luke',
+          $title: 'Test Post',
+          $body: 'This is a test post',
+        },
+      ],
+      description: 'This is a test procedure',
+    };
+
+    await kwil.execute(actionBody, kSigner, true);
+
+    const body: ActionBody = {
+      dbid,
+      name: 'get_post_by_title',
+      inputs: [
+        {
+          $title: 'Test Post',
         },
       ],
     };
 
-    const result = await kwil.call(body);
+    let result;
+    if (isKwildPrivateOn || isKgwOn) {
+      result = await kwil.call(body, kSigner);
+    } else {
+      result = await kwil.call(body);
+    }
 
     expect(result.data).toBeDefined();
     expect(result.data).toMatchObject<MsgReceipt>({
       result: expect.any(Array),
     });
-  }, 10000)
+  }, 10000);
 
-  test('call should submit a view procedure that foreign calls a different schema', async () => {
+  it('should submit a get_post_by_title procedure on call()', async () => {
+    const actionBody: ActionBody = {
+      dbid,
+      name: 'add_post',
+      inputs: [
+        {
+          $user: 'Luke',
+          $title: 'Test Post',
+          $body: 'This is a test post',
+        },
+      ],
+      description: 'This is a test procedure',
+    };
+
+    await kwil.execute(actionBody, kSigner, true);
+
+    const body: ActionBody = {
+      dbid,
+      name: 'get_post_by_title',
+      inputs: [
+        {
+          $title: 'Test Post',
+        },
+      ],
+      challenge: '',
+    };
+
+    let res;
+    if (isKwildPrivateOn || isKgwOn) {
+      res = await kwil.call(body, kSigner);
+    } else {
+      res = await kwil.call(body);
+    }
+
+    expect(res.data).toBeDefined();
+    expect(res.status).toBe(200);
+    expect(res.data).toMatchObject<MsgReceipt>({
+      result: expect.any(Array),
+    });
+  }, 10000);
+
+  it('should submit a view procedure that foreign calls a different schema on call()', async () => {
     const body: ActionBody = {
       dbid,
       name: 'proc_call_base',
-      inputs: [{
-        $dbid: baseDbid,
-      }]
-    }
+      inputs: [
+        {
+          $dbid: baseDbid,
+        },
+      ],
+    };
 
-    const result = await kwil.call(body);
+    let result;
+    if (isKwildPrivateOn || isKgwOn) {
+      result = await kwil.call(body, kSigner);
+    } else {
+      result = await kwil.call(body);
+    }
 
     expect(result.data).toBeDefined();
 
@@ -260,20 +319,24 @@ describe('Kwil Integration Tests', () => {
     });
   }, 10000);
 
-  (isGasOn ? test : test.skip)('Kwil.funder should transfer tokens', async () => {
-    const funder = kwil.funder;
-    const transferBody = {
-      to: '0x6E2fA2aF9B4eF5c8A3BcF9A9B9A4F1a1a2c1c1c1',
-      amount: BigInt(1),
-    };
-    const result = await funder.transfer(transferBody, kSigner);
-    expect(result.data).toBeDefined();
-    expect(result.data).toMatchObject<TxReceipt>({
-      tx_hash: expect.any(String),
-    });
-  }, 10000);
+  (isGasOn ? it : it.skip)(
+    'should transfer tokens via kwil.funder',
+    async () => {
+      const funder = kwil.funder;
+      const transferBody = {
+        to: '0x6E2fA2aF9B4eF5c8A3BcF9A9B9A4F1a1a2c1c1c1',
+        amount: BigInt(1),
+      };
+      const result = await funder.transfer(transferBody, kSigner);
+      expect(result.data).toBeDefined();
+      expect(result.data).toMatchObject<TxReceipt>({
+        tx_hash: expect.any(String),
+      });
+    },
+    10000
+  );
 
-  test('a database should be deployed with kwil.deploy()', async () => {
+  it('should deploy a database with kwil.deploy()', async () => {
     const result = await deployTempSchema(schema, kSigner);
     expect(result.data).toBeDefined();
     expect(result.data).toMatchObject<TxReceipt>({
@@ -281,7 +344,7 @@ describe('Kwil Integration Tests', () => {
     });
   }, 10000);
 
-  test('a database should be dropped with kwil.drop()', async () => {
+  it('should drop a database with kwil.drop()', async () => {
     const dbList = await kwil.listDatabases(kSigner.identifier);
     const dbName = `test_db_${dbList.data?.length}`;
     const dbidToDrop = kwil.getDBID(kSigner.identifier, dbName);
@@ -299,7 +362,7 @@ describe('Kwil Integration Tests', () => {
   }, 10000);
 });
 
-describe('Testing case insentivity on test_db', () => {
+describe('Testing case sensitivity on test_db', () => {
   let dbid: string;
 
   beforeAll(async () => {
@@ -318,7 +381,7 @@ describe('Testing case insentivity on test_db', () => {
     }
 
     await deployTempSchema(schema, kSigner);
-    dbid = kwil.getDBID(kSigner.identifier, 'test_db_1');
+    dbid = kwil.getDBID(kSigner.identifier, `test_db_${dbList.length + 1}`);
   }, 10000);
 
   afterAll(async () => {
@@ -330,21 +393,10 @@ describe('Testing case insentivity on test_db', () => {
   }, 10000);
 
   async function buildActionInput(dbid: string): Promise<ActionInput> {
-    const count = await kwil.selectQuery(dbid, 'SELECT COUNT(*) FROM users');
-    if (!count || !count.data)
-      throw new Error(
-        `Something went wrong with the select query in Testing case insentivity on test_db. Count = ${count}`
-      );
-    const amount = count?.data[0] as AmntObject;
-    const amnt = amount['count'];
-
-    return Utils.ActionInput.of()
-      .put('$id', amnt + 1)
-      .put('$username', 'Luke')
-      .put('$age', 25);
+    return Utils.ActionInput.of().put('$username', 'Luke').put('$age', 25);
   }
 
-  test('createUserTest action should execute', async () => {
+  it('should execute createUserTest action', async () => {
     const actionInputs = await buildActionInput(dbid);
 
     const body: ActionBody = {
@@ -361,7 +413,7 @@ describe('Testing case insentivity on test_db', () => {
     });
   }, 10000);
 
-  test('delete_user action should execute', async () => {
+  it('should execute delete_user action', async () => {
     const body: ActionBody = {
       name: 'delete_user',
       dbid,
@@ -375,7 +427,7 @@ describe('Testing case insentivity on test_db', () => {
     });
   }, 10000);
 
-  test('CREATEUSERTEST action should execute', async () => {
+  it('should execute CREATEUSERTEST action', async () => {
     const actionInputs = await buildActionInput(dbid);
 
     const body: ActionBody = {
@@ -392,10 +444,10 @@ describe('Testing case insentivity on test_db', () => {
     });
   }, 10000);
 
-  test('DELETE_USER action should execute', async () => {
+  it('should execute DELETE_USER action', async () => {
     const body: ActionBody = {
       name: 'DELETE_USER',
-      dbid
+      dbid,
     };
 
     const result = await kwil.execute(body, kSigner, true);
@@ -406,7 +458,7 @@ describe('Testing case insentivity on test_db', () => {
     });
   }, 10000);
 
-  test('createusertest action should execute', async () => {
+  it('should execute createusertest action', async () => {
     const actionInputs = await buildActionInput(dbid);
 
     const body: ActionBody = {
@@ -447,10 +499,11 @@ describe('Testing case insentivity on test_db', () => {
     });
   });
 
+  // cookies are not needed in private mode
   it('should return an expired cookie when logging out', async () => {
     // @ts-ignore
     const preCookie = kwil.cookie;
-    const result = await kwil.auth.logout();
+    const result = await kwil.auth.logoutKGW();
 
     //@ts-ignore
     const postCookie = kwil.cookie;
@@ -464,13 +517,9 @@ describe('Testing case insentivity on test_db', () => {
     expect(preCookie).not.toBe(postCookie);
   });
 
-  interface ViewCaller {
-    caller: string;
-  }
-
   it('should allow a new signer after logging out', async () => {
     // Log out
-    await kwil.auth.logout();
+    await kwil.auth.logoutKGW();
 
     // Create a new signer
     const newWallet = Wallet.createRandom();
@@ -482,7 +531,12 @@ describe('Testing case insentivity on test_db', () => {
       dbid,
     };
 
-    const result = await kwil.call(body, newSigner);
+    let result;
+    if (isKwildPrivateOn || isKgwOn) {
+      result = await kwil.call(body, newSigner);
+    } else {
+      result = await kwil.call(body);
+    }
 
     const returnedCaller = result.data?.result?.[0] as ViewCaller | undefined;
 
@@ -492,83 +546,87 @@ describe('Testing case insentivity on test_db', () => {
     expect(returnedCaller?.caller).toBe(newWallet.address);
   });
 
-  describe('Testing authentication without autoAuthenticate', () => {
-    const newKwil = new NodeKwil({
-      kwilProvider: process.env.KWIL_PROVIDER || '',
-      chainId: process.env.CHAIN_ID || '',
-      autoAuthenticate: false,
-    });
-
-    it('should not authenticate automatically', async () => {
-      const body: ActionBody = {
-        name: 'view_must_sign',
-        dbid,
-      };
-
-      const result = await newKwil.call(body, kSigner);
-
-      expect(result.status).toBe(401);
-      expect(result.data?.result).toBe(null);
-    });
-
-    it('should authenticate after calling the authenticate method', async () => {
-      const result = await newKwil.auth.authenticate(kSigner);
-
-      await newKwil.auth.logout();
-
-      expect(result.data).toMatchObject<AuthSuccess<EnvironmentType.NODE>>({
-        result: 'ok',
-        cookie: expect.any(String),
+  (isKgwOn ? describe : describe.skip)(
+    'Testing authentication without autoAuthenticate in KGW',
+    () => {
+      const newKwil = new NodeKwil({
+        kwilProvider: process.env.KWIL_PROVIDER || '',
+        chainId: process.env.CHAIN_ID || '',
+        autoAuthenticate: false,
       });
-    });
 
-    it('should authenticate when the cookie is passed back to the action', async () => {
-      const authRes = await newKwil.auth.authenticate(kSigner);
-      const cookie = authRes.data?.cookie;
+      it('should not authenticate automatically', async () => {
+        const body: ActionBody = {
+          name: 'view_must_sign',
+          dbid,
+        };
 
-      if (!cookie) throw new Error('No cookie found');
+        const result = await newKwil.call(body, kSigner);
 
-      const body: ActionBodyNode = {
-        name: 'view_must_sign',
-        dbid,
-        cookie
-      };
-
-      const result = await newKwil.call(body, kSigner);
-
-      expect(result.data).toBeDefined();
-      expect(result.data).toMatchObject<MsgReceipt>({
-        result: expect.any(Array),
+        expect(result.status).toBe(401);
+        expect(result.data?.result).toBe(null);
       });
-    });
 
-    it('should not authenticate when a bad cookie is passed back to the action', async () => {
-      const body: ActionBodyNode = {
-        name: 'view_must_sign',
-        dbid,
-        cookie: 'badCookie'
-      };
+      it('should authenticate after calling the authenticate method', async () => {
+        const result = await newKwil.auth.authenticateKGW(kSigner);
 
-      const result = await newKwil.call(body, kSigner);
+        await newKwil.auth.logoutKGW();
 
-      expect(result.status).toBe(401);
-      expect(result.data?.result).toBe(null);
-    });
-
-    it('should continue authenticating after a bad cookie was passed to the previous action', async () => {
-      const body: ActionBody = {
-        name: 'view_must_sign',
-        dbid,
-      };
-
-      const result = await newKwil.call(body, kSigner);
-
-      expect(result.data).toBeDefined();
-      expect(result.data).toMatchObject<MsgReceipt>({
-        result: expect.any(Array),
+        expect(result.data).toMatchObject<AuthSuccess<EnvironmentType.NODE>>({
+          result: 'ok',
+          cookie: expect.any(String),
+        });
       });
-    });
-  });
+
+      it('should authenticate when the cookie is passed back to the action', async () => {
+        const authRes = await newKwil.auth.authenticateKGW(kSigner);
+        const cookie = authRes.data?.cookie;
+
+        if (!cookie) throw new Error('No cookie found');
+
+        const body: ActionBodyNode = {
+          name: 'view_must_sign',
+          dbid,
+          cookie,
+        };
+
+        const result = await newKwil.call(body, kSigner);
+
+        expect(result.data).toBeDefined();
+        expect(result.data).toMatchObject<MsgReceipt>({
+          result: expect.any(Array),
+        });
+      });
+
+      it('should not authenticate when a bad cookie is passed back to the action', async () => {
+        const body: ActionBodyNode = {
+          name: 'view_must_sign',
+          dbid,
+          cookie: 'badCookie',
+        };
+
+        const result = await newKwil.call(body, kSigner);
+
+        expect(result.status).toBe(401);
+        expect(result.data?.result).toBe(null);
+      });
+
+      // cookies are not needed in private mode
+      it('should continue authenticating after a bad cookie was passed to the previous action', async () => {
+        const body: ActionBody = {
+          name: 'view_must_sign',
+          dbid,
+        };
+
+        const result = await newKwil.call(body, kSigner);
+
+        expect(result.data).toBeDefined();
+        expect(result.data).toMatchObject<MsgReceipt>({
+          result: expect.any(Array),
+        });
+      });
+    }
+  );
 });
 
 describe('Testing custom signers', () => {
@@ -595,25 +653,13 @@ describe('Testing custom signers', () => {
   }, 10000);
 
   beforeEach(async () => {
-    let recordCount: number;
-
-    const count = await kwil.selectQuery(dbid, 'SELECT COUNT(*) FROM posts');
-    if (count.status == 200 && count.data) {
-      const amnt = count.data[0] as AmntObject;
-      recordCount = amnt['count'];
-    } else {
-      throw new Error('Something went wrong checking how many records on users table in the Testing custom signers section')
-    }
-
     input = new Utils.ActionInput();
-    input.put('$id', recordCount + 1);
     input.put('$user', 'Luke');
     input.put('$title', 'Test Post');
     input.put('$body', 'This is a test post');
   });
 
-
-  test("ed25519 signed tx's should broadcast correctly", async () => {
+  it("should broadcast ed25519 signed tx's correctly", async () => {
     const body: ActionBody = {
       dbid,
       name: 'add_post',
@@ -628,7 +674,7 @@ describe('Testing custom signers', () => {
     });
   }, 10000);
 
-  test('ed25519 signed msgs should call correctly', async () => {
+  it('should call ed25519 signed msgs correctly', async () => {
     const payload: ActionBody = {
       dbid,
       name: 'view_must_sign',
@@ -645,47 +691,59 @@ describe('Testing custom signers', () => {
 
 describe('Testing simple actions and db deploy / drop (builder pattern alternative)', () => {
   beforeAll(async () => {
-    await deployIfNoTestDb(kSigner)
+    await deployIfNoTestDb(kSigner);
   }, 10000);
 
   afterAll(async () => {
     await dropTestDb(dbid, kSigner);
   }, 10000);
 
-  test('kwil.call() with ActionBody interface as first argument, action inputs NOT REQUIRED, and no signature required should return a MsgReceipt', async () => {
+  it('should return a MsgReceipt when kwil.call() with ActionBody interface as first argument, action inputs NOT REQUIRED, and no signature required', async () => {
     const actionBody: ActionBody = {
       dbid: dbid,
       name: 'read_posts',
     };
 
-    const result = await kwil.call(actionBody);
+    let result;
+    if (isKwildPrivateOn || isKgwOn) {
+      result = await kwil.call(actionBody, kSigner);
+    } else {
+      result = await kwil.call(actionBody);
+    }
+
     expect(result.data).toBeDefined();
     expect(result.data).toMatchObject<MsgReceipt>({
       result: expect.any(Array),
     });
   });
 
-  describe('kwil.call() with ActionBody interface as first argument, action inputs REQUIRED, and no signature required should return a MsgReceipt', () => {
-    test('with action inputs as array of objects', async () => {
+  describe('kwil.call() with ActionBody interface as first argument, action inputs REQUIRED, and no signature required', () => {
+    it('should return a MsgReceipt with action inputs as array of objects', async () => {
       const actionBody: ActionBody = {
         dbid,
         name: 'view_with_param',
         inputs: [
           {
-            $id: 1,
+            $title: 'Test Post',
           },
         ],
       };
 
-      const result = await kwil.call(actionBody);
+      let result;
+      if (isKwildPrivateOn || isKgwOn) {
+        result = await kwil.call(actionBody, kSigner);
+      } else {
+        result = await kwil.call(actionBody);
+      }
+
       expect(result.data).toBeDefined();
       expect(result.data).toMatchObject<MsgReceipt>({
         result: expect.any(Array),
       });
     });
 
-    test('with action inputs as ActionInput', async () => {
-      const input = ActionInput.of().put('$id', 1);
+    it('should return a MsgReceipt with action inputs as ActionInput', async () => {
+      const input = ActionInput.of().put('$title', 'Test Post');
 
       const actionBody: ActionBody = {
         dbid,
@@ -693,49 +751,45 @@ describe('Testing simple actions and db deploy / drop (builder pattern alternati
         inputs: [input],
       };
 
-      const result = await kwil.call(actionBody);
+      let result;
+      if (isKwildPrivateOn || isKgwOn) {
+        result = await kwil.call(actionBody, kSigner);
+      } else {
+        result = await kwil.call(actionBody);
+      }
+
+      expect(result.data).toBeDefined();
+      expect(result.data).toMatchObject<MsgReceipt>({
+        result: expect.any(Object),
+      });
+    });
+  });
+
+  (isKgwOn ? it : it.skip)(
+    'should return a MsgReceipt when kwil.call() with ActionBody interface as first argument, action inputs NOT REQUIRED, and signature required',
+    async () => {
+      const actionBody: ActionBody = {
+        dbid,
+        name: 'view_must_sign',
+        description: 'This is a test action',
+      };
+
+      const result = await kwil.call(actionBody, kSigner);
 
       expect(result.data).toBeDefined();
       expect(result.data).toMatchObject<MsgReceipt>({
         result: expect.any(Array),
       });
-    });
-  });
+    }
+  );
 
-  test('kwil.call() with ActionBody interface as first argument, action inputs NOT REQUIRED, and signature required should return a MsgReceipt', async () => {
-    const actionBody: ActionBody = {
-      dbid,
-      name: 'view_must_sign',
-      description: 'This is a test action',
-    };
-
-    const result = await kwil.call(actionBody, kSigner);
-    expect(result.data).toBeDefined();
-    expect(result.data).toMatchObject<MsgReceipt>({
-      result: expect.any(Array),
-    });
-  });
-
-  describe('kwil.execute() with ActionBody interface as first argument, action inputs ARE REQUIRED should return a TxReceipt', () => {
-    let recordCount: number;
-
-    beforeAll(async () => {
-      const count = await kwil.selectQuery(dbid, 'SELECT COUNT(*) FROM posts');
-      if (count.status == 200 && count.data) {
-        const amnt = count.data[0] as AmntObject;
-        recordCount = amnt['count'] + 1;
-      }
-    });
-
-    afterEach(() => recordCount++);
-
-    test('with action inputs as array of objects', async () => {
+  describe('kwil.execute() with ActionBody interface as first argument, action inputs ARE REQUIRED', () => {
+    it('should return a TxReceipt with action inputs as array of objects', async () => {
       const actionBody: ActionBody = {
         dbid,
         name: 'add_post',
         inputs: [
           {
-            $id: recordCount,
             $user: 'Luke',
             $title: 'Test Post',
             $body: 'This is a test post',
@@ -752,9 +806,8 @@ describe('Testing simple actions and db deploy / drop (builder pattern alternati
       });
     }, 10000);
 
-    test('with action inputs as ActionInput', async () => {
+    it('should return a TxReceipt with action inputs as ActionInput', async () => {
       const input = ActionInput.of().putFromObject({
-        $id: recordCount,
         $user: 'Luke',
         $title: 'Test Post',
         $body: 'This is a test post',
@@ -784,7 +837,6 @@ describe('Testing simple actions and db deploy / drop (builder pattern alternati
         name: 'add_post',
         inputs: [
           {
-            $id: recordCount,
             $user: 'Luke',
             $title: 'Test Post',
             $body: 'This is a test post',
@@ -811,7 +863,6 @@ describe('Testing simple actions and db deploy / drop (builder pattern alternati
         name: 'add_post',
         inputs: [
           {
-            $id: recordCount,
             $user: 'Luke',
             $title: 'Test Post',
             $body: 'This is a test post',
@@ -838,16 +889,11 @@ describe('unconfirmedNonce', () => {
   }, 10000);
 
   it('should return a nonce that is 1 greater than the current nonce immediately after a transaction', async () => {
-    const posts = await kwil.selectQuery(dbid, 'SELECT COUNT(*) FROM posts');
-    if (!posts.status || !posts.data) throw new Error('No posts found');
-    const amnt = posts.data[0] as AmntObject;
-    const recordCount = amnt['count'] + 1;
     const actionBody: ActionBody = {
       dbid,
       name: 'add_post',
       inputs: [
         {
-          $id: recordCount,
           $user: 'Luke',
           $title: 'Test Post',
           $body: 'This is a test post',
@@ -864,72 +910,91 @@ describe('unconfirmedNonce', () => {
   });
 });
 
-import variableDb from './variable_test.json'
+import variableDb from './variable_test.json';
 import { v4 as uuidV4 } from 'uuid';
 import { bytesToString } from '../dist/utils/serial';
 import { base64ToBytes } from '../dist/utils/base64';
 import { Account, ChainInfo } from '../dist/core/network';
 
-describe('Kwil DB types', () => {
+(!isKwildPrivateOn ? describe : describe.skip)('Kwil DB types', () => {
   const kwilSigner = new KwilSigner(wallet, address);
   const dbid = kwil.getDBID(address, 'variable_test');
 
   beforeAll(async () => {
-    await kwil.deploy({
-      schema: variableDb,
-    }, kwilSigner, true);
+    await kwil.deploy(
+      {
+        schema: variableDb,
+      },
+      kwilSigner,
+      true
+    );
   }, 10000);
 
   afterAll(async () => {
     await dropTestDb(dbid, kwilSigner);
   }, 10000);
 
-  test('should be able to insert a record with a UUID', async () => {
+  // Will run in either KGW or Public mode
+  it('should be able to insert a record with a UUID', async () => {
     const uuid = uuidV4();
 
-    const res = await kwil.execute({
-      dbid,
-      name: 'insert_uuid',
-      inputs: [
-        {
-          $id: uuid
-        }
-      ]
-    }, kwilSigner, true);
+    const res = await kwil.execute(
+      {
+        dbid,
+        name: 'insert_uuid',
+        inputs: [
+          {
+            $id: uuid,
+          },
+        ],
+      },
+      kwilSigner,
+      true
+    );
 
     expect(res.data).toBeDefined();
     expect(res.data).toMatchObject<TxReceipt>({
       tx_hash: expect.any(String),
     });
 
-    const query = await kwil.selectQuery(dbid, `SELECT * FROM var_table WHERE uuid_col = '${uuid}'::uuid`);
+    const query = await kwil.selectQuery(
+      dbid,
+      `SELECT * FROM var_table WHERE uuid_col = '${uuid}'::uuid`
+    );
     expect(query.data).toBeDefined();
     expect(query.data).toHaveLength(1);
     expect(Array.isArray(query.data)).toBe(true);
     expect(query.data?.length).toBeGreaterThan(0);
   }, 10000);
 
-  test('should be able to insert a record with a text', async () => {
+  it('should be able to insert a record with a text', async () => {
     const id = uuidV4();
     const text = 'This is a test text';
 
-    const res = await kwil.execute({
-      dbid,
-      name: 'insert_text',
-      inputs: [
-        {
-          $id: id,
-          $text: text
-        }
-      ]
-    }, kwilSigner, true);
+    const res = await kwil.execute(
+      {
+        dbid,
+        name: 'insert_text',
+        inputs: [
+          {
+            $id: id,
+            $text: text,
+          },
+        ],
+      },
+      kwilSigner,
+      true
+    );
 
     expect(res.data).toBeDefined();
     expect(res.data).toMatchObject<TxReceipt>({
       tx_hash: expect.any(String),
     });
 
-    const query = await kwil.selectQuery(dbid, `SELECT * FROM var_table WHERE text_col = '${text}'`);
+    const query = await kwil.selectQuery(
+      dbid,
+      `SELECT * FROM var_table WHERE text_col = '${text}'`
+    );
 
     expect(query.data).toBeDefined();
     expect(query.data).toHaveLength(1);
@@ -937,25 +1002,29 @@ describe('Kwil DB types', () => {
     expect(query.data?.length).toBeGreaterThan(0);
   }, 10000);
 
-  test('should be able to insert a record with an integer', async () => {
+  it('should be able to insert a record with an integer', async () => {
     const id = uuidV4();
     const num = 123;
 
-    const res = await kwil.execute({
-      dbid,
-      name: 'insert_int',
-      inputs: [
-        {
-          $id: id,
-          $int: num
-        }
-      ]
-    }, kwilSigner, true);
+    const res = await kwil.execute(
+      {
+        dbid,
+        name: 'insert_int',
+        inputs: [
+          {
+            $id: id,
+            $int: num,
+          },
+        ],
+      },
+      kwilSigner,
+      true
+    );
 
     expect(res.data).toBeDefined();
     expect(res.data).toMatchObject<TxReceipt>({
       tx_hash: expect.any(String),
-    });
+    }); // Missing semicolon added here
 
     const query = await kwil.selectQuery(dbid, `SELECT * FROM var_table WHERE int_col = ${num}`);
 
@@ -963,22 +1032,26 @@ describe('Kwil DB types', () => {
     expect(query.data).toHaveLength(1);
     expect(Array.isArray(query.data)).toBe(true);
     expect(query.data?.length).toBeGreaterThan(0);
-  }, 10000)
+  }, 10000);
 
-  test('should be able to insert a record with a boolean', async () => {
+  it('should be able to insert a record with a boolean', async () => {
     const id = uuidV4();
     const bool = true;
 
-    const res = await kwil.execute({
-      dbid,
-      name: 'insert_bool',
-      inputs: [
-        {
-          $id: id,
-          $bool: bool
-        }
-      ]
-    }, kwilSigner, true);
+    const res = await kwil.execute(
+      {
+        dbid,
+        name: 'insert_bool',
+        inputs: [
+          {
+            $id: id,
+            $bool: bool,
+          },
+        ],
+      },
+      kwilSigner,
+      true
+    );
 
     expect(res.data).toBeDefined();
     expect(res.data).toMatchObject<TxReceipt>({
@@ -993,27 +1066,34 @@ describe('Kwil DB types', () => {
     expect(query.data?.length).toBeGreaterThan(0);
   }, 10000);
 
-  test('should be able to insert a record with a decimal', async () => {
+  it('should be able to insert a record with a decimal', async () => {
     const id = uuidV4();
     const dec = 12.345;
 
-    const res = await kwil.execute({
-      dbid,
-      name: 'insert_dec',
-      inputs: [
-        {
-          $id: id,
-          $dec: dec
-        }
-      ]
-    }, kwilSigner, true);
+    const res = await kwil.execute(
+      {
+        dbid,
+        name: 'insert_dec',
+        inputs: [
+          {
+            $id: id,
+            $dec: dec,
+          },
+        ],
+      },
+      kwilSigner,
+      true
+    );
 
     expect(res.data).toBeDefined();
     expect(res.data).toMatchObject<TxReceipt>({
       tx_hash: expect.any(String),
     });
 
-    const query = await kwil.selectQuery(dbid, `SELECT * FROM var_table WHERE uuid_col = '${id}'::uuid`);
+    const query = await kwil.selectQuery(
+      dbid,
+      `SELECT * FROM var_table WHERE uuid_col = '${id}'::uuid`
+    );
 
     expect(query.data).toBeDefined();
     expect(query.data).toHaveLength(1);
@@ -1021,27 +1101,34 @@ describe('Kwil DB types', () => {
     expect(query.data?.length).toBeGreaterThan(0);
   }, 10000);
 
-  test('should be able to insert a record with a blob as a string', async () => {
+  it('should be able to insert a record with a blob as a string', async () => {
     const id = uuidV4();
-    const blob = 'this is a test blob'
+    const blob = 'this is a test blob';
 
-    const res = await kwil.execute({
-      dbid,
-      name: 'insert_blob',
-      inputs: [
-        {
-          $id: id,
-          $blob: blob
-        }
-      ]
-    }, kwilSigner, true);
+    const res = await kwil.execute(
+      {
+        dbid,
+        name: 'insert_blob',
+        inputs: [
+          {
+            $id: id,
+            $blob: blob,
+          },
+        ],
+      },
+      kwilSigner,
+      true
+    );
 
     expect(res.data).toBeDefined();
     expect(res.data).toMatchObject<TxReceipt>({
       tx_hash: expect.any(String),
     });
 
-    const query = await kwil.selectQuery(dbid, `SELECT * FROM var_table WHERE blob_col = '${blob}'::blob`);
+    const query = await kwil.selectQuery(
+      dbid,
+      `SELECT * FROM var_table WHERE blob_col = '${blob}'::blob`
+    );
 
     expect(query.data).toBeDefined();
     expect(query.data).toHaveLength(1);
@@ -1049,27 +1136,34 @@ describe('Kwil DB types', () => {
     expect(query.data?.length).toBeGreaterThan(0);
   }, 10000);
 
-  test('should be able to insert a record with a blob as a Uint8array', async () => {
+  it('should be able to insert a record with a blob as a Uint8array', async () => {
     const id = uuidV4();
     const blob = new Uint8Array([1, 2, 3, 4, 5]);
 
-    const res = await kwil.execute({
-      dbid,
-      name: 'insert_blob',
-      inputs: [
-        {
-          $id: id,
-          $blob: blob
-        }
-      ]
-    }, kwilSigner, true);
+    const res = await kwil.execute(
+      {
+        dbid,
+        name: 'insert_blob',
+        inputs: [
+          {
+            $id: id,
+            $blob: blob,
+          },
+        ],
+      },
+      kwilSigner,
+      true
+    );
 
     expect(res.data).toBeDefined();
     expect(res.data).toMatchObject<TxReceipt>({
       tx_hash: expect.any(String),
     });
 
-    const query = await kwil.selectQuery(dbid, `SELECT * FROM var_table WHERE blob_col = '${bytesToString(blob)}'::blob`);
+    const query = await kwil.selectQuery(
+      dbid,
+      `SELECT * FROM var_table WHERE blob_col = '${bytesToString(blob)}'::blob`
+    );
     expect(query.data).toBeDefined();
     expect(query.data).toHaveLength(1);
     expect(Array.isArray(query.data)).toBe(true);
@@ -1081,32 +1175,39 @@ describe('Kwil DB types', () => {
     expect(base64ToBytes(blobVal)).toStrictEqual(blob);
   }, 10000);
 
-  test('should be able to insert a uint256 value', async () => {
+  it('should be able to insert a uint256 value', async () => {
     const id = uuidV4();
-    const maxUint256 = '115792089237316195423570985008687907853269984665640564039457584007913129639935'
+    const maxUint256 =
+      '115792089237316195423570985008687907853269984665640564039457584007913129639935';
 
-    const res = await kwil.execute({
-      dbid,
-      name: 'insert_uint256',
-      inputs: [
-        {
-          $id: id,
-          $uint256: maxUint256
-        }
-      ]
-    }, kwilSigner, true);
+    const res = await kwil.execute(
+      {
+        dbid,
+        name: 'insert_uint256',
+        inputs: [
+          {
+            $id: id,
+            $uint256: maxUint256,
+          },
+        ],
+      },
+      kwilSigner,
+      true
+    );
 
     expect(res.data).toBeDefined();
     expect(res.data).toMatchObject<TxReceipt>({
       tx_hash: expect.any(String),
     });
 
-    const query = await kwil.selectQuery(dbid, `SELECT * FROM var_table WHERE uint256_col = ${maxUint256}`);
+    const query = await kwil.selectQuery(
+      dbid,
+      `SELECT * FROM var_table WHERE uint256_col = ${maxUint256}`
+    );
 
     expect(query.data).toBeDefined();
     expect(query.data).toHaveLength(1);
     expect(Array.isArray(query.data)).toBe(true);
     expect(query.data?.length).toBeGreaterThan(0);
   }, 10000);
-})
-
+});

@@ -73,6 +73,11 @@ export enum EnvironmentType {
   NODE = 'node',
 }
 
+export enum AuthenticationMode {
+  PRIVATE = 'private',
+  OPEN = 'open', // kwil-db in public mode, regardless of kgw running
+}
+
 export type PayloadBytesTypes =
   | BytesEncodingStatus.BASE64_ENCODED
   | BytesEncodingStatus.UINT8_ENCODED;
@@ -81,4 +86,9 @@ export enum BroadcastSyncType {
   ASYNC = 0,
   SYNC = 1,
   COMMIT = 2,
+}
+
+export enum AuthErrorCodes {
+  PRIVATE_MODE = -1001,
+  KGW_MODE = -901,
 }
