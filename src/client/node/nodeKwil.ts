@@ -4,10 +4,10 @@ import { ActionInput, Entries, ActionBodyNode } from '../../core/action';
 import { ActionBuilder } from '../../core/builders';
 import { AuthenticationMode, BytesEncodingStatus, EnvironmentType } from '../../core/enums';
 import { KwilSigner } from '../../core/kwilSigner';
-import { BaseMessage, CallClientResponse, Message, MsgReceipt } from '../../core/message';
+import { BaseMessage, Message, MsgReceipt } from '../../core/message';
 import { GenericResponse } from '../../core/resreq';
 import { Kwil } from '../kwil';
-import { Signature } from '../../core/signature';
+import { AuthBody, Signature } from '../../core/signature';
 
 export class NodeKwil extends Kwil<EnvironmentType.NODE> {
   private autoAuthenticate: boolean;
@@ -65,10 +65,17 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
       }
       return response;
     } else if (this.authMode === AuthenticationMode.PRIVATE) {
-      return await this.handleAuthenticatePrivate(actionBody, kwilSigner)
+      const authBody = await this.handleAuthenticatePrivate(actionBody, kwilSigner)
+      const message = await this.buildMessage(
+        actionBody,
+        kwilSigner,
+        authBody.challenge,
+        authBody.signature
+      );
+      return await this.callClient(message);
     }
 
-    throw new Error("Unexpected authentication mode or action body type.");
+    throw new Error("Unexpected authentication mode. If you hit this error, please report it to the Kwil team.");
   }
 
   /**
@@ -222,7 +229,7 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
   private async handleAuthenticatePrivate(
     actionBody: ActionBodyNode,
     kwilSigner?: KwilSigner
-  ): Promise<CallClientResponse<MsgReceipt>> {
+  ): Promise<AuthBody> {
     if (this.autoAuthenticate) {
       try {
         // PRIVATE MODE AUTHENTICATION
@@ -231,18 +238,10 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
             throw new Error('Private mode authentication requires a KwilSigner.');
           }
 
-          const authPrivateModeRes = await this.auth.authenticatePrivateMode(
+          return await this.auth.authenticatePrivateMode(
             actionBody,
             kwilSigner
           );
-          const message = await this.buildMessage(
-            actionBody,
-            kwilSigner,
-            authPrivateModeRes.challenge,
-            authPrivateModeRes.signature
-          );
-
-          return await this.callClient(message);
         }
       } catch (error) {
         throw new Error(`Authentication failed: ${error}`);
