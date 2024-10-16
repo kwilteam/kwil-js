@@ -4,9 +4,9 @@ import { ActionBody, ActionBodyNode, ActionInput, Entries } from '../../core/act
 import { ActionBuilder } from '../../core/builders';
 import { AuthenticationMode, BytesEncodingStatus, EnvironmentType } from '../../core/enums';
 import { KwilSigner } from '../../core/kwilSigner';
-import { BaseMessage, CallClientResponse, Message, MsgReceipt } from '../../core/message';
+import { BaseMessage, Message, MsgReceipt } from '../../core/message';
 import { GenericResponse } from '../../core/resreq';
-import { Signature } from '../../core/signature';
+import { AuthBody, Signature } from '../../core/signature';
 import { Kwil } from '../kwil';
 
 export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
@@ -60,10 +60,17 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
       }
       return response;
     } else if (this.authMode === AuthenticationMode.PRIVATE) {
-      return await this.handleAuthenticatePrivate(actionBody, kwilSigner);
+      const authBody = await this.handleAuthenticatePrivate(actionBody, kwilSigner);
+      const message = await this.buildMessage(
+        actionBody,
+        kwilSigner,
+        authBody.challenge,
+        authBody.signature
+      );
+      return await this.callClient(message);
     }
 
-    throw new Error("Unexpected authentication mode or action body type."); 
+    throw new Error("Unexpected authentication mode. If you hit this error, please report it to the Kwil team.");
   }
 
   /**
@@ -174,7 +181,7 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
           }
           await this.auth.authenticateKGW(kwilSigner);
       } catch (error) {
-        console.error('Authentication failed:', error);
+        throw  new Error(`Authentication failed: ${error}`)
       }
     }
   }
@@ -191,7 +198,7 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
   private async handleAuthenticatePrivate(
     actionBody: ActionBodyNode,
     kwilSigner?: KwilSigner
-  ): Promise<CallClientResponse<MsgReceipt>> {
+  ): Promise<AuthBody> {
     if (this.autoAuthenticate) {
       try {
         // PRIVATE MODE AUTHENTICATION
@@ -200,22 +207,13 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
             throw new Error('Private mode authentication requires a KwilSigner.');
           }
 
-          const authPrivateModeRes = await this.auth.authenticatePrivateMode(
+          return await this.auth.authenticatePrivateMode(
             actionBody,
             kwilSigner
           );
-          const message = await this.buildMessage(
-            actionBody,
-            kwilSigner,
-            authPrivateModeRes.challenge,
-            authPrivateModeRes.signature
-          );
-
-          return await this.callClient(message);
         }
       } catch (error) {
-        console.error('Authentication failed:', error);
-        throw new Error('Authentication failed')
+        throw  new Error(`Authentication failed: ${error}`)
       }
     }
 

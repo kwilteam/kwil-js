@@ -103,7 +103,7 @@ export class Auth<T extends EnvironmentType> {
 
     // Check if challenge.data is undefined
     if (!msgChallenge) {
-      throw new Error('Challenge data is undefined. Unable to authenticate in private mode.');
+      throw new Error('Challenge data is undefined. Something went wrong.');
     }
 
     // Check if multiple inputs were provided
