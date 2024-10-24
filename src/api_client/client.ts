@@ -53,6 +53,7 @@ import {
   TxQueryResponse,
 } from '../core/jsonrpc';
 import { HexString } from '../utils/types';
+import { parseWithSafeInt } from '../utils/integer';
 
 export default class Client extends Api {
   private unconfirmedNonce: boolean;
@@ -265,7 +266,7 @@ export default class Client extends Api {
     const res = await super.post<JsonRPCResponse<QueryResponse>>(`/rpc/v1`, body);
 
     return checkRes(res, (r) => {
-      return JSON.parse(bytesToString(base64ToBytes(r.result.result))) as Object[];
+      return parseWithSafeInt(bytesToString(base64ToBytes(r.result.result))) as Object[];
     });
   }
 
@@ -317,8 +318,8 @@ export default class Client extends Api {
 
     return checkRes(res, (r) => {
       return {
-        result: JSON.parse(bytesToString(base64ToBytes(r.result.result))),
-      };
+        result: parseWithSafeInt(bytesToString(base64ToBytes(r.result.result)))
+      }
     });
   }
 

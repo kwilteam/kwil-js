@@ -6,6 +6,7 @@ table var_table {
     int_col int,
     bool_col bool,
     dec_col decimal(5,2),
+    big_dec_col decimal(20, 10),
     blob_col blob,
     uint256_col uint256
 }
@@ -43,4 +44,9 @@ action insert_blob ($id, $blob) public {
 action insert_uint256 ($id, $uint256) public {
     INSERT INTO var_table (uuid_col, uint256_col)
     VALUES ($id, $uint256);
+}
+
+action insert_big_dec ($id, $big_dec) public {
+    INSERT INTO var_table (uuid_col, big_dec_col)
+    VALUES ($id, $big_dec);
 }
