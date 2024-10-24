@@ -852,8 +852,8 @@ describe('unconfirmedNonce', () => {
 
 import variableDb from './variable_test.json'
 import { v4 as uuidV4 } from 'uuid';
-import { bytesToString, stringToBytes } from '../dist/utils/serial';
-import { base64ToBytes, bytesToBase64 } from '../dist/utils/base64';
+import { bytesToString } from '../dist/utils/serial';
+import { base64ToBytes } from '../dist/utils/base64';
 
 describe('Kwil DB types', () => {
   const kwilSigner = new KwilSigner(wallet, address);
@@ -1056,9 +1056,36 @@ describe('Kwil DB types', () => {
     expect(res.status).toBe(200);
     
     const query = await kwil.selectQuery(dbid, `SELECT * FROM var_table WHERE uint256_col = ${maxUint256}`);
-
     expect(query.data).toBeDefined();
     expect(query.data).toHaveLength(1);
+    console.log(query)
+    // @ts-ignore
+    expect(query.data[0]?.uint256_col).toBe(maxUint256);
+  }, 10000);
+
+  test('decimals outside the max safe integer range should return as a string', async () => {
+    const id = uuidV4();
+    const bigDec = "1234567890.1234567890"
+
+    const res = await kwil.execute({
+      dbid,
+      name: 'insert_big_dec',
+      inputs: [
+        {
+          $id: id,
+          $big_dec: bigDec
+        }
+      ]
+    }, kwilSigner, true);
+
+    expect(res.data).toBeDefined();
+    expect(res.status).toBe(200);
+
+    const query = await kwil.selectQuery(dbid, `SELECT * FROM var_table WHERE big_dec_col = '${bigDec}'::decimal(20,10)`);
+    expect(query.data).toBeDefined();
+    expect(query.data).toHaveLength(1);
+    // @ts-ignore
+    expect(query.data[0]?.big_dec_col).toBe(bigDec);
   }, 10000);
 })
 

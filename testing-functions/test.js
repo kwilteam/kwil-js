@@ -105,7 +105,7 @@ async function executeGeneralView(kwil, dbid, name, input) {
     const body = {
         name,
         dbid,
-        inputs: [ input ]
+        inputs: [ input ] 
     }
 
     const res = await kwil.call(body)

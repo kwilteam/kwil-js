@@ -15,6 +15,7 @@ import { BroadcastSyncType, BytesEncodingStatus, EnvironmentType } from '../core
 import { AuthInfo, AuthSuccess, AuthenticatedBody, LogoutResponse } from '../core/auth';
 import { AxiosResponse } from 'axios';
 import { AccountRequest, AccountResponse, AccountStatus, AuthParamRequest, AuthParamResponse, AuthnLogoutRequest, AuthnRequest, AuthnResponse, BroadcastRequest, BroadcastResponse, CallRequest, CallResponse, ChainInfoRequest, ChainInfoResponse, EstimatePriceRequest, EstimatePriceResponse, JSONRPCMethod, JsonRPCRequest, JsonRPCResponse, ListDatabasesRequest, ListDatabasesResponse, PingRequest, PingResponse, QueryRequest, QueryResponse, SchemaRequest, SchemaResponse, TxQueryRequest, TxQueryResponse } from '../core/jsonrpc';
+import { parseWithSafeInt } from '../utils/integer';
 
 export default class Client extends Api {
   private unconfirmedNonce: boolean;
@@ -227,7 +228,7 @@ export default class Client extends Api {
     const res = await super.post<JsonRPCResponse<QueryResponse>>(`/rpc/v1`, body);
 
     return checkRes(res, (r) => {
-      return JSON.parse(bytesToString(base64ToBytes(r.result.result))) as Object[];
+      return parseWithSafeInt(bytesToString(base64ToBytes(r.result.result))) as Object[];
     });
   }
 
@@ -263,7 +264,7 @@ export default class Client extends Api {
   protected async callClient(msg: Message): Promise<GenericResponse<MsgReceipt>> {
     const body = this.buildJsonRpcRequest<CallRequest>(
       JSONRPCMethod.METHOD_CALL,
-      { 
+      {
         body: msg.body,
         auth_type: msg.auth_type,
         sender: msg.sender || '',
@@ -284,7 +285,7 @@ export default class Client extends Api {
 
     return checkRes(res, (r) => {
       return {
-        result: JSON.parse(bytesToString(base64ToBytes(r.result.result)))
+        result: parseWithSafeInt(bytesToString(base64ToBytes(r.result.result)))
       }
     });
   }
