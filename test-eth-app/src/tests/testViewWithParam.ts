@@ -7,7 +7,7 @@ export async function testViewWithParam(kwil: WebKwil, dbid: string): Promise<vo
 
     const res = await kwil.call({
         dbid,
-        action: 'view_with_param',
+        name: 'view_with_param',
         inputs: [ actionInput ]
     })
 

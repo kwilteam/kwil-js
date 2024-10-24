@@ -21,6 +21,7 @@ export function isEthersSigner(signer: any): boolean {
 
 export async function deployDb(signer: KwilSigner) : Promise<void> {
     const res = await kwil.deploy({
+        //@ts-ignore
         schema: db,
         description: 'This is a test deployment',
     }, signer, true)
