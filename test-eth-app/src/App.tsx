@@ -27,14 +27,14 @@ function App() {
     // await executeAction(kwil, dbid, 'add_post', kwilSigner)
     // await testViewWithParam(kwil, dbid)
     // await kwilAuthenticate(kwil, kwilSigner)
-    await testViewWithSign(kwil, dbid, kwilSigner)
+    // await testViewWithSign(kwil, dbid, kwilSigner)
     // await kwilLogout(kwil);
     // console.log(await kwil.txInfo("47b616daf28363746f820e56b3d29917bce3230176879fd072cccd07c72462bb"))
-    // console.log(await kwil.listDatabases(signer.identifier))
+    // console.log(await kwil.listDatabases(kwilSigner.identifier))
     // console.log(await kwil.getSchema(dbid))
     // console.log(await kwil.selectQuery(dbid, "SELECT * FROM posts"))
     // console.log(await kwil.ping())
-    // console.log(await kwil.getAccount(signer.identifier))
+    // console.log(await kwil.getAccount(kwilSigner.identifier))
     // await dropDatabase(kwil, dbid, kwilSigner)
   }
 
