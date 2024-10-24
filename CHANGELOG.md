@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.7.2](https://github.com/kwilteam/kwil-js/compare/v0.7.1...v0.7.2) (2024-10-24)
+
+
+### Bug Fixes
+
+* **kwil.call:** return decimals as strings ([5711c74](https://github.com/kwilteam/kwil-js/commit/5711c74dfc9be77fac8a20b8fb705f80df91f660))
+
 ### [0.7.1](https://github.com/kwilteam/kwil-js/compare/v0.7.0...v0.7.1) (2024-06-10)
 
 
