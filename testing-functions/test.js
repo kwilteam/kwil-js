@@ -82,7 +82,7 @@ async function test() {
     // chainInfo(kwil)
     // await execSingleAction(kwil, dbid, "add_post", wallet, address)
     // await execSingleActionKwilSigner(kwil, dbid, "add_post", kwilSigner)
-    // await select(kwil, dbid, "SELECT * FROM users")
+    await select(kwil, dbid, "SELECT * FROM primitive_events")
     // bulkAction(kwil, dbid, "add_post", wallet, address)
     // await testViewWithParam(kwil, dbid, wallet)
     // await testViewWithSign(kwil, dbid, kwilSigner)
@@ -108,8 +108,8 @@ async function test() {
         $date_string: "10-1-2024"
     }
     // executeGeneralAction(kwil, dbid, "create_post", kwilSigner, post)
-    await executeGeneralView(kwil, dbid, "view_must_sign", null, kwilSigner)
-    await executeGeneralView(kwil, dbid, "view_must_sign", null, kwilSigner)
+    // await executeGeneralView(kwil, dbid, "view_must_sign", null, kwilSigner)
+    // await executeGeneralView(kwil, dbid, "view_must_sign", null, kwilSigner)
 }
 
 test()
