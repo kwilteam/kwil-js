@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.8.4](https://github.com/kwilteam/kwil-js/compare/v0.8.3...v0.8.4) (2024-10-25)
+
+
+### Bug Fixes
+
+* **kwil.call:** fix json parse bug ([b82d681](https://github.com/kwilteam/kwil-js/commit/b82d681c17f05282d5a16074dc1c4174d077f447))
+
 ### [0.8.3](https://github.com/kwilteam/kwil-js/compare/v0.8.2...v0.8.3) (2024-10-24)
 
 
