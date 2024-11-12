@@ -12,6 +12,7 @@ import { GenericResponse } from '../core/resreq';
 import { Transaction, TxReceipt } from '../core/tx';
 import { hexToBytes } from '../utils/serial';
 import { TransferBody } from './funding_types';
+import { Payload } from '../payload/payload';
 
 interface FunderClient {
   broadcastClient(
@@ -57,8 +58,20 @@ export class Funder<T extends EnvironmentType> {
       .signer(signer.signer, signer.signatureType)
       .buildTx();
 
+    const payloadTx = Payload.create(this.kwil, {
+      chainId: this.chainId,
+      description: payload.description,
+      payload: txPayload,
+      payloadType: PayloadType.TRANSFER,
+      identifier: signer.identifier,
+      signer: signer.signer,
+      signatureType: signer.signatureType,
+    });
+
+    const fx = await payloadTx.buildTx();
+
     return await this.funderClient.broadcastClient(
-      tx,
+      fx,
       synchronous ? BroadcastSyncType.COMMIT : undefined
     );
   }

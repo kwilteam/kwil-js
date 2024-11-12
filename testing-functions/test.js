@@ -70,11 +70,11 @@ async function test() {
 
     // testMultiLogout()
 
-    const dbid = kwil.getDBID(address, "mydb")
+    const dbid = kwil.getDBID(address, "sample")
     // await authenticate(kwil, kwilSigner)
-    // broadcast(kwil, testDB, kwilSigner)
+    broadcast(kwil, testDB, kwilSigner)
     // broadcastEd25519(kwil, testDB)
-    // await getTxInfo(kwil, txHash)
+    // await getTxInfo(kwil, txHash) 
     // await getSchema(kwil, 'xe04718a9b8780a0b61fbc082b5493d19f5202b5bd6af4d75072b3193')
     // getAccount(kwil, address)
     // listDatabases(kwil)
@@ -82,7 +82,7 @@ async function test() {
     // chainInfo(kwil)
     // await execSingleAction(kwil, dbid, "add_post", wallet, address)
     // await execSingleActionKwilSigner(kwil, dbid, "add_post", kwilSigner)
-    await select(kwil, dbid, "SELECT * FROM primitive_events")
+    // await select(kwil, dbid, "SELECT * FROM primitive_events")
     // bulkAction(kwil, dbid, "add_post", wallet, address)
     // await testViewWithParam(kwil, dbid, wallet)
     // await testViewWithSign(kwil, dbid, kwilSigner)
@@ -102,13 +102,13 @@ async function test() {
     }
 
     const post = {
-        $id: 1,
-        $title: "Tyler post",
-        $content: "Some Content",
-        $date_string: "10-1-2024"
+        $id: 2,
+        $title: "Ty post",
+        $content: "Gotchu",
+        $date_string: "11-7-2024"
     }
     // executeGeneralAction(kwil, dbid, "create_post", kwilSigner, post)
-    // await executeGeneralView(kwil, dbid, "view_must_sign", null, kwilSigner)
+    // await executeGeneralView(kwil, dbid, "get_profile", null, kwilSigner)
     // await executeGeneralView(kwil, dbid, "view_must_sign", null, kwilSigner)
 }
 
