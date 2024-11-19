@@ -17,6 +17,7 @@ import { objects } from '../utils/objects';
 import { kwilEncode } from '../utils/rlp';
 import { bytesToHex, stringToBytes } from '../utils/serial';
 import { strings } from '../utils/strings';
+import { validateFields } from '../utils/validation';
 
 export interface PayloadOptions {
   payloadType?: PayloadType;
@@ -39,9 +40,9 @@ export class Payload<T extends EnvironmentType> {
   private identifier?: Uint8Array;
   private signatureType?: AnySignatureType;
   private chainId?: string;
-  private description?: string = '';
+  private description?: string;
   private nonce?: number;
-  private challenge?: string = '';
+  private challenge?: string;
   private signature?: Signature<BytesEncodingStatus.BASE64_ENCODED>;
 
   /**
@@ -50,7 +51,10 @@ export class Payload<T extends EnvironmentType> {
    * @param {Kwil} kwil - The Kwil client, used to call higher-level methods on the Kwil class.
    */
   constructor(kwil: Kwil<T>, options: PayloadOptions) {
-    this.kwil = kwil;
+    this.kwil = objects.requireNonNil(
+      kwil,
+      'client is required for TxnBuilder. Please pass a valid Kwil client. This is an internal error, please create an issue.'
+    );
     this.payloadType = options.payloadType;
     this.payload = options.payload;
     this.signer = options.signer;
@@ -79,33 +83,54 @@ export class Payload<T extends EnvironmentType> {
   async buildTx(): Promise<Transaction> {
     const resolvedPayload = await this.resolvePayload();
 
+    // ensure required fields are not null or undefined
+    const { signer, payloadType, identifier, signatureType, chainId } = validateFields(
+      {
+        signer: this.signer,
+        payloadType: this.payloadType,
+        identifier: this.identifier,
+        signatureType: this.signatureType,
+        chainId: this.chainId,
+      },
+      (fieldName: string) => `${fieldName} is required to build a transaction.`
+    );
+
     const preEstTxn = Txn.create<BytesEncodingStatus.BASE64_ENCODED>((tx) => {
       tx.body.payload = bytesToBase64(kwilEncode(resolvedPayload));
-      tx.body.type = this.payloadType!;
-      tx.sender = bytesToHex(this.identifier!);
+      tx.body.type = payloadType;
+      tx.sender = bytesToHex(identifier);
     });
 
+    // estimate the cost of the transaction with the estimateCost symbol from the client
     const cost = await unwrap(this.kwil)(preEstTxn);
-    const nonce =
-      this.nonce ?? ((await this.kwil.getAccount(this.identifier!)).data?.nonce || 0) + 1;
+
+    // retrieve the account for the nonce, if none is provided
+    let nonce = this.nonce;
+
+    if (!this.nonce) {
+      const acct = await this.kwil.getAccount(identifier);
+      nonce =
+        Number(
+          objects.requireNonNil(
+            acct.data?.nonce,
+            'something went wrong retrieving your account nonce.'
+          )
+        ) + 1;
+    }
 
     const postEstTxn = Txn.copy<BytesEncodingStatus.UINT8_ENCODED>(preEstTxn, (tx) => {
       tx.body.payload = base64ToBytes(preEstTxn.body.payload as string);
-      tx.body.fee = BigInt(cost.data!);
-      tx.body.nonce = nonce!;
-      tx.body.chain_id = this.chainId!;
-      //   tx.body.payload = base64ToBytes(preEstTxn.body.payload as string);
-      //   tx.body.fee = BigInt(
-      //     strings.requireNonNil(
-      //       cost.data,
-      //       'something went wrong estimating the cost of your transaction.'
-      //     )
-      //   );
-      //   tx.body.nonce = objects.requireNonNil(
-      //     nonce,
-      //     'something went wrong retrieving your account nonce.'
-      //   );
-      //   tx.body.chain_id = this.chainId!;
+      tx.body.fee = BigInt(
+        strings.requireNonNil(
+          cost.data,
+          'something went wrong estimating the cost of your transaction.'
+        )
+      );
+      tx.body.nonce = objects.requireNonNil(
+        nonce,
+        'something went wrong retrieving your account nonce.'
+      );
+      tx.body.chain_id = chainId;
     });
 
     // check that a valid signature is used
@@ -115,13 +140,12 @@ export class Payload<T extends EnvironmentType> {
 
     const signedTx = Payload.signTx(
       postEstTxn,
-      this.signer!,
-      this.identifier!,
-      this.signatureType!,
+      signer,
+      identifier,
+      signatureType,
       this.description!
     );
 
-    // console.log("signed tx sender ===> ", ((await signedTx).sender));
     return signedTx;
   }
 
@@ -146,16 +170,19 @@ export class Payload<T extends EnvironmentType> {
     // create the digest, which is the first bytes of the sha256 hash of the rlp-encoded payload
     const digest = sha256BytesToBytes(tx.body.payload as Uint8Array).subarray(0, 20);
 
-    // create the signature message
+    /**
+     * create the signature message
+     * the signature message cannot have any preceding or succeeding white space. Must be exact length as server expects it
+     */
     const signatureMessage = `${description}
-  
-  PayloadType: ${tx.body.type}
-  PayloadDigest: ${bytesToHex(digest)}
-  Fee: ${tx.body.fee}
-  Nonce: ${tx.body.nonce}
-  
-  Kwil Chain ID: ${tx.body.chain_id}
-  `;
+
+PayloadType: ${tx.body.type}
+PayloadDigest: ${bytesToHex(digest)}
+Fee: ${tx.body.fee}
+Nonce: ${tx.body.nonce}
+
+Kwil Chain ID: ${tx.body.chain_id}
+`;
 
     // sign the above message
     const signedMessage = await executeSign(stringToBytes(signatureMessage), signer, signatureType);
@@ -252,17 +279,5 @@ export class Payload<T extends EnvironmentType> {
   }
 }
 
-// TODO => refactor all of the build functions
-// buildTx() => builds the payload for kwil.broadcast() method (GRPC broadcast endpoint) - resolves to the signed transaction
-// buildMsg() => builds the payload structure for message to the kwil.call() method - resolves to the message with signature if provided
-// resolvePayload() => resolves the provided payload object
-// signTx() => signs the payload of a transaction to the GRPC broadcast endpoint
-// authMsg() => adds caller's sender address to the message - resolves to the signed message
-
-// TODO => create a function that streamlines the repetitiveness in lines 155-175
-// somehow maybe map through all of the txPayload properties you want to provide and then...
-// ...dynamically create txPayload.param = objects.requireNonNil(param, `${param} is required`)
-
-// TODO => Think about this...
-// see if you even need to preassign variables like above (txPayload). May be able to directly call buildTx to build it vs all of the chaining non-sense
-// may not even need the top part. may just need to call the functions without them
+// TODO ==> create a helper function that checks for types vs having all of these if statements (ugly)
+// TODO ==> consider extracting the various functions into separate classes to make classes cleaner and easier to follow...

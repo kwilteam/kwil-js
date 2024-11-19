@@ -48,16 +48,7 @@ export class Funder<T extends EnvironmentType> {
       amount: payload.amount.toString(),
     };
 
-    // const tx = await PayloadBuilderImpl.of<T>(this.kwil)
-    //   .chainId(this.chainId)
-    //   .description(payload.description)
-    //   .payload(txPayload)
-    //   .payloadType(PayloadType.TRANSFER)
-    //   .publicKey(signer.identifier)
-    //   .signer(signer.signer, signer.signatureType)
-    //   .buildTx();
-
-    const payloadTx = Payload.create(this.kwil, {
+    const tx = Payload.create(this.kwil, {
       chainId: this.chainId,
       description: payload.description,
       payload: txPayload,
@@ -67,10 +58,10 @@ export class Funder<T extends EnvironmentType> {
       signatureType: signer.signatureType,
     });
 
-    const fx = await payloadTx.buildTx();
+    const transaction = await tx.buildTx();
 
     return await this.funderClient.broadcastClient(
-      fx,
+      transaction,
       synchronous ? BroadcastSyncType.COMMIT : undefined
     );
   }

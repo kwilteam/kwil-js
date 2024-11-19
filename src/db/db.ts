@@ -1,7 +1,6 @@
 import { Kwil } from '../client/kwil';
 import { SignerSupplier } from '../core/builders';
 import { EncodeableDatabase } from '../core/database';
-import { validateField } from '../utils/validation';
 import {
   AttributeType,
   DeployOrDrop,
@@ -18,13 +17,13 @@ import { Payload } from '../payload/payload';
 import { objects } from '../utils/objects';
 
 export interface DBOptions {
-  signer: SignerSupplier;
-  payload: () => CompiledKuneiform | DropDbPayload;
-  identifier: Uint8Array;
-  signatureType: AnySignatureType;
-  chainId: string;
-  description: string;
-  nonce: number;
+  signer?: SignerSupplier;
+  payload?: () => CompiledKuneiform | DropDbPayload;
+  identifier?: Uint8Array;
+  signatureType?: AnySignatureType;
+  chainId?: string;
+  description?: string;
+  nonce?: number;
 }
 
 export class DB<T extends EnvironmentType> {
@@ -35,7 +34,7 @@ export class DB<T extends EnvironmentType> {
   private identifier?: Uint8Array;
   private signatureType?: AnySignatureType;
   private chainId?: string;
-  private description?: string = '';
+  private description?: string;
   private nonce?: number;
 
   /**
@@ -44,7 +43,7 @@ export class DB<T extends EnvironmentType> {
    * @param {Kwil} kwil - The Kwil client, used to call higher-level methods on the Kwil class.
    */
 
-  constructor(kwil: Kwil<T>, payloadType: DeployOrDrop, options: Partial<DBOptions>) {
+  constructor(kwil: Kwil<T>, payloadType: DeployOrDrop, options: DBOptions) {
     this.kwil = kwil;
     this.payloadType = payloadType;
     this.signer = options.signer;
@@ -65,7 +64,7 @@ export class DB<T extends EnvironmentType> {
   static create<T extends EnvironmentType>(
     kwil: Kwil<T>,
     payloadType: DeployOrDrop,
-    options: Partial<DBOptions>
+    options: DBOptions
   ): DB<T> {
     objects.requireNonNil(
       kwil,
@@ -104,9 +103,6 @@ export class DB<T extends EnvironmentType> {
       // reassign "clean payload" to be a callback function that returns the encodable payload in the correct order
       cleanedPayload = () => enforceDatabaseOrder(encodablePayload);
     }
-
-    // throw runtime errors if any of the required fields are null
-    this.validateDBTxOptions();
 
     if (!this.signatureType) {
       this.signatureType = getSignatureType(this.signer!);
@@ -482,21 +478,9 @@ export class DB<T extends EnvironmentType> {
 
     return db;
   }
-
-  private validateCreateDBOptions() {
-    const client = validateField(this.kwil, 'client');
-    const payloadType = validateField(this.payloadType, 'payload type');
-
-    return { client, payloadType };
-  }
-
-  private validateDBTxOptions() {
-    const payloadType = validateField(this.payloadType, 'payload type');
-    const signer = validateField(this.signer, 'signer');
-    const identifier = validateField(this.identifier, 'identifier');
-    const chainId = validateField(this.chainId, 'chainId');
-    const signatureType = validateField(this.signatureType, 'signature type');
-
-    return { payloadType, signer, identifier, chainId, signatureType };
-  }
 }
+
+// TODO ==> follow logic more closely like you did with payload yesterday (in the various functions that handle payload transaction building)
+// TODO ==> add in validation of fields to reduce repetitive logic
+// TODO ==> create a helper function that checks for types vs having all of these if statements (ugly)
+// TODO ==> consider extracting the various functions into separate classes to make classes cleaner and easier to follow...

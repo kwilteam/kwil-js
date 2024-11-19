@@ -207,7 +207,6 @@ export default class Client extends Api {
       tx: tx.txData,
       ...(broadcastSync ? { sync: broadcastSync } : {}),
     });
-    console.log("broadcast tx data ===> ", body.params.tx)
 
     const res = await super.post<JsonRPCResponse<BroadcastResponse>>(`/rpc/v1`, body);
     return checkRes(res, (r) => {

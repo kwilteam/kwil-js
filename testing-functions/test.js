@@ -45,7 +45,7 @@ async function test() {
   });
 
   const kwilSigner = new KwilSigner(wallet, address);
-//   console.log(kwilSigner)
+  //   console.log(kwilSigner)
 
   async function testMultiLogout() {
     const ethWallet1 = ethers.Wallet.createRandom();
@@ -70,16 +70,17 @@ async function test() {
 
   // testMultiLogout()
 
-  const dbid = kwil.getDBID(address, 'sample');
+  const dbid = kwil.getDBID(address, 'social');
+    // console.log("social dbid ", dbid)
   // await authenticate(kwil, kwilSigner)
   // broadcast(kwil, testDB, kwilSigner)
   // broadcastEd25519(kwil, testDB)
   // await getTxInfo(kwil, txHash)
   // await getSchema(kwil, 'xe04718a9b8780a0b61fbc082b5493d19f5202b5bd6af4d75072b3193')
   // getAccount(kwil, address)
-  // listDatabases(kwil)
+  listDatabases(kwil)
   // ping(kwil)
-//   chainInfo(kwil)
+  //   chainInfo(kwil)
   // await execSingleAction(kwil, dbid, "add_post", wallet, address)
   // await execSingleActionKwilSigner(kwil, dbid, "add_post", kwilSigner)
   // await select(kwil, dbid, "SELECT * FROM primitive_events")
@@ -90,7 +91,7 @@ async function test() {
   // await customSignature(kwil, dbid)
   // await julioSignature(kwil, dbid)
   // await customEd25519(kwil, dbid)
-  await dropDb(kwil, kwilSigner, dbid);
+//   await dropDb(kwil, kwilSigner, dbid);
   // await transfer(kwil, "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf", 20, kwilSigner)
   // bulkActionInput(kwil, kwilSigner)
   // console.log(base64ToBytes('QVFJREJBVUdCd2dKQ2c9PQ=='))

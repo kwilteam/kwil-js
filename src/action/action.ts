@@ -92,3 +92,4 @@ export class Action<T extends EnvironmentType> {
 }
 
 // TODO => find a way to refactor assertNotBuilding() to make sure the action cannot be modified while the transaction is being built
+// TODO ==> continue refactor...
