@@ -13,8 +13,10 @@ import { AnySignatureType, executeSign, Signature, SignatureType } from '../core
 import { BaseTransaction, Transaction, Txn } from '../core/tx';
 import { base64ToBytes, bytesToBase64 } from '../utils/base64';
 import { sha256BytesToBytes } from '../utils/crypto';
+import { objects } from '../utils/objects';
 import { kwilEncode } from '../utils/rlp';
 import { bytesToHex, stringToBytes } from '../utils/serial';
+import { strings } from '../utils/strings';
 
 export interface PayloadOptions {
   payloadType?: PayloadType;
@@ -43,18 +45,22 @@ export class Payload<T extends EnvironmentType> {
   private signature?: Signature<BytesEncodingStatus.BASE64_ENCODED>;
 
   /**
-   * Initializes a new `PayloadBuilderImpl` instance.
+   * Initializes a new `Payload` instance.
    *
    * @param {Kwil} kwil - The Kwil client, used to call higher-level methods on the Kwil class.
    */
   constructor(kwil: Kwil<T>, options: PayloadOptions) {
     this.kwil = kwil;
+    this.payloadType = options.payloadType;
+    this.payload = options.payload;
+    this.signer = options.signer;
+    this.identifier = options.identifier;
+    this.signatureType = options.signatureType;
     this.chainId = options.chainId;
     this.description = options.description;
-    this.payload = options.payload;
-    this.identifier = options.identifier;
-    this.signer = options.signer;
-    this.signatureType = options.signatureType;
+    this.nonce = options.nonce;
+    this.challenge = options.challenge;
+    this.signature = options.signature;
   }
 
   /**
@@ -88,15 +94,35 @@ export class Payload<T extends EnvironmentType> {
       tx.body.fee = BigInt(cost.data!);
       tx.body.nonce = nonce!;
       tx.body.chain_id = this.chainId!;
+      //   tx.body.payload = base64ToBytes(preEstTxn.body.payload as string);
+      //   tx.body.fee = BigInt(
+      //     strings.requireNonNil(
+      //       cost.data,
+      //       'something went wrong estimating the cost of your transaction.'
+      //     )
+      //   );
+      //   tx.body.nonce = objects.requireNonNil(
+      //     nonce,
+      //     'something went wrong retrieving your account nonce.'
+      //   );
+      //   tx.body.chain_id = this.chainId!;
     });
 
-    return Payload.signTx(
+    // check that a valid signature is used
+    if (this.signatureType === SignatureType.SIGNATURE_TYPE_INVALID) {
+      throw new Error('Signature type is invalid.');
+    }
+
+    const signedTx = Payload.signTx(
       postEstTxn,
       this.signer!,
       this.identifier!,
       this.signatureType!,
       this.description!
     );
+
+    // console.log("signed tx sender ===> ", ((await signedTx).sender));
+    return signedTx;
   }
 
   /**

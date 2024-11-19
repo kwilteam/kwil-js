@@ -3,12 +3,13 @@ import Client from '../api_client/client';
 import { KwilConfig } from '../api_client/config';
 import { GenericResponse } from '../core/resreq';
 import { Database, DeployBody, DropBody, SelectQuery } from '../core/database';
-import { BaseTransaction, TxReceipt } from '../core/tx';
+import { BaseTransaction, Transaction, TxReceipt } from '../core/tx';
 import { Account, ChainInfo, ChainInfoOpts, DatasetInfo } from '../core/network';
 import { ActionBuilderImpl } from '../builders/action_builder';
 import { DBBuilderImpl } from '../builders/db_builder';
 import { NonNil } from '../utils/types';
 import { ActionBuilder, DBBuilder } from '../core/builders';
+import { DB } from '../db/db';
 import { Cache } from '../utils/cache';
 import { TxInfoReceipt } from '../core/txQuery';
 import {
@@ -143,11 +144,14 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    * @deprecated Use `kwil.deploy()` See: {@link https://github.com/kwilteam/kwil-js/issues/32}.
    */
 
-  public dbBuilder(): NonNil<DBBuilder<PayloadType.DEPLOY_DATABASE>> {
-    return DBBuilderImpl.of<PayloadType.DEPLOY_DATABASE, T>(
-      this,
-      PayloadType.DEPLOY_DATABASE
-    ).chainId(this.chainId);
+  public dbBuilder(): DB<T> {
+    // return DBBuilderImpl.of<PayloadType.DEPLOY_DATABASE, T>(
+    //   this,
+    //   PayloadType.DEPLOY_DATABASE
+    // ).chainId(this.chainId);
+    return DB.create(this, PayloadType.DEPLOY_DATABASE, {
+      chainId: this.chainId,
+    });
   }
 
   /**
@@ -157,10 +161,13 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    * @deprecated Use `kwil.drop()` See: {@link https://github.com/kwilteam/kwil-js/issues/32}.
    */
 
-  public dropDbBuilder(): NonNil<DBBuilder<PayloadType.DROP_DATABASE>> {
-    return DBBuilderImpl.of<PayloadType.DROP_DATABASE, T>(this, PayloadType.DROP_DATABASE).chainId(
-      this.chainId
-    );
+  public dropDbBuilder(): DB<T> {
+    // return DBBuilderImpl.of<PayloadType.DROP_DATABASE, T>(this, PayloadType.DROP_DATABASE).chainId(
+    //   this.chainId
+    // );
+    return DB.create(this, PayloadType.DROP_DATABASE, {
+      chainId: this.chainId,
+    });
   }
 
   /**
@@ -231,23 +238,32 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     kwilSigner: KwilSigner,
     synchronous?: boolean
   ): Promise<GenericResponse<TxReceipt>> {
-    let tx = DBBuilderImpl.of<PayloadType.DEPLOY_DATABASE, T>(this, PayloadType.DEPLOY_DATABASE)
-      .description(deployBody.description || '')
-      .payload(deployBody.schema)
-      .publicKey(kwilSigner.identifier)
-      .signer(kwilSigner.signer, kwilSigner.signatureType)
-      .chainId(this.chainId);
+    // let tx = DBBuilderImpl.of<PayloadType.DEPLOY_DATABASE, T>(this, PayloadType.DEPLOY_DATABASE)
+    //   .description(deployBody.description || '')
+    //   .payload(deployBody.schema)
+    //   .publicKey(kwilSigner.identifier)
+    //   .signer(kwilSigner.signer, kwilSigner.signatureType)
+    //   .chainId(this.chainId);
 
-    if (deployBody.nonce) {
-      tx = tx.nonce(deployBody.nonce);
-    }
+    let dbTx = DB.create(this, PayloadType.DEPLOY_DATABASE, {
+      description: deployBody.description || '',
+      payload: () => deployBody.schema,
+      identifier: kwilSigner.identifier,
+      signer: kwilSigner.signer,
+      signatureType: kwilSigner.signatureType,
+      chainId: this.chainId,
+      nonce: deployBody.nonce && deployBody.nonce,
+    });
 
-    const transaction = await tx.buildTx();
+    const fx = await dbTx.buildTx();
 
-    return await this.broadcastClient(
-      transaction,
-      synchronous ? BroadcastSyncType.COMMIT : undefined
-    );
+    // if (deployBody.nonce) {
+    //   tx = tx.nonce(deployBody.nonce);
+    // }
+
+    // const transaction = await tx.buildTx();
+
+    return await this.broadcastClient(fx, synchronous ? BroadcastSyncType.COMMIT : undefined);
   }
 
   /**
@@ -263,23 +279,35 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     kwilSigner: KwilSigner,
     synchronous?: boolean
   ): Promise<GenericResponse<TxReceipt>> {
-    let tx = DBBuilderImpl.of<PayloadType.DROP_DATABASE, T>(this, PayloadType.DROP_DATABASE)
-      .description(dropBody.description || '')
-      .payload({ dbid: dropBody.dbid })
-      .publicKey(kwilSigner.identifier)
-      .signer(kwilSigner.signer, kwilSigner.signatureType)
-      .chainId(this.chainId);
+    // let tx = DBBuilderImpl.of<PayloadType.DROP_DATABASE, T>(this, PayloadType.DROP_DATABASE)
+    //   .description(dropBody.description || '')
+    //   .payload({ dbid: dropBody.dbid })
+    //   .publicKey(kwilSigner.identifier)
+    //   .signer(kwilSigner.signer, kwilSigner.signatureType)
+    //   .chainId(this.chainId);
+    // // console.log(tx);
 
-    if (dropBody.nonce) {
-      tx = tx.nonce(dropBody.nonce);
-    }
+    let dbTx = DB.create(this, PayloadType.DROP_DATABASE, {
+      description: dropBody.description || '',
+      payload: () => ({ dbid: dropBody.dbid }),
+      identifier: kwilSigner.identifier,
+      signer: kwilSigner.signer,
+      signatureType: kwilSigner.signatureType,
+      chainId: this.chainId,
+      nonce: dropBody.nonce && dropBody.nonce,
+    });
+    // console.log(dbTx);
 
-    const transaction = await tx.buildTx();
+    const fx = await dbTx.buildTx();
+    // console.log(fx.sender);
 
-    return await this.broadcastClient(
-      transaction,
-      synchronous ? BroadcastSyncType.COMMIT : undefined
-    );
+    // if (dropBody.nonce) {
+    //   tx = tx.nonce(dropBody.nonce);
+    // }
+
+    // const transaction = await tx.buildTx();
+
+    return await this.broadcastClient(fx, synchronous ? BroadcastSyncType.COMMIT : undefined);
   }
 
   /**

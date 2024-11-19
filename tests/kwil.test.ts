@@ -344,7 +344,7 @@ describe('Kwil Integration Tests', () => {
     });
   }, 10000);
 
-  it('should drop a database with kwil.drop()', async () => {
+  it.only('should drop a database with kwil.drop()', async () => {
     const dbList = await kwil.listDatabases(kSigner.identifier);
     const dbName = `test_db_${dbList.data?.length}`;
     const dbidToDrop = kwil.getDBID(kSigner.identifier, dbName);

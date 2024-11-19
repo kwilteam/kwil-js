@@ -1,4 +1,3 @@
-import { PayloadBuilderImpl } from '../builders/payload_builder';
 import { Kwil } from '../client/kwil';
 import {
   BroadcastSyncType,
@@ -49,14 +48,14 @@ export class Funder<T extends EnvironmentType> {
       amount: payload.amount.toString(),
     };
 
-    const tx = await PayloadBuilderImpl.of<T>(this.kwil)
-      .chainId(this.chainId)
-      .description(payload.description)
-      .payload(txPayload)
-      .payloadType(PayloadType.TRANSFER)
-      .publicKey(signer.identifier)
-      .signer(signer.signer, signer.signatureType)
-      .buildTx();
+    // const tx = await PayloadBuilderImpl.of<T>(this.kwil)
+    //   .chainId(this.chainId)
+    //   .description(payload.description)
+    //   .payload(txPayload)
+    //   .payloadType(PayloadType.TRANSFER)
+    //   .publicKey(signer.identifier)
+    //   .signer(signer.signer, signer.signatureType)
+    //   .buildTx();
 
     const payloadTx = Payload.create(this.kwil, {
       chainId: this.chainId,

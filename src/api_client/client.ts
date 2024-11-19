@@ -207,9 +207,9 @@ export default class Client extends Api {
       tx: tx.txData,
       ...(broadcastSync ? { sync: broadcastSync } : {}),
     });
+    console.log("broadcast tx data ===> ", body.params.tx)
 
     const res = await super.post<JsonRPCResponse<BroadcastResponse>>(`/rpc/v1`, body);
-
     return checkRes(res, (r) => {
       return {
         tx_hash: base64ToHex(r.result.tx_hash),
@@ -236,8 +236,8 @@ export default class Client extends Api {
       return {
         chain_id: r.result.chain_id,
         height: r.result.block_height.toString(),
-        hash: r.result.block_hash
-      }
+        hash: r.result.block_hash,
+      };
     });
   }
 
@@ -317,8 +317,8 @@ export default class Client extends Api {
 
     return checkRes(res, (r) => {
       return {
-        result: JSON.parse(bytesToString(base64ToBytes(r.result.result)))
-      }
+        result: JSON.parse(bytesToString(base64ToBytes(r.result.result))),
+      };
     });
   }
 
