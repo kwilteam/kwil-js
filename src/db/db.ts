@@ -15,13 +15,15 @@ import { AnySignatureType, getSignatureType, SignatureType } from '../core/signa
 import { Transaction } from '../core/tx';
 import { Payload } from '../payload/payload';
 import { objects } from '../utils/objects';
+import { Promisy } from '../utils/types';
+import { validateFields } from '../utils/validation';
 
 export interface DBOptions {
-  signer?: SignerSupplier;
-  payload?: () => CompiledKuneiform | DropDbPayload;
-  identifier?: Uint8Array;
-  signatureType?: AnySignatureType;
-  chainId?: string;
+  signer: SignerSupplier;
+  payload: () => CompiledKuneiform | DropDbPayload;
+  identifier: Uint8Array;
+  signatureType: AnySignatureType;
+  chainId: string;
   description?: string;
   nonce?: number;
 }
@@ -29,11 +31,11 @@ export interface DBOptions {
 export class DB<T extends EnvironmentType> {
   private readonly kwil: Kwil<T>;
   private payloadType: DeployOrDrop;
-  private signer?: SignerSupplier;
-  private payload?: () => CompiledKuneiform | DropDbPayload;
-  private identifier?: Uint8Array;
-  private signatureType?: AnySignatureType;
-  private chainId?: string;
+  private signer: SignerSupplier;
+  private payload: () => CompiledKuneiform | DropDbPayload;
+  private identifier: Uint8Array;
+  private signatureType: AnySignatureType;
+  private chainId: string;
   private description?: string;
   private nonce?: number;
 
@@ -85,8 +87,11 @@ export class DB<T extends EnvironmentType> {
    * @throws Will throw an error if there is an issue with the account retrieval.
    */
   async buildTx(): Promise<Transaction> {
-    // throw runtime error if payload is null
-    const ensuredPayload = objects.requireNonNil(this.payload, 'dbBuilder payload cannot be null');
+    // throw runtime error if payload is null or undefined
+    const ensuredPayload = objects.requireNonNil(
+      this.payload,
+      'dbBuilder payload cannot be null or undefined'
+    );
     // ensure payload is a callback function for lazy evaluation
     this.payload =
       typeof ensuredPayload !== 'function'
@@ -96,6 +101,7 @@ export class DB<T extends EnvironmentType> {
     // create a "clean payload" that equals the current callback
     let cleanedPayload: () => AllPayloads = () => ensuredPayload();
 
+    // if it is a deploy database, we need to add all of the required fields and field order to make it RLP encodable. The Kuneiform parser does not include null fields.
     if (this.payloadType === PayloadType.DEPLOY_DATABASE) {
       // make the payload encodable
       const encodablePayload = this.makePayloadEncodable(ensuredPayload as () => CompiledKuneiform);
@@ -112,19 +118,35 @@ export class DB<T extends EnvironmentType> {
       throw new Error('Invalid or missing signature type.');
     }
 
-    let tx = Payload.create(this.kwil, {
-      payloadType: this.payloadType,
-      payload: cleanedPayload,
-      signer: this.signer,
-      signatureType: this.signatureType,
-      identifier: this.identifier,
-      chainId: this.chainId,
-      description: this.description,
-      nonce: this.nonce && this.nonce,
-    });
+    // throw runtime errors if any of the required fields are null or undefined
+    const { payloadType, signer, identifier, chainId } = validateFields(
+      {
+        payloadType: this.payloadType,
+        signer: this.signer,
+        identifier: this.identifier,
+        chainId: this.chainId,
+      },
+      (fieldName: string) =>
+        `${fieldName} cannot be null or undefined. please specify a ${fieldName}`
+    );
 
-    const builtTx = tx.buildTx();
-    return builtTx;
+    // throw runtime errors if signatureType is null or undefined
+    const signatureType = await Promisy.resolveOrReject(
+      this.signatureType,
+      'signature type cannot be null or undefined. please specify a signature type.'
+    );
+
+    // build transaction
+    return await Payload.create(this.kwil, {
+      payloadType: payloadType,
+      payload: cleanedPayload,
+      signer: signer,
+      signatureType: signatureType,
+      identifier: identifier,
+      chainId: chainId,
+      description: this.description,
+      nonce: this.nonce,
+    }).buildTx();
   }
 
   /**
@@ -480,7 +502,5 @@ export class DB<T extends EnvironmentType> {
   }
 }
 
-// TODO ==> follow logic more closely like you did with payload yesterday (in the various functions that handle payload transaction building)
-// TODO ==> add in validation of fields to reduce repetitive logic
 // TODO ==> create a helper function that checks for types vs having all of these if statements (ugly)
 // TODO ==> consider extracting the various functions into separate classes to make classes cleaner and easier to follow...

@@ -20,8 +20,8 @@ import { strings } from '../utils/strings';
 import { validateFields } from '../utils/validation';
 
 export interface PayloadOptions {
+  payload: (() => AllPayloads) | AllPayloads;
   payloadType?: PayloadType;
-  payload?: (() => AllPayloads) | AllPayloads;
   signer?: SignerSupplier;
   identifier?: Uint8Array;
   signatureType?: AnySignatureType;
@@ -34,8 +34,8 @@ export interface PayloadOptions {
 
 export class Payload<T extends EnvironmentType> {
   private kwil: Kwil<T>;
+  private payload: (() => AllPayloads) | AllPayloads;
   private payloadType?: PayloadType;
-  private payload?: (() => AllPayloads) | AllPayloads;
   private signer?: SignerSupplier;
   private identifier?: Uint8Array;
   private signatureType?: AnySignatureType;
@@ -95,7 +95,9 @@ export class Payload<T extends EnvironmentType> {
       (fieldName: string) => `${fieldName} is required to build a transaction.`
     );
 
+    // create transaction payload for estimating cost. Set the Tx bytes type to base64 encoded because we need to make GRPC estimate cost request.
     const preEstTxn = Txn.create<BytesEncodingStatus.BASE64_ENCODED>((tx) => {
+      // rlp encode the payload and convert to base64
       tx.body.payload = bytesToBase64(kwilEncode(resolvedPayload));
       tx.body.type = payloadType;
       tx.sender = bytesToHex(identifier);
@@ -118,6 +120,7 @@ export class Payload<T extends EnvironmentType> {
         ) + 1;
     }
 
+    // add the nonce and fee to the transaction. Set the tx bytes back to uint8 so we can do the signature.
     const postEstTxn = Txn.copy<BytesEncodingStatus.UINT8_ENCODED>(preEstTxn, (tx) => {
       tx.body.payload = base64ToBytes(preEstTxn.body.payload as string);
       tx.body.fee = BigInt(
@@ -138,15 +141,8 @@ export class Payload<T extends EnvironmentType> {
       throw new Error('Signature type is invalid.');
     }
 
-    const signedTx = Payload.signTx(
-      postEstTxn,
-      signer,
-      identifier,
-      signatureType,
-      this.description!
-    );
-
-    return signedTx;
+    // sign the transaction
+    return Payload.signTx(postEstTxn, signer, identifier, signatureType, this.description!);
   }
 
   /**

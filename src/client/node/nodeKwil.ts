@@ -8,6 +8,8 @@ import { BaseMessage, Message, MsgReceipt } from '../../core/message';
 import { GenericResponse } from '../../core/resreq';
 import { Kwil } from '../kwil';
 import { AuthBody, Signature } from '../../core/signature';
+import { Action } from '../../action/action';
+import { sign } from 'crypto';
 
 export class NodeKwil extends Kwil<EnvironmentType.NODE> {
   private autoAuthenticate: boolean;
@@ -53,19 +55,19 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
 
     // kwil.call()
     if (this.authMode === AuthenticationMode.OPEN) {
-      const tempCookie = this.setTemporaryCookie(actionBody?.cookie)
+      const tempCookie = this.setTemporaryCookie(actionBody?.cookie);
       const message = await this.buildMessage(actionBody, kwilSigner);
       const response = await this.callClient(message);
       if (tempCookie) {
-        this.resetTempCookie(tempCookie)
+        this.resetTempCookie(tempCookie);
       }
       if (response.authCode === -901 && this.autoAuthenticate) {
-        await this.handleAuthenticateKGW(kwilSigner)
+        await this.handleAuthenticateKGW(kwilSigner);
         return await this.callClient(message);
       }
       return response;
     } else if (this.authMode === AuthenticationMode.PRIVATE) {
-      const authBody = await this.handleAuthenticatePrivate(actionBody, kwilSigner)
+      const authBody = await this.handleAuthenticatePrivate(actionBody, kwilSigner);
       const message = await this.buildMessage(
         actionBody,
         kwilSigner,
@@ -75,7 +77,9 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
       return await this.callClient(message);
     }
 
-    throw new Error("Unexpected authentication mode. If you hit this error, please report it to the Kwil team.");
+    throw new Error(
+      'Unexpected authentication mode. If you hit this error, please report it to the Kwil team.'
+    );
   }
 
   /**
@@ -136,19 +140,36 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
     const name = !actionBody.name && actionBody.action ? actionBody.action : actionBody.name;
 
     // pre Challenge message
-    let msgBuilder = ActionBuilderImpl.of<EnvironmentType.NODE>(this)
-      .chainId(this.chainId)
-      .dbid(actionBody.dbid)
-      .name(name)
-      .description(actionBody.description || '');
+    let msg = Action.create<EnvironmentType.NODE>(this, {
+      chainId: this.chainId,
+      dbid: actionBody.dbid,
+      actionName: name,
+      description: actionBody.description || '',
+    });
 
     if (actionBody.inputs) {
       const inputs =
         actionBody.inputs[0] instanceof ActionInput
           ? (actionBody.inputs as ActionInput[])
           : new ActionInput().putFromObjects(actionBody.inputs as Entries[]);
-      msgBuilder = msgBuilder.concat(inputs);
+      msg = msg.concat(inputs);
     }
+
+    // let msgBuilder = ActionBuilderImpl.of<EnvironmentType.NODE>(this)
+    //   .chainId(this.chainId)
+    //   .dbid(actionBody.dbid)
+    //   .name(name)
+    //   .description(actionBody.description || '');
+
+    // if (actionBody.inputs) {
+    //   const inputs =
+    //     actionBody.inputs[0] instanceof ActionInput
+    //       ? (actionBody.inputs as ActionInput[])
+    //       : new ActionInput().putFromObjects(actionBody.inputs as Entries[]);
+    //   msgBuilder = msgBuilder.concat(inputs);
+    // }
+
+    // TODO ===> No longer need addSignerToMessage. Just assign signer and signatureType to msg & spread current properties of msg to it
 
     /**
      * PUBLIC MODE
@@ -157,7 +178,13 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
      *
      */
     if (kwilSigner && this.authMode === AuthenticationMode.OPEN) {
-      msgBuilder = this.addSignerToMessage(msgBuilder, kwilSigner);
+      // msgBuilder = this.addSignerToMessage(msgBuilder, kwilSigner);
+      msg = Object.assign(msg, {
+        ...msg,
+        signer: kwilSigner.signer,
+        signatureType: kwilSigner.signatureType,
+        identifier: kwilSigner.identifier,
+      });
     }
 
     /**
@@ -168,12 +195,23 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
      */
     if (kwilSigner && this.authMode === AuthenticationMode.PRIVATE) {
       if (challenge && signature) {
-        msgBuilder.challenge(challenge).signature(signature);
-        msgBuilder = this.addSignerToMessage(msgBuilder, kwilSigner);
+        // msgBuilder.challenge(challenge).signature(signature);
+        msg = Object.assign(msg, {
+          ...msg,
+          challenge: challenge,
+          signature: signature,
+        });
+        // msgBuilder = this.addSignerToMessage(msgBuilder, kwilSigner);
+        msg = Object.assign(msg, {
+          ...msg,
+          signer: kwilSigner.signer,
+          signatureType: kwilSigner.signatureType,
+          identifier: kwilSigner.identifier,
+        });
       }
     }
 
-    return await msgBuilder.buildMsg();
+    return await msg.buildMsg();
   }
 
   /**
@@ -184,11 +222,14 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
    * @returns the ActionBuilder responsible for building the view action message with the sender attached
    *
    */
-  private addSignerToMessage(msgBuilder: ActionBuilder, kwilSigner: KwilSigner): ActionBuilder {
-    return msgBuilder
-      .signer(kwilSigner.signer, kwilSigner.signatureType)
-      .publicKey(kwilSigner.identifier);
-  }
+  // private addSignerToMessage(msgBuilder: ActionBuilder, kwilSigner: KwilSigner): ActionBuilder {
+  //   return msgBuilder
+  //     .signer(kwilSigner.signer, kwilSigner.signatureType)
+  //     .publicKey(kwilSigner.identifier);
+  // }
+
+  // TODO => may need to create a function to reduce repetitiveness of setting signer properties to the message
+  // TODO => may also need same thing for challenge and signature
 
   /**
    * Checks authentication errors for PUBLIC (KGW)
@@ -200,9 +241,7 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
    * @returns
    */
 
-  private async handleAuthenticateKGW(
-    kwilSigner?: KwilSigner
-  ) {
+  private async handleAuthenticateKGW(kwilSigner?: KwilSigner) {
     try {
       // KGW AUTHENTICATION
       if (!kwilSigner) {
@@ -210,10 +249,10 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
       }
 
       // set the cookie
-      const res = await this.auth.authenticateKGW(kwilSigner)
-      this.cookie = res.data?.cookie
+      const res = await this.auth.authenticateKGW(kwilSigner);
+      this.cookie = res.data?.cookie;
     } catch (error) {
-      throw new Error(`Authentication failed: ${error}`)
+      throw new Error(`Authentication failed: ${error}`);
     }
   }
 
@@ -238,16 +277,13 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
             throw new Error('Private mode authentication requires a KwilSigner.');
           }
 
-          return await this.auth.authenticatePrivateMode(
-            actionBody,
-            kwilSigner
-          );
+          return await this.auth.authenticatePrivateMode(actionBody, kwilSigner);
         }
       } catch (error) {
         throw new Error(`Authentication failed: ${error}`);
       }
     }
 
-    throw new Error('Authentication process did not complete successfully')
+    throw new Error('Authentication process did not complete successfully');
   }
 }

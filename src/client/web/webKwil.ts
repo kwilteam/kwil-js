@@ -1,3 +1,4 @@
+import { Action } from '../../action/action';
 import { Config } from '../../api_client/config';
 import { ActionBuilderImpl } from '../../builders/action_builder';
 import { ActionBody, ActionBodyNode, ActionInput, Entries } from '../../core/action';
@@ -55,7 +56,7 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
       const message = await this.buildMessage(actionBody, kwilSigner);
       const response = await this.callClient(message);
       if (response.authCode === -901) {
-        await this.handleAuthenticateKGW(kwilSigner)
+        await this.handleAuthenticateKGW(kwilSigner);
         return await this.callClient(message);
       }
       return response;
@@ -70,7 +71,9 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
       return await this.callClient(message);
     }
 
-    throw new Error("Unexpected authentication mode. If you hit this error, please report it to the Kwil team.");
+    throw new Error(
+      'Unexpected authentication mode. If you hit this error, please report it to the Kwil team.'
+    );
   }
 
   /**
@@ -106,19 +109,34 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
     const name = !actionBody.name && actionBody.action ? actionBody.action : actionBody.name;
 
     // pre Challenge message
-    let msgBuilder = ActionBuilderImpl.of<EnvironmentType.BROWSER>(this)
-      .chainId(this.chainId)
-      .dbid(actionBody.dbid)
-      .name(name)
-      .description(actionBody.description || '');
+    let msg = Action.create<EnvironmentType.NODE>(this, {
+      chainId: this.chainId,
+      dbid: actionBody.dbid,
+      actionName: name,
+      description: actionBody.description || '',
+    });
 
     if (actionBody.inputs) {
       const inputs =
         actionBody.inputs[0] instanceof ActionInput
           ? (actionBody.inputs as ActionInput[])
           : new ActionInput().putFromObjects(actionBody.inputs as Entries[]);
-      msgBuilder = msgBuilder.concat(inputs);
+      msg = msg.concat(inputs);
     }
+
+    // let msgBuilder = ActionBuilderImpl.of<EnvironmentType.BROWSER>(this)
+    //   .chainId(this.chainId)
+    //   .dbid(actionBody.dbid)
+    //   .name(name)
+    //   .description(actionBody.description || '');
+
+    // if (actionBody.inputs) {
+    //   const inputs =
+    //     actionBody.inputs[0] instanceof ActionInput
+    //       ? (actionBody.inputs as ActionInput[])
+    //       : new ActionInput().putFromObjects(actionBody.inputs as Entries[]);
+    //   msgBuilder = msgBuilder.concat(inputs);
+    // }
 
     /**
      * PUBLIC MODE
@@ -127,7 +145,13 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
      *
      */
     if (kwilSigner && this.authMode === AuthenticationMode.OPEN) {
-      msgBuilder = this.addSignerToMessage(msgBuilder, kwilSigner);
+      // msgBuilder = this.addSignerToMessage(msgBuilder, kwilSigner);
+      msg = Object.assign(msg, {
+        ...msg,
+        signer: kwilSigner.signer,
+        signatureType: kwilSigner.signatureType,
+        identifier: kwilSigner.identifier,
+      });
     }
 
     /**
@@ -138,12 +162,23 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
      */
     if (kwilSigner && this.authMode === AuthenticationMode.PRIVATE) {
       if (challenge && signature) {
-        msgBuilder.challenge(challenge).signature(signature);
-        msgBuilder = this.addSignerToMessage(msgBuilder, kwilSigner);
+        // msgBuilder.challenge(challenge).signature(signature);
+        msg = Object.assign(msg, {
+          ...msg,
+          challenge: challenge,
+          signature: signature,
+        });
+        // msgBuilder = this.addSignerToMessage(msgBuilder, kwilSigner);
+        msg = Object.assign(msg, {
+          ...msg,
+          signer: kwilSigner.signer,
+          signatureType: kwilSigner.signatureType,
+          identifier: kwilSigner.identifier,
+        });
       }
     }
 
-    return await msgBuilder.buildMsg();
+    return await msg.buildMsg();
   }
 
   /**
@@ -154,11 +189,14 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
    * @returns the ActionBuilder responsible for building the view action message with the sender attached
    *
    */
-  private addSignerToMessage(msgBuilder: ActionBuilder, kwilSigner: KwilSigner): ActionBuilder {
-    return msgBuilder
-      .signer(kwilSigner.signer, kwilSigner.signatureType)
-      .publicKey(kwilSigner.identifier);
-  }
+  // private addSignerToMessage(msgBuilder: ActionBuilder, kwilSigner: KwilSigner): ActionBuilder {
+  //   return msgBuilder
+  //     .signer(kwilSigner.signer, kwilSigner.signatureType)
+  //     .publicKey(kwilSigner.identifier);
+  // }
+
+  // TODO => may need to create a function to reduce repetitiveness of setting signer properties to the message
+  // TODO => may also need same thing for challenge and signature
 
   /**
    * Checks authentication errors for PUBLIC (KGW)
@@ -170,18 +208,16 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
    * @returns
    */
 
-  private async handleAuthenticateKGW(
-    kwilSigner?: KwilSigner
-  ) {
+  private async handleAuthenticateKGW(kwilSigner?: KwilSigner) {
     if (this.autoAuthenticate) {
       try {
         // KGW AUTHENTICATION
-          if (!kwilSigner) {
-            throw new Error('KGW authentication requires a KwilSigner.');
-          }
-          await this.auth.authenticateKGW(kwilSigner);
+        if (!kwilSigner) {
+          throw new Error('KGW authentication requires a KwilSigner.');
+        }
+        await this.auth.authenticateKGW(kwilSigner);
       } catch (error) {
-        throw  new Error(`Authentication failed: ${error}`)
+        throw new Error(`Authentication failed: ${error}`);
       }
     }
   }
@@ -207,16 +243,13 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
             throw new Error('Private mode authentication requires a KwilSigner.');
           }
 
-          return await this.auth.authenticatePrivateMode(
-            actionBody,
-            kwilSigner
-          );
+          return await this.auth.authenticatePrivateMode(actionBody, kwilSigner);
         }
       } catch (error) {
-        throw  new Error(`Authentication failed: ${error}`)
+        throw new Error(`Authentication failed: ${error}`);
       }
     }
 
-    throw new Error('Authentication process did not complete successfully')
+    throw new Error('Authentication process did not complete successfully');
   }
 }

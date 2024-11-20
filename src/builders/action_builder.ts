@@ -10,6 +10,7 @@ import { AnySignatureType, Signature, SignatureType, getSignatureType } from '..
 import { EncodedValue, UnencodedActionPayload } from '../core/payload';
 import { Message } from '../core/message';
 import { encodeNestedArguments } from '../utils/rlp';
+import { Payload } from '../payload/payload';
 
 interface CheckSchema {
   dbid: string;
