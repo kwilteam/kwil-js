@@ -4,6 +4,7 @@ import {objects} from "./objects";
 import { HexString } from './types';
 import { base64ToBytes, bytesToBase64 } from './base64';
 
+// converts string to bytes using utf-8 encoding
 export function stringToBytes(str: string): Uint8Array {
         strings.requireNonNil(str as any);
         let result: Array<number> = [];
@@ -45,12 +46,7 @@ export function stringToEthHex(str: string): HexString {
 }
 
 export function stringToHex(str: string): HexString {
-    let hex = '';
-    for (let i = 0; i < str.length; i++) {
-        const code = str.charCodeAt(i);
-        hex += code.toString(16).padStart(2, '0'); // Convert the code into a base-16 number and pad with a leading 0 if necessary
-    }
-    return hex;
+    return stringToBytes(str).reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');  
 }
 
 export function hexToString(hex: HexString): string {

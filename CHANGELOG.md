@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.8.5](https://github.com/kwilteam/kwil-js/compare/v0.8.4...v0.8.5) (2024-11-20)
+
+
+### Bug Fixes
+
+* **serial:** change string encoding from utf-16 to utf-8 ([48e710c](https://github.com/kwilteam/kwil-js/commit/48e710c2420b6524bb4aa18030994fd4d1dfa930))
+
 ### [0.8.4](https://github.com/kwilteam/kwil-js/compare/v0.8.3...v0.8.4) (2024-10-25)
 
 
