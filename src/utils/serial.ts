@@ -6,37 +6,7 @@ import { base64ToBytes, bytesToBase64 } from './base64';
 
 // converts string to bytes using utf-8 encoding
 export function stringToBytes(str: string): Uint8Array {
-        strings.requireNonNil(str as any);
-        let result: Array<number> = [];
-        for (let i = 0; i < str.length; i++) {
-            const c = str.charCodeAt(i);
-    
-            if (c < 0x80) {
-                result.push(c);
-    
-            } else if (c < 0x800) {
-                result.push((c >> 6) | 0xc0);
-                result.push((c & 0x3f) | 0x80);
-    
-            } else if ((c & 0xfc00) == 0xd800) {
-                i++;
-                const c2 = str.charCodeAt(i);
-    
-                // Surrogate Pair
-                const pair = 0x10000 + ((c & 0x03ff) << 10) + (c2 & 0x03ff);
-                result.push((pair >> 18) | 0xf0);
-                result.push(((pair >> 12) & 0x3f) | 0x80);
-                result.push(((pair >> 6) & 0x3f) | 0x80);
-                result.push((pair & 0x3f) | 0x80);
-    
-            } else {
-                result.push((c >> 12) | 0xe0);
-                result.push(((c >> 6) & 0x3f) | 0x80);
-                result.push((c & 0x3f) | 0x80);
-            }
-        }
-    
-        return new Uint8Array(result);
+        return new TextEncoder().encode(str);
     }
 
 export function stringToEthHex(str: string): HexString {
@@ -51,20 +21,7 @@ export function stringToHex(str: string): HexString {
 
 export function hexToString(hex: HexString): string {
     strings.requireNonNil(hex);
-
-    if (hex.length % 2 !== 0) {
-        throw new Error(`invalid hex string: ${hex}`);
-    }
-    // strip 0x prefix
-    if (hex.startsWith('0x')) {
-        hex = hex.slice(2);
-    }
-    let str = '';
-    for (let i = 0; i < hex.length; i += 2) {
-        const code = parseInt(hex.slice(i, i + 2), 16);
-        str += String.fromCharCode(code);
-    }
-    return str;
+    return bytesToString(hexToBytes(hex));
 }
 
 export function numberToBytes(num: number | bigint): Uint8Array {
@@ -153,12 +110,7 @@ export function hexToBase64(hex: HexString): string {
 }
 
 export function bytesToString(bytes: Uint8Array): string {
-    objects.requireNonNil(bytes);
-    let string = '';
-    for (let i = 0; i < bytes.length; i++) {
-        string += String.fromCharCode(bytes[i]);
-    }
-    return string;
+    return new TextDecoder().decode(bytes);
 }
 
 export function int32ToBytes(num: number): Uint8Array {
