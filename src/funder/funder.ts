@@ -48,7 +48,7 @@ export class Funder<T extends EnvironmentType> {
       amount: payload.amount.toString(),
     };
 
-    const tx = Payload.create(this.kwil, {
+    const transaction = await Payload.createTx(this.kwil, {
       chainId: this.chainId,
       description: payload.description,
       payload: txPayload,
@@ -56,9 +56,7 @@ export class Funder<T extends EnvironmentType> {
       identifier: signer.identifier,
       signer: signer.signer,
       signatureType: signer.signatureType,
-    });
-
-    const transaction = await tx.buildTx();
+    }).buildTx();
 
     return await this.funderClient.broadcastClient(
       transaction,

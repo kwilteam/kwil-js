@@ -1,6 +1,6 @@
 import { Kwil } from '../client/kwil';
 import { ActionInput } from '../core/action';
-import { ActionBuilder, SignerSupplier } from '../core/builders';
+import { SignerSupplier } from '../core/builders';
 import { BytesEncodingStatus, EnvironmentType, PayloadType, ValueType } from '../core/enums';
 import { Message } from '../core/message';
 import { EncodedValue, UnencodedActionPayload } from '../core/payload';
@@ -9,8 +9,7 @@ import { Transaction } from '../core/tx';
 import { Payload } from '../payload/payload';
 import { objects } from '../utils/objects';
 import { encodeNestedArguments } from '../utils/rlp';
-import { HexString, Nillable, NonNil, Promisy } from '../utils/types';
-import { validateFields } from '../utils/validation';
+import { HexString, Nillable, Promisy } from '../utils/types';
 
 export interface ActionOptions {
   actionName: string;
@@ -19,7 +18,7 @@ export interface ActionOptions {
   description: string;
   signer?: SignerSupplier;
   identifier?: HexString | Uint8Array;
-  actions?: ActionInput[];
+  actionInputs?: ActionInput[];
   signatureType?: AnySignatureType;
   nonce?: number;
   challenge?: string;
@@ -42,6 +41,9 @@ interface ExecSchema {
 
 const TXN_BUILD_IN_PROGRESS: ActionInput[] = [];
 
+/**
+ * `Action` class creates a transaction to execute database actions on the Kwil network.
+ */
 export class Action<T extends EnvironmentType> {
   private kwil: Kwil<T>;
   private actionName: string;
@@ -67,7 +69,7 @@ export class Action<T extends EnvironmentType> {
     this.kwil = kwil;
     this.signer = options.signer;
     this.identifier = options.identifier;
-    this.actions = options.actions;
+    this.actions = options.actionInputs;
     this.signatureType = options.signatureType;
     this.actionName = options.actionName;
     this.dbid = options.dbid;
@@ -84,7 +86,7 @@ export class Action<T extends EnvironmentType> {
    * @param kwil - The Kwil client.
    * @param options - The options to configure the Action instance.
    */
-  static create<T extends EnvironmentType>(kwil: Kwil<T>, options: ActionOptions): Action<T> {
+  static createTx<T extends EnvironmentType>(kwil: Kwil<T>, options: ActionOptions): Action<T> {
     objects.requireNonNil(
       kwil,
       'client is required for DbBuilder. Please pass a valid Kwil client. This is an internal error, please create an issue.'
@@ -92,7 +94,6 @@ export class Action<T extends EnvironmentType> {
 
     return new Action<T>(kwil, options);
   }
-
   /**
    * Build the action structure for a transaction.
    */
@@ -106,10 +107,12 @@ export class Action<T extends EnvironmentType> {
     this.actions = TXN_BUILD_IN_PROGRESS;
 
     // retrieve the schema and run validations
-    const { dbid, actionName, preparedActions, modifiers } = await this.checkSchema(this.actions);
+    const { dbid, actionName, preparedActions, modifiers } = await this.checkSchema(
+      cached as ActionInput[]
+    );
 
     // throw runtime error if signer is null or undefined
-    const { signer, chainId, identifier, signatureType } = validateFields(
+    const { signer, chainId, identifier, signatureType } = objects.validateFields(
       {
         signer: this.signer,
         chainId: this.chainId,
@@ -134,7 +137,7 @@ export class Action<T extends EnvironmentType> {
     };
 
     // build the transaction
-    return await Payload.create(this.kwil, {
+    return await Payload.createTx(this.kwil, {
       payloadType: PayloadType.EXECUTE_ACTION,
       payload: payload,
       signer: signer,
@@ -163,7 +166,9 @@ export class Action<T extends EnvironmentType> {
     this.actions = TXN_BUILD_IN_PROGRESS;
 
     // retrieve the schema and run validations
-    const { dbid, actionName, preparedActions, modifiers } = await this.checkSchema(this.actions);
+    const { dbid, actionName, preparedActions, modifiers } = await this.checkSchema(
+      cached as ActionInput[]
+    );
 
     // throw a runtime error if more than one set of inputs is trying to be executed. Call does not allow bulk execution.
     if (preparedActions && preparedActions.length > 1) {
@@ -189,7 +194,7 @@ export class Action<T extends EnvironmentType> {
       // if there are nilArgs, then the first element in the array is the nilArgs.
     };
 
-    let msg = await Payload.create(this.kwil, {
+    let msg = await Payload.createTx(this.kwil, {
       payload: payload,
       challenge: this.challenge,
       signature: this.signature,
@@ -231,12 +236,14 @@ export class Action<T extends EnvironmentType> {
     // loop over array of actions and add them to the list of actions
     for (const action of actions) {
       // push action into array and throw runtime error if action is null or undefined
-      actions.push(
-        objects.requireNonNil(
-          action,
-          'action cannot be null or undefined. Please pass a valid ActionInput object.'
-        )
-      );
+      if (this.actions) {
+        this.actions.push(
+          objects.requireNonNil(
+            action,
+            'action cannot be null or undefined. Please pass a valid ActionInput object.'
+          )
+        );
+      }
     }
 
     return this;
@@ -254,6 +261,7 @@ export class Action<T extends EnvironmentType> {
       this.dbid,
       'dbid is required to execute or call an action or procedure.'
     );
+
     const name = objects.requireNonNil(
       this.actionName,
       'name is required to execute or call an action or procedure.'
@@ -347,7 +355,10 @@ export class Action<T extends EnvironmentType> {
     // track the missing actions
     const missingActions = new Set<string>();
     execSchema.parameters.forEach((p) => {
-      const found = actions.find((a) => a.containsKey(p));
+      const found = actions.find((a) => {
+        return a.containsKey && a.containsKey(p);
+      });
+
       if (!found) {
         missingActions.add(p);
       }
@@ -405,6 +416,3 @@ export class Action<T extends EnvironmentType> {
     }
   }
 }
-
-// TODO => find a way to refactor assertNotBuilding() to make sure the action cannot be modified while the transaction is being built
-// TODO ==> continue refactor...

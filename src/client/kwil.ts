@@ -5,9 +5,6 @@ import { GenericResponse } from '../core/resreq';
 import { Database, DeployBody, DropBody, SelectQuery } from '../core/database';
 import { BaseTransaction, TxReceipt } from '../core/tx';
 import { Account, ChainInfo, ChainInfoOpts, DatasetInfo } from '../core/network';
-import { ActionBuilderImpl } from '../builders/action_builder';
-import { NonNil } from '../utils/types';
-import { ActionBuilder } from '../core/builders';
 import { DB } from '../db/db';
 import { Cache } from '../utils/cache';
 import { TxInfoReceipt } from '../core/txQuery';
@@ -156,7 +153,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
   ): Promise<GenericResponse<TxReceipt>> {
     const name = !actionBody.name && actionBody.action ? actionBody.action : actionBody.name;
 
-    let fx = Action.create(this, {
+    let transaction = await Action.createTx(this, {
       dbid: actionBody.dbid,
       actionName: name.toLowerCase(),
       description: actionBody.description || '',
@@ -165,14 +162,8 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       signer: kwilSigner.signer,
       signatureType: kwilSigner.signatureType,
       nonce: actionBody.nonce,
-    });
-
-    if (actionBody.inputs) {
-      const inputs = resolveActionInputs(actionBody.inputs);
-      fx = fx.concat(inputs);
-    }
-
-    const transaction = await fx.buildTx();
+      actionInputs: resolveActionInputs(actionBody.inputs!),
+    }).buildTx();
 
     return await this.broadcastClient(
       transaction,
@@ -193,7 +184,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     kwilSigner: KwilSigner,
     synchronous?: boolean
   ): Promise<GenericResponse<TxReceipt>> {
-    let tx = await DB.create(this, PayloadType.DEPLOY_DATABASE, {
+    let transaction = await DB.createTx(this, PayloadType.DEPLOY_DATABASE, {
       description: deployBody.description || '',
       payload: () => deployBody.schema,
       identifier: kwilSigner.identifier,
@@ -203,7 +194,10 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       nonce: deployBody.nonce,
     }).buildTx();
 
-    return await this.broadcastClient(tx, synchronous ? BroadcastSyncType.COMMIT : undefined);
+    return await this.broadcastClient(
+      transaction,
+      synchronous ? BroadcastSyncType.COMMIT : undefined
+    );
   }
 
   /**
@@ -219,7 +213,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     kwilSigner: KwilSigner,
     synchronous?: boolean
   ): Promise<GenericResponse<TxReceipt>> {
-    let tx = await DB.create(this, PayloadType.DROP_DATABASE, {
+    let transaction = await DB.createTx(this, PayloadType.DROP_DATABASE, {
       description: dropBody.description || '',
       payload: () => ({ dbid: dropBody.dbid }),
       identifier: kwilSigner.identifier,
@@ -229,7 +223,10 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       nonce: dropBody.nonce,
     }).buildTx();
 
-    return await this.broadcastClient(tx, synchronous ? BroadcastSyncType.COMMIT : undefined);
+    return await this.broadcastClient(
+      transaction,
+      synchronous ? BroadcastSyncType.COMMIT : undefined
+    );
   }
 
   /**

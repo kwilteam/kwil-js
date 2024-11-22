@@ -17,7 +17,7 @@ import { objects } from '../utils/objects';
 import { kwilEncode } from '../utils/rlp';
 import { bytesToHex, stringToBytes } from '../utils/serial';
 import { strings } from '../utils/strings';
-import { validateFields } from '../utils/validation';
+// import { validateFields } from '../utils/validation';
 
 export interface PayloadOptions {
   payload: (() => AllPayloads) | AllPayloads;
@@ -32,6 +32,9 @@ export interface PayloadOptions {
   signature?: Signature<BytesEncodingStatus.BASE64_ENCODED>;
 }
 
+/**
+ * `Payload` class creates a transaction and call payloads that can be sent over GRPC.
+ */
 export class Payload<T extends EnvironmentType> {
   private kwil: Kwil<T>;
   private payload: (() => AllPayloads) | AllPayloads;
@@ -55,8 +58,11 @@ export class Payload<T extends EnvironmentType> {
       kwil,
       'client is required for TxnBuilder. Please pass a valid Kwil client. This is an internal error, please create an issue.'
     );
+    this.payload = objects.requireNonNil(
+      options.payload,
+      'payload is required for TxnBuilder. Please pass a valid payload.'
+    );
     this.payloadType = options.payloadType;
-    this.payload = options.payload;
     this.signer = options.signer;
     this.identifier = options.identifier;
     this.signatureType = options.signatureType;
@@ -73,7 +79,7 @@ export class Payload<T extends EnvironmentType> {
    * @param kwil - The Kwil client.
    * @param options - The options to configure the Payload instance.
    */
-  static create<T extends EnvironmentType>(kwil: Kwil<T>, options: PayloadOptions): Payload<T> {
+  static createTx<T extends EnvironmentType>(kwil: Kwil<T>, options: PayloadOptions): Payload<T> {
     return new Payload<T>(kwil, options);
   }
 
@@ -84,7 +90,7 @@ export class Payload<T extends EnvironmentType> {
     const resolvedPayload = await this.resolvePayload();
 
     // ensure required fields are not null or undefined
-    const { signer, payloadType, identifier, signatureType, chainId } = validateFields(
+    const { signer, payloadType, identifier, signatureType, chainId } = objects.validateFields(
       {
         signer: this.signer,
         payloadType: this.payloadType,
@@ -258,22 +264,22 @@ Kwil Chain ID: ${tx.body.chain_id}
   }
 
   /**
-   * Method to resolve the payload from either direct value or a function.
+   * Execute lazy evaluation of payload.
+   *
+   * @returns {AllPayloads} - A promise that resolves to the provided payload object.
    */
   private async resolvePayload(): Promise<AllPayloads> {
-    if (typeof this.payload === 'function') {
-      const resolvedPayload = this.payload();
+    const payloadValue = objects.requireNonNil(
+      this.payload,
+      'payload is required to build the payload.'
+    );
 
-      if (resolvedPayload === undefined) {
-        throw new Error('Payload function returned undefined.');
-      }
+    // Check if the payloadValue is a function and call it if it is
+    const resolvedPayload =
+      typeof payloadValue === 'function'
+        ? objects.requireNonNil(payloadValue(), 'payload cannot resolve to be null.')
+        : objects.requireNonNil(payloadValue, 'payload cannot resolve to be null.');
 
-      // Cast resolvedPayload as AllPayloads, as we've checked it can't be undefined.
-      return resolvedPayload as AllPayloads;
-    }
-    throw new Error('Payload is missing.');
+    return resolvedPayload;
   }
 }
-
-// TODO ==> create a helper function that checks for types vs having all of these if statements (ugly)
-// TODO ==> consider extracting the various functions into separate classes to make classes cleaner and easier to follow...

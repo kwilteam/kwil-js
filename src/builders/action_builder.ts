@@ -10,7 +10,6 @@ import { AnySignatureType, Signature, SignatureType, getSignatureType } from '..
 import { EncodedValue, UnencodedActionPayload } from '../core/payload';
 import { Message } from '../core/message';
 import { encodeNestedArguments } from '../utils/rlp';
-import { Payload } from '../payload/payload';
 
 interface CheckSchema {
   dbid: string;
@@ -30,6 +29,7 @@ const TXN_BUILD_IN_PROGRESS: ActionInput[] = [];
 /**
  * `ActionBuilderImpl` class is an implementation of the `ActionBuilder` interface.
  * It helps in building and transactions to execute database actions on the Kwil network.
+ * @deprecated Use `Action` class instead`.
  */
 
 export class ActionBuilderImpl<T extends EnvironmentType> implements ActionBuilder {

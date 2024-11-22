@@ -24,6 +24,7 @@ import { AllPayloads, UnencodedActionPayload } from '../core/payload';
 /**
  * PayloadBuilderImpl is the default implementation of PayloadBuilder. It allows for building transaction and call payloads that can be sent over GRPC.
  * See the proto files for more information on the structure of the payloads. {@link https://github.com/kwilteam/proto/tree/main/kwil/tx/v1}
+ * @deprecated Use `Payload` class instead`.
  */
 export class PayloadBuilderImpl<T extends EnvironmentType> implements PayloadBuilder {
   private readonly kwil: Kwil<T>;

@@ -1,7 +1,5 @@
 import { Config } from '../../api_client/config';
-import { ActionBuilderImpl } from '../../builders/action_builder';
-import { ActionInput, Entries, ActionBodyNode } from '../../core/action';
-import { ActionBuilder } from '../../core/builders';
+import { ActionInput, Entries, ActionBodyNode, resolveActionInputs } from '../../core/action';
 import { AuthenticationMode, BytesEncodingStatus, EnvironmentType } from '../../core/enums';
 import { KwilSigner } from '../../core/kwilSigner';
 import { BaseMessage, Message, MsgReceipt } from '../../core/message';
@@ -9,7 +7,6 @@ import { GenericResponse } from '../../core/resreq';
 import { Kwil } from '../kwil';
 import { AuthBody, Signature } from '../../core/signature';
 import { Action } from '../../action/action';
-import { sign } from 'crypto';
 
 export class NodeKwil extends Kwil<EnvironmentType.NODE> {
   private autoAuthenticate: boolean;
@@ -140,36 +137,23 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
     const name = !actionBody.name && actionBody.action ? actionBody.action : actionBody.name;
 
     // pre Challenge message
-    let msg = Action.create<EnvironmentType.NODE>(this, {
+    let msg = Action.createTx<EnvironmentType.NODE>(this, {
       chainId: this.chainId,
       dbid: actionBody.dbid,
       actionName: name,
       description: actionBody.description || '',
+      actionInputs: resolveActionInputs(actionBody.inputs!),
     });
 
-    if (actionBody.inputs) {
-      const inputs =
-        actionBody.inputs[0] instanceof ActionInput
-          ? (actionBody.inputs as ActionInput[])
-          : new ActionInput().putFromObjects(actionBody.inputs as Entries[]);
-      msg = msg.concat(inputs);
-    }
-
-    // let msgBuilder = ActionBuilderImpl.of<EnvironmentType.NODE>(this)
-    //   .chainId(this.chainId)
-    //   .dbid(actionBody.dbid)
-    //   .name(name)
-    //   .description(actionBody.description || '');
-
     // if (actionBody.inputs) {
+    //   // console.log(actionBody.inputs)
     //   const inputs =
     //     actionBody.inputs[0] instanceof ActionInput
     //       ? (actionBody.inputs as ActionInput[])
     //       : new ActionInput().putFromObjects(actionBody.inputs as Entries[]);
-    //   msgBuilder = msgBuilder.concat(inputs);
+    //   // msg = msg.concat(inputs);
+    //   console.log(inputs)
     // }
-
-    // TODO ===> No longer need addSignerToMessage. Just assign signer and signatureType to msg & spread current properties of msg to it
 
     /**
      * PUBLIC MODE
@@ -178,13 +162,7 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
      *
      */
     if (kwilSigner && this.authMode === AuthenticationMode.OPEN) {
-      // msgBuilder = this.addSignerToMessage(msgBuilder, kwilSigner);
-      msg = Object.assign(msg, {
-        ...msg,
-        signer: kwilSigner.signer,
-        signatureType: kwilSigner.signatureType,
-        identifier: kwilSigner.identifier,
-      });
+      this.addSignerToMessage(msg, kwilSigner);
     }
 
     /**
@@ -195,19 +173,13 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
      */
     if (kwilSigner && this.authMode === AuthenticationMode.PRIVATE) {
       if (challenge && signature) {
-        // msgBuilder.challenge(challenge).signature(signature);
+        // add challenge and signature to the message
         msg = Object.assign(msg, {
           ...msg,
           challenge: challenge,
           signature: signature,
         });
-        // msgBuilder = this.addSignerToMessage(msgBuilder, kwilSigner);
-        msg = Object.assign(msg, {
-          ...msg,
-          signer: kwilSigner.signer,
-          signatureType: kwilSigner.signatureType,
-          identifier: kwilSigner.identifier,
-        });
+        this.addSignerToMessage(msg, kwilSigner);
       }
     }
 
@@ -217,19 +189,23 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
   /**
    * Adds a signer to the message
    *
-   * @param msgBuilder
+   * @param msg
    * @param kwilSigner
    * @returns the ActionBuilder responsible for building the view action message with the sender attached
    *
    */
-  // private addSignerToMessage(msgBuilder: ActionBuilder, kwilSigner: KwilSigner): ActionBuilder {
-  //   return msgBuilder
-  //     .signer(kwilSigner.signer, kwilSigner.signatureType)
-  //     .publicKey(kwilSigner.identifier);
-  // }
-
-  // TODO => may need to create a function to reduce repetitiveness of setting signer properties to the message
-  // TODO => may also need same thing for challenge and signature
+  private addSignerToMessage(
+    msg: Action<EnvironmentType.NODE>,
+    kwilSigner: KwilSigner
+  ): Action<EnvironmentType.NODE> {
+    msg = Object.assign(msg, {
+      ...msg,
+      signer: kwilSigner.signer,
+      signatureType: kwilSigner.signatureType,
+      identifier: kwilSigner.identifier,
+    });
+    return msg;
+  }
 
   /**
    * Checks authentication errors for PUBLIC (KGW)

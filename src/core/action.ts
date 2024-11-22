@@ -289,7 +289,7 @@ export class ActionInput implements Iterable<EntryType> {
 
   public static from(entries: Iterable<EntryType>): ActionInput {
     const action = ActionInput.of();
-    for (let [key, value] of objects.requireNonNil(entries)) {
+    for (let [key, value] of entries) {
       key = lowercaseKey(key);
       action.map[assertKey(key)] = value;
     }

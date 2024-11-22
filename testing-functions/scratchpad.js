@@ -16,7 +16,6 @@ const { sha256BytesToBytes } = require('../dist/utils/crypto');
 const { KwilSigner } = require('../dist/core/kwilSigner');
 const { ActionInput } = require('../dist/core/action');
 const { v4 } = require('uuid');
-
 require('dotenv').config();
 
 const chainId = process.env.CHAIN_ID || 'SHOULD FAIL';
@@ -71,7 +70,7 @@ async function test() {
   // testMultiLogout()
 
   const dbid = kwil.getDBID(address, 'social');
-    // console.log("social dbid ", dbid) 
+  // console.log("social dbid ", dbid)
   // await authenticate(kwil, kwilSigner)
   // broadcast(kwil, testDB, kwilSigner)
   // broadcastEd25519(kwil, testDB)
@@ -99,17 +98,21 @@ async function test() {
   const user = {
     $id: 1,
     $username: 'Tyler',
-    $age: 4,
+    $age: 28,
   };
+
+  const userId = {
+    $id: 1
+  }
 
   const post = {
     $id: 3,
-    $title: 'Ty post',
-    $content: 'Lets go',
-    $date_string: '11-7-2024',
+    $title: 'tampa',
+    $content: 'l cool',
+    $date_string: '11-22-2024',
   };
-  // executeGeneralAction(kwil, dbid, "create_post", kwilSigner, post)
-  await executeGeneralView(kwil, dbid, "get_profile", null, kwilSigner)
+  // executeGeneralAction(kwil, dbid, 'create_post', kwilSigner, post);
+  await executeGeneralView(kwil, dbid, 'get_user', 'Tyler', kwilSigner);
   // await executeGeneralView(kwil, dbid, "view_must_sign", null, kwilSigner)
 }
 

@@ -16,7 +16,6 @@ import { Transaction } from '../core/tx';
 import { Payload } from '../payload/payload';
 import { objects } from '../utils/objects';
 import { Promisy } from '../utils/types';
-import { validateFields } from '../utils/validation';
 
 export interface DBOptions {
   signer: SignerSupplier;
@@ -28,6 +27,9 @@ export interface DBOptions {
   nonce?: number;
 }
 
+/**
+ * `DB` class creates a transaction to deploy or drop a new database on the Kwil network.
+ */
 export class DB<T extends EnvironmentType> {
   private readonly kwil: Kwil<T>;
   private payloadType: DeployOrDrop;
@@ -63,7 +65,7 @@ export class DB<T extends EnvironmentType> {
    * @param kwil - The Kwil client.
    * @param options - The options to configure the Kwil Database instance.
    */
-  static create<T extends EnvironmentType>(
+  static createTx<T extends EnvironmentType>(
     kwil: Kwil<T>,
     payloadType: DeployOrDrop,
     options: DBOptions
@@ -119,7 +121,7 @@ export class DB<T extends EnvironmentType> {
     }
 
     // throw runtime errors if any of the required fields are null or undefined
-    const { payloadType, signer, identifier, chainId } = validateFields(
+    const { payloadType, signer, identifier, chainId } = objects.validateFields(
       {
         payloadType: this.payloadType,
         signer: this.signer,
@@ -137,7 +139,7 @@ export class DB<T extends EnvironmentType> {
     );
 
     // build transaction
-    return await Payload.create(this.kwil, {
+    return await Payload.createTx(this.kwil, {
       payloadType: payloadType,
       payload: cleanedPayload,
       signer: signer,
@@ -501,6 +503,3 @@ export class DB<T extends EnvironmentType> {
     return db;
   }
 }
-
-// TODO ==> create a helper function that checks for types vs having all of these if statements (ugly)
-// TODO ==> consider extracting the various functions into separate classes to make classes cleaner and easier to follow...

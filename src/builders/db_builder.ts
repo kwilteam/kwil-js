@@ -20,6 +20,7 @@ import { AllPayloads, CompiledKuneiform, DbPayloadType, DropDbPayload } from '..
 /**
  * `DBBuilderImpl` class is an implementation of the `DBBuilder` interface.
  * It creates a transaction to deploy a new database on the Kwil network.
+ * @deprecated Use `DB` class instead`.
  */
 
 export class DBBuilderImpl<T extends DeployOrDrop, U extends EnvironmentType>
