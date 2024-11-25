@@ -52,7 +52,7 @@ export class Action<T extends EnvironmentType> {
   private description: string;
   private signer?: SignerSupplier;
   private identifier?: HexString | Uint8Array;
-  private actions?: ActionInput[];
+  private actionInputs?: ActionInput[];
   private signatureType?: AnySignatureType;
   private nonce?: number;
   private challenge?: string;
@@ -66,15 +66,37 @@ export class Action<T extends EnvironmentType> {
    */
 
   constructor(kwil: Kwil<T>, options: ActionOptions) {
-    this.kwil = kwil;
+    this.kwil = objects.requireNonNil(
+      kwil,
+      'Client is required for Action Builder. Please pass a valid Kwil Client.'
+    );
+    this.actionName = objects.requireNonNil(
+      options.actionName,
+      'actionName cannot be null or undefined. Please specify the action or procedure name you wish to execute.'
+    );
+    this.dbid = objects.requireNonNil(
+      options.dbid,
+      'DBID cannot be null or undefined. Please specify the dbid of the database you wish to execute an action on.'
+    );
+    this.chainId = objects.requireNonNil(options.chainId, 'Chain ID cannot be null or undefined.');
+    this.description = objects.requireNonNil(
+      options.description,
+      'Description cannot be null or undefined.'
+    );
+
+    // Validate optional parameters if passed into Action Builder
+    objects.validateOptionalFields(options, [
+      'signer',
+      'identifier',
+      'actionInputs',
+      'signatureType',
+      'nonce',
+    ]);
+
     this.signer = options.signer;
     this.identifier = options.identifier;
-    this.actions = options.actionInputs;
+    this.actionInputs = options.actionInputs;
     this.signatureType = options.signatureType;
-    this.actionName = options.actionName;
-    this.dbid = options.dbid;
-    this.chainId = options.chainId;
-    this.description = options.description;
     this.nonce = options.nonce;
     this.challenge = options.challenge;
     this.signature = options.signature;
@@ -101,10 +123,10 @@ export class Action<T extends EnvironmentType> {
     this.assertNotBuilding();
 
     // cache the action
-    const cached = this.actions;
+    const cached = this.actionInputs;
 
     // set the actions to a special value to indicate that the transaction is being built
-    this.actions = TXN_BUILD_IN_PROGRESS;
+    this.actionInputs = TXN_BUILD_IN_PROGRESS;
 
     // retrieve the schema and run validations
     const { dbid, actionName, preparedActions, modifiers } = await this.checkSchema(
@@ -150,7 +172,7 @@ export class Action<T extends EnvironmentType> {
       nonce: this.nonce,
     })
       .buildTx()
-      .finally(() => (this.actions = cached));
+      .finally(() => (this.actionInputs = cached));
   }
 
   /**
@@ -160,10 +182,10 @@ export class Action<T extends EnvironmentType> {
     this.assertNotBuilding();
 
     // cache the action
-    const cached = this.actions;
+    const cached = this.actionInputs;
 
     // set the actions to a special value to indicate that the message is being built
-    this.actions = TXN_BUILD_IN_PROGRESS;
+    this.actionInputs = TXN_BUILD_IN_PROGRESS;
 
     // retrieve the schema and run validations
     const { dbid, actionName, preparedActions, modifiers } = await this.checkSchema(
@@ -219,7 +241,7 @@ export class Action<T extends EnvironmentType> {
       });
     }
 
-    return await msg.buildMsg().finally(() => (this.actions = cached));
+    return await msg.buildMsg().finally(() => (this.actionInputs = cached));
   }
 
   /**
@@ -236,8 +258,8 @@ export class Action<T extends EnvironmentType> {
     // loop over array of actions and add them to the list of actions
     for (const action of actions) {
       // push action into array and throw runtime error if action is null or undefined
-      if (this.actions) {
-        this.actions.push(
+      if (this.actionInputs) {
+        this.actionInputs.push(
           objects.requireNonNil(
             action,
             'action cannot be null or undefined. Please pass a valid ActionInput object.'
@@ -411,7 +433,7 @@ export class Action<T extends EnvironmentType> {
   }
 
   private assertNotBuilding(): void {
-    if (this.actions === TXN_BUILD_IN_PROGRESS) {
+    if (this.actionInputs === TXN_BUILD_IN_PROGRESS) {
       throw new Error('Cannot modify the builder while a transaction is being built.');
     }
   }

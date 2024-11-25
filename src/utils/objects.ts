@@ -90,4 +90,32 @@ export const objects = {
 
     return value as NonNil<T>;
   },
+  /**
+   * Validates that optional parameters, if provided, are not null.
+   *
+   * @param options - The options object containing the parameters to validate.
+   * @param fields - An array of field names to validate.
+   * @throws Error if any field is explicitly provided but null.
+   */
+  validateOptionalFields<T>(options: T, fields: (keyof T)[]): void {
+    fields.forEach((field) => {
+      if (options[field] !== undefined && options[field] === null) {
+        throw new Error(`${String(field)} must not be null.`);
+      }
+    });
+  },
+  /**
+   * Validates required parameters for the class or function, are not null or undefined.
+   *
+   * @param options - The options object containing the parameters to validate.
+   * @param fields - An array of field names to validate.
+   * @throws Error if any field is explicitly provided but null.
+   */
+  validateRequiredFields<T>(options: T, fields: (keyof T)[]): void {
+    fields.forEach((field) => {
+      if (options[field] === undefined && options[field] === null) {
+        throw new Error(`${String(field)} must not be null.`);
+      }
+    });
+  },
 };

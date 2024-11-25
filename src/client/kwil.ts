@@ -16,7 +16,7 @@ import {
 } from '../core/enums';
 import { hexToBytes } from '../utils/serial';
 import { isNearPubKey, nearB58ToHex } from '../utils/keys';
-import { ActionBody, resolveActionInputs } from '../core/action';
+import { ActionBody, ActionInput, Entries } from '../core/action';
 import { KwilSigner } from '../core/kwilSigner';
 import { wrap } from './intern';
 import { Funder } from '../funder/funder';
@@ -153,7 +153,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
   ): Promise<GenericResponse<TxReceipt>> {
     const name = !actionBody.name && actionBody.action ? actionBody.action : actionBody.name;
 
-    let transaction = await Action.createTx(this, {
+    let tx = Action.createTx(this, {
       dbid: actionBody.dbid,
       actionName: name.toLowerCase(),
       description: actionBody.description || '',
@@ -162,8 +162,22 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       signer: kwilSigner.signer,
       signatureType: kwilSigner.signatureType,
       nonce: actionBody.nonce,
-      actionInputs: resolveActionInputs(actionBody.inputs!),
-    }).buildTx();
+    });
+
+    if (actionBody.inputs) {
+      const inputs = (actionBody.inputs as ActionInput[]).every(
+        (item: ActionInput) => item instanceof ActionInput
+      )
+        ? (actionBody.inputs as ActionInput[])
+        : new ActionInput().putFromObjects(actionBody.inputs as Entries[]);
+      tx = Object.assign(tx, {
+        // add action inputs to message
+        ...tx,
+        actionInputs: inputs,
+      });
+    }
+
+    const transaction = await tx.buildTx();
 
     return await this.broadcastClient(
       transaction,

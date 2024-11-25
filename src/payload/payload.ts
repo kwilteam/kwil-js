@@ -17,7 +17,6 @@ import { objects } from '../utils/objects';
 import { kwilEncode } from '../utils/rlp';
 import { bytesToHex, stringToBytes } from '../utils/serial';
 import { strings } from '../utils/strings';
-// import { validateFields } from '../utils/validation';
 
 export interface PayloadOptions {
   payload: (() => AllPayloads) | AllPayloads;
@@ -56,12 +55,24 @@ export class Payload<T extends EnvironmentType> {
   constructor(kwil: Kwil<T>, options: PayloadOptions) {
     this.kwil = objects.requireNonNil(
       kwil,
-      'client is required for TxnBuilder. Please pass a valid Kwil client. This is an internal error, please create an issue.'
+      'Client is required for TxnBuilder. Please pass a valid Kwil client. This is an internal error, please create an issue.'
     );
     this.payload = objects.requireNonNil(
       options.payload,
-      'payload is required for TxnBuilder. Please pass a valid payload.'
+      'Payload is required for TxnBuilder. Please pass a valid payload.'
     );
+
+    // Validate optional parameters if passed into Payload Txn Builder
+    objects.validateOptionalFields(options, [
+      'payloadType',
+      'signer',
+      'identifier',
+      'signatureType',
+      'chainId',
+      'description',
+      'nonce',
+    ]);
+
     this.payloadType = options.payloadType;
     this.signer = options.signer;
     this.identifier = options.identifier;
@@ -222,8 +233,18 @@ Kwil Chain ID: ${tx.body.chain_id}
       msg.signature = this.signature;
     });
 
-    if (this.identifier) {
-      return await Payload.authMsg(msg, this.identifier, this.signatureType!);
+    if (this.signer) {
+      // ensure required fields are not null or undefined
+      const { identifier, signatureType } = objects.validateFields(
+        {
+          identifier: this.identifier,
+          signatureType: this.signatureType,
+        },
+        (fieldName: string) => `${fieldName} required to build a message.`
+      );
+      if (identifier) {
+        return await Payload.authMsg(msg, identifier, signatureType!);
+      }
     }
 
     // return the unsigned message, with the payload base64 encoded

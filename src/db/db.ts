@@ -48,13 +48,32 @@ export class DB<T extends EnvironmentType> {
    */
 
   constructor(kwil: Kwil<T>, payloadType: DeployOrDrop, options: DBOptions) {
-    this.kwil = kwil;
-    this.payloadType = payloadType;
-    this.signer = options.signer;
-    this.payload = options.payload;
-    this.identifier = options.identifier;
-    this.signatureType = options.signatureType;
-    this.chainId = options.chainId;
+    this.kwil = objects.requireNonNil(
+      kwil,
+      'Client is required for DbBuilder. Please pass a valid Kwil client.'
+    );
+    this.payloadType = objects.requireNonNil(
+      payloadType,
+      'PayloadType is required for DbBuilder. Please pass a valid PayloadType.'
+    );
+    this.signer = objects.requireNonNil(
+      options.signer,
+      'No signer provided. Please specify a signing function or pass an Ethers signer in the KwilSigner.'
+    );
+    this.payload = objects.requireNonNil(options.payload, 'dbBuilder payload cannot be null');
+    this.identifier = objects.requireNonNil(
+      options.identifier,
+      'Identifier is required for DbBuilder. Please pass a valid identifier to the .identifier() method.'
+    );
+    this.signatureType = objects.requireNonNil(
+      options.signatureType,
+      'Signature type cannot be null or undefined. Please specify signature type.'
+    );
+    this.chainId = objects.requireNonNil(options.chainId, 'Chain ID cannot be null or undefined.');
+
+    // Validate optional parameters if pass into DB Builder
+    objects.validateOptionalFields(options, ['description', 'nonce']);
+
     this.description = options.description;
     this.nonce = options.nonce;
   }
@@ -72,7 +91,7 @@ export class DB<T extends EnvironmentType> {
   ): DB<T> {
     objects.requireNonNil(
       kwil,
-      'client is required for DbBuilder. Please pass a valid Kwil client. This is an internal error, please create an issue.'
+      'client is required for Db creator. Please pass a valid Kwil client. This is an internal error, please create an issue.'
     ),
       objects.requireNonNil(
         payloadType,
@@ -120,18 +139,6 @@ export class DB<T extends EnvironmentType> {
       throw new Error('Invalid or missing signature type.');
     }
 
-    // throw runtime errors if any of the required fields are null or undefined
-    const { payloadType, signer, identifier, chainId } = objects.validateFields(
-      {
-        payloadType: this.payloadType,
-        signer: this.signer,
-        identifier: this.identifier,
-        chainId: this.chainId,
-      },
-      (fieldName: string) =>
-        `${fieldName} cannot be null or undefined. please specify a ${fieldName}`
-    );
-
     // throw runtime errors if signatureType is null or undefined
     const signatureType = await Promisy.resolveOrReject(
       this.signatureType,
@@ -140,12 +147,12 @@ export class DB<T extends EnvironmentType> {
 
     // build transaction
     return await Payload.createTx(this.kwil, {
-      payloadType: payloadType,
+      payloadType: this.payloadType,
       payload: cleanedPayload,
-      signer: signer,
+      signer: this.signer,
       signatureType: signatureType,
-      identifier: identifier,
-      chainId: chainId,
+      identifier: this.identifier,
+      chainId: this.chainId,
       description: this.description,
       nonce: this.nonce,
     }).buildTx();

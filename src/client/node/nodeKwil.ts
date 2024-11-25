@@ -1,5 +1,9 @@
 import { Config } from '../../api_client/config';
-import { ActionInput, Entries, ActionBodyNode, resolveActionInputs } from '../../core/action';
+import {
+  ActionInput,
+  Entries,
+  ActionBodyNode,
+} from '../../core/action';
 import { AuthenticationMode, BytesEncodingStatus, EnvironmentType } from '../../core/enums';
 import { KwilSigner } from '../../core/kwilSigner';
 import { BaseMessage, Message, MsgReceipt } from '../../core/message';
@@ -142,18 +146,19 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
       dbid: actionBody.dbid,
       actionName: name,
       description: actionBody.description || '',
-      actionInputs: resolveActionInputs(actionBody.inputs!),
     });
 
-    // if (actionBody.inputs) {
-    //   // console.log(actionBody.inputs)
-    //   const inputs =
-    //     actionBody.inputs[0] instanceof ActionInput
-    //       ? (actionBody.inputs as ActionInput[])
-    //       : new ActionInput().putFromObjects(actionBody.inputs as Entries[]);
-    //   // msg = msg.concat(inputs);
-    //   console.log(inputs)
-    // }
+    if (actionBody.inputs) {
+      const inputs =
+        actionBody.inputs[0] instanceof ActionInput
+          ? (actionBody.inputs as ActionInput[])
+          : new ActionInput().putFromObjects(actionBody.inputs as Entries[]);
+      msg = Object.assign(msg, {
+        // add action inputs to message
+        ...msg,
+        actionInputs: inputs,
+      });
+    }
 
     /**
      * PUBLIC MODE

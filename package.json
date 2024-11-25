@@ -25,7 +25,8 @@
     "pack_pre": "copyfiles package.json README.md dist && rimraf ./kwil*.tgz",
     "pack_post": "copyfiles ./kwil*.tgz ./pkg && rimraf ./kwil*.tgz",
     "pack": "npm run pack_build && npm run pack_pre && npm --prefix ./dist pack && npm run pack_post",
-    "integration": "npx jest ./tests/kwil"
+    "integration": "npx jest ./tests/kwil",
+    "test": "npx jest ./tests/unitTests/validation/validation"
   },
   "author": "Kwil, Inc. <luke@kwil.com>",
   "license": "MIT",

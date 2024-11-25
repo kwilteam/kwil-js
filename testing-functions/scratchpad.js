@@ -38,7 +38,7 @@ async function test() {
 
   const kwil = new kwiljs.NodeKwil({
     kwilProvider: process.env.KWIL_PROVIDER || 'SHOULD FAIL',
-    chainId: chainId,
+    // chainId: chainId,
     timeout: 10000,
     logging: true,
   });
@@ -90,7 +90,7 @@ async function test() {
   // await customSignature(kwil, dbid)
   // await julioSignature(kwil, dbid)
   // await customEd25519(kwil, dbid)
-  // await dropDb(kwil, kwilSigner, dbid);
+  await dropDb(kwil, kwilSigner, dbid);
   // await transfer(kwil, "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf", 20, kwilSigner)
   // bulkActionInput(kwil, kwilSigner)
   // console.log(base64ToBytes('QVFJREJBVUdCd2dKQ2c9PQ=='))
@@ -111,8 +111,8 @@ async function test() {
     $content: 'l cool',
     $date_string: '11-22-2024',
   };
-  // executeGeneralAction(kwil, dbid, 'create_post', kwilSigner, post);
-  await executeGeneralView(kwil, dbid, 'get_user', 'Tyler', kwilSigner);
+  executeGeneralAction(kwil, dbid, 'create_post', kwilSigner, post);
+  // await executeGeneralView(kwil, dbid, 'get_profile', null, kwilSigner);
   // await executeGeneralView(kwil, dbid, "view_must_sign", null, kwilSigner)
 }
 

@@ -107,7 +107,7 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
     const name = !actionBody.name && actionBody.action ? actionBody.action : actionBody.name;
 
     // pre Challenge message
-    let msg = Action.createTx<EnvironmentType.NODE>(this, {
+    let msg = Action.createTx<EnvironmentType.BROWSER>(this, {
       chainId: this.chainId,
       dbid: actionBody.dbid,
       actionName: name,
@@ -119,7 +119,11 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
         actionBody.inputs[0] instanceof ActionInput
           ? (actionBody.inputs as ActionInput[])
           : new ActionInput().putFromObjects(actionBody.inputs as Entries[]);
-      msg = msg.concat(inputs);
+      msg = Object.assign(msg, {
+        // add action inputs to message
+        ...msg,
+        actionInputs: inputs,
+      });
     }
 
     /**
