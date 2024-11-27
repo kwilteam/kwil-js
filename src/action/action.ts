@@ -17,7 +17,7 @@ export interface ActionOptions {
   chainId: string;
   description: string;
   signer?: SignerSupplier;
-  identifier?: HexString | Uint8Array;
+  identifier?: Uint8Array;
   actionInputs?: ActionInput[];
   signatureType?: AnySignatureType;
   nonce?: number;
@@ -51,7 +51,7 @@ export class Action<T extends EnvironmentType> {
   public chainId: string;
   public description: string;
   public signer?: SignerSupplier;
-  public identifier?: HexString | Uint8Array;
+  public identifier?: Uint8Array;
   public actionInputs?: ActionInput[];
   public signatureType?: AnySignatureType;
   public nonce?: number;
@@ -70,19 +70,14 @@ export class Action<T extends EnvironmentType> {
       kwil,
       'Client is required for Action Builder. Please pass a valid Kwil Client.'
     );
-    this.actionName = objects.requireNonNil(
-      options.actionName,
-      'actionName cannot be null or undefined. Please specify the action or procedure name you wish to execute.'
-    );
-    this.dbid = objects.requireNonNil(
-      options.dbid,
-      'DBID cannot be null or undefined. Please specify the dbid of the database you wish to execute an action on.'
-    );
-    this.chainId = objects.requireNonNil(options.chainId, 'Chain ID cannot be null or undefined.');
-    this.description = objects.requireNonNil(
-      options.description,
-      'Description cannot be null or undefined.'
-    );
+
+    // Validate required parameters passed into Action Builder
+    objects.validateRequiredFields(options, ['actionName', 'dbid', 'chainId', 'description']);
+
+    this.actionName = options.actionName;
+    this.dbid = options.dbid;
+    this.chainId = options.chainId;
+    this.description = options.description;
 
     // Validate optional parameters if passed into Action Builder
     objects.validateOptionalFields(options, [
@@ -129,15 +124,12 @@ export class Action<T extends EnvironmentType> {
     this.actionInputs = TXN_BUILD_IN_PROGRESS;
 
     // retrieve the schema and run validations
-    const { dbid, actionName, preparedActions, modifiers } = await this.checkSchema(
-      cached as ActionInput[]
-    );
+    const { dbid, actionName, preparedActions, modifiers } = await this.checkSchema(cached);
 
     // throw runtime error if signer is null or undefined
-    const { signer, chainId, identifier, signatureType } = objects.validateFields(
+    const { signer, identifier, signatureType } = objects.validateFields(
       {
         signer: this.signer,
-        chainId: this.chainId,
         identifier: this.identifier,
         signatureType: this.signatureType,
       },
@@ -167,8 +159,8 @@ export class Action<T extends EnvironmentType> {
       description: this.description,
       challenge: this.challenge,
       signature: this.signature,
-      chainId: chainId,
-      identifier: identifier as Uint8Array, // Fix this. Seems hacky...
+      chainId: this.chainId,
+      identifier: identifier,
       nonce: this.nonce,
     })
       .buildTx()
@@ -188,9 +180,7 @@ export class Action<T extends EnvironmentType> {
     this.actionInputs = TXN_BUILD_IN_PROGRESS;
 
     // retrieve the schema and run validations
-    const { dbid, actionName, preparedActions, modifiers } = await this.checkSchema(
-      cached as ActionInput[]
-    );
+    const { dbid, actionName, preparedActions, modifiers } = await this.checkSchema(cached);
 
     // throw a runtime error if more than one set of inputs is trying to be executed. Call does not allow bulk execution.
     if (preparedActions && preparedActions.length > 1) {
@@ -204,9 +194,6 @@ export class Action<T extends EnvironmentType> {
       throw new Error(`Action ${actionName} is not a view only action. Please use kwil.execute().`);
     }
 
-    // resolve if a signer is or is not specified. Only actions with `mustsign` require a signer.
-    const signer = this.signer ? this.signer : null;
-
     // construct payload. If there are no prepared actions, then the payload is an empty array.
     const payload: UnencodedActionPayload<PayloadType.CALL_ACTION> = {
       dbid: dbid,
@@ -216,29 +203,22 @@ export class Action<T extends EnvironmentType> {
       // if there are nilArgs, then the first element in the array is the nilArgs.
     };
 
-    let msg = await Payload.createTx(this.kwil, {
+    let msg = Payload.createTx(this.kwil, {
       payload: payload,
       challenge: this.challenge,
       signature: this.signature,
     });
 
     // if a signer is specified, add the signer, signature type, identifier, and description to the message
-    if (signer) {
-      const identifier = await Promisy.resolveOrReject(this.identifier as Nillable<string>);
-      const signatureType = await Promisy.resolveOrReject(this.signatureType);
-
+    if (this.signer) {
       /**
        * assign signer to signer, signatureType to signatureType, identifier to identifier and this.description to description
        *  extend the `msg` object by adding the new properties while preserving the existing type
        */
-      //
-      msg = Object.assign(msg, {
-        ...msg,
-        signer: signer,
-        signatureType: signatureType,
-        identifier: identifier as unknown as Uint8Array,
-        description: this.description,
-      });
+      (msg.signer = this.signer),
+        (msg.signatureType = this.signatureType),
+        (msg.identifier = this.identifier),
+        (msg.description = this.description);
     }
 
     return await msg.buildMsg().finally(() => (this.actionInputs = cached));
@@ -277,70 +257,61 @@ export class Action<T extends EnvironmentType> {
    * @param {ActionInput[]} actions - The values of the actions to be executed.
    * @returns {CheckSchema} - An object containing the database identifier, action name, action schema, and prepared actions.
    */
-  private async checkSchema(actions: ActionInput[]): Promise<CheckSchema> {
-    // throw runtime errors is dbid or action name is null or undefined
-    const dbid = objects.requireNonNil(
-      this.dbid,
-      'dbid is required to execute or call an action or procedure.'
-    );
-
-    const name = objects.requireNonNil(
-      this.actionName,
-      'name is required to execute or call an action or procedure.'
-    );
-
+  private async checkSchema(actions?: ActionInput[]): Promise<CheckSchema> {
     // retrieve the schema for the database
-    const schema = await this.kwil.getSchema(dbid);
+    const schema = await this.kwil.getSchema(this.dbid);
 
     // throw an error if the schema does not have any actions.
     if (!schema?.data?.actions && !schema.data?.procedures) {
       throw new Error(
-        `Could not retrieve actions or procedures for database ${dbid}. Please double check that you have the correct DBID.`
+        `Could not retrieve actions or procedures for database ${this.dbid}. Please double check that you have the correct DBID.`
       );
     }
 
     // validate the the name exists on the schema.
-    const actionSchema = schema.data.actions?.find((a) => a.name === name);
-    const procedureSchema = schema.data.procedures?.find((p) => p.name === name);
+    const actionSchema = schema.data.actions?.find((a) => a.name === this.actionName);
+    const procedureSchema = schema.data.procedures?.find((p) => p.name === this.actionName);
 
     const foundActionOrProcedure = actionSchema || procedureSchema;
 
     if (!foundActionOrProcedure) {
       throw new Error(
-        `Could not find action or procedure ${name} in database ${dbid}. Please double check that you have the correct DBID and action name.`
+        `Could not find action or procedure ${this.actionName} in database ${this.dbid}. Please double check that you have the correct DBID and action name.`
       );
     }
 
+    const validated = objects.validateRequiredFields(foundActionOrProcedure, ['name', 'public']);
+
     const execSchema: ExecSchema = actionSchema
       ? {
-          name: actionSchema.name,
-          public: actionSchema.public,
+          name: validated.name,
+          public: validated.public,
           parameters: actionSchema.parameters,
           modifiers: actionSchema.modifiers,
         }
       : {
           // if we have reached this point and actionSchema is null, then we know that procedureSchema is not null.
-          name: procedureSchema?.name as string,
-          public: procedureSchema?.public as boolean,
-          parameters: (procedureSchema?.parameters?.map((p) => p.name) as string[]) || [],
-          modifiers: procedureSchema?.modifiers as string[],
+          name: validated.name,
+          public: validated.public,
+          parameters: procedureSchema?.parameters?.map((p) => p.name) || [],
+          modifiers: procedureSchema?.modifiers,
         };
 
     if (actions) {
       // ensure that no action inputs or values are missing
-      const preparedActions = this.prepareActions(actions, execSchema, name);
+      const preparedActions = this.prepareActions(actions, execSchema, this.actionName);
 
       return {
-        dbid: dbid,
-        actionName: name,
+        dbid: this.dbid,
+        actionName: this.actionName,
         modifiers: execSchema.modifiers,
         preparedActions,
       };
     }
 
     return {
-      dbid: dbid,
-      actionName: name,
+      dbid: this.dbid,
+      actionName: this.actionName,
       modifiers: execSchema.modifiers,
       preparedActions: [],
     };

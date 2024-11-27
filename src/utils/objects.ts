@@ -107,11 +107,12 @@ export const objects = {
    * @param fields - An array of field names to validate.
    * @throws Error if any field is explicitly provided but null.
    */
-  validateRequiredFields<T>(options: T, fields: (keyof T)[]): void {
+  validateRequiredFields<T>(options: T, fields: (keyof T)[]): T {
     fields.forEach((field) => {
       if (options[field] === undefined && options[field] === null) {
         throw new Error(`${String(field)} must not be null.`);
       }
     });
+    return options;
   },
 };

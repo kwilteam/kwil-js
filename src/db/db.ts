@@ -56,20 +56,20 @@ export class DB<T extends EnvironmentType> {
       payloadType,
       'PayloadType is required for DbBuilder. Please pass a valid PayloadType.'
     );
-    this.signer = objects.requireNonNil(
-      options.signer,
-      'No signer provided. Please specify a signing function or pass an Ethers signer in the KwilSigner.'
-    );
-    this.payload = objects.requireNonNil(options.payload, 'dbBuilder payload cannot be null');
-    this.identifier = objects.requireNonNil(
-      options.identifier,
-      'Identifier is required for DbBuilder. Please pass a valid identifier to the .identifier() method.'
-    );
-    this.signatureType = objects.requireNonNil(
-      options.signatureType,
-      'Signature type cannot be null or undefined. Please specify signature type.'
-    );
-    this.chainId = objects.requireNonNil(options.chainId, 'Chain ID cannot be null or undefined.');
+
+    objects.validateRequiredFields(options, [
+      'signer',
+      'payload',
+      'identifier',
+      'signatureType',
+      'chainId',
+    ]);
+
+    this.signer = options.signer;
+    this.payload = options.payload;
+    this.identifier = options.identifier;
+    this.signatureType = options.signatureType;
+    this.chainId = options.chainId;
 
     // Validate optional parameters if pass into DB Builder
     objects.validateOptionalFields(options, ['description', 'nonce']);
