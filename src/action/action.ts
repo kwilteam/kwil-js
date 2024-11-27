@@ -45,18 +45,18 @@ const TXN_BUILD_IN_PROGRESS: ActionInput[] = [];
  * `Action` class creates a transaction to execute database actions on the Kwil network.
  */
 export class Action<T extends EnvironmentType> {
-  private kwil: Kwil<T>;
-  private actionName: string;
-  private dbid: string;
-  private chainId: string;
-  private description: string;
-  private signer?: SignerSupplier;
-  private identifier?: HexString | Uint8Array;
-  private actionInputs?: ActionInput[];
-  private signatureType?: AnySignatureType;
-  private nonce?: number;
-  private challenge?: string;
-  private signature?: Signature<BytesEncodingStatus.BASE64_ENCODED>;
+  public kwil: Kwil<T>;
+  public actionName: string;
+  public dbid: string;
+  public chainId: string;
+  public description: string;
+  public signer?: SignerSupplier;
+  public identifier?: HexString | Uint8Array;
+  public actionInputs?: ActionInput[];
+  public signatureType?: AnySignatureType;
+  public nonce?: number;
+  public challenge?: string;
+  public signature?: Signature<BytesEncodingStatus.BASE64_ENCODED>;
 
   /**
    * Initializes a new `Action` instance.

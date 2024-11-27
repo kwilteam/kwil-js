@@ -1,9 +1,5 @@
 import { Config } from '../../api_client/config';
-import {
-  ActionInput,
-  Entries,
-  ActionBodyNode,
-} from '../../core/action';
+import { ActionInput, Entries, ActionBodyNode } from '../../core/action';
 import { AuthenticationMode, BytesEncodingStatus, EnvironmentType } from '../../core/enums';
 import { KwilSigner } from '../../core/kwilSigner';
 import { BaseMessage, Message, MsgReceipt } from '../../core/message';
@@ -140,25 +136,22 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
   ): Promise<Message> {
     const name = !actionBody.name && actionBody.action ? actionBody.action : actionBody.name;
 
+    let inputs;
+    if (actionBody.inputs) {
+      inputs =
+        actionBody.inputs[0] instanceof ActionInput
+          ? (actionBody.inputs as ActionInput[])
+          : new ActionInput().putFromObjects(actionBody.inputs as Entries[]);
+    }
+
     // pre Challenge message
     let msg = Action.createTx<EnvironmentType.NODE>(this, {
       chainId: this.chainId,
       dbid: actionBody.dbid,
       actionName: name,
       description: actionBody.description || '',
+      actionInputs: inputs,
     });
-
-    if (actionBody.inputs) {
-      const inputs =
-        actionBody.inputs[0] instanceof ActionInput
-          ? (actionBody.inputs as ActionInput[])
-          : new ActionInput().putFromObjects(actionBody.inputs as Entries[]);
-      msg = Object.assign(msg, {
-        // add action inputs to message
-        ...msg,
-        actionInputs: inputs,
-      });
-    }
 
     /**
      * PUBLIC MODE
@@ -179,12 +172,9 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
     if (kwilSigner && this.authMode === AuthenticationMode.PRIVATE) {
       if (challenge && signature) {
         // add challenge and signature to the message
-        msg = Object.assign(msg, {
-          ...msg,
-          challenge: challenge,
-          signature: signature,
-        });
-        this.addSignerToMessage(msg, kwilSigner);
+        (msg.challenge = challenge),
+          (msg.signature = signature),
+          this.addSignerToMessage(msg, kwilSigner);
       }
     }
 
@@ -203,12 +193,10 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
     msg: Action<EnvironmentType.NODE>,
     kwilSigner: KwilSigner
   ): Action<EnvironmentType.NODE> {
-    msg = Object.assign(msg, {
-      ...msg,
-      signer: kwilSigner.signer,
-      signatureType: kwilSigner.signatureType,
-      identifier: kwilSigner.identifier,
-    });
+    (msg.signer = kwilSigner.signer),
+      (msg.signatureType = kwilSigner.signatureType),
+      (msg.identifier = kwilSigner.identifier);
+
     return msg;
   }
 

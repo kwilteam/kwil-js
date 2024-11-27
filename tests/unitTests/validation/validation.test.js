@@ -4,36 +4,109 @@ const ethers = require('ethers');
 require('dotenv').config();
 
 describe('Kwil Parameter Validation Tests', () => {
-  const provider = new ethers.JsonRpcProvider(process.env.ETH_PROVIDER);
+  const provider = new ethers.JsonRpcProvider(process.env.ETH_PROVIDER); // provider
   const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider); // signer
-  const txHash = '90a922292d2a057c0ea9d8f34162a4ba1673c8c7146a565ca66c90b40b42b150';
   const address = wallet.address; // address
 
-  it('should return the correct validation error if null or undefined parameter is provided', () => {
-    function throwError() {
-        throw new Error('Chain ID cannot be null or undefined.');
-      }
+  const kwil = new kwiljs.NodeKwil({
+    kwilProvider: process.env.KWIL_PROVIDER || 'SHOULD FAIL',
+    chainId: '',
+    timeout: 10000,
+    logging: true,
+  });
+
+  it('should return a validation error if the identifier/address is null or undefined', async () => {
     const kwil = new kwiljs.NodeKwil({
       kwilProvider: process.env.KWIL_PROVIDER || 'SHOULD FAIL',
-      // chainId: chainId,
+      chainId: '',
       timeout: 10000,
       logging: true,
     });
-    const kSigner = new kwiljs.KwilSigner(wallet, address);
-    console.log(kSigner);
+
+    // PROVIDE WALLET/SIGNER BUT NO ADDRESS/IDENTIFIER
+    const kSigner = new kwiljs.KwilSigner(wallet);
+
     const dbid = kwil.getDBID(address, 'social');
 
-    function dropDb(kwil, signer, dbid) {
-      const body = {
-        dbid: dbid,
-        description: 'show me this',
-      };
-      const res = kwil.drop(body, signer, true);
+    const body = {
+      dbid: dbid,
+      description: 'drop this db',
+    };
 
-      logger(res);
-    }
+    await expect(kwil.drop(body, kSigner, true)).rejects.toThrowError();
+  });
 
-    dropDb(kwil, kSigner, dbid);
-    expect(() => throwError()).toThrow('Chain ID cannot be null or undefined.')
+  it('should return a validation error if the chain id is null or undefined', async () => {
+    // NO PROVIDER PROVIDED
+    const kwilNoChainId = new kwiljs.NodeKwil({
+      kwilProvider: process.env.KWIL_PROVIDER || 'SHOULD FAIL',
+      timeout: 10000,
+      logging: true,
+    });
+
+    const kSigner = new kwiljs.KwilSigner(wallet, address);
+
+    const dbid = kwilNoChainId.getDBID(address, 'social');
+
+    const body = {
+      dbid: dbid,
+      description: 'drop this db',
+    };
+
+    await expect(kwilNoChainId.drop(body, kSigner, true)).rejects.toThrowError();
+  });
+
+  it('should return a validation error if the dbid is null or undefined when performing an action', async () => {
+    const kwil = new kwiljs.NodeKwil({
+      kwilProvider: process.env.KWIL_PROVIDER || 'SHOULD FAIL',
+      chainId: '',
+      timeout: 10000,
+      logging: true,
+    });
+
+    const kSigner = new kwiljs.KwilSigner(wallet, address);
+
+    const actionBody = {
+      // NO DBID PROVIDED
+      name: 'add_post',
+      inputs: [
+        {
+          $user: 'Ty',
+          $title: 'Test Post',
+          $body: 'This is a test post',
+        },
+      ],
+      description: 'This is a test action',
+    };
+
+    await expect(kwil.execute(actionBody, kSigner)).rejects.toThrowError();
+  });
+
+  it('should return a validation error if the actionName is null or undefined when performing an action', async () => {
+    const kwil = new kwiljs.NodeKwil({
+      kwilProvider: process.env.KWIL_PROVIDER || 'SHOULD FAIL',
+      chainId: '',
+      timeout: 10000,
+      logging: true,
+    });
+
+    const kSigner = new kwiljs.KwilSigner(wallet, address);
+
+    const dbid = kwil.getDBID(address, 'social');
+
+    const actionBody = {
+      dbid,
+      // NO ACTION NAME PROVIDED
+      inputs: [
+        {
+          $id: 3,
+          $title: 'tampa',
+          $content: 'l cool',
+          $date_string: '11-22-2024',
+        },
+      ],
+    };
+
+    await expect(kwil.execute(actionBody, kSigner)).rejects.toThrowError();
   });
 });

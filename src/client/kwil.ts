@@ -153,6 +153,15 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
   ): Promise<GenericResponse<TxReceipt>> {
     const name = !actionBody.name && actionBody.action ? actionBody.action : actionBody.name;
 
+    let inputs;
+    if (actionBody.inputs) {
+      inputs = (actionBody.inputs as ActionInput[]).every(
+        (item: ActionInput) => item instanceof ActionInput
+      )
+        ? (actionBody.inputs as ActionInput[])
+        : new ActionInput().putFromObjects(actionBody.inputs as Entries[]);
+    }
+
     let tx = Action.createTx(this, {
       dbid: actionBody.dbid,
       actionName: name.toLowerCase(),
@@ -162,20 +171,8 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       signer: kwilSigner.signer,
       signatureType: kwilSigner.signatureType,
       nonce: actionBody.nonce,
+      actionInputs: inputs,
     });
-
-    if (actionBody.inputs) {
-      const inputs = (actionBody.inputs as ActionInput[]).every(
-        (item: ActionInput) => item instanceof ActionInput
-      )
-        ? (actionBody.inputs as ActionInput[])
-        : new ActionInput().putFromObjects(actionBody.inputs as Entries[]);
-      tx = Object.assign(tx, {
-        // add action inputs to message
-        ...tx,
-        actionInputs: inputs,
-      });
-    }
 
     const transaction = await tx.buildTx();
 

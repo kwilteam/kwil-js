@@ -35,17 +35,17 @@ export interface PayloadOptions {
  * `Payload` class creates a transaction and call payloads that can be sent over GRPC.
  */
 export class Payload<T extends EnvironmentType> {
-  private kwil: Kwil<T>;
-  private payload: (() => AllPayloads) | AllPayloads;
-  private payloadType?: PayloadType;
-  private signer?: SignerSupplier;
-  private identifier?: Uint8Array;
-  private signatureType?: AnySignatureType;
-  private chainId?: string;
-  private description?: string;
-  private nonce?: number;
-  private challenge?: string;
-  private signature?: Signature<BytesEncodingStatus.BASE64_ENCODED>;
+  public kwil: Kwil<T>;
+  public payload: (() => AllPayloads) | AllPayloads;
+  public payloadType?: PayloadType;
+  public signer?: SignerSupplier;
+  public identifier?: Uint8Array;
+  public signatureType?: AnySignatureType;
+  public chainId?: string;
+  public description?: string;
+  public nonce?: number;
+  public challenge?: string;
+  public signature?: Signature<BytesEncodingStatus.BASE64_ENCODED>;
 
   /**
    * Initializes a new `Payload` instance.

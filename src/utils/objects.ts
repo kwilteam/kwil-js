@@ -28,22 +28,18 @@ export const objects = {
     return !objects.isNil(value);
   },
   /**
-   * Helper function to validate required fields with a standard error message format.
+   * Helper function to validate required fields with a requireNonNil error.
    * @param values An object containing field names and their corresponding values.
    * @param errorMessageTemplate A function to generate error messages dynamically.
    */
-  validateFields: <T extends Record<string, unknown>>(
+  validateFields: <T extends Record<string, any>>(
     values: T,
     errorMessageTemplate: (fieldName: keyof T) => string
   ): { [K in keyof T]: NonNil<T[K]> } => {
-    const validatedFields = {} as { [K in keyof T]: NonNil<T[K]> };
-    for (const [fieldName, value] of Object.entries(values)) {
-      validatedFields[fieldName as keyof T] = objects.requireNonNil(
-        value,
-        errorMessageTemplate(fieldName as keyof T)
-      ) as NonNil<T[typeof fieldName]>;
+    for (const key in values) {
+      objects.requireNonNil(values[key], errorMessageTemplate(key));
     }
-    return validatedFields;
+    return values;
   },
   // If value is null or undefined, then an error is thrown, else
   // value is returned.

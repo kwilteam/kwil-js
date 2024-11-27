@@ -31,15 +31,15 @@ export interface DBOptions {
  * `DB` class creates a transaction to deploy or drop a new database on the Kwil network.
  */
 export class DB<T extends EnvironmentType> {
-  private readonly kwil: Kwil<T>;
-  private payloadType: DeployOrDrop;
-  private signer: SignerSupplier;
-  private payload: () => CompiledKuneiform | DropDbPayload;
-  private identifier: Uint8Array;
-  private signatureType: AnySignatureType;
-  private chainId: string;
-  private description?: string;
-  private nonce?: number;
+  public readonly kwil: Kwil<T>;
+  public payloadType: DeployOrDrop;
+  public signer: SignerSupplier;
+  public payload: () => CompiledKuneiform | DropDbPayload;
+  public identifier: Uint8Array;
+  public signatureType: AnySignatureType;
+  public chainId: string;
+  public description?: string;
+  public nonce?: number;
 
   /**
    * Initializes a new `Kwil Database` instance.
