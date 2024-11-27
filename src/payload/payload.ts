@@ -19,7 +19,7 @@ import { bytesToHex, stringToBytes } from '../utils/serial';
 import { strings } from '../utils/strings';
 
 export interface PayloadOptions {
-  payload: (() => AllPayloads) | AllPayloads;
+  payload: AllPayloads;
   payloadType?: PayloadType;
   signer?: SignerSupplier;
   identifier?: Uint8Array;
@@ -36,7 +36,7 @@ export interface PayloadOptions {
  */
 export class Payload<T extends EnvironmentType> {
   public kwil: Kwil<T>;
-  public payload: (() => AllPayloads) | AllPayloads;
+  public payload: AllPayloads;
   public payloadType?: PayloadType;
   public signer?: SignerSupplier;
   public identifier?: Uint8Array;
@@ -98,8 +98,6 @@ export class Payload<T extends EnvironmentType> {
    * Build the payload structure for a transaction.
    */
   async buildTx(): Promise<Transaction> {
-    const resolvedPayload = await this.resolvePayload();
-
     // ensure required fields are not null or undefined
     const { signer, payloadType, identifier, signatureType, chainId } = objects.validateFields(
       {
@@ -115,7 +113,7 @@ export class Payload<T extends EnvironmentType> {
     // create transaction payload for estimating cost. Set the Tx bytes type to base64 encoded because we need to make GRPC estimate cost request.
     const preEstTxn = Txn.create<BytesEncodingStatus.BASE64_ENCODED>((tx) => {
       // rlp encode the payload and convert to base64
-      tx.body.payload = bytesToBase64(kwilEncode(resolvedPayload));
+      tx.body.payload = bytesToBase64(kwilEncode(this.payload));
       tx.body.type = payloadType;
       tx.sender = bytesToHex(identifier);
     });
@@ -225,10 +223,8 @@ Kwil Chain ID: ${tx.body.chain_id}
    * Build the payload structure for a message.
    */
   async buildMsg(): Promise<Message> {
-    const resolvedPayload = await this.resolvePayload();
-
     let msg = Msg.create<BytesEncodingStatus.UINT8_ENCODED>((msg) => {
-      msg.body.payload = resolvedPayload as UnencodedActionPayload<PayloadType.CALL_ACTION>;
+      msg.body.payload = this.payload as UnencodedActionPayload<PayloadType.CALL_ACTION>;
       msg.body.challenge = this.challenge;
       msg.signature = this.signature;
     });
@@ -250,7 +246,7 @@ Kwil Chain ID: ${tx.body.chain_id}
     // return the unsigned message, with the payload base64 encoded
     return Msg.copy<BytesEncodingStatus.BASE64_ENCODED>(msg, (msg) => {
       // rlp encode the payload and convert to base64 for transport over GRPC
-      msg.body.payload = bytesToBase64(kwilEncode(resolvedPayload));
+      msg.body.payload = bytesToBase64(kwilEncode(this.payload));
     });
   }
 
@@ -282,25 +278,5 @@ Kwil Chain ID: ${tx.body.chain_id}
       // bytes must be base64 encoded for transport over GRPC
       msg.sender = bytesToHex(identifier);
     });
-  }
-
-  /**
-   * Execute lazy evaluation of payload.
-   *
-   * @returns {AllPayloads} - A promise that resolves to the provided payload object.
-   */
-  private async resolvePayload(): Promise<AllPayloads> {
-    const payloadValue = objects.requireNonNil(
-      this.payload,
-      'payload is required to build the payload.'
-    );
-
-    // Check if the payloadValue is a function and call it if it is
-    const resolvedPayload =
-      typeof payloadValue === 'function'
-        ? objects.requireNonNil(payloadValue(), 'payload cannot resolve to be null.')
-        : objects.requireNonNil(payloadValue, 'payload cannot resolve to be null.');
-
-    return resolvedPayload;
   }
 }

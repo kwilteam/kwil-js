@@ -19,7 +19,7 @@ import { Promisy } from '../utils/types';
 
 export interface DBOptions {
   signer: SignerSupplier;
-  payload: () => CompiledKuneiform | DropDbPayload;
+  payload: CompiledKuneiform | DropDbPayload;
   identifier: Uint8Array;
   signatureType: AnySignatureType;
   chainId: string;
@@ -34,7 +34,7 @@ export class DB<T extends EnvironmentType> {
   public readonly kwil: Kwil<T>;
   public payloadType: DeployOrDrop;
   public signer: SignerSupplier;
-  public payload: () => CompiledKuneiform | DropDbPayload;
+  public payload: CompiledKuneiform | DropDbPayload;
   public identifier: Uint8Array;
   public signatureType: AnySignatureType;
   public chainId: string;
@@ -108,27 +108,14 @@ export class DB<T extends EnvironmentType> {
    * @throws Will throw an error if there is an issue with the account retrieval.
    */
   async buildTx(): Promise<Transaction> {
-    // throw runtime error if payload is null or undefined
-    const ensuredPayload = objects.requireNonNil(
-      this.payload,
-      'dbBuilder payload cannot be null or undefined'
-    );
-    // ensure payload is a callback function for lazy evaluation
-    this.payload =
-      typeof ensuredPayload !== 'function'
-        ? () => ensuredPayload
-        : (ensuredPayload as () => CompiledKuneiform | DropDbPayload);
-
-    // create a "clean payload" that equals the current callback
-    let cleanedPayload: () => AllPayloads = () => ensuredPayload();
-
+    let cleanedPayload: AllPayloads = this.payload;
     // if it is a deploy database, we need to add all of the required fields and field order to make it RLP encodable. The Kuneiform parser does not include null fields.
     if (this.payloadType === PayloadType.DEPLOY_DATABASE) {
       // make the payload encodable
-      const encodablePayload = this.makePayloadEncodable(ensuredPayload as () => CompiledKuneiform);
+      const encodablePayload = this.makePayloadEncodable(this.payload as CompiledKuneiform);
 
       // reassign "clean payload" to be a callback function that returns the encodable payload in the correct order
-      cleanedPayload = () => enforceDatabaseOrder(encodablePayload);
+      cleanedPayload = enforceDatabaseOrder(encodablePayload);
     }
 
     if (!this.signatureType) {
@@ -164,10 +151,10 @@ export class DB<T extends EnvironmentType> {
    * @param payload
    * @returns
    */
-  private makePayloadEncodable(payload: () => CompiledKuneiform): EncodeableDatabase {
+  private makePayloadEncodable(payload: CompiledKuneiform): EncodeableDatabase {
     // check if the payload has the required fields for the database
 
-    const resolvedPayload = payload();
+    const resolvedPayload = payload;
 
     // @ts-ignore
     let db = resolvedPayload as EncodeableDatabase;

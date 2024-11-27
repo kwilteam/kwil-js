@@ -197,7 +197,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
   ): Promise<GenericResponse<TxReceipt>> {
     let transaction = await DB.createTx(this, PayloadType.DEPLOY_DATABASE, {
       description: deployBody.description || '',
-      payload: () => deployBody.schema,
+      payload: deployBody.schema,
       identifier: kwilSigner.identifier,
       signer: kwilSigner.signer,
       signatureType: kwilSigner.signatureType,
@@ -226,7 +226,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
   ): Promise<GenericResponse<TxReceipt>> {
     let transaction = await DB.createTx(this, PayloadType.DROP_DATABASE, {
       description: dropBody.description || '',
-      payload: () => ({ dbid: dropBody.dbid }),
+      payload: ({ dbid: dropBody.dbid }),
       identifier: kwilSigner.identifier,
       signer: kwilSigner.signer,
       signatureType: kwilSigner.signatureType,
