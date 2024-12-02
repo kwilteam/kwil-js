@@ -13,7 +13,7 @@ import { enforceDatabaseOrder } from '../core/order';
 import { AllPayloads, CompiledKuneiform, DropDbPayload } from '../core/payload';
 import { AnySignatureType, getSignatureType, SignatureType } from '../core/signature';
 import { Transaction } from '../core/tx';
-import { Payload } from '../payload/payload';
+import { PayloadTx } from '../payload/payloadTx';
 import { objects } from '../utils/objects';
 import { Promisy } from '../utils/types';
 
@@ -23,7 +23,7 @@ export interface DBOptions {
   identifier: Uint8Array;
   signatureType: AnySignatureType;
   chainId: string;
-  description?: string;
+  description: string;
   nonce?: number;
 }
 
@@ -38,7 +38,7 @@ export class DB<T extends EnvironmentType> {
   public identifier: Uint8Array;
   public signatureType: AnySignatureType;
   public chainId: string;
-  public description?: string;
+  public description: string;
   public nonce?: number;
 
   /**
@@ -89,14 +89,6 @@ export class DB<T extends EnvironmentType> {
     payloadType: DeployOrDrop,
     options: DBOptions
   ): DB<T> {
-    objects.requireNonNil(
-      kwil,
-      'client is required for Db creator. Please pass a valid Kwil client. This is an internal error, please create an issue.'
-    ),
-      objects.requireNonNil(
-        payloadType,
-        'payloadType is required for DbBuilder. Please pass a valid PayloadType. This is an internal error, please create an issue.'
-      );
     return new DB<T>(kwil, payloadType, options);
   }
 
@@ -112,7 +104,7 @@ export class DB<T extends EnvironmentType> {
     // if it is a deploy database, we need to add all of the required fields and field order to make it RLP encodable. The Kuneiform parser does not include null fields.
     if (this.payloadType === PayloadType.DEPLOY_DATABASE) {
       // make the payload encodable
-      const encodablePayload = this.makePayloadEncodable(this.payload as CompiledKuneiform);
+      const encodablePayload = this.makePayloadEncodable(this.payload);
 
       // reassign "clean payload" to be a callback function that returns the encodable payload in the correct order
       cleanedPayload = enforceDatabaseOrder(encodablePayload);
@@ -133,7 +125,7 @@ export class DB<T extends EnvironmentType> {
     );
 
     // build transaction
-    return await Payload.createTx(this.kwil, {
+    return await PayloadTx.createTx(this.kwil, {
       payloadType: this.payloadType,
       payload: cleanedPayload,
       signer: this.signer,
@@ -151,7 +143,7 @@ export class DB<T extends EnvironmentType> {
    * @param payload
    * @returns
    */
-  private makePayloadEncodable(payload: CompiledKuneiform): EncodeableDatabase {
+  private makePayloadEncodable(payload: AllPayloads): EncodeableDatabase {
     // check if the payload has the required fields for the database
 
     const resolvedPayload = payload;

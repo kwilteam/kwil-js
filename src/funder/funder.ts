@@ -11,7 +11,7 @@ import { GenericResponse } from '../core/resreq';
 import { Transaction, TxReceipt } from '../core/tx';
 import { hexToBytes } from '../utils/serial';
 import { TransferBody } from './funding_types';
-import { Payload } from '../payload/payload';
+import { PayloadTx } from '../payload/payloadTx';
 
 interface FunderClient {
   broadcastClient(
@@ -48,9 +48,9 @@ export class Funder<T extends EnvironmentType> {
       amount: payload.amount.toString(),
     };
 
-    const transaction = await Payload.createTx(this.kwil, {
+    const transaction = await PayloadTx.createTx(this.kwil, {
       chainId: this.chainId,
-      description: payload.description,
+      description: payload.description!,
       payload: txPayload,
       payloadType: PayloadType.TRANSFER,
       identifier: signer.identifier,

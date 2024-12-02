@@ -120,7 +120,7 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
       dbid: actionBody.dbid,
       actionName: name,
       description: actionBody.description || '',
-      actionInputs: inputs,
+      actionInputs: inputs || [],
     });
 
     /**

@@ -6,19 +6,19 @@ import { Message } from '../core/message';
 import { EncodedValue, UnencodedActionPayload } from '../core/payload';
 import { AnySignatureType, Signature } from '../core/signature';
 import { Transaction } from '../core/tx';
-import { Payload } from '../payload/payload';
+import { PayloadTx } from '../payload/payloadTx';
+import { PayloadMsg } from '../payload/payloadMsg';
 import { objects } from '../utils/objects';
 import { encodeNestedArguments } from '../utils/rlp';
-import { HexString, Nillable, Promisy } from '../utils/types';
 
 export interface ActionOptions {
   actionName: string;
   dbid: string;
   chainId: string;
   description: string;
+  actionInputs: ActionInput[];
   signer?: SignerSupplier;
   identifier?: Uint8Array;
-  actionInputs?: ActionInput[];
   signatureType?: AnySignatureType;
   nonce?: number;
   challenge?: string;
@@ -50,9 +50,9 @@ export class Action<T extends EnvironmentType> {
   public dbid: string;
   public chainId: string;
   public description: string;
+  public actionInputs: ActionInput[];
   public signer?: SignerSupplier;
   public identifier?: Uint8Array;
-  public actionInputs?: ActionInput[];
   public signatureType?: AnySignatureType;
   public nonce?: number;
   public challenge?: string;
@@ -72,12 +72,19 @@ export class Action<T extends EnvironmentType> {
     );
 
     // Validate required parameters passed into Action Builder
-    objects.validateRequiredFields(options, ['actionName', 'dbid', 'chainId', 'description']);
+    objects.validateRequiredFields(options, [
+      'actionName',
+      'dbid',
+      'chainId',
+      'description',
+      'actionInputs',
+    ]);
 
     this.actionName = options.actionName;
     this.dbid = options.dbid;
     this.chainId = options.chainId;
     this.description = options.description;
+    this.actionInputs = options.actionInputs;
 
     // Validate optional parameters if passed into Action Builder
     objects.validateOptionalFields(options, [
@@ -90,7 +97,6 @@ export class Action<T extends EnvironmentType> {
 
     this.signer = options.signer;
     this.identifier = options.identifier;
-    this.actionInputs = options.actionInputs;
     this.signatureType = options.signatureType;
     this.nonce = options.nonce;
     this.challenge = options.challenge;
@@ -104,11 +110,6 @@ export class Action<T extends EnvironmentType> {
    * @param options - The options to configure the Action instance.
    */
   static createTx<T extends EnvironmentType>(kwil: Kwil<T>, options: ActionOptions): Action<T> {
-    objects.requireNonNil(
-      kwil,
-      'client is required for DbBuilder. Please pass a valid Kwil client. This is an internal error, please create an issue.'
-    );
-
     return new Action<T>(kwil, options);
   }
   /**
@@ -151,14 +152,12 @@ export class Action<T extends EnvironmentType> {
     };
 
     // build the transaction
-    return await Payload.createTx(this.kwil, {
+    return await PayloadTx.createTx(this.kwil, {
       payloadType: PayloadType.EXECUTE_ACTION,
       payload: payload,
       signer: signer,
       signatureType: signatureType,
       description: this.description,
-      challenge: this.challenge,
-      signature: this.signature,
       chainId: this.chainId,
       identifier: identifier,
       nonce: this.nonce,
@@ -203,52 +202,23 @@ export class Action<T extends EnvironmentType> {
       // if there are nilArgs, then the first element in the array is the nilArgs.
     };
 
-    let msg = Payload.createTx(this.kwil, {
-      payload: payload,
+    // build message
+    let msg = PayloadMsg.createMsg(payload, {
       challenge: this.challenge,
       signature: this.signature,
     });
 
-    // if a signer is specified, add the signer, signature type, identifier, and description to the message
+    /**
+     * if a signer is specified, add the signer, signature type, identifier, and description to the message
+     * ex => if the @caller contextual variable is present in a kuneiform block for kwil.call()
+     */
     if (this.signer) {
-      /**
-       * assign signer to signer, signatureType to signatureType, identifier to identifier and this.description to description
-       *  extend the `msg` object by adding the new properties while preserving the existing type
-       */
       (msg.signer = this.signer),
-        (msg.signatureType = this.signatureType),
-        (msg.identifier = this.identifier),
-        (msg.description = this.description);
+        (msg.signatureType = this.signatureType!),
+        (msg.identifier = this.identifier!);
     }
 
     return await msg.buildMsg().finally(() => (this.actionInputs = cached));
-  }
-
-  /**
-   * Adds actionInputs to the list of inputs to be executed in the action.
-   */
-  concat(actions: ActionInput[] | ActionInput): Action<T> {
-    this.assertNotBuilding();
-
-    // if actions is not an array, convert it to an array
-    if (!Array.isArray(actions)) {
-      actions = [actions];
-    }
-
-    // loop over array of actions and add them to the list of actions
-    for (const action of actions) {
-      // push action into array and throw runtime error if action is null or undefined
-      if (this.actionInputs) {
-        this.actionInputs.push(
-          objects.requireNonNil(
-            action,
-            'action cannot be null or undefined. Please pass a valid ActionInput object.'
-          )
-        );
-      }
-    }
-
-    return this;
   }
 
   /**

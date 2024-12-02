@@ -37,6 +37,7 @@ export type EncodeableDatabase = Omit<Database, 'tables' | 'procedures' | 'forei
   tables: ReadonlyArray<CompiledTable>;
   procedures: ReadonlyArray<CompiledProcedure>;
   foreign_calls: ReadonlyArray<CompiledForeignProcedure>;
+  type?: 'encodeable_database';
 };
 
 export interface Database {

@@ -16,7 +16,7 @@ import {
 } from '../core/enums';
 import { hexToBytes } from '../utils/serial';
 import { isNearPubKey, nearB58ToHex } from '../utils/keys';
-import { ActionBody, ActionInput, Entries } from '../core/action';
+import { ActionBody, ActionInput } from '../core/action';
 import { KwilSigner } from '../core/kwilSigner';
 import { wrap } from './intern';
 import { Funder } from '../funder/funder';
@@ -155,11 +155,9 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
 
     let inputs;
     if (actionBody.inputs) {
-      inputs = (actionBody.inputs as ActionInput[]).every(
-        (item: ActionInput) => item instanceof ActionInput
-      )
-        ? (actionBody.inputs as ActionInput[])
-        : new ActionInput().putFromObjects(actionBody.inputs as Entries[]);
+      inputs = actionBody.inputs.every((item) => item instanceof ActionInput)
+        ? actionBody.inputs
+        : new ActionInput().putFromObjects(actionBody.inputs);
     }
 
     let tx = Action.createTx(this, {
@@ -171,7 +169,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       signer: kwilSigner.signer,
       signatureType: kwilSigner.signatureType,
       nonce: actionBody.nonce,
-      actionInputs: inputs,
+      actionInputs: inputs || [],
     });
 
     const transaction = await tx.buildTx();
@@ -226,7 +224,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
   ): Promise<GenericResponse<TxReceipt>> {
     let transaction = await DB.createTx(this, PayloadType.DROP_DATABASE, {
       description: dropBody.description || '',
-      payload: ({ dbid: dropBody.dbid }),
+      payload: { dbid: dropBody.dbid },
       identifier: kwilSigner.identifier,
       signer: kwilSigner.signer,
       signatureType: kwilSigner.signatureType,

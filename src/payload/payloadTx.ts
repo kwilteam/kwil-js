@@ -7,9 +7,8 @@ import {
   PayloadType,
   SerializationType,
 } from '../core/enums';
-import { BaseMessage, Message, Msg } from '../core/message';
-import { AllPayloads, UnencodedActionPayload } from '../core/payload';
-import { AnySignatureType, executeSign, Signature, SignatureType } from '../core/signature';
+import { AllPayloads } from '../core/payload';
+import { AnySignatureType, executeSign, SignatureType } from '../core/signature';
 import { BaseTransaction, Transaction, Txn } from '../core/tx';
 import { base64ToBytes, bytesToBase64 } from '../utils/base64';
 import { sha256BytesToBytes } from '../utils/crypto';
@@ -18,41 +17,37 @@ import { kwilEncode } from '../utils/rlp';
 import { bytesToHex, stringToBytes } from '../utils/serial';
 import { strings } from '../utils/strings';
 
-export interface PayloadOptions {
+export interface PayloadTxOptions {
   payload: AllPayloads;
-  payloadType?: PayloadType;
-  signer?: SignerSupplier;
-  identifier?: Uint8Array;
-  signatureType?: AnySignatureType;
-  chainId?: string;
-  description?: string;
+  payloadType: PayloadType;
+  signer: SignerSupplier;
+  identifier: Uint8Array;
+  signatureType: AnySignatureType;
+  chainId: string;
+  description: string;
   nonce?: number;
-  challenge?: string;
-  signature?: Signature<BytesEncodingStatus.BASE64_ENCODED>;
 }
 
 /**
  * `Payload` class creates a transaction and call payloads that can be sent over GRPC.
  */
-export class Payload<T extends EnvironmentType> {
+export class PayloadTx<T extends EnvironmentType> {
   public kwil: Kwil<T>;
   public payload: AllPayloads;
-  public payloadType?: PayloadType;
-  public signer?: SignerSupplier;
-  public identifier?: Uint8Array;
-  public signatureType?: AnySignatureType;
-  public chainId?: string;
-  public description?: string;
+  public payloadType: PayloadType;
+  public signer: SignerSupplier;
+  public identifier: Uint8Array;
+  public signatureType: AnySignatureType;
+  public chainId: string;
+  public description: string;
   public nonce?: number;
-  public challenge?: string;
-  public signature?: Signature<BytesEncodingStatus.BASE64_ENCODED>;
 
   /**
    * Initializes a new `Payload` instance.
    *
    * @param {Kwil} kwil - The Kwil client, used to call higher-level methods on the Kwil class.
    */
-  constructor(kwil: Kwil<T>, options: PayloadOptions) {
+  constructor(kwil: Kwil<T>, options: PayloadTxOptions) {
     this.kwil = objects.requireNonNil(
       kwil,
       'Client is required for TxnBuilder. Please pass a valid Kwil client. This is an internal error, please create an issue.'
@@ -80,8 +75,6 @@ export class Payload<T extends EnvironmentType> {
     this.chainId = options.chainId;
     this.description = options.description;
     this.nonce = options.nonce;
-    this.challenge = options.challenge;
-    this.signature = options.signature;
   }
 
   /**
@@ -90,8 +83,8 @@ export class Payload<T extends EnvironmentType> {
    * @param kwil - The Kwil client.
    * @param options - The options to configure the Payload instance.
    */
-  static createTx<T extends EnvironmentType>(kwil: Kwil<T>, options: PayloadOptions): Payload<T> {
-    return new Payload<T>(kwil, options);
+  static createTx<T extends EnvironmentType>(kwil: Kwil<T>, options: PayloadTxOptions): PayloadTx<T> {
+    return new PayloadTx<T>(kwil, options);
   }
 
   /**
@@ -157,7 +150,7 @@ export class Payload<T extends EnvironmentType> {
     }
 
     // sign the transaction
-    return Payload.signTx(postEstTxn, signer, identifier, signatureType, this.description!);
+    return PayloadTx.signTx(postEstTxn, signer, identifier, signatureType, this.description!);
   }
 
   /**
@@ -216,67 +209,6 @@ Kwil Chain ID: ${tx.body.chain_id}
       // bytes must be base64 encoded for transport over GRPC
       newTx.sender = bytesToHex(identifier);
       newTx.serialization = SerializationType.SIGNED_MSG_CONCAT;
-    });
-  }
-
-  /**
-   * Build the payload structure for a message.
-   */
-  async buildMsg(): Promise<Message> {
-    let msg = Msg.create<BytesEncodingStatus.UINT8_ENCODED>((msg) => {
-      msg.body.payload = this.payload as UnencodedActionPayload<PayloadType.CALL_ACTION>;
-      msg.body.challenge = this.challenge;
-      msg.signature = this.signature;
-    });
-
-    if (this.signer) {
-      // ensure required fields are not null or undefined
-      const { identifier, signatureType } = objects.validateFields(
-        {
-          identifier: this.identifier,
-          signatureType: this.signatureType,
-        },
-        (fieldName: string) => `${fieldName} required to build a message.`
-      );
-      if (identifier) {
-        return await Payload.authMsg(msg, identifier, signatureType!);
-      }
-    }
-
-    // return the unsigned message, with the payload base64 encoded
-    return Msg.copy<BytesEncodingStatus.BASE64_ENCODED>(msg, (msg) => {
-      // rlp encode the payload and convert to base64 for transport over GRPC
-      msg.body.payload = bytesToBase64(kwilEncode(this.payload));
-    });
-  }
-
-  /**
-   * Adds the caller's sender address to the message.
-   *
-   * @param {Message} msg - The message to sign. See {@link Message} for more information.
-   * @param {Uint8Array} identifier - The identifier (e.g. wallet address, public key, etc) for the signature, represented as bytes.
-   * @param {AnySignatureType} signatureType - The signature type being used. See {@link SignatureType} for more information.
-   * @param {string} description - The description to be included in the signature.
-   * @returns Message - A promise that resolves to the signed message.
-   * @throws {Error} - If the the signer is not an Ethers Signer or a function that accepts and returns a Uint8Array.
-   */
-  private static async authMsg(
-    msg: BaseMessage<BytesEncodingStatus.UINT8_ENCODED>,
-    identifier: Uint8Array,
-    signatureType: AnySignatureType
-  ): Promise<Message> {
-    // rlp encode the payload
-    const encodedPayload = kwilEncode(
-      msg.body.payload as UnencodedActionPayload<PayloadType.CALL_ACTION>
-    );
-
-    // copy the message and add the signature, with bytes set to base64 for transport over GRPC
-    return Msg.copy<BytesEncodingStatus.BASE64_ENCODED>(msg, (msg) => {
-      // bytes must be base64 encoded for transport over GRPC
-      msg.body.payload = bytesToBase64(encodedPayload);
-      msg.auth_type = signatureType;
-      // bytes must be base64 encoded for transport over GRPC
-      msg.sender = bytesToHex(identifier);
     });
   }
 }

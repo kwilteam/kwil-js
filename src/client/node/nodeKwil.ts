@@ -150,7 +150,7 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
       dbid: actionBody.dbid,
       actionName: name,
       description: actionBody.description || '',
-      actionInputs: inputs,
+      actionInputs: inputs || [],
     });
 
     /**
