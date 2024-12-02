@@ -16,7 +16,7 @@ import {
 } from '../core/enums';
 import { hexToBytes } from '../utils/serial';
 import { isNearPubKey, nearB58ToHex } from '../utils/keys';
-import { ActionBody, ActionInput } from '../core/action';
+import { ActionBody, ActionInput, Entries } from '../core/action';
 import { KwilSigner } from '../core/kwilSigner';
 import { wrap } from './intern';
 import { Funder } from '../funder/funder';
@@ -155,9 +155,11 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
 
     let inputs;
     if (actionBody.inputs) {
-      inputs = actionBody.inputs.every((item) => item instanceof ActionInput)
-        ? actionBody.inputs
-        : new ActionInput().putFromObjects(actionBody.inputs);
+      inputs = (actionBody.inputs as ActionInput[]).every(
+        (item: ActionInput) => item instanceof ActionInput
+      )
+        ? (actionBody.inputs as ActionInput[])
+        : new ActionInput().putFromObjects(actionBody.inputs as Entries[]);
     }
 
     let tx = Action.createTx(this, {
