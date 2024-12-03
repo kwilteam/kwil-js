@@ -334,7 +334,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    * @returns A promise that resolves to the receipt of the message.
    */
   protected async baseCall(
-    actionBody: ActionBodyNode,
+    actionBody: Message | ActionBodyNode,
     kwilSigner?: KwilSigner,
     cookieHandlerCallback?: (...args: any) => void
   ): Promise<GenericResponse<MsgReceipt>> {
