@@ -315,4 +315,14 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
   public async ping(): Promise<GenericResponse<string>> {
     return await this.pingClient();
   }
+
+  protected async baseCall(
+    actionBody: ActionBody,
+    kwilSigner?: KwilSigner,
+    cb?: (...args: any) => void
+  ): Promise<GenericResponse<MsgReceipt>> {
+    // build and execute the call
+
+    // use the cb to handle the cookie
+  }
 }

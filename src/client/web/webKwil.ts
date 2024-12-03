@@ -31,18 +31,13 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
     kwilSigner?: KwilSigner
   ): Promise<GenericResponse<MsgReceipt>>;
 
-  /**
-   * Calls a Kwil node. This can be used to execute read-only ('view') actions on Kwil.
-   *
-   * @param actionBody - The message to send. The message can be built using the ActionBuilder class.
-   * @returns A promise that resolves to the receipt of the message.
-   */
-  public async call(actionBody: Message): Promise<GenericResponse<MsgReceipt>>;
-
   public async call(
-    actionBody: Message | ActionBody,
+    actionBody: ActionBody,
     kwilSigner?: KwilSigner
   ): Promise<GenericResponse<MsgReceipt>> {
+    return await this.baseCall(actionBody, kwilSigner);
+
+    // delete everything below this line (as it is moved to the baseCall method)
     if (actionBody instanceof BaseMessage) {
       return await this.callClient(actionBody);
     }
