@@ -24,7 +24,7 @@ function logger(msg) {
   console.log(util.inspect(msg, false, null, true /* enable colors */));
 }
 
-async function test() {
+async function scratchpad() {
   //update to goerli when live
   const provider = new ethers.JsonRpcProvider(process.env.ETH_PROVIDER);
   const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider); // signer
@@ -38,7 +38,7 @@ async function test() {
 
   const kwil = new kwiljs.NodeKwil({
     kwilProvider: process.env.KWIL_PROVIDER || 'SHOULD FAIL',
-    // chainId: chainId,
+    chainId: chainId,
     timeout: 10000,
     logging: true,
   });
@@ -106,17 +106,17 @@ async function test() {
   }
 
   const post = {
-    $id: 3,
-    $title: 'tampa',
-    $content: 'l cool',
-    $date_string: '11-22-2024',
+    $id: 1,
+    $title: 'dmx',
+    $content: 'lose my mind',
+    $date_string: '12-03-2024',
   };
-  executeGeneralAction(kwil, dbid, 'create_post', kwilSigner, post);
+  // executeGeneralAction(kwil, dbid, 'create_post', kwilSigner, post);
   // await executeGeneralView(kwil, dbid, 'get_profile', null, kwilSigner);
   // await executeGeneralView(kwil, dbid, "view_must_sign", null, kwilSigner)
 }
 
-test();
+scratchpad();
 
 async function executeGeneralView(kwil, dbid, name, input, signer) {
   const body = {
