@@ -2,7 +2,7 @@ import { Config } from '../../api_client/config';
 import { ActionBody } from '../../core/action';
 import { EnvironmentType } from '../../core/enums';
 import { KwilSigner } from '../../core/kwilSigner';
-import { MsgReceipt } from '../../core/message';
+import { Message, MsgReceipt } from '../../core/message';
 import { GenericResponse } from '../../core/resreq';
 import { Kwil } from '../kwil';
 
@@ -20,7 +20,7 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
    * @returns A promise that resolves to the receipt of the message.
    */
   public async call(
-    actionBody: ActionBody,
+    actionBody: Message | ActionBody,
     kwilSigner?: KwilSigner
   ): Promise<GenericResponse<MsgReceipt>>;
 

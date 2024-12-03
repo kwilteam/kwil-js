@@ -2,7 +2,7 @@ import { Config } from '../../api_client/config';
 import { ActionBodyNode } from '../../core/action';
 import { AuthenticationMode, EnvironmentType } from '../../core/enums';
 import { KwilSigner } from '../../core/kwilSigner';
-import { MsgReceipt } from '../../core/message';
+import { Message, MsgReceipt } from '../../core/message';
 import { GenericResponse } from '../../core/resreq';
 import { Kwil } from '../kwil';
 
@@ -20,7 +20,7 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
    * @returns A promise that resolves to the receipt of the message.
    */
   public async call(
-    actionBody: ActionBodyNode,
+    actionBody: Message | ActionBodyNode,
     kwilSigner?: KwilSigner
   ): Promise<GenericResponse<MsgReceipt>>;
 

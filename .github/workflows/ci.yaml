@@ -55,10 +55,8 @@ jobs:
 
       - name: Set up KwilDB Docker in Public mode
         run: |
-          git clone https://github.com/kwilteam/kwil-db.git /tmp/kwil-db-public
+          git clone https://github.com/kwilteam/kwil-db.git /tmp/kwil-db-public -b release-v0.9
           cd /tmp/kwil-db-public
-          git fetch origin
-          git checkout release-v0.9
           go work init && go work use . ./test ./core
           task build:docker
           cd deployments/compose/kwil
@@ -86,10 +84,8 @@ jobs:
 
       - name: Set up KwilDB Docker in Private mode
         run: |
-          git clone https://github.com/kwilteam/kwil-db.git /tmp/kwil-db-private
+          git clone https://github.com/kwilteam/kwil-db.git /tmp/kwil-db-private -b release-v0.9
           cd /tmp/kwil-db-private
-          git fetch origin
-          git checkout release-v0.9
           go work init && go work use . ./test ./core
           task build:docker
           cd -
