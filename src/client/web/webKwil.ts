@@ -20,11 +20,6 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
    * @returns A promise that resolves to the receipt of the message.
    */
   public async call(
-    actionBody: Message | ActionBody,
-    kwilSigner?: KwilSigner
-  ): Promise<GenericResponse<MsgReceipt>>;
-
-  public async call(
     actionBody: ActionBody,
     kwilSigner?: KwilSigner
   ): Promise<GenericResponse<MsgReceipt>> {

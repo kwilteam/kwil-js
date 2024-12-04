@@ -7,6 +7,8 @@ import { GenericResponse } from '../../core/resreq';
 import { Kwil } from '../kwil';
 
 export class NodeKwil extends Kwil<EnvironmentType.NODE> {
+  private tempCookie: string | undefined;
+
   constructor(opts: Config) {
     super(opts);
   }
@@ -20,25 +22,31 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
    * @returns A promise that resolves to the receipt of the message.
    */
   public async call(
-    actionBody: Message | ActionBodyNode,
-    kwilSigner?: KwilSigner
-  ): Promise<GenericResponse<MsgReceipt>>;
-
-  public async call(
     actionBody: ActionBodyNode,
     kwilSigner?: KwilSigner
   ): Promise<GenericResponse<MsgReceipt>> {
-    const cookieHandler = (body: ActionBodyNode, authMode: AuthenticationMode) => {
-      // handle cookie if in PUBLIC mode
-      if (authMode === AuthenticationMode.OPEN && body.cookie) {
-        // set the temporary cookie
-        const tempCookie = this.setTemporaryCookie(body.cookie);
-        // reset the temporary cookie
+    let tempCookie: string | undefined;
+
+    const setCookie = () => {
+        // set the temporary cookie, if the user provided one
+        if (actionBody.cookie) {
+          this.setTemporaryCookie(actionBody.cookie);
+        }
+    };
+
+    const resetCookie = () => {
+        // after the user makes the request, we need to reset the cookie to what it was before
+        // when manually passing cookies, the user is expected to pass the cookie for each request
+        // if a user does not pass a cookie for a subsequent request, the cookie will be reset to the original cookie
         if (tempCookie) {
           this.resetTempCookie(tempCookie);
         }
-      }
-    };
+    }
+
+    const cookieHandler = {
+      setCookie,
+      resetCookie,
+    }
 
     return await this.baseCall(actionBody, kwilSigner, cookieHandler);
   }
@@ -49,10 +57,9 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
    * @param {string} cookie - The temporary cookie
    * @returns the temporary cookie to handle for Node
    */
-  private setTemporaryCookie(cookie?: string): string | undefined {
-    const tempCookie = this.cookie;
+  private setTemporaryCookie(cookie: string): void {
+    this.tempCookie = this.cookie;
     this.cookie = cookie;
-    return tempCookie;
   }
 
   /**

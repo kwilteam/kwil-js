@@ -17,13 +17,13 @@ import {
 } from '../core/enums';
 import { hexToBytes } from '../utils/serial';
 import { isNearPubKey, nearB58ToHex } from '../utils/keys';
-import { ActionBodyNode, ActionInput, Entries } from '../core/action';
+import { ActionBody, ActionBodyNode, ActionInput, Entries } from '../core/action';
 import { KwilSigner } from '../core/kwilSigner';
 import { wrap } from './intern';
 import { Funder } from '../funder/funder';
 import { Auth } from '../auth/auth';
 import { Action } from '../action/action';
-import { BaseMessage, Message, MsgReceipt } from '../core/message';
+import { Message, MsgReceipt } from '../core/message';
 import { AuthBody, Signature } from '../core/signature';
 
 /**
@@ -48,7 +48,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     // set chainId
     this.chainId = opts.chainId;
 
-    this.autoAuthenticate = opts.autoAuthenticate !== undefined ? opts.autoAuthenticate : true;
+    this.autoAuthenticate = opts.autoAuthenticate || true;
 
     // create funder
     this.funder = new Funder<T>(
@@ -150,13 +150,13 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
   /**
    * Executes a transaction on a Kwil network. These are mutative actions that must be mined on the Kwil network's blockchain.
    *
-   * @param actionBody - The body of the action to send. This should use the `ActionBodyNode` interface.
+   * @param actionBody - The body of the action to send. This should use the `ActionBody` interface.
    * @param kwilSigner - The signer for the action transactions.
    * @param synchronous - (optional) If true, the broadcast will wait for the transaction to be mined before returning. If false, the broadcast will return the transaction hash immediately, regardless of if the transaction is successful. Defaults to false.
    * @returns A promise that resolves to the receipt of the transaction.
    */
   public async execute(
-    actionBody: ActionBodyNode,
+    actionBody: ActionBody,
     kwilSigner: KwilSigner,
     synchronous?: boolean
   ): Promise<GenericResponse<TxReceipt>> {
@@ -328,38 +328,42 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
   /**
    * Calls a Kwil node. This can be used to execute read-only ('view') actions on Kwil.
    *
-   * @param {ActionBodyNode} actionBody - The message to send. The message can be built using the buildMsg() method in the Action class.
+   * @param {ActionBody} actionBody - The message to send. The message can be built using the buildMsg() method in the Action class.
    * @param {KwilSigner} kwilSigner (optional) - KwilSigner should be passed if the action requires authentication OR if the action uses a `@caller` contextual variable. If `@caller` is used and authentication is not required, the user will not be prompted to authenticate; however, the user's identifier will be passed as the sender.
    * @param {(...args: any) => void} cookieHandlerCallback (optional) - the callback to handle the cookie if in the NODE environment
    * @returns A promise that resolves to the receipt of the message.
    */
   protected async baseCall(
-    actionBody: Message | ActionBodyNode,
+    actionBody: ActionBody,
     kwilSigner?: KwilSigner,
-    cookieHandlerCallback?: (...args: any) => void
+    cookieHandlerCallback?: { setCookie: () => void, resetCookie: () => void }
   ): Promise<GenericResponse<MsgReceipt>> {
-    // handle the cookie
-    if (cookieHandlerCallback) {
-      cookieHandlerCallback(actionBody, this.authMode);
-    }
-
-    // build and execute the call
-    if (actionBody instanceof BaseMessage) {
-      return await this.callClient(actionBody);
-    }
-
     // Ensure auth mode is set
     await this.ensureAuthenticationMode();
 
     if (this.authMode === AuthenticationMode.OPEN) {
+      // if nodeJS user passes a cookie, use it for the call
+      if (cookieHandlerCallback) {
+        cookieHandlerCallback.setCookie();
+      }
+
       const message = await this.buildMessage(actionBody, kwilSigner);
       const response = await this.callClient(message);
-      if (response.authCode === -901) {
+      
+      // if nodeJS user passes a cookie, reset it after the call
+      if (cookieHandlerCallback) {
+        cookieHandlerCallback.resetCookie();
+      }
+      
+      // if the user is not authenticated, prompt the user to authenticate
+      if (response.authCode === -901 && this.autoAuthenticate) {
         await this.handleAuthenticateKGW(kwilSigner);
         return await this.callClient(message);
       }
       return response;
-    } else if (this.authMode === AuthenticationMode.PRIVATE) {
+    } 
+    
+    if (this.authMode === AuthenticationMode.PRIVATE) {
       const authBody = await this.handleAuthenticatePrivate(actionBody, kwilSigner);
       const message = await this.buildMessage(
         actionBody,

@@ -35,8 +35,8 @@ interface CheckSchema {
 interface ExecSchema {
   name: string;
   public: boolean;
-  parameters?: ReadonlyArray<string>;
-  modifiers?: ReadonlyArray<string>;
+  parameters: ReadonlyArray<string>;
+  modifiers: ReadonlyArray<string>;
 }
 
 const TXN_BUILD_IN_PROGRESS: ActionInput[] = [];
@@ -227,7 +227,7 @@ export class Action<T extends EnvironmentType> {
    * @param {ActionInput[]} actions - The values of the actions to be executed.
    * @returns {CheckSchema} - An object containing the database identifier, action name, action schema, and prepared actions.
    */
-  private async checkSchema(actions?: ActionInput[]): Promise<CheckSchema> {
+  private async checkSchema(actions: ActionInput[]): Promise<CheckSchema> {
     // retrieve the schema for the database
     const schema = await this.kwil.getSchema(this.dbid);
 
@@ -252,20 +252,19 @@ export class Action<T extends EnvironmentType> {
 
     const validated = objects.validateRequiredFields(foundActionOrProcedure, ['name', 'public']);
 
-    const execSchema: ExecSchema = actionSchema
-      ? {
-          name: validated.name,
-          public: validated.public,
-          parameters: actionSchema.parameters,
-          modifiers: actionSchema.modifiers,
-        }
-      : {
-          // if we have reached this point and actionSchema is null, then we know that procedureSchema is not null.
-          name: validated.name,
-          public: validated.public,
-          parameters: procedureSchema?.parameters?.map((p) => p.name) || [],
-          modifiers: procedureSchema?.modifiers,
-        };
+    const execSchema: ExecSchema = {
+      name: validated.name,
+      public: validated.public,
+      ...actionSchema ? {
+        // if we have reached this point and actionSchema is not null, then we know that procedureSchema is null.
+        parameters: actionSchema.parameters,
+        modifiers: actionSchema.modifiers,
+      } : {
+        // if we have reached this point and actionSchema is not null, then we know that procedureSchema is not null.
+        parameters: procedureSchema?.parameters?.map((p) => p.name) || [],
+        modifiers: procedureSchema?.modifiers || [],
+      }
+    }
 
     if (actions) {
       // ensure that no action inputs or values are missing

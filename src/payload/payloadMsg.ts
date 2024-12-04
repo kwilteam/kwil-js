@@ -20,7 +20,7 @@ export interface PayloadMsgOptions {
  * `PayloadMsg` class creates a call message payload that can be sent over GRPC.
  */
 export class PayloadMsg {
-  public payload: AllPayloads;
+  public payload: UnencodedActionPayload<PayloadType.CALL_ACTION>;
   public challenge: string;
   public signatureType: AnySignatureType;
   public identifier: Uint8Array;
@@ -32,7 +32,7 @@ export class PayloadMsg {
    *
    * @param {PayloadMsgOptions} options - Parameters interface to build a payload message.
    */
-  constructor(payload: AllPayloads, options: Partial<PayloadMsgOptions>) {
+  constructor(payload: UnencodedActionPayload<PayloadType.CALL_ACTION>, options: Partial<PayloadMsgOptions>) {
     this.payload = objects.requireNonNil(
       payload,
       'Payload is required for Payload Msg Builder. Please pass a valid payload.'
@@ -60,7 +60,7 @@ export class PayloadMsg {
    * @param kwil - The Kwil client.
    * @param options - The options to configure the Payload instance.
    */
-  static createMsg(payload: AllPayloads, options: Partial<PayloadMsgOptions>): PayloadMsg {
+  static createMsg(payload: UnencodedActionPayload<PayloadType.CALL_ACTION>, options: Partial<PayloadMsgOptions>): PayloadMsg {
     return new PayloadMsg(payload, options);
   }
 
@@ -69,7 +69,7 @@ export class PayloadMsg {
    */
   async buildMsg(): Promise<Message> {
     let msg = Msg.create<BytesEncodingStatus.UINT8_ENCODED>((msg) => {
-      msg.body.payload = this.payload as UnencodedActionPayload<PayloadType.CALL_ACTION>;
+      msg.body.payload = this.payload;
       msg.body.challenge = this.challenge;
       msg.signature = this.signature;
     });
@@ -110,9 +110,14 @@ export class PayloadMsg {
     identifier: Uint8Array,
     signatureType: AnySignatureType
   ): Promise<Message> {
+    const unencodedPayload = objects.requireNonNil(
+      msg.body.payload,
+      'Payload is required to sign a message. This is likely an internal error. Please create an issue.'
+    )
+
     // rlp encode the payload
     const encodedPayload = kwilEncode(
-      msg.body.payload as UnencodedActionPayload<PayloadType.CALL_ACTION>
+      unencodedPayload
     );
 
     // copy the message and add the signature, with bytes set to base64 for transport over GRPC

@@ -146,10 +146,7 @@ export class DB<T extends EnvironmentType> {
   private makePayloadEncodable(payload: AllPayloads): EncodeableDatabase {
     // check if the payload has the required fields for the database
 
-    const resolvedPayload = payload;
-
-    // @ts-ignore
-    let db = resolvedPayload as EncodeableDatabase;
+    let db: EncodeableDatabase = payload as EncodeableDatabase;
 
     if (!db.owner) {
       db.owner = new Uint8Array();

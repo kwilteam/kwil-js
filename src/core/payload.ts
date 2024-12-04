@@ -51,7 +51,6 @@ export type DbPayloadType<T extends DeployOrDrop> = T extends PayloadType.DEPLOY
  */
 export interface DropDbPayload {
   dbid: string;
-  type?: 'drop_db_payload';
 }
 
 /**
@@ -66,7 +65,6 @@ export interface CompiledKuneiform {
   extensions: PartialNillable<Extension>[] | null;
   procedures: PartialNillable<CompiledProcedure>[] | null;
   foreign_calls: PartialNillable<CompiledForeignProcedure>[] | null;
-  type?: 'compiled_kuneiform';
 }
 
 /**
@@ -78,7 +76,6 @@ export interface CompiledKuneiform {
 export interface TransferPayload<T extends BytesEncodingStatus> {
   to: T extends BytesEncodingStatus.BASE64_ENCODED ? string : Uint8Array;
   amount: string;
-  type?: 'transfer_payload';
 }
 
 // The CompiledXXX types are used to replace the enums in the Database interface with strings.

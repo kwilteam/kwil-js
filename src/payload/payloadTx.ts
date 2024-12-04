@@ -114,9 +114,10 @@ export class PayloadTx<T extends EnvironmentType> {
     // estimate the cost of the transaction with the estimateCost symbol from the client
     const cost = await unwrap(this.kwil)(preEstTxn);
 
-    // retrieve the account for the nonce, if none is provided
+    // retrieve the account for the nonce, if one is provided
     let nonce = this.nonce;
 
+    // if no nonce is provided, retrieve the nonce from the account
     if (!this.nonce) {
       const acct = await this.kwil.getAccount(identifier);
       nonce =
@@ -128,9 +129,11 @@ export class PayloadTx<T extends EnvironmentType> {
         ) + 1;
     }
 
+    const encodedPayload = objects.requireNonNil(preEstTxn.body.payload, 'encoded payload is null. This is likely an internal error, please create an issue.');
+
     // add the nonce and fee to the transaction. Set the tx bytes back to uint8 so we can do the signature.
     const postEstTxn = Txn.copy<BytesEncodingStatus.UINT8_ENCODED>(preEstTxn, (tx) => {
-      tx.body.payload = base64ToBytes(preEstTxn.body.payload as string);
+      tx.body.payload = base64ToBytes(encodedPayload);
       tx.body.fee = BigInt(
         strings.requireNonNil(
           cost.data,
@@ -191,17 +194,19 @@ Kwil Chain ID: ${tx.body.chain_id}
     // sign the above message
     const signedMessage = await executeSign(stringToBytes(signatureMessage), signer, signatureType);
 
+    const encodedPayload = objects.requireNonNil(tx.body.payload, 'encoded payload is null. This is likely an internal error, please create an issue.');
+
     // copy the transaction and add the signature
     return Txn.copy<BytesEncodingStatus.BASE64_ENCODED>(tx, (newTx) => {
       newTx.signature = {
         // bytes must be base64 encoded for transport over GRPC
         sig: bytesToBase64(signedMessage),
-        type: signatureType.toString() as SignatureType,
+        type: signatureType.toString(),
       };
       newTx.body = {
         desc: description,
-        payload: bytesToBase64(tx.body.payload as Uint8Array),
-        type: newTx.body.type as PayloadType,
+        payload: bytesToBase64(encodedPayload),
+        type: newTx.body.type,
         fee: newTx.body.fee?.toString() || '',
         nonce: newTx.body.nonce,
         chain_id: newTx.body.chain_id,
