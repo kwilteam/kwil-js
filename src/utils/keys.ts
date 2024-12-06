@@ -1,5 +1,5 @@
 import { SigningKey, hashMessage } from "ethers";
-import { EthSigner } from "../core/builders";
+import { EthSigner } from '../core/signature';
 import { from_b58 } from "./base58";
 import { bytesToHex, stringToBytes } from "./serial";
 import { isEthersSigner } from "../core/signature";

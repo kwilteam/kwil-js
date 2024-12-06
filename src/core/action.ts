@@ -56,20 +56,6 @@ export interface ActionBodyNode extends ActionBody {
   cookie?: string;
 }
 
-export function resolveActionInputs(inputs: Entries[] | ActionInput[]): ActionInput[] {
-  if (inputs && Array.isArray(inputs)) {
-    if ((inputs as ActionInput[]).every((item: ActionInput) => item instanceof ActionInput)) {
-      return inputs as ActionInput[];
-    } else {
-      return new ActionInput().putFromObjects(inputs as Entries[]);
-    }
-  } else {
-    throw new Error(
-      'action inputs must be an array of entries or an array of ActionInput instances'
-    );
-  }
-}
-
 /**
  * `ActionInput` class is a utility class for creating action inputs.
  */
@@ -289,7 +275,7 @@ export class ActionInput implements Iterable<EntryType> {
 
   public static from(entries: Iterable<EntryType>): ActionInput {
     const action = ActionInput.of();
-    for (let [key, value] of objects.requireNonNil(entries)) {
+    for (let [key, value] of entries) {
       key = lowercaseKey(key);
       action.map[assertKey(key)] = value;
     }

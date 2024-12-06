@@ -24,7 +24,8 @@
     "pack_pre": "copyfiles package.json README.md dist && rimraf ./kwil*.tgz",
     "pack_post": "copyfiles ./kwil*.tgz ./pkg && rimraf ./kwil*.tgz",
     "pack": "npm run pack_build && npm run pack_pre && npm --prefix ./dist pack && npm run pack_post",
-    "integration": "npx jest ./tests/kwil"
+    "integration": "npx jest ./tests/kwil",
+    "scratchpad": "ts-node testing-functions/scratchpad.js"
   },
   "author": "Kwil, Inc. <luke@kwil.com>",
   "license": "MIT",
@@ -51,9 +52,9 @@
     "scrypt-js": "^3.0.1",
     "standard-version": "^9.5.0",
     "ts-jest": "^29.1.0",
-    "ts-node": "^10.9.1",
+    "ts-node": "^10.9.2",
     "tweetnacl": "^1.0.3",
-    "typescript": "^4.9.4",
+    "typescript": "^4.9.5",
     "uuid": "^9.0.1"
   },
   "dependencies": {

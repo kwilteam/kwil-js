@@ -1199,8 +1199,11 @@ import { Account, ChainInfo } from '../dist/core/network';
     expect(res.data).toMatchObject<TxReceipt>({
       tx_hash: expect.any(String),
     });
-    
-    const query = await kwil.selectQuery(dbid, `SELECT * FROM var_table WHERE uint256_col = ${maxUint256}`);
+
+    const query = await kwil.selectQuery(
+      dbid,
+      `SELECT * FROM var_table WHERE uint256_col = ${maxUint256}`
+    );
     expect(query.data).toBeDefined();
     expect(query.data).toHaveLength(1);
     // @ts-ignore
@@ -1209,25 +1212,32 @@ import { Account, ChainInfo } from '../dist/core/network';
 
   test('decimals outside the max safe integer range should return as a string', async () => {
     const id = uuidV4();
-    const bigDec = "1234567890.1234567890"
+    const bigDec = '1234567890.1234567890';
 
-    const res = await kwil.execute({
-      dbid,
-      name: 'insert_big_dec',
-      inputs: [
-        {
-          $id: id,
-          $big_dec: bigDec
-        }
-      ]
-    }, kwilSigner, true);
+    const res = await kwil.execute(
+      {
+        dbid,
+        name: 'insert_big_dec',
+        inputs: [
+          {
+            $id: id,
+            $big_dec: bigDec,
+          },
+        ],
+      },
+      kwilSigner,
+      true
+    );
 
     expect(res.data).toBeDefined();
     expect(res.data).toMatchObject<TxReceipt>({
       tx_hash: expect.any(String),
     });
 
-    const query = await kwil.selectQuery(dbid, `SELECT * FROM var_table WHERE big_dec_col = '${bigDec}'::decimal(20,10)`);
+    const query = await kwil.selectQuery(
+      dbid,
+      `SELECT * FROM var_table WHERE big_dec_col = '${bigDec}'::decimal(20,10)`
+    );
     expect(query.data).toBeDefined();
     expect(query.data).toHaveLength(1);
     // @ts-ignore
