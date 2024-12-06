@@ -1,5 +1,10 @@
 import { AttributeType, IndexType, VarType } from './enums';
-import { CompiledForeignProcedure, CompiledKuneiform, CompiledProcedure, CompiledTable } from './payload';
+import {
+  CompiledForeignProcedure,
+  CompiledKuneiform,
+  CompiledProcedure,
+  CompiledTable,
+} from './payload';
 
 /**
  * @typedef {Object} DeployBody is the interface for deploying a database with the `kwil.deploy()` method.
@@ -29,9 +34,9 @@ export interface DropBody {
 
 // Encodable database is the same as database but procedures.returns can be an empty array
 export type EncodeableDatabase = Omit<Database, 'tables' | 'procedures' | 'foreign_calls'> & {
-  tables: ReadonlyArray<CompiledTable>,
-  procedures: ReadonlyArray<CompiledProcedure>,
-  foreign_calls: ReadonlyArray<CompiledForeignProcedure>,
+  tables: ReadonlyArray<CompiledTable>;
+  procedures: ReadonlyArray<CompiledProcedure>;
+  foreign_calls: ReadonlyArray<CompiledForeignProcedure>;
 };
 
 export interface Database {

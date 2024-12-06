@@ -1,5 +1,4 @@
-import { Base64String, HexString, Nillable } from '../utils/types';
-import { EthSigner, SignerSupplier } from './builders';
+import { Base64String, HexString, Nillable, NonNil, Promisy } from '../utils/types';
 import { hexToBytes } from '../utils/serial';
 import { BytesEncodingStatus, PayloadBytesTypes } from './enums';
 
@@ -13,6 +12,14 @@ export enum SignatureType {
   SECP256K1_PERSONAL = 'secp256k1_ep',
   ED25519 = 'ed25519',
 }
+
+// Eth Signer is any class with a signMessage() method. This is supported by Ethers v5 and Ethers v6.
+export type EthSigner = {
+  signMessage: (message: string | Uint8Array) => Promise<string>;
+}
+
+export type CustomSigner = NonNil<(message: Uint8Array) => Promise<Uint8Array>>;
+export type SignerSupplier = Promisy<EthSigner | CustomSigner>;
 
 export interface AuthBody {
   signature: Signature<BytesEncodingStatus.BASE64_ENCODED>;
@@ -75,3 +82,4 @@ export async function executeSign(
     'Could not execute signature. Make sure you pass a signer from EtherJS or a function that returns a Uint8Array.'
   );
 }
+

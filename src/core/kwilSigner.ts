@@ -1,7 +1,13 @@
 import { hexToBytes } from '../utils/serial';
 import { HexString } from '../utils/types';
-import { CustomSigner, EthSigner, SignerSupplier } from './builders';
-import { AnySignatureType, SignatureType, getSignatureType } from './signature';
+import {
+  CustomSigner,
+  EthSigner, 
+  SignerSupplier,
+  AnySignatureType,
+  SignatureType,
+  getSignatureType
+} from './signature';
 
 /**
  * The `KwilSigner` class is a utility class for storing a signer and its associated public key. It is used to sign transactions and messages on Kwil.

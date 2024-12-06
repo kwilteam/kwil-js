@@ -5,13 +5,11 @@ import { GenericResponse } from '../core/resreq';
 import { Database, DeployBody, DropBody, SelectQuery } from '../core/database';
 import { BaseTransaction, TxReceipt } from '../core/tx';
 import { Account, ChainInfo, ChainInfoOpts, DatasetInfo } from '../core/network';
-import { ActionBuilderImpl } from '../builders/action_builder';
-import { DBBuilderImpl } from '../builders/db_builder';
-import { NonNil } from '../utils/types';
-import { ActionBuilder, DBBuilder } from '../core/builders';
+import { DB } from '../transaction/db';
 import { Cache } from '../utils/cache';
 import { TxInfoReceipt } from '../core/txQuery';
 import {
+  AuthenticationMode,
   BroadcastSyncType,
   BytesEncodingStatus,
   EnvironmentType,
@@ -19,11 +17,14 @@ import {
 } from '../core/enums';
 import { hexToBytes } from '../utils/serial';
 import { isNearPubKey, nearB58ToHex } from '../utils/keys';
-import { ActionBody, resolveActionInputs } from '../core/action';
+import { ActionBody, ActionInput } from '../core/action';
 import { KwilSigner } from '../core/kwilSigner';
 import { wrap } from './intern';
 import { Funder } from '../funder/funder';
 import { Auth } from '../auth/auth';
+import { Action } from '../transaction/action';
+import { Message, MsgReceipt } from '../core/message';
+import { AuthBody, Signature } from '../core/signature';
 
 /**
  * The main class for interacting with the Kwil network.
@@ -31,10 +32,14 @@ import { Auth } from '../auth/auth';
 
 export abstract class Kwil<T extends EnvironmentType> extends Client {
   protected readonly chainId: string;
+  private readonly autoAuthenticate: boolean;
+
   //cache schemas
   private schemas: Cache<GenericResponse<Database>>;
   public funder: Funder<T>;
   public auth: Auth<T>;
+
+  private authMode?: string; // To store the mode on the class for subsequent requests
 
   protected constructor(opts: KwilConfig) {
     super(opts);
@@ -42,6 +47,8 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
 
     // set chainId
     this.chainId = opts.chainId;
+
+    this.autoAuthenticate = opts.autoAuthenticate || true;
 
     // create funder
     this.funder = new Funder<T>(
@@ -126,44 +133,6 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
   }
 
   /**
-   * Returns an instance of ActionBuilder for this client.
-   *
-   * @returns An ActionBuilder instance. ActionBuilder is used to build action transactions to be broadcasted to the Kwil network.
-   * @deprecated Use `kwil.execute()` or `kwil.call()` instead. See: {@link https://github.com/kwilteam/kwil-js/issues/32}.
-   */
-
-  public actionBuilder(): NonNil<ActionBuilder> {
-    return ActionBuilderImpl.of(this).chainId(this.chainId);
-  }
-
-  /**
-   * Returns an instance of DBBuilder for this client.
-   *
-   * @returns A DBBuilder instance. DBBuilder is used to build new database transactions to be broadcasted to the Kwil network.
-   * @deprecated Use `kwil.deploy()` See: {@link https://github.com/kwilteam/kwil-js/issues/32}.
-   */
-
-  public dbBuilder(): NonNil<DBBuilder<PayloadType.DEPLOY_DATABASE>> {
-    return DBBuilderImpl.of<PayloadType.DEPLOY_DATABASE, T>(
-      this,
-      PayloadType.DEPLOY_DATABASE
-    ).chainId(this.chainId);
-  }
-
-  /**
-   * Returns an instance of Drop Database Builder for this client.
-   *
-   * @returns A Drop Database Builder instance. Drop Database Builder is used to build drop database transactions to be broadcasted to the Kwil network.
-   * @deprecated Use `kwil.drop()` See: {@link https://github.com/kwilteam/kwil-js/issues/32}.
-   */
-
-  public dropDbBuilder(): NonNil<DBBuilder<PayloadType.DROP_DATABASE>> {
-    return DBBuilderImpl.of<PayloadType.DROP_DATABASE, T>(this, PayloadType.DROP_DATABASE).chainId(
-      this.chainId
-    );
-  }
-
-  /**
    * Broadcasts a transaction on the network.
    *
    * @param tx - The transaction to broadcast. The transaction can be built using the ActionBuilder or DBBuilder.
@@ -193,22 +162,31 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
   ): Promise<GenericResponse<TxReceipt>> {
     const name = !actionBody.name && actionBody.action ? actionBody.action : actionBody.name;
 
-    let tx = ActionBuilderImpl.of<T>(this)
-      .dbid(actionBody.dbid)
-      .name(name)
-      .description(actionBody.description || '')
-      .publicKey(kwilSigner.identifier)
-      .chainId(this.chainId)
-      .signer(kwilSigner.signer, kwilSigner.signatureType);
-
+    /**
+     * if actionBody.inputs are defined: check if all elements in actionBody.inputs are instances of ActionInput class
+     * if true => assign inputs directly to the existing array
+     * if an item in actionBody.inputs is NOT an instance of ActionInput => convert into an ActionInput instance
+     */
+    let inputs: ActionInput[] | undefined;
     if (actionBody.inputs) {
-      const inputs = resolveActionInputs(actionBody.inputs);
-      tx = tx.concat(inputs);
+      if (this.isActionInputArray(actionBody.inputs)) {
+        inputs = actionBody.inputs;
+      } else {
+        inputs = new ActionInput().putFromObjects(actionBody.inputs);
+      }
     }
 
-    if (actionBody.nonce) {
-      tx = tx.nonce(actionBody.nonce);
-    }
+    let tx = Action.createTx(this, {
+      dbid: actionBody.dbid,
+      actionName: name.toLowerCase(),
+      description: actionBody.description || '',
+      identifier: kwilSigner.identifier,
+      chainId: this.chainId,
+      signer: kwilSigner.signer,
+      signatureType: kwilSigner.signatureType,
+      nonce: actionBody.nonce,
+      actionInputs: inputs || [],
+    });
 
     const transaction = await tx.buildTx();
 
@@ -231,18 +209,15 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     kwilSigner: KwilSigner,
     synchronous?: boolean
   ): Promise<GenericResponse<TxReceipt>> {
-    let tx = DBBuilderImpl.of<PayloadType.DEPLOY_DATABASE, T>(this, PayloadType.DEPLOY_DATABASE)
-      .description(deployBody.description || '')
-      .payload(deployBody.schema)
-      .publicKey(kwilSigner.identifier)
-      .signer(kwilSigner.signer, kwilSigner.signatureType)
-      .chainId(this.chainId);
-
-    if (deployBody.nonce) {
-      tx = tx.nonce(deployBody.nonce);
-    }
-
-    const transaction = await tx.buildTx();
+    let transaction = await DB.createTx(this, PayloadType.DEPLOY_DATABASE, {
+      description: deployBody.description || '',
+      payload: deployBody.schema,
+      identifier: kwilSigner.identifier,
+      signer: kwilSigner.signer,
+      signatureType: kwilSigner.signatureType,
+      chainId: this.chainId,
+      nonce: deployBody.nonce,
+    }).buildTx();
 
     return await this.broadcastClient(
       transaction,
@@ -263,18 +238,15 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     kwilSigner: KwilSigner,
     synchronous?: boolean
   ): Promise<GenericResponse<TxReceipt>> {
-    let tx = DBBuilderImpl.of<PayloadType.DROP_DATABASE, T>(this, PayloadType.DROP_DATABASE)
-      .description(dropBody.description || '')
-      .payload({ dbid: dropBody.dbid })
-      .publicKey(kwilSigner.identifier)
-      .signer(kwilSigner.signer, kwilSigner.signatureType)
-      .chainId(this.chainId);
-
-    if (dropBody.nonce) {
-      tx = tx.nonce(dropBody.nonce);
-    }
-
-    const transaction = await tx.buildTx();
+    let transaction = await DB.createTx(this, PayloadType.DROP_DATABASE, {
+      description: dropBody.description || '',
+      payload: { dbid: dropBody.dbid },
+      identifier: kwilSigner.identifier,
+      signer: kwilSigner.signer,
+      signatureType: kwilSigner.signatureType,
+      chainId: this.chainId,
+      nonce: dropBody.nonce,
+    }).buildTx();
 
     return await this.broadcastClient(
       transaction,
@@ -356,5 +328,225 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    */
   public async ping(): Promise<GenericResponse<string>> {
     return await this.pingClient();
+  }
+
+  /**
+   * Calls a Kwil node. This can be used to execute read-only ('view') actions on Kwil.
+   *
+   * @param {ActionBody} actionBody - The message to send. The message can be built using the buildMsg() method in the Action class.
+   * @param {KwilSigner} kwilSigner (optional) - KwilSigner should be passed if the action requires authentication OR if the action uses a `@caller` contextual variable. If `@caller` is used and authentication is not required, the user will not be prompted to authenticate; however, the user's identifier will be passed as the sender.
+   * @param {(...args: any) => void} cookieHandlerCallback (optional) - the callback to handle the cookie if in the NODE environment
+   * @returns A promise that resolves to the receipt of the message.
+   */
+  protected async baseCall(
+    actionBody: ActionBody,
+    kwilSigner?: KwilSigner,
+    cookieHandlerCallback?: { setCookie: () => void; resetCookie: () => void }
+  ): Promise<GenericResponse<MsgReceipt>> {
+    // Ensure auth mode is set
+    await this.ensureAuthenticationMode();
+
+    if (this.authMode === AuthenticationMode.OPEN) {
+      // if nodeJS user passes a cookie, use it for the call
+      if (cookieHandlerCallback) {
+        cookieHandlerCallback.setCookie();
+      }
+      const message = await this.buildMessage(actionBody, kwilSigner);
+      const response = await this.callClient(message);
+
+      // if nodeJS user passes a cookie, reset it after the call
+      if (cookieHandlerCallback) {
+        cookieHandlerCallback.resetCookie();
+      }
+
+      // if the user is not authenticated, prompt the user to authenticate
+      if (response.authCode === -901 && this.autoAuthenticate) {
+        await this.handleAuthenticateKGW(kwilSigner);
+        return await this.callClient(message);
+      }
+      return response;
+    }
+    if (this.authMode === AuthenticationMode.PRIVATE) {
+      const authBody = await this.handleAuthenticatePrivate(actionBody, kwilSigner);
+      const message = await this.buildMessage(
+        actionBody,
+        kwilSigner,
+        authBody.challenge,
+        authBody.signature
+      );
+      return await this.callClient(message);
+    }
+
+    throw new Error(
+      'Unexpected authentication mode. If you hit this error, please report it to the Kwil team.'
+    );
+  }
+
+  /**
+   * Check if authMode is already set, if not call healthModeCheckClient()
+   * healthModeCheckClient => RPC call to retrieve health of blockchain and kwild mode (PRIVATE or OPEN (PUBLIC))
+   *
+   */
+  private async ensureAuthenticationMode(): Promise<void> {
+    if (!this.authMode) {
+      const health = await this.healthModeCheckClient();
+      this.authMode = health.data?.mode;
+    }
+  }
+
+  /**
+   * Builds a message with a chainId, dbid, name, and description of the action.
+   * NOT INCLUDED => challenge, sender, signature
+   *
+   * @param actionBody - The message to send. The message can be built using the buildMsg() method in the Action class.
+   * @param kwilSigner (optional) - KwilSigner should be passed if the action requires authentication OR if the action uses a `@caller` contextual variable. If `@caller` is used and authentication is not required, the user will not be prompted to authenticate; however, the user's identifier will be passed as the sender.
+   * @param challenge (optional) - To ensure a challenge is passed into the message before the signer in PRIVATE mode
+   * @param signature (optional) - To ensure a signature is passed into the message before the signer in PRIVATE mode
+   * @returns A message object that can be sent to the Kwil network.
+   * @throws — Will throw an error if the action is being built or if there's an issue with the schema or account retrieval.
+   * @throws — Will throw an error if the action is not a view action.
+   */
+  private async buildMessage(
+    actionBody: ActionBody,
+    kwilSigner?: KwilSigner,
+    challenge?: string,
+    signature?: Signature<BytesEncodingStatus.BASE64_ENCODED>
+  ): Promise<Message> {
+    const name = !actionBody.name && actionBody.action ? actionBody.action : actionBody.name;
+
+    let inputs: ActionInput[] | undefined;
+    if (actionBody.inputs) {
+      inputs = this.isFirstElementActionInput(actionBody.inputs)
+        ? actionBody.inputs
+        : new ActionInput().putFromObjects(actionBody.inputs);
+    }
+
+    // pre Challenge message
+    let msg = Action.createTx<EnvironmentType.BROWSER>(this, {
+      chainId: this.chainId,
+      dbid: actionBody.dbid,
+      actionName: name,
+      description: actionBody.description || '',
+      actionInputs: inputs || [],
+    });
+
+    /**
+     * PUBLIC MODE
+     * include the sender when the user passes a KwilSigner to kwil.call().
+     * This is because the sender is required for queries that use @caller
+     *
+     */
+    if (kwilSigner && this.authMode === AuthenticationMode.OPEN) {
+      this.addSignerToMessage(msg, kwilSigner);
+    }
+
+    /**
+     * PRIVATE MODE
+     * include the sender when the user passes a KwilSigner to kwil.call().
+     * only AFTER a challenge and signature is attached to the message
+     *
+     */
+    if (kwilSigner && this.authMode === AuthenticationMode.PRIVATE) {
+      if (challenge && signature) {
+        // add challenge and signature to the message
+        (msg.challenge = challenge),
+          (msg.signature = signature),
+          this.addSignerToMessage(msg, kwilSigner);
+      }
+    }
+
+    return await msg.buildMsg();
+  }
+
+  /**
+   * Adds a signer to the message
+   *
+   * @param msgBuilder - The Action class that handles the building of the message
+   * @param kwilSigner - KwilSigner should be passed if the action requires authentication OR if the action uses a `@caller` contextual variable. If `@caller` is used and authentication is not required, the user will not be prompted to authenticate; however, the user's identifier will be passed as the sender.
+   * @returns the Action class responsible for building the view action message with the sender attached
+   *
+   */
+  private addSignerToMessage(
+    msg: Action<EnvironmentType.BROWSER>,
+    kwilSigner: KwilSigner
+  ): Action<EnvironmentType.BROWSER> {
+    (msg.signer = kwilSigner.signer),
+      (msg.signatureType = kwilSigner.signatureType),
+      (msg.identifier = kwilSigner.identifier);
+
+    return msg;
+  }
+
+  /**
+   * Checks authentication errors for PUBLIC (KGW)
+   * Signs message and then retries request for successful response
+   *
+   * @param kwilSigner kwilSigner (optional) - KwilSigner should be passed if the action requires authentication OR if the action uses a `@caller` contextual variable. If `@caller` is used and authentication is not required, the user will not be prompted to authenticate; however, the user's identifier will be passed as the sender.
+   * @returns
+   */
+
+  private async handleAuthenticateKGW(kwilSigner?: KwilSigner) {
+    if (this.autoAuthenticate) {
+      try {
+        // KGW AUTHENTICATION
+        if (!kwilSigner) {
+          throw new Error('KGW authentication requires a KwilSigner.');
+        }
+        await this.auth.authenticateKGW(kwilSigner);
+      } catch (error) {
+        throw new Error(`Authentication failed: ${error}`);
+      }
+    }
+  }
+
+  /**
+   * Checks authentication errors for PRIVATE mode
+   * Signs message and then retries request for successful response
+   *
+   * @param {ActionBodyNode} actionBody - The message to send. The message can be built using the buildMsg() method in the Action class.
+   * @param {KwilSigner} kwilSigner (optional) - KwilSigner should be passed if the action requires authentication OR if the action uses a `@caller` contextual variable. If `@caller` is used and authentication is not required, the user will not be prompted to authenticate; however, the user's identifier will be passed as the sender.
+   * @returns the authentication body that consists of the challenge and signature required for PRIVATE mode
+   */
+
+  private async handleAuthenticatePrivate(
+    actionBody: ActionBody,
+    kwilSigner?: KwilSigner
+  ): Promise<AuthBody> {
+    if (this.autoAuthenticate) {
+      try {
+        // PRIVATE MODE AUTHENTICATION
+        if (this.authMode === AuthenticationMode.PRIVATE) {
+          if (!kwilSigner) {
+            throw new Error('Private mode authentication requires a KwilSigner.');
+          }
+
+          return await this.auth.authenticatePrivateMode(actionBody, kwilSigner);
+        }
+      } catch (error) {
+        throw new Error(`Authentication failed: ${error}`);
+      }
+    }
+
+    throw new Error('Authentication process did not complete successfully');
+  }
+
+  /**
+ * Checks if all elements in the given array are instances of ActionInput.
+ *
+ * @param {unknown} inputs - The value to be checked.
+ * @returns {boolean} - True if `inputs` is an array where every element is an ActionInput, otherwise false.
+ */
+  private isActionInputArray(inputs: unknown): inputs is ActionInput[] {
+    return Array.isArray(inputs) && inputs.every((item) => item instanceof ActionInput);
+  }
+
+  /**
+ * Checks if the first element of the given array is an instance of ActionInput.
+ *
+ * @param {unknown} inputs - The value to be checked.
+ * @returns {boolean} - True if `inputs` is an array with the first element being an ActionInput, otherwise false.
+ */
+  private isFirstElementActionInput(inputs: unknown): inputs is ActionInput[] {
+    return Array.isArray(inputs) && inputs[0] instanceof ActionInput;
   }
 }
