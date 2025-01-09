@@ -15,6 +15,7 @@ export type Predicate = (k: [key: string, v: ValueType | ValueType[]]) => boolea
  */
 export interface ActionBody {
   /**
+   * @deprecated - This field is deprecated. It will be removed in the next major release.
    * dbid is the database ID of the record on which to execute the action.
    */
   dbid: string;
@@ -22,11 +23,6 @@ export interface ActionBody {
    * name is the name of the action or procedure to execute.
    */
   name: string;
-  /**
-   * action is the name of the action or procedure to execute.
-   * @deprecated This field is deprecated. Use ActionBody.name instead.
-   */
-  action?: string;
   /**
    * inputs is an array of action inputs.
    */

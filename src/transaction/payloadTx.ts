@@ -24,7 +24,7 @@ export interface PayloadTxOptions {
   identifier: Uint8Array;
   signatureType: AnySignatureType;
   chainId: string;
-  description: string;
+  description: string | null;
   nonce?: number;
 }
 
@@ -39,7 +39,7 @@ export class PayloadTx<T extends EnvironmentType> {
   public identifier: Uint8Array;
   public signatureType: AnySignatureType;
   public chainId: string;
-  public description: string;
+  public description: string | null;
   public nonce?: number;
 
   /**
@@ -83,7 +83,10 @@ export class PayloadTx<T extends EnvironmentType> {
    * @param kwil - The Kwil client.
    * @param options - The options to configure the Payload instance.
    */
-  static createTx<T extends EnvironmentType>(kwil: Kwil<T>, options: PayloadTxOptions): PayloadTx<T> {
+  static createTx<T extends EnvironmentType>(
+    kwil: Kwil<T>,
+    options: PayloadTxOptions
+  ): PayloadTx<T> {
     return new PayloadTx<T>(kwil, options);
   }
 
@@ -129,7 +132,10 @@ export class PayloadTx<T extends EnvironmentType> {
         ) + 1;
     }
 
-    const encodedPayload = objects.requireNonNil(preEstTxn.body.payload, 'encoded payload is null. This is likely an internal error, please create an issue.');
+    const encodedPayload = objects.requireNonNil(
+      preEstTxn.body.payload,
+      'encoded payload is null. This is likely an internal error, please create an issue.'
+    );
 
     // add the nonce and fee to the transaction. Set the tx bytes back to uint8 so we can do the signature.
     const postEstTxn = Txn.copy<BytesEncodingStatus.UINT8_ENCODED>(preEstTxn, (tx) => {
@@ -194,7 +200,10 @@ Kwil Chain ID: ${tx.body.chain_id}
     // sign the above message
     const signedMessage = await executeSign(stringToBytes(signatureMessage), signer, signatureType);
 
-    const encodedPayload = objects.requireNonNil(tx.body.payload, 'encoded payload is null. This is likely an internal error, please create an issue.');
+    const encodedPayload = objects.requireNonNil(
+      tx.body.payload,
+      'encoded payload is null. This is likely an internal error, please create an issue.'
+    );
 
     // copy the transaction and add the signature
     return Txn.copy<BytesEncodingStatus.BASE64_ENCODED>(tx, (newTx) => {

@@ -15,7 +15,7 @@ export interface ActionOptions {
   actionName: string;
   dbid: string;
   chainId: string;
-  description: string;
+  description: string | null;
   actionInputs: ActionInput[];
   signer?: SignerSupplier;
   identifier?: Uint8Array;
@@ -49,7 +49,7 @@ export class Action<T extends EnvironmentType> {
   public actionName: string;
   public dbid: string;
   public chainId: string;
-  public description: string;
+  public description: string | null;
   public actionInputs: ActionInput[];
   public signer?: SignerSupplier;
   public identifier?: Uint8Array;
@@ -255,16 +255,18 @@ export class Action<T extends EnvironmentType> {
     const execSchema: ExecSchema = {
       name: validated.name,
       public: validated.public,
-      ...actionSchema ? {
-        // if we have reached this point and actionSchema is not null, then we know that procedureSchema is null.
-        parameters: actionSchema.parameters,
-        modifiers: actionSchema.modifiers,
-      } : {
-        // if we have reached this point and actionSchema is not null, then we know that procedureSchema is not null.
-        parameters: procedureSchema?.parameters?.map((p) => p.name) || [],
-        modifiers: procedureSchema?.modifiers || [],
-      }
-    }
+      ...(actionSchema
+        ? {
+            // if we have reached this point and actionSchema is not null, then we know that procedureSchema is null.
+            parameters: actionSchema.parameters,
+            modifiers: actionSchema.modifiers,
+          }
+        : {
+            // if we have reached this point and actionSchema is not null, then we know that procedureSchema is not null.
+            parameters: procedureSchema?.parameters?.map((p) => p.name) || [],
+            modifiers: procedureSchema?.modifiers || [],
+          }),
+    };
 
     if (actions) {
       // ensure that no action inputs or values are missing

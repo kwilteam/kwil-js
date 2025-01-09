@@ -80,6 +80,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    *
    * @param owner - The owner's identifier (e.g wallet address, public key, etc.). Ethereum addresses can be passed as a hex string (0x123...) or as bytes (Uint8Array). NEAR protocol public keys can be passed as the base58 encoded public key (with "ed25519:" prefix), a hex string, or bytes (Uint8Array).
    * @param name - The name of the database. This should be a unique name to identify the database.
+   * @deprecated DBID's are no longer in use.
    * @returns A string that represents the unique identifier for the database.
    */
 
@@ -91,6 +92,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    * Retrieves the schema of a database given its unique identifier (DBID).
    *
    * @param dbid - The unique identifier of the database. The DBID can be generated using the kwil.getDBID method.
+   * @deprecated Use `kwil.selectQuery()` instead.
    * @returns A promise that resolves to the schema of the database.
    */
 
@@ -133,21 +135,6 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
   }
 
   /**
-   * Broadcasts a transaction on the network.
-   *
-   * @param tx - The transaction to broadcast. The transaction can be built using the ActionBuilder or DBBuilder.
-   * @returns A promise that resolves to the receipt of the transaction. The transaction receipt includes the transaction hash, fee, and body.
-   * @deprecated Use `kwil.execute()` or `kwil.deploy()` instead. See: {@link https://github.com/kwilteam/kwil-js/issues/32}.
-   */
-
-  public async broadcast(
-    tx: BaseTransaction<BytesEncodingStatus.BASE64_ENCODED>,
-    sync?: BroadcastSyncType
-  ): Promise<GenericResponse<TxReceipt>> {
-    return await this.broadcastClient(tx, sync);
-  }
-
-  /**
    * Executes a transaction on a Kwil network. These are mutative actions that must be mined on the Kwil network's blockchain.
    *
    * @param actionBody - The body of the action to send. This should use the `ActionBody` interface.
@@ -160,7 +147,9 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     kwilSigner: KwilSigner,
     synchronous?: boolean
   ): Promise<GenericResponse<TxReceipt>> {
-    const name = !actionBody.name && actionBody.action ? actionBody.action : actionBody.name;
+    if (!actionBody.name) {
+      throw new Error('name is required in actionBody');
+    }
 
     /**
      * if actionBody.inputs are defined: check if all elements in actionBody.inputs are instances of ActionInput class
@@ -176,10 +165,16 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       }
     }
 
+    if (!actionBody.nonce) {
+      // If the nonce is not provided then calculate it using the account's most recent confirmed nonce and add 1
+      const account = await this.getAccount(kwilSigner.identifier);
+      actionBody.nonce = account.data?.nonce ? account.data.nonce + 1 : 0;
+    }
+
     let tx = Action.createTx(this, {
       dbid: actionBody.dbid,
-      actionName: name.toLowerCase(),
-      description: actionBody.description || '',
+      actionName: actionBody.name.toLowerCase(),
+      description: actionBody.description || null,
       identifier: kwilSigner.identifier,
       chainId: this.chainId,
       signer: kwilSigner.signer,
@@ -202,6 +197,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    * @param deployBody - The body of the database to deploy. This should use the `DeployBody` interface.
    * @param kwilSigner - The signer for the database deployment.
    * @param synchronous - (optional) If true, the broadcast will wait for the transaction to be mined before returning. If false, the broadcast will return the transaction hash immediately, regardless of if the transaction is successful. Defaults to false.
+   * @deprecated Use `kwil.query()` instead.
    * @returns A promise that resolves to the receipt of the transaction.
    */
   public async deploy(
@@ -231,6 +227,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    * @param dropBody - The body of the database to drop. This should use the `DropBody` interface.
    * @param kwilSigner - The signer for the database drop.
    * @param synchronous - (optional) If true, the broadcast will wait for the transaction to be mined before returning. If false, the broadcast will return the transaction hash immediately, regardless of if the transaction is successful. Defaults to false.
+   * @deprecated Use `kwil.query()` instead.
    * @returns A promise that resolves to the receipt of the transaction.
    */
   public async drop(
@@ -258,6 +255,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    * Lists all databases owned by a particular owner.
    *
    * @param owner (optional) - Lists the databases on a network. Can pass and owner identifier to see all the databases deployed by a specific account, or leave empty to see al the databases deployed on the network. The owner's public key (Ethereum or NEAR Protocol). Ethereum keys can be passed as a hex string (0x123...) or as bytes (Uint8Array).
+   * @deprecated Use `kwil.selectQuery()` instead.
    * @returns A promise that resolves to a list of database names.
    */
 
@@ -412,7 +410,9 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     challenge?: string,
     signature?: Signature<BytesEncodingStatus.BASE64_ENCODED>
   ): Promise<Message> {
-    const name = !actionBody.name && actionBody.action ? actionBody.action : actionBody.name;
+    if (!actionBody.name) {
+      throw new Error('name is required in actionBody');
+    }
 
     let inputs: ActionInput[] | undefined;
     if (actionBody.inputs) {
@@ -425,7 +425,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     let msg = Action.createTx<EnvironmentType.BROWSER>(this, {
       chainId: this.chainId,
       dbid: actionBody.dbid,
-      actionName: name,
+      actionName: actionBody.name,
       description: actionBody.description || '',
       actionInputs: inputs || [],
     });
@@ -531,21 +531,21 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
   }
 
   /**
- * Checks if all elements in the given array are instances of ActionInput.
- *
- * @param {unknown} inputs - The value to be checked.
- * @returns {boolean} - True if `inputs` is an array where every element is an ActionInput, otherwise false.
- */
+   * Checks if all elements in the given array are instances of ActionInput.
+   *
+   * @param {unknown} inputs - The value to be checked.
+   * @returns {boolean} - True if `inputs` is an array where every element is an ActionInput, otherwise false.
+   */
   private isActionInputArray(inputs: unknown): inputs is ActionInput[] {
     return Array.isArray(inputs) && inputs.every((item) => item instanceof ActionInput);
   }
 
   /**
- * Checks if the first element of the given array is an instance of ActionInput.
- *
- * @param {unknown} inputs - The value to be checked.
- * @returns {boolean} - True if `inputs` is an array with the first element being an ActionInput, otherwise false.
- */
+   * Checks if the first element of the given array is an instance of ActionInput.
+   *
+   * @param {unknown} inputs - The value to be checked.
+   * @returns {boolean} - True if `inputs` is an array with the first element being an ActionInput, otherwise false.
+   */
   private isFirstElementActionInput(inputs: unknown): inputs is ActionInput[] {
     return Array.isArray(inputs) && inputs[0] instanceof ActionInput;
   }
