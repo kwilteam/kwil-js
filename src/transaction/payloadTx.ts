@@ -24,7 +24,7 @@ export interface PayloadTxOptions {
   identifier: Uint8Array;
   signatureType: AnySignatureType;
   chainId: string;
-  description: string | null;
+  description: string;
   nonce?: number;
 }
 
@@ -39,7 +39,7 @@ export class PayloadTx<T extends EnvironmentType> {
   public identifier: Uint8Array;
   public signatureType: AnySignatureType;
   public chainId: string;
-  public description: string | null;
+  public description: string;
   public nonce?: number;
 
   /**

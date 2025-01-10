@@ -13,9 +13,9 @@ import { encodeNestedArguments } from '../utils/rlp';
 
 export interface ActionOptions {
   actionName: string;
-  dbid: string;
+  namespace: string;
   chainId: string;
-  description: string | null;
+  description: string;
   actionInputs: ActionInput[];
   signer?: SignerSupplier;
   identifier?: Uint8Array;
@@ -47,9 +47,9 @@ const TXN_BUILD_IN_PROGRESS: ActionInput[] = [];
 export class Action<T extends EnvironmentType> {
   public kwil: Kwil<T>;
   public actionName: string;
-  public dbid: string;
+  public namespace: string;
   public chainId: string;
-  public description: string | null;
+  public description: string;
   public actionInputs: ActionInput[];
   public signer?: SignerSupplier;
   public identifier?: Uint8Array;
@@ -74,14 +74,14 @@ export class Action<T extends EnvironmentType> {
     // Validate required parameters passed into Action Builder
     objects.validateRequiredFields(options, [
       'actionName',
-      'dbid',
+      'namespace',
       'chainId',
       'description',
       'actionInputs',
     ]);
 
     this.actionName = options.actionName;
-    this.dbid = options.dbid;
+    this.namespace = options.namespace;
     this.chainId = options.chainId;
     this.description = options.description;
     this.actionInputs = options.actionInputs;
@@ -146,7 +146,7 @@ export class Action<T extends EnvironmentType> {
 
     // construct payload
     const payload: UnencodedActionPayload<PayloadType.EXECUTE_ACTION> = {
-      dbid: dbid,
+      namespace: this.namespace,
       action: actionName,
       arguments: preparedActions,
     };
@@ -195,7 +195,7 @@ export class Action<T extends EnvironmentType> {
 
     // construct payload. If there are no prepared actions, then the payload is an empty array.
     const payload: UnencodedActionPayload<PayloadType.CALL_ACTION> = {
-      dbid: dbid,
+      namespace: dbid,
       action: actionName,
       // if there are prepared actions, then the first element in the array is the action inputs.
       arguments: preparedActions.length > 0 ? preparedActions[0] : [],
@@ -228,64 +228,56 @@ export class Action<T extends EnvironmentType> {
    * @returns {CheckSchema} - An object containing the database identifier, action name, action schema, and prepared actions.
    */
   private async checkSchema(actions: ActionInput[]): Promise<CheckSchema> {
+    // TODO: Needs to be refactored to check schema in way
     // retrieve the schema for the database
-    const schema = await this.kwil.getSchema(this.dbid);
-
-    // throw an error if the schema does not have any actions.
-    if (!schema?.data?.actions && !schema.data?.procedures) {
-      throw new Error(
-        `Could not retrieve actions or procedures for database ${this.dbid}. Please double check that you have the correct DBID.`
-      );
-    }
-
-    // validate the the name exists on the schema.
-    const actionSchema = schema.data.actions?.find((a) => a.name === this.actionName);
-    const procedureSchema = schema.data.procedures?.find((p) => p.name === this.actionName);
-
-    const foundActionOrProcedure = actionSchema || procedureSchema;
-
-    if (!foundActionOrProcedure) {
-      throw new Error(
-        `Could not find action or procedure ${this.actionName} in database ${this.dbid}. Please double check that you have the correct DBID and action name.`
-      );
-    }
-
-    const validated = objects.validateRequiredFields(foundActionOrProcedure, ['name', 'public']);
-
-    const execSchema: ExecSchema = {
-      name: validated.name,
-      public: validated.public,
-      ...(actionSchema
-        ? {
-            // if we have reached this point and actionSchema is not null, then we know that procedureSchema is null.
-            parameters: actionSchema.parameters,
-            modifiers: actionSchema.modifiers,
-          }
-        : {
-            // if we have reached this point and actionSchema is not null, then we know that procedureSchema is not null.
-            parameters: procedureSchema?.parameters?.map((p) => p.name) || [],
-            modifiers: procedureSchema?.modifiers || [],
-          }),
-    };
-
-    if (actions) {
-      // ensure that no action inputs or values are missing
-      const preparedActions = this.prepareActions(actions, execSchema, this.actionName);
-
-      return {
-        dbid: this.dbid,
-        actionName: this.actionName,
-        modifiers: execSchema.modifiers,
-        preparedActions,
-      };
-    }
-
-    return {
-      dbid: this.dbid,
-      actionName: this.actionName,
-      modifiers: execSchema.modifiers,
-      preparedActions: [],
-    };
+    // const schema = await this.kwil.getSchema(this.dbid);
+    // // throw an error if the schema does not have any actions.
+    // if (!schema?.data?.actions && !schema.data?.procedures) {
+    //   throw new Error(
+    //     `Could not retrieve actions or procedures for database ${this.dbid}. Please double check that you have the correct DBID.`
+    //   );
+    // }
+    // // validate the the name exists on the schema.
+    // const actionSchema = schema.data.actions?.find((a) => a.name === this.actionName);
+    // const procedureSchema = schema.data.procedures?.find((p) => p.name === this.actionName);
+    // const foundActionOrProcedure = actionSchema || procedureSchema;
+    // if (!foundActionOrProcedure) {
+    //   throw new Error(
+    //     `Could not find action or procedure ${this.actionName} in database ${this.dbid}. Please double check that you have the correct DBID and action name.`
+    //   );
+    // }
+    // const validated = objects.validateRequiredFields(foundActionOrProcedure, ['name', 'public']);
+    // const execSchema: ExecSchema = {
+    //   name: validated.name,
+    //   public: validated.public,
+    //   ...(actionSchema
+    //     ? {
+    //         // if we have reached this point and actionSchema is not null, then we know that procedureSchema is null.
+    //         parameters: actionSchema.parameters,
+    //         modifiers: actionSchema.modifiers,
+    //       }
+    //     : {
+    //         // if we have reached this point and actionSchema is not null, then we know that procedureSchema is not null.
+    //         parameters: procedureSchema?.parameters?.map((p) => p.name) || [],
+    //         modifiers: procedureSchema?.modifiers || [],
+    //       }),
+    // };
+    // if (actions) {
+    //   // ensure that no action inputs or values are missing
+    //   const preparedActions = this.prepareActions(actions, execSchema, this.actionName);
+    //   return {
+    //     dbid: this.dbid,
+    //     actionName: this.actionName,
+    //     modifiers: execSchema.modifiers,
+    //     preparedActions,
+    //   };
+    // }
+    // return {
+    //   dbid: this.dbid,
+    //   actionName: this.actionName,
+    //   modifiers: execSchema.modifiers,
+    //   preparedActions: [],
+    // };
   }
 
   /**

@@ -1,4 +1,4 @@
-import { AttributeType, IndexType, VarType } from './enums';
+import { AttributeType, IndexType, VarType, ValueType } from './enums';
 import {
   CompiledForeignProcedure,
   CompiledKuneiform,
@@ -132,8 +132,9 @@ export interface ProcedureReturn {
 }
 
 export interface SelectQuery {
-  dbid: string;
+  dbid?: string;
   query: string;
+  params?: ValueType[];
 }
 
 export interface ForeignProcedure {

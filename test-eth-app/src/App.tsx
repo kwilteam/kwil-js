@@ -40,8 +40,13 @@ function App() {
       )
     );
     // console.log(await kwil.listDatabases(kwilSigner.identifier));
-    // console.log(await kwil.getSchema(dbid));
+    //console.log(await kwil.getSchema(dbid));
+
     // console.log(await kwil.selectQuery(dbid, "SELECT * FROM posts"))
+    // console.log(await kwil.selectQuery("{martin}SELECT * FROM posts"))
+    // console.log(await kwil.selectQuery("{martin}SELECT * FROM posts WHERE author = $1", [1]))
+    // console.log(await kwil.selectQuery("{martin}SELECT * FROM posts WHERE author = $1", [1], kwilSigner))
+
     console.log(await kwil.ping());
     console.log(await kwil.getAccount(kwilSigner.identifier));
     // console.log(await kwil.getAccount(kwilSigner.identifier))

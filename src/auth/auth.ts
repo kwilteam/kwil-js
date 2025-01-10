@@ -108,20 +108,23 @@ export class Auth<T extends EnvironmentType> {
 
     // Check if multiple inputs were provided
     if (actionBody.inputs && actionBody.inputs.length > 1) {
-      throw new Error('Only one input is allowed for call requests. Please pass only one input and try again.');
+      throw new Error(
+        'Only one input is allowed for call requests. Please pass only one input and try again.'
+      );
     }
 
     // handle if the inputs are an array of ActionInput objects or an array of Entries objects
-    const cleanActionValues = actionBody?.inputs ? 
-      actionBody.inputs.map((input) => {
-        return input instanceof ActionInput ? input.toEntries() : input;
-      }) : [];
+    const cleanActionValues = actionBody?.inputs
+      ? actionBody.inputs.map((input) => {
+          return input instanceof ActionInput ? input.toEntries() : input;
+        })
+      : [];
 
     const actionValues = actionBody?.inputs ? Object.values(cleanActionValues[0]) : [];
 
     // create payload
     const payload: UnencodedActionPayload<PayloadType.CALL_ACTION> = {
-      dbid: actionBody.dbid,
+      namespace: actionBody.namespace,
       action: actionBody.name,
       arguments: encodeSingleArguments(actionValues),
     };
@@ -133,7 +136,7 @@ export class Auth<T extends EnvironmentType> {
     const uInt8ArrayPayload = base64ToBytes(base64Payload);
     const digest = sha256BytesToBytes(uInt8ArrayPayload).subarray(0, 20);
     const msg = generateSignatureText(
-      actionBody.dbid,
+      actionBody.namespace,
       actionBody.name,
       bytesToHex(digest),
       msgChallenge

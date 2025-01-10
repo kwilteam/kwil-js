@@ -14,6 +14,7 @@ import {
   BytesEncodingStatus,
   EnvironmentType,
   PayloadType,
+  ValueType,
 } from '../core/enums';
 import { hexToBytes } from '../utils/serial';
 import { isNearPubKey, nearB58ToHex } from '../utils/keys';
@@ -92,26 +93,17 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    * Retrieves the schema of a database given its unique identifier (DBID).
    *
    * @param dbid - The unique identifier of the database. The DBID can be generated using the kwil.getDBID method.
-   * @deprecated Use `kwil.selectQuery()` instead.
+   * @deprecated Use `kwil.selectQuery(query, params?, signer?)` instead.
    * @returns A promise that resolves to the schema of the database.
    */
 
   public async getSchema(dbid: string): Promise<GenericResponse<Database>> {
-    // check cache
-    const schema = this.schemas.get(dbid);
-    if (schema) {
-      return schema;
-    }
-
-    //fetch from server
-    const res = await this.getSchemaClient(dbid);
-
-    //cache result
-    if (res.status === 200) {
-      this.schemas.set(dbid, res);
-    }
-
-    return res;
+    console.warn(
+      'WARNING: `getSchema()` is deprecated and will be removed in the next major version. Please use `kwil.selectQuery()` instead.'
+    );
+    throw new Error(
+      'The `getSchema()` method is no longer supported. Please use `kwil.selectQuery(query, params?, signer?)` instead.'
+    );
   }
 
   /**
@@ -165,6 +157,8 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       }
     }
 
+    // TODO: Need to validate the inputs against the schema
+
     if (!actionBody.nonce) {
       // If the nonce is not provided then calculate it using the account's most recent confirmed nonce and add 1
       const account = await this.getAccount(kwilSigner.identifier);
@@ -172,9 +166,9 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     }
 
     let tx = Action.createTx(this, {
-      dbid: actionBody.dbid,
+      namespace: actionBody.namespace,
       actionName: actionBody.name.toLowerCase(),
-      description: actionBody.description || null,
+      description: actionBody.description || '',
       identifier: kwilSigner.identifier,
       chainId: this.chainId,
       signer: kwilSigner.signer,
@@ -205,19 +199,11 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     kwilSigner: KwilSigner,
     synchronous?: boolean
   ): Promise<GenericResponse<TxReceipt>> {
-    let transaction = await DB.createTx(this, PayloadType.DEPLOY_DATABASE, {
-      description: deployBody.description || '',
-      payload: deployBody.schema,
-      identifier: kwilSigner.identifier,
-      signer: kwilSigner.signer,
-      signatureType: kwilSigner.signatureType,
-      chainId: this.chainId,
-      nonce: deployBody.nonce,
-    }).buildTx();
-
-    return await this.broadcastClient(
-      transaction,
-      synchronous ? BroadcastSyncType.COMMIT : undefined
+    console.warn(
+      'WARNING: `deploy()` is deprecated and will be removed in the next major version. Please use `kwil.query()` instead.'
+    );
+    throw new Error(
+      'The `deploy()` method is no longer supported. Please use `kwil.query()` instead.'
     );
   }
 
@@ -235,19 +221,11 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     kwilSigner: KwilSigner,
     synchronous?: boolean
   ): Promise<GenericResponse<TxReceipt>> {
-    let transaction = await DB.createTx(this, PayloadType.DROP_DATABASE, {
-      description: dropBody.description || '',
-      payload: { dbid: dropBody.dbid },
-      identifier: kwilSigner.identifier,
-      signer: kwilSigner.signer,
-      signatureType: kwilSigner.signatureType,
-      chainId: this.chainId,
-      nonce: dropBody.nonce,
-    }).buildTx();
-
-    return await this.broadcastClient(
-      transaction,
-      synchronous ? BroadcastSyncType.COMMIT : undefined
+    console.warn(
+      'WARNING: `drop()` is deprecated and will be removed in the next major version. Please use `kwil.query()` instead.'
+    );
+    throw new Error(
+      'The `drop()` method is no longer supported. Please use `kwil.query()` instead.'
     );
   }
 
@@ -255,35 +233,65 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    * Lists all databases owned by a particular owner.
    *
    * @param owner (optional) - Lists the databases on a network. Can pass and owner identifier to see all the databases deployed by a specific account, or leave empty to see al the databases deployed on the network. The owner's public key (Ethereum or NEAR Protocol). Ethereum keys can be passed as a hex string (0x123...) or as bytes (Uint8Array).
-   * @deprecated Use `kwil.selectQuery()` instead.
+   * @deprecated Use `kwil.selectQuery(query, params?, signer?)` instead.
    * @returns A promise that resolves to a list of database names.
    */
 
   public async listDatabases(owner?: string | Uint8Array): Promise<GenericResponse<DatasetInfo[]>> {
-    if (typeof owner === 'string') {
-      if (isNearPubKey(owner)) {
-        owner = nearB58ToHex(owner);
-      }
-
-      owner = owner.toLowerCase();
-      owner = hexToBytes(owner);
-    }
-
-    return await this.listDatabasesClient(owner);
+    console.warn(
+      'WARNING: `listDatabases()` is deprecated and will be removed in the next major version. Please use `kwil.selectQuery(query, params?, signer?)` instead.'
+    );
+    throw new Error(
+      'The `listDatabases()` method is no longer supported. Please use `kwil.selectQuery(query, params?, signer?)` instead.'
+    );
   }
 
+  /**
+   * Performs a SELECT query on a database. The query must be a read-only query.
+   *
+   * @param query - The SELECT query to execute.
+   * @param params - Optional array of parameters to bind to the query.
+   * @param signer - Optional signer for authenticated queries.
+   * @returns A promise that resolves to a list of objects resulting from the query.
+   */
+  public async selectQuery(
+    query: string,
+    params?: ValueType[],
+    signer?: KwilSigner
+  ): Promise<GenericResponse<Object[]>>;
   /**
    * Performs a SELECT query on a database. The query must be a read-only query.
    *
    * @param dbid - The unique identifier of the database. The DBID can be generated using the kwil.getDBID method.
    * @param query - The SELECT query to execute.
    * @returns A promise that resolves to a list of objects resulting from the query.
+   * @deprecated Use selectQuery(query, params?, signer?) instead. This method will be removed in the next major version.
    */
+  public async selectQuery(dbid: string, query: string): Promise<GenericResponse<Object[]>>;
+  public async selectQuery(
+    queryOrDbid: string,
+    paramsOrQuery?: string | ValueType[],
+    signer?: KwilSigner
+  ): Promise<GenericResponse<Object[]>> {
+    // TODO: Add support for signer
+    // TODO: Add support for params
 
-  public async selectQuery(dbid: string, query: string): Promise<GenericResponse<Object[]>> {
+    // Handle legacy method call
+    if (typeof paramsOrQuery === 'string') {
+      console.warn(
+        'WARNING: selectQuery(dbid, query) is deprecated and will be removed in the next major version. Use selectQuery(query, params?, signer?) instead.'
+      );
+      const q: SelectQuery = {
+        dbid: queryOrDbid,
+        query: paramsOrQuery,
+      };
+      return await this.selectQueryClient(q);
+    }
+
+    // Handle new method call
     const q: SelectQuery = {
-      dbid: dbid,
-      query: query,
+      query: queryOrDbid,
+      params: paramsOrQuery,
     };
 
     return await this.selectQueryClient(q);
@@ -424,7 +432,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     // pre Challenge message
     let msg = Action.createTx<EnvironmentType.BROWSER>(this, {
       chainId: this.chainId,
-      dbid: actionBody.dbid,
+      namespace: actionBody.namespace,
       actionName: actionBody.name,
       description: actionBody.description || '',
       actionInputs: inputs || [],

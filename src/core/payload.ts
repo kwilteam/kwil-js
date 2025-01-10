@@ -28,7 +28,7 @@ export type AllPayloads =
 
 export type UnencodedActionPayload<T extends PayloadType.CALL_ACTION | PayloadType.EXECUTE_ACTION> =
   {
-    dbid: string;
+    namespace: string;
     action: string;
     arguments: T extends PayloadType.EXECUTE_ACTION ? EncodedValue[][] : EncodedValue[];
   };
