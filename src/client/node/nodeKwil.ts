@@ -1,5 +1,5 @@
 import { Config } from '../../api_client/config';
-import { ActionBodyNode } from '../../core/action';
+import { ActionBodyNode, CallBodyNode } from '../../core/action';
 import { EnvironmentType } from '../../core/enums';
 import { KwilSigner } from '../../core/kwilSigner';
 import { MsgReceipt } from '../../core/message';
@@ -17,36 +17,34 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
    * Calls a Kwil node. This can be used to execute read-only ('view') actions on Kwil.
    * If the action requires authentication in the Kwil Gateway, the kwilSigner should be passed. If the user is not authenticated, the user will be prompted to authenticate.
    *
-   * @param {ActionBodyNode} actionBody - The body of the action to send. This should use the `ActionBody` interface.
+   * @param {CallBodyNode} actionBody - The body of the action to send. This should use the `CallBody` interface.
    * @param {KwilSigner} kwilSigner (optional) - KwilSigner should be passed if the action requires authentication OR if the action uses a `@caller` contextual variable. If `@caller` is used and authentication is not required, the user will not be prompted to authenticate; however, the user's identifier will be passed as the sender.
    * @returns A promise that resolves to the receipt of the message.
    */
   public async call(
-    actionBody: ActionBodyNode,
+    actionBody: CallBodyNode,
     kwilSigner?: KwilSigner
   ): Promise<GenericResponse<MsgReceipt>> {
-
-
     const setCookie = () => {
-        // set the temporary cookie, if the user provided one
-        if (actionBody.cookie) {
-          this.setTemporaryCookie(actionBody.cookie);
-        }
+      // set the temporary cookie, if the user provided one
+      if (actionBody.cookie) {
+        this.setTemporaryCookie(actionBody.cookie);
+      }
     };
 
     const resetCookie = () => {
-        // after the user makes the request, we need to reset the cookie to what it was before
-        // when manually passing cookies, the user is expected to pass the cookie for each request
-        // if a user does not pass a cookie for a subsequent request, the cookie will be reset to the original cookie
-        if (this.tempCookie) {
-          this.resetTempCookie(this.tempCookie);
-        }
-    }
+      // after the user makes the request, we need to reset the cookie to what it was before
+      // when manually passing cookies, the user is expected to pass the cookie for each request
+      // if a user does not pass a cookie for a subsequent request, the cookie will be reset to the original cookie
+      if (this.tempCookie) {
+        this.resetTempCookie(this.tempCookie);
+      }
+    };
 
     const cookieHandler = {
       setCookie,
       resetCookie,
-    }
+    };
 
     return await this.baseCall(actionBody, kwilSigner, cookieHandler);
   }

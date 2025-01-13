@@ -18,7 +18,7 @@ import {
 } from '../core/enums';
 import { hexToBytes } from '../utils/serial';
 import { isNearPubKey, nearB58ToHex } from '../utils/keys';
-import { ActionBody, ActionInput } from '../core/action';
+import { ActionBody, ActionInput, CallBody } from '../core/action';
 import { KwilSigner } from '../core/kwilSigner';
 import { wrap } from './intern';
 import { Funder } from '../funder/funder';
@@ -26,6 +26,7 @@ import { Auth } from '../auth/auth';
 import { Action } from '../transaction/action';
 import { Message, MsgReceipt } from '../core/message';
 import { AuthBody, Signature } from '../core/signature';
+import { QueryRequest } from '../core/jsonrpc';
 
 /**
  * The main class for interacting with the Kwil network.
@@ -81,7 +82,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    *
    * @param owner - The owner's identifier (e.g wallet address, public key, etc.). Ethereum addresses can be passed as a hex string (0x123...) or as bytes (Uint8Array). NEAR protocol public keys can be passed as the base58 encoded public key (with "ed25519:" prefix), a hex string, or bytes (Uint8Array).
    * @param name - The name of the database. This should be a unique name to identify the database.
-   * @deprecated DBID's are no longer in use.
+   * @deprecated DBID's are no longer in use.  This method will be removed in the next major version.
    * @returns A string that represents the unique identifier for the database.
    */
 
@@ -93,7 +94,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    * Retrieves the schema of a database given its unique identifier (DBID).
    *
    * @param dbid - The unique identifier of the database. The DBID can be generated using the kwil.getDBID method.
-   * @deprecated Use `kwil.selectQuery(query, params?, signer?)` instead.
+   * @deprecated Use `kwil.selectQuery(query, params?, signer?)` instead. This method will be removed in the next major version.
    * @returns A promise that resolves to the schema of the database.
    */
 
@@ -191,7 +192,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    * @param deployBody - The body of the database to deploy. This should use the `DeployBody` interface.
    * @param kwilSigner - The signer for the database deployment.
    * @param synchronous - (optional) If true, the broadcast will wait for the transaction to be mined before returning. If false, the broadcast will return the transaction hash immediately, regardless of if the transaction is successful. Defaults to false.
-   * @deprecated Use `kwil.query()` instead.
+   * @deprecated Use `kwil.query()` instead. This method will be removed in the next major version.
    * @returns A promise that resolves to the receipt of the transaction.
    */
   public async deploy(
@@ -213,7 +214,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    * @param dropBody - The body of the database to drop. This should use the `DropBody` interface.
    * @param kwilSigner - The signer for the database drop.
    * @param synchronous - (optional) If true, the broadcast will wait for the transaction to be mined before returning. If false, the broadcast will return the transaction hash immediately, regardless of if the transaction is successful. Defaults to false.
-   * @deprecated Use `kwil.query()` instead.
+   * @deprecated Use `kwil.query()` instead. This method will be removed in the next major version.
    * @returns A promise that resolves to the receipt of the transaction.
    */
   public async drop(
@@ -233,7 +234,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    * Lists all databases owned by a particular owner.
    *
    * @param owner (optional) - Lists the databases on a network. Can pass and owner identifier to see all the databases deployed by a specific account, or leave empty to see al the databases deployed on the network. The owner's public key (Ethereum or NEAR Protocol). Ethereum keys can be passed as a hex string (0x123...) or as bytes (Uint8Array).
-   * @deprecated Use `kwil.selectQuery(query, params?, signer?)` instead.
+   * @deprecated Use `kwil.selectQuery(query, params?, signer?)` instead. This method will be removed in the next major version.
    * @returns A promise that resolves to a list of database names.
    */
 
@@ -247,34 +248,29 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
   }
 
   /**
-   * Performs a SELECT query on a database. The query must be a read-only query.
+   * Performs a read-only SELECT query on a database.
+   * This operation does not modify state.
    *
-   * @param query - The SELECT query to execute.
-   * @param params - Optional array of parameters to bind to the query.
-   * @param signer - Optional signer for authenticated queries.
-   * @returns A promise that resolves to a list of objects resulting from the query.
+   * @param query - The SELECT query to execute
+   * @param params - Optional array of parameters to bind to the query ($1, $2, etc.)
+   * @param signer - Optional signer for authenticated queries
+   * @returns Promise resolving to query results
    */
   public async selectQuery(
     query: string,
-    params?: ValueType[],
+    params?: Record<string, ValueType>,
     signer?: KwilSigner
   ): Promise<GenericResponse<Object[]>>;
   /**
-   * Performs a SELECT query on a database. The query must be a read-only query.
-   *
-   * @param dbid - The unique identifier of the database. The DBID can be generated using the kwil.getDBID method.
-   * @param query - The SELECT query to execute.
-   * @returns A promise that resolves to a list of objects resulting from the query.
-   * @deprecated Use selectQuery(query, params?, signer?) instead. This method will be removed in the next major version.
+   * @deprecated Use selectQuery(query, params?, signer?) instead. This method will be removed in next major version.
    */
   public async selectQuery(dbid: string, query: string): Promise<GenericResponse<Object[]>>;
   public async selectQuery(
     queryOrDbid: string,
-    paramsOrQuery?: string | ValueType[],
-    signer?: KwilSigner
+    paramsOrQuery?: string | Record<string, ValueType>,
+    kwilSigner?: KwilSigner
   ): Promise<GenericResponse<Object[]>> {
     // TODO: Add support for signer
-    // TODO: Add support for params
 
     // Handle legacy method call
     if (typeof paramsOrQuery === 'string') {
@@ -282,7 +278,6 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
         'WARNING: selectQuery(dbid, query) is deprecated and will be removed in the next major version. Use selectQuery(query, params?, signer?) instead.'
       );
       const q: SelectQuery = {
-        dbid: queryOrDbid,
         query: paramsOrQuery,
       };
       return await this.selectQueryClient(q);
@@ -295,6 +290,74 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     };
 
     return await this.selectQueryClient(q);
+  }
+
+  /**
+   * Executes a mutative SQL query (INSERT, UPDATE, DELETE) on a database.
+   *
+   * @param query - The SQL query to execute, including the database identifier in curly braces.
+   *               Use parameterized queries with @paramName placeholders for better security (recommended):
+   *               '{dbname}INSERT INTO users (name) VALUES (@name)'
+   *
+   *               Raw queries are possible but discouraged:
+   *               '{dbname}INSERT INTO users (name) VALUES ('john')'
+   *
+   * @param params - Object containing named parameters to bind to the query. Parameters are referenced
+   *                using @paramName syntax in the query.
+   * @param kwilSigner - Required signer for executing mutative queries
+   * @param synchronous - (optional) If true, waits for transaction to be mined
+   *
+   * @example
+   * // Insert with parameters
+   * await kwil.query(
+   *   '{mydb}INSERT INTO users (name, email) VALUES (@name, @email)',
+   *   { name: 'John', email: 'john@example.com' },
+   *   signer
+   * );
+   *
+   * // Update with parameters
+   * await kwil.query(
+   *   '{mydb}UPDATE users SET status = @status WHERE id = @id',
+   *   { status: 'active', id: 123 },
+   *   signer
+   * );
+   *
+   * // Delete with parameters
+   * await kwil.query(
+   *   '{mydb}DELETE FROM users WHERE id = @id',
+   *   { id: 123 },
+   *   signer
+   * );
+   *
+   * @returns Promise resolving to transaction receipt
+   */
+  public async query(
+    query: string,
+    params: Record<string, ValueType>,
+    kwilSigner: KwilSigner,
+    synchronous?: boolean
+  ): Promise<GenericResponse<TxReceipt>> {
+    // TODO: Add support for signer
+    // TODO: Add support for synchronous
+
+    console.log('query', query);
+    console.log('params', params);
+    console.log('kwilSigner', kwilSigner);
+    console.log('synchronous', synchronous);
+
+    const q: QueryRequest = {
+      query,
+      params: params || {},
+    };
+
+    // Add signer information if provided
+    if (kwilSigner) {
+      // q.identifier = kwilSigner.identifier;
+      // q.signatureType = kwilSigner.signatureType;
+      // Add any other necessary signer info
+    }
+
+    // return await this.queryClient(q);
   }
 
   /**
@@ -339,13 +402,13 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
   /**
    * Calls a Kwil node. This can be used to execute read-only ('view') actions on Kwil.
    *
-   * @param {ActionBody} actionBody - The message to send. The message can be built using the buildMsg() method in the Action class.
+   * @param {CallBody} callBody - The message to send. The message can be built using the buildMsg() method in the Action class.
    * @param {KwilSigner} kwilSigner (optional) - KwilSigner should be passed if the action requires authentication OR if the action uses a `@caller` contextual variable. If `@caller` is used and authentication is not required, the user will not be prompted to authenticate; however, the user's identifier will be passed as the sender.
    * @param {(...args: any) => void} cookieHandlerCallback (optional) - the callback to handle the cookie if in the NODE environment
    * @returns A promise that resolves to the receipt of the message.
    */
   protected async baseCall(
-    actionBody: ActionBody,
+    actionBody: CallBody,
     kwilSigner?: KwilSigner,
     cookieHandlerCallback?: { setCookie: () => void; resetCookie: () => void }
   ): Promise<GenericResponse<MsgReceipt>> {
@@ -401,7 +464,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
   }
 
   /**
-   * Builds a message with a chainId, dbid, name, and description of the action.
+   * Builds a message with a chainId, namespace, name, and description of the action.
    * NOT INCLUDED => challenge, sender, signature
    *
    * @param actionBody - The message to send. The message can be built using the buildMsg() method in the Action class.

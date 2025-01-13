@@ -11,7 +11,7 @@ export type Entries = { [key: string]: ValueType | ValueType[] };
 export type Predicate = (k: [key: string, v: ValueType | ValueType[]]) => boolean;
 
 /**
- * ActionBody is the interface for executing an action with the `kwil.execute()` method or calling an action with the `kwil.call()` method.
+ * ActionBody is the interface for executing an action with the `kwil.execute()` method.
  */
 export interface ActionBody {
   /**
@@ -53,6 +53,39 @@ export interface ActionBody {
 }
 
 export interface ActionBodyNode extends ActionBody {
+  cookie?: string;
+}
+
+/**
+ * CallBody is the interface for calling an action with the `kwil.call()` method.
+ */
+export interface CallBody {
+  /**
+   * @deprecated - This field is deprecated and will be removed in the next major release. Please use the 'namespace' field instead.
+   * dbid is the database ID of the record on which to execute the action.
+   */
+  dbid?: string;
+  /**
+   * namespace is the namespace of the record on which to execute the action.
+   */
+  namespace: string;
+  /**
+   * name is the name of the action or procedure to execute.
+   */
+  name: string;
+  /**
+   * inputs is an array of action inputs.
+   */
+  inputs?: Entries[] | ActionInput[];
+
+  /**
+   * authBody is an optional value for the read/view action to be called in private mode
+   * AuthBody interface => consisting of the signature and challenge for the message
+   */
+  authBody?: AuthBody;
+}
+
+export interface CallBodyNode extends CallBody {
   cookie?: string;
 }
 

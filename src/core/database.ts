@@ -132,9 +132,8 @@ export interface ProcedureReturn {
 }
 
 export interface SelectQuery {
-  dbid?: string;
   query: string;
-  params?: ValueType[];
+  params?: Record<string, ValueType>;
 }
 
 export interface ForeignProcedure {

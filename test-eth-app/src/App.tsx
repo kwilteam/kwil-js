@@ -34,18 +34,28 @@ function App() {
     // await kwilAuthenticate(kwil, kwilSigner)
     // await testViewWithSign(kwil, dbid, kwilSigner)
     // await kwilLogout(kwil);
-    console.log(
-      await kwil.txInfo(
-        '79df1f6fae5f6b6ef9f1b6b4f37739e9f6bcd377fdefb6b9f347f57f4eb8e5ae5ee77d37eba736f5aef9db67367f7eb5'
-      )
-    );
+    // console.log(
+    //   await kwil.txInfo(
+    //     '79df1f6fae5f6b6ef9f1b6b4f37739e9f6bcd377fdefb6b9f347f57f4eb8e5ae5ee77d37eba736f5aef9db67367f7eb5'
+    //   )
+    // );
     // console.log(await kwil.listDatabases(kwilSigner.identifier));
     //console.log(await kwil.getSchema(dbid));
 
     // console.log(await kwil.selectQuery(dbid, "SELECT * FROM posts"))
-    // console.log(await kwil.selectQuery("{martin}SELECT * FROM posts"))
+    // console.log(
+    //   await kwil.selectQuery('{martin}SELECT * FROM posts WHERE author = @author', { author: '1' })
+    // );
     // console.log(await kwil.selectQuery("{martin}SELECT * FROM posts WHERE author = $1", [1]))
     // console.log(await kwil.selectQuery("{martin}SELECT * FROM posts WHERE author = $1", [1], kwilSigner))
+    console.log(
+      await kwil.query(
+        '{main}UPDATE posts SET author = @author WHERE id = @id',
+        { author: '1', id: '1' },
+        kwilSigner,
+        true
+      )
+    );
 
     console.log(await kwil.ping());
     console.log(await kwil.getAccount(kwilSigner.identifier));

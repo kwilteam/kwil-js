@@ -1,7 +1,7 @@
 import { Base64String, HexString } from '../utils/types';
 import { KGWAuthInfo, AuthenticatedBody } from './auth';
 import { Database } from './database';
-import { BroadcastSyncType, BytesEncodingStatus } from './enums';
+import { BroadcastSyncType, BytesEncodingStatus, ValueType } from './enums';
 import { MsgData } from './message';
 import { ChainInfo, DatasetInfoServer } from './network';
 import { TxnData } from './tx';
@@ -34,7 +34,7 @@ export enum JSONRPCMethod {
 }
 
 export interface SchemaRequest {
-  dbid: string;
+  namespace: string;
 }
 
 export interface AccountRequest {
@@ -80,8 +80,8 @@ export interface EstimatePriceRequest {
 }
 
 export interface QueryRequest {
-  dbid: string;
   query: string;
+  params?: Record<string, ValueType>;
 }
 
 export interface TxQueryRequest {
@@ -120,9 +120,9 @@ export interface BroadcastResponse {
 export type CallResponse = Result;
 
 export interface ChainInfoResponse {
-    chain_id: string;
-    block_height: number;
-    block_hash: string;
+  chain_id: string;
+  block_height: number;
+  block_hash: string;
 }
 
 export interface ChallengeResponse {
