@@ -52,6 +52,20 @@ function App() {
                 "AAAAAAAAAAE="
     */
 
+    // Deprecated
+    await kwil.selectQuery('main', 'SELECT * FROM variable_test');
+    // await kwil.selectQuery('SELECT * FROM variable_test');
+    // await kwil.selectQuery('{main}SELECT * FROM variable_test WHERE id = $id', {
+    //   $id: '123e4567-e89b-12d3-a456-426614174000',
+    // });
+    // await kwil.selectQuery(
+    //   '{main}SELECT * FROM variable_test WHERE id = $id',
+    //   {
+    //     $id: '123e4567-e89b-12d3-a456-426614174000',
+    //   },
+    //   kwilSigner
+    // );
+
     // UUID;
     // console.log(
     //   await kwil.selectQuery('{main}SELECT * FROM variable_test WHERE id = $id', {

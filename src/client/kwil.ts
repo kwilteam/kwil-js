@@ -257,7 +257,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    */
   public async selectQuery(
     query: string,
-    params: Record<string, ValueType>,
+    params?: Record<string, ValueType>,
     signer?: KwilSigner
   ): Promise<GenericResponse<Object[]>>;
   /**
@@ -266,7 +266,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
   public async selectQuery(dbid: string, query: string): Promise<GenericResponse<Object[]>>;
   public async selectQuery(
     query: string,
-    params: Record<string, ValueType> | string = {},
+    params?: Record<string, ValueType> | string,
     kwilSigner?: KwilSigner
   ): Promise<GenericResponse<Object[]>> {
     // If params is a string, we're using the legacy method call
@@ -274,7 +274,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       return this.legacySelectQuery(query, params);
     }
 
-    const formattedParams = formatParameters(params);
+    const formattedParams = formatParameters(params || {});
 
     const q: SelectQueryRequest = {
       query,
@@ -292,7 +292,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     );
 
     const q: SelectQueryRequest = {
-      query,
+      query: `{${dbid}}${query}`, // Append the dbid to the query to set the namespace
       params: {},
     };
 
