@@ -1,4 +1,4 @@
-import { AttributeType, IndexType, VarType, ValueType } from './enums';
+import { AttributeType, IndexType, ValueType, VarType } from './enums';
 import {
   CompiledForeignProcedure,
   CompiledKuneiform,

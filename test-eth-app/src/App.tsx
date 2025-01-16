@@ -22,8 +22,8 @@ function App() {
     const provider = new BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
     const kwilSigner = new KwilSigner(signer, signer.address);
-    const res = await kwil.chainInfo();
-    console.log(res);
+    // const res = await kwil.chainInfo();
+    // console.log(res);
 
     const dbid = kwil.getDBID(signer.address, 'mydb');
     console.log('dbid', dbid);
@@ -35,30 +35,79 @@ function App() {
     // await testViewWithSign(kwil, dbid, kwilSigner)
     // await kwilLogout(kwil);
     // console.log(
-    //   await kwil.txInfo(
-    //     '79df1f6fae5f6b6ef9f1b6b4f37739e9f6bcd377fdefb6b9f347f57f4eb8e5ae5ee77d37eba736f5aef9db67367f7eb5'
-    //   )
+    //   await kwil.txInfo('f66d86c28a866fc23e6dc6f099f8871a2db7378706572c9a7adcc905fa2309b0')
     // );
     // console.log(await kwil.listDatabases(kwilSigner.identifier));
     //console.log(await kwil.getSchema(dbid));
 
     // console.log(await kwil.selectQuery(dbid, "SELECT * FROM posts"))
+    // console.log(await kwil.selectQuery('{main}SELECT * FROM posts'));
+
+    /*
+      "123e4567-e89b-12d3-a456-426614174000",
+                42,
+                "Sample text",
+                true,
+                "12.3456",
+                "AAAAAAAAAAE="
+    */
+
+    // UUID;
     // console.log(
-    //   await kwil.selectQuery('{martin}SELECT * FROM posts WHERE author = @author', { author: '1' })
+    //   await kwil.selectQuery('{main}SELECT * FROM variable_test WHERE id = $id', {
+    //     $id: '123e4567-e89b-12d3-a456-426614174000',
+    //   })
     // );
-    // console.log(await kwil.selectQuery("{martin}SELECT * FROM posts WHERE author = $1", [1]))
-    // console.log(await kwil.selectQuery("{martin}SELECT * FROM posts WHERE author = $1", [1], kwilSigner))
+
+    // INT;
+    // console.log(
+    //   await kwil.selectQuery('{main}SELECT * FROM variable_test WHERE int_var = $int', {
+    //     $int: 42,
+    //   })
+    // );
+
+    // BOOL;
+    // console.log(
+    //   await kwil.selectQuery('{main}SELECT * FROM variable_test WHERE bool_var = $bool', {
+    //     $bool: true,
+    //   })
+    // );
+
+    // DECIMAL
+    // console.log(
+    //   await kwil.selectQuery('{main}SELECT * FROM variable_test WHERE decimal_var = $decimal', {
+    //     $decimal: 12.3456,
+    //   })
+    // );
+
+    // BLOB;
     console.log(
-      await kwil.query(
-        '{main}UPDATE posts SET author = @author WHERE id = @id',
-        { author: '1', id: '1' },
-        kwilSigner,
-        true
-      )
+      await kwil.selectQuery('{main}SELECT * FROM variable_test WHERE blob_var = $blob', {
+        $blob: new Uint8Array([1]),
+      })
     );
 
-    console.log(await kwil.ping());
-    console.log(await kwil.getAccount(kwilSigner.identifier));
+    // TEXT
+    // console.log(
+    //   await kwil.selectQuery('{main}SELECT * FROM variable_test WHERE text_var = $text', {
+    //     $text: 'Sample text',
+    //   })
+    // );
+
+    // console.log(
+    //   await kwil.selectQuery('{main}SELECT * FROM info.columns WHERE table_name = $table_name', {
+    //     table_name: 'users',
+    //   })
+    // );
+
+    // console.log(
+    //   await kwil.selectQuery('{martin}SELECT * FROM users WHERE id = $id::int', { id: '1' })
+    // );
+
+    // console.log(await kwil.selectQuery('{main}SELECT * FROM users'));
+
+    // console.log(await kwil.ping());
+    // console.log(await kwil.getAccount(kwilSigner.identifier));
     // console.log(await kwil.getAccount(kwilSigner.identifier))
     // await dropDatabase(kwil, dbid, kwilSigner)
   }

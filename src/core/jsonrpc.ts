@@ -3,7 +3,8 @@ import { KGWAuthInfo, AuthenticatedBody } from './auth';
 import { Database } from './database';
 import { BroadcastSyncType, BytesEncodingStatus, ValueType } from './enums';
 import { MsgData } from './message';
-import { ChainInfo, DatasetInfoServer } from './network';
+import { DatasetInfoServer } from './network';
+import { EncodedValue } from './payload';
 import { TxnData } from './tx';
 import { TxResult } from './txQuery';
 
@@ -81,7 +82,7 @@ export interface EstimatePriceRequest {
 
 export interface QueryRequest {
   query: string;
-  params?: Record<string, ValueType>;
+  params: Record<string, ValueType>;
 }
 
 export interface TxQueryRequest {
@@ -146,6 +147,23 @@ export type QueryResponse = Result;
 
 interface Result {
   result: Base64String;
+}
+
+export interface SelectQueryRequest {
+  query: string;
+  params: Record<string, EncodedValue>;
+}
+
+export interface ColumnType {
+  name: string;
+  is_array: boolean;
+  metadata: Array<number>;
+}
+
+export interface SelectQueryResponse {
+  column_names: string[];
+  column_types: ColumnType[];
+  values: any[];
 }
 
 export interface ListDatabasesResponse {

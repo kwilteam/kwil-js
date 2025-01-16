@@ -1,11 +1,9 @@
-import { generateDBID } from '../utils/dbid';
 import Client from '../api_client/client';
 import { KwilConfig } from '../api_client/config';
 import { GenericResponse } from '../core/resreq';
 import { Database, DeployBody, DropBody, SelectQuery } from '../core/database';
-import { BaseTransaction, TxReceipt } from '../core/tx';
+import { TxReceipt } from '../core/tx';
 import { Account, ChainInfo, ChainInfoOpts, DatasetInfo } from '../core/network';
-import { DB } from '../transaction/db';
 import { Cache } from '../utils/cache';
 import { TxInfoReceipt } from '../core/txQuery';
 import {
@@ -13,7 +11,6 @@ import {
   BroadcastSyncType,
   BytesEncodingStatus,
   EnvironmentType,
-  PayloadType,
   ValueType,
 } from '../core/enums';
 import { hexToBytes } from '../utils/serial';
@@ -26,7 +23,9 @@ import { Auth } from '../auth/auth';
 import { Action } from '../transaction/action';
 import { Message, MsgReceipt } from '../core/message';
 import { AuthBody, Signature } from '../core/signature';
-import { QueryRequest } from '../core/jsonrpc';
+import { QueryRequest, SelectQueryRequest } from '../core/jsonrpc';
+import { formatParameters } from '../utils/parameters';
+import { generateDBID } from '../utils/dbid';
 
 /**
  * The main class for interacting with the Kwil network.
@@ -258,7 +257,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    */
   public async selectQuery(
     query: string,
-    params?: Record<string, ValueType>,
+    params: Record<string, ValueType>,
     signer?: KwilSigner
   ): Promise<GenericResponse<Object[]>>;
   /**
@@ -266,27 +265,35 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    */
   public async selectQuery(dbid: string, query: string): Promise<GenericResponse<Object[]>>;
   public async selectQuery(
-    queryOrDbid: string,
-    paramsOrQuery?: string | Record<string, ValueType>,
+    query: string,
+    params: Record<string, ValueType> | string = {},
     kwilSigner?: KwilSigner
   ): Promise<GenericResponse<Object[]>> {
-    // TODO: Add support for signer
-
-    // Handle legacy method call
-    if (typeof paramsOrQuery === 'string') {
-      console.warn(
-        'WARNING: selectQuery(dbid, query) is deprecated and will be removed in the next major version. Use selectQuery(query, params?, signer?) instead.'
-      );
-      const q: SelectQuery = {
-        query: paramsOrQuery,
-      };
-      return await this.selectQueryClient(q);
+    // If params is a string, we're using the legacy method call
+    if (typeof params === 'string') {
+      return this.legacySelectQuery(query, params);
     }
 
-    // Handle new method call
-    const q: SelectQuery = {
-      query: queryOrDbid,
-      params: paramsOrQuery,
+    const formattedParams = formatParameters(params);
+
+    const q: SelectQueryRequest = {
+      query,
+      params: formattedParams,
+    };
+
+    // TODO: Add support for signer
+
+    return await this.selectQueryClient(q);
+  }
+
+  private async legacySelectQuery(dbid: string, query: string): Promise<GenericResponse<Object[]>> {
+    console.warn(
+      'WARNING: selectQuery(dbid, query) is deprecated and will be removed in the next major version. Use selectQuery(query, params?, signer?) instead.'
+    );
+
+    const q: SelectQueryRequest = {
+      query,
+      params: {},
     };
 
     return await this.selectQueryClient(q);
@@ -331,34 +338,34 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    *
    * @returns Promise resolving to transaction receipt
    */
-  public async query(
-    query: string,
-    params: Record<string, ValueType>,
-    kwilSigner: KwilSigner,
-    synchronous?: boolean
-  ): Promise<GenericResponse<TxReceipt>> {
-    // TODO: Add support for signer
-    // TODO: Add support for synchronous
+  // public async query(
+  //   query: string,
+  //   params: Record<string, ValueType>,
+  //   kwilSigner: KwilSigner,
+  //   synchronous?: boolean
+  // ): Promise<GenericResponse<TxReceipt>> {
+  //   // TODO: Add support for signer
+  //   // TODO: Add support for synchronous
 
-    console.log('query', query);
-    console.log('params', params);
-    console.log('kwilSigner', kwilSigner);
-    console.log('synchronous', synchronous);
+  //   console.log('query', query);
+  //   console.log('params', params);
+  //   console.log('kwilSigner', kwilSigner);
+  //   console.log('synchronous', synchronous);
 
-    const q: QueryRequest = {
-      query,
-      params: params || {},
-    };
+  //   const q: QueryRequest = {
+  //     query,
+  //     params: params || {},
+  //   };
 
-    // Add signer information if provided
-    if (kwilSigner) {
-      // q.identifier = kwilSigner.identifier;
-      // q.signatureType = kwilSigner.signatureType;
-      // Add any other necessary signer info
-    }
+  //   // Add signer information if provided
+  //   if (kwilSigner) {
+  //     // q.identifier = kwilSigner.identifier;
+  //     // q.signatureType = kwilSigner.signatureType;
+  //     // Add any other necessary signer info
+  //   }
 
-    // return await this.queryClient(q);
-  }
+  //   // return await this.queryClient(q);
+  // }
 
   /**
    * Retrieves information about a transaction given its hash.
@@ -541,9 +548,9 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     msg: Action<EnvironmentType.BROWSER>,
     kwilSigner: KwilSigner
   ): Action<EnvironmentType.BROWSER> {
-    (msg.signer = kwilSigner.signer),
-      (msg.signatureType = kwilSigner.signatureType),
-      (msg.identifier = kwilSigner.identifier);
+    msg.signer = kwilSigner.signer;
+    msg.signatureType = kwilSigner.signatureType;
+    msg.identifier = kwilSigner.identifier;
 
     return msg;
   }

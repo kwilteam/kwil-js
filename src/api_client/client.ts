@@ -1,6 +1,6 @@
 import { base64ToBytes } from '../utils/base64';
 import { Account, ChainInfo, DatasetInfo } from '../core/network';
-import { Database, SelectQuery } from '../core/database';
+import { Database } from '../core/database';
 import { Transaction, TxReceipt } from '../core/tx';
 import { Api } from './api';
 import { ClientConfig } from './config';
@@ -45,10 +45,8 @@ import {
   ListDatabasesResponse,
   PingRequest,
   PingResponse,
-  QueryRequest,
-  QueryResponse,
-  SchemaRequest,
-  SchemaResponse,
+  SelectQueryRequest,
+  SelectQueryResponse,
   TxQueryRequest,
   TxQueryResponse,
 } from '../core/jsonrpc';
@@ -61,19 +59,6 @@ export default class Client extends Api {
   constructor(opts: ClientConfig) {
     super(opts);
     this.unconfirmedNonce = opts.unconfirmedNonce || false;
-  }
-
-  protected async getSchemaClient(dbid: string): Promise<GenericResponse<Database>> {
-    const body = this.buildJsonRpcRequest<SchemaRequest>(JSONRPCMethod.METHOD_SCHEMA, { dbid });
-
-    const res = await super.post<JsonRPCResponse<SchemaResponse>>(`/rpc/v1`, body);
-
-    return checkRes(res, (r) => {
-      return {
-        ...r.result.schema,
-        owner: hexToBytes(r.result.schema.owner || ''),
-      };
-    });
   }
 
   protected async getAuthenticateClient(): Promise<GenericResponse<KGWAuthInfo>> {
@@ -258,13 +243,29 @@ export default class Client extends Api {
     return checkRes(res, (r) => r.result.challenge);
   }
 
-  protected async selectQueryClient(query: SelectQuery): Promise<GenericResponse<Object[]>> {
-    const body = this.buildJsonRpcRequest<QueryRequest>(JSONRPCMethod.METHOD_QUERY, query);
-
-    const res = await super.post<JsonRPCResponse<QueryResponse>>(`/rpc/v1`, body);
+  protected async selectQueryClient(query: SelectQueryRequest): Promise<GenericResponse<Object[]>> {
+    const body = this.buildJsonRpcRequest<SelectQueryRequest>(JSONRPCMethod.METHOD_QUERY, query);
+    const res = await super.post<JsonRPCResponse<SelectQueryResponse>>(`/rpc/v1`, body);
 
     return checkRes(res, (r) => {
-      return JSON.parse(bytesToString(base64ToBytes(r.result.result))) as Object[];
+      // TODO: We have to use this approach as we receive column_names, column_types, and values as a response.
+      // It could have performance issues, so returning the row of objects would be better.
+      const { column_names, values } = r.result;
+      const result = new Array(values.length);
+
+      // Iterate over the values array and convert each row into an object
+      for (let i = 0; i < values.length; i++) {
+        const obj: Record<string, any> = {};
+
+        // Iterate over the column_names array and convert each value into an object
+        for (let j = 0; j < column_names.length; j++) {
+          obj[column_names[j]] = values[i][j];
+        }
+
+        // Add the object to the result array
+        result[i] = obj;
+      }
+      return result;
     });
   }
 
