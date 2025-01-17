@@ -14,6 +14,7 @@ import {
   BytesEncodingStatus,
   EnvironmentType,
   PayloadType,
+  VarType,
 } from '../core/enums';
 import { booleanToBytes, hexToBytes, numberToBytes, stringToBytes } from '../utils/serial';
 import { isNearPubKey, nearB58ToHex } from '../utils/keys';
@@ -372,23 +373,27 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
 
           const varAnalysis = analyzeVariable(i)
           let varBytes: Uint8Array = new Uint8Array();
+          let varType: VarType = VarType.TEXT
 
           switch(typeof i) {
             case 'string':
               varBytes = stringToBytes(i)
+              varType = VarType.TEXT
               break;
             case 'number':
               varBytes = numberToBytes(i)
+              varType = VarType.INT
               break;
             case 'boolean':
               varBytes = booleanToBytes(i);
+              varType = VarType.BOOL
             default:
               break;
           }
 
           const ev: EncodedValue = {
             type: {
-              name: varAnalysis.varType,
+              name: varType,
               is_array: false,
               metadata: varAnalysis.metadata
             },
