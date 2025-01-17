@@ -269,6 +269,7 @@ export class Action<T extends EnvironmentType> {
     if (actions) {
       // ensure that no action inputs or values are missing
       const preparedActions = this.prepareActions(actions, execSchema, this.actionName);
+      console.dir(preparedActions, {depth: null})
 
       return {
         dbid: this.dbid,
