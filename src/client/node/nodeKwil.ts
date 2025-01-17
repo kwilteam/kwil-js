@@ -1,6 +1,7 @@
 import { Config } from '../../api_client/config';
 import { ActionBodyNode } from '../../core/action';
 import { EnvironmentType } from '../../core/enums';
+import { CallResponse } from '../../core/jsonrpc';
 import { KwilSigner } from '../../core/kwilSigner';
 import { MsgReceipt } from '../../core/message';
 import { GenericResponse } from '../../core/resreq';
@@ -24,7 +25,7 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
   public async call(
     actionBody: ActionBodyNode,
     kwilSigner?: KwilSigner
-  ): Promise<GenericResponse<MsgReceipt>> {
+  ): Promise<GenericResponse<CallResponse>> {
 
 
     const setCookie = () => {

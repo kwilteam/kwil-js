@@ -15,16 +15,19 @@ import {
   EnvironmentType,
   PayloadType,
 } from '../core/enums';
-import { hexToBytes } from '../utils/serial';
+import { booleanToBytes, hexToBytes, numberToBytes, stringToBytes } from '../utils/serial';
 import { isNearPubKey, nearB58ToHex } from '../utils/keys';
-import { ActionBody, ActionInput } from '../core/action';
+import { ActionBody, ActionInput, Entries, Entry } from '../core/action';
 import { KwilSigner } from '../core/kwilSigner';
 import { wrap } from './intern';
 import { Funder } from '../funder/funder';
 import { Auth } from '../auth/auth';
 import { Action } from '../transaction/action';
-import { Message, MsgReceipt } from '../core/message';
-import { AuthBody, Signature } from '../core/signature';
+import { Message, Msg, MsgData, MsgReceipt } from '../core/message';
+import { AuthBody, Signature, SignatureType } from '../core/signature';
+import { ActionCall, encodeActionCall, EncodedValue } from '../martin_examples/broadcast_payloads';
+import { analyzeVariable } from '../utils/rlp';
+import { CallResponse } from '../core/jsonrpc';
 
 /**
  * The main class for interacting with the Kwil network.
@@ -342,7 +345,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     actionBody: ActionBody,
     kwilSigner?: KwilSigner,
     cookieHandlerCallback?: { setCookie: () => void; resetCookie: () => void }
-  ): Promise<GenericResponse<MsgReceipt>> {
+  ): Promise<GenericResponse<CallResponse>> {
     // Ensure auth mode is set
     await this.ensureAuthenticationMode();
 
@@ -351,7 +354,80 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       if (cookieHandlerCallback) {
         cookieHandlerCallback.setCookie();
       }
-      const message = await this.buildMessage(actionBody, kwilSigner);
+
+      const firstLevelInput = actionBody.inputs ?
+      actionBody.inputs[0] : null
+
+      const cleanedInput = firstLevelInput instanceof ActionInput ?
+        firstLevelInput.toEntries() : firstLevelInput;
+
+      let encodedValues: EncodedValue[] = []
+
+      if(cleanedInput) {
+        const iValues = Object.values(cleanedInput)
+        for (const i of iValues) { 
+          if (Array.isArray(i)) {
+            throw Error('Arrays not supported right now. Pleae wait for future update.')
+          }
+
+          const varAnalysis = analyzeVariable(i)
+          let varBytes: Uint8Array = new Uint8Array();
+
+          switch(typeof i) {
+            case 'string':
+              varBytes = stringToBytes(i)
+              break;
+            case 'number':
+              varBytes = numberToBytes(i)
+              break;
+            case 'boolean':
+              varBytes = booleanToBytes(i);
+            default:
+              break;
+          }
+
+          const ev: EncodedValue = {
+            type: {
+              name: varAnalysis.varType,
+              is_array: false,
+              metadata: varAnalysis.metadata
+            },
+            data: [varBytes]
+          }
+
+          encodedValues.push(ev)
+        }
+      }
+      
+      const actionCall: ActionCall = {
+        dbid: actionBody.dbid,
+        action: actionBody.name,
+        arguments: encodedValues
+      }
+
+      const eAC = encodeActionCall(actionCall);
+
+      const msgData: MsgData<BytesEncodingStatus.BASE64_ENCODED> = {
+        body: {
+          payload: eAC,
+          challenge: ''
+        },
+        auth_type: '',
+        sender: '',
+        signature: {
+          sig: '',
+          type: SignatureType.SECP256K1_PERSONAL
+        }
+      }
+
+      const message = Msg.create<BytesEncodingStatus.BASE64_ENCODED>((msg) => {
+        msg.body = msgData.body
+        msg.auth_type = msgData.auth_type
+        msg.sender = msgData.sender
+        msg.signature = msgData.signature
+      })
+
+      // const message = await this.buildMessage(actionBody, kwilSigner);
       const response = await this.callClient(message);
 
       // if nodeJS user passes a cookie, reset it after the call
@@ -360,22 +436,22 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       }
 
       // if the user is not authenticated, prompt the user to authenticate
-      if (response.authCode === -901 && this.autoAuthenticate) {
-        await this.handleAuthenticateKGW(kwilSigner);
-        return await this.callClient(message);
-      }
+      // if (response.authCode === -901 && this.autoAuthenticate) {
+      //   await this.handleAuthenticateKGW(kwilSigner);
+      //   return await this.callClient(message);
+      // }
       return response;
     }
-    if (this.authMode === AuthenticationMode.PRIVATE) {
-      const authBody = await this.handleAuthenticatePrivate(actionBody, kwilSigner);
-      const message = await this.buildMessage(
-        actionBody,
-        kwilSigner,
-        authBody.challenge,
-        authBody.signature
-      );
-      return await this.callClient(message);
-    }
+    // if (this.authMode === AuthenticationMode.PRIVATE) {
+    //   const authBody = await this.handleAuthenticatePrivate(actionBody, kwilSigner);
+    //   const message = await this.buildMessage(
+    //     actionBody,
+    //     kwilSigner,
+    //     authBody.challenge,
+    //     authBody.signature
+    //   );
+    //   return await this.callClient(message);
+    // }
 
     throw new Error(
       'Unexpected authentication mode. If you hit this error, please report it to the Kwil team.'

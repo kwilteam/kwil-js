@@ -118,8 +118,8 @@ function analyzeNumber(num: number) {
   return analysis;
 }
 
-function analyzeVariable(val: ValueType): {
-  metadata: [number, number] | undefined;
+export function analyzeVariable(val: ValueType): {
+  metadata: [number, number];
   varType: VarType;
 } {
   if (Array.isArray(val)) {
@@ -127,7 +127,7 @@ function analyzeVariable(val: ValueType): {
     return analyzeVariable(val[0]);
   }
 
-  let metadata: [number, number] | undefined;
+  let metadata: [number, number] = [0,0]
   // Default to text string
   // Only other types are null or blob. For client-side tooling, everything else can be sent as a string, and Kwil will handle the conversion.
   let varType: VarType = VarType.TEXT;

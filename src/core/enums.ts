@@ -13,7 +13,7 @@ export type ValueType = string | number | null | undefined | Array<ValueType> | 
  */
 export enum VarType {
   TEXT = 'text',
-  INT = 'int',
+  INT = 'int8',
   BOOL = 'bool',
   DECIMAL = 'decimal',
   NULL = 'null',

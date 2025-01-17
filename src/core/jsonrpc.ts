@@ -1,7 +1,8 @@
+import { DataType, EncodedValue } from '../martin_examples/broadcast_payloads';
 import { Base64String, HexString } from '../utils/types';
 import { KGWAuthInfo, AuthenticatedBody } from './auth';
 import { Database } from './database';
-import { BroadcastSyncType, BytesEncodingStatus } from './enums';
+import { BroadcastSyncType, BytesEncodingStatus, ValueType } from './enums';
 import { MsgData } from './message';
 import { ChainInfo, DatasetInfoServer } from './network';
 import { TxnData } from './tx';
@@ -145,7 +146,14 @@ export interface HealthResponse {
 export type QueryResponse = Result;
 
 interface Result {
-  result: Base64String;
+  result: {
+    query_result: {
+      column_names: string[]
+      columun_types: DataType[]
+      values: ValueType[][]
+    }
+  }
+  logs: string[]
 }
 
 export interface ListDatabasesResponse {

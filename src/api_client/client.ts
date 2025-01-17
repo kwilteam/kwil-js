@@ -264,6 +264,7 @@ export default class Client extends Api {
     const res = await super.post<JsonRPCResponse<QueryResponse>>(`/rpc/v1`, body);
 
     return checkRes(res, (r) => {
+      // @ts-ignore
       return JSON.parse(bytesToString(base64ToBytes(r.result.result))) as Object[];
     });
   }
@@ -296,7 +297,7 @@ export default class Client extends Api {
     });
   }
 
-  protected async callClient(msg: Message): Promise<CallClientResponse<MsgReceipt>> {
+  protected async callClient(msg: Message): Promise<CallClientResponse<CallResponse>> {
     const body = this.buildJsonRpcRequest<CallRequest>(JSONRPCMethod.METHOD_CALL, {
       body: msg.body,
       auth_type: msg.auth_type,
@@ -309,15 +310,8 @@ export default class Client extends Api {
 
     const res = await super.post<JsonRPCResponse<CallResponse>>(`/rpc/v1`, body);
 
-    const errorResponse = this.checkAuthError(res);
-    if (errorResponse) {
-      return errorResponse;
-    }
-
     return checkRes(res, (r) => {
-      return {
-        result: JSON.parse(bytesToString(base64ToBytes(r.result.result))),
-      };
+      return res.data.result;
     });
   }
 

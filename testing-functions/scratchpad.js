@@ -102,7 +102,7 @@ async function scratchpad() {
   };
 
   const userId = {
-    $id: 1
+    $param: 'yooo'
   }
 
   const post = {
@@ -111,8 +111,8 @@ async function scratchpad() {
     $content: 'lose my mind',
     $date_string: '12-03-2024',
   };
-  executeGeneralAction(kwil, dbid, 'create_post', kwilSigner, post);
-  // await executeGeneralView(kwil, dbid, 'get_profile', null, kwilSigner);
+  // executeGeneralAction(kwil, , 'insert_tester', kwilSigner, post);
+  await executeGeneralView(kwil, 'main', 'return_param', userId, kwilSigner);
   // await executeGeneralView(kwil, dbid, "view_must_sign", null, kwilSigner)
 }
 
