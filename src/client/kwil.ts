@@ -96,7 +96,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    * @deprecated Use `kwil.selectQuery(query, params?, signer?)` instead. This method will be removed in the next major version.
    * @returns A promise that resolves to the schema of the database.
    */
-
+  // TODO: Improve deprecation message with examples
   public async getSchema(dbid: string): Promise<GenericResponse<Database>> {
     console.warn(
       'WARNING: `getSchema()` is deprecated and will be removed in the next major version. Please use `kwil.selectQuery()` instead.'
@@ -104,6 +104,77 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     throw new Error(
       'The `getSchema()` method is no longer supported. Please use `kwil.selectQuery(query, params?, signer?)` instead.'
     );
+  }
+
+  /**
+   * Retrieves the tables in a database given its namespace.
+   *
+   * @param namespace - The namespace of the tables to retrieve.
+   * @returns A promise that resolves to the tables in the database.
+   */
+  public async getTables(namespace: string): Promise<GenericResponse<Object[]>> {
+    if (!this.validateNamespace(namespace)) {
+      throw new Error('Please provide a valid namespace');
+    }
+
+    return await this.selectQuery('SELECT * FROM info.tables WHERE namespace = $namespace', {
+      $namespace: namespace,
+    });
+  }
+
+  /**
+   * Retrieves the tables in a database given its namespace.
+   *
+   * @param namespace - The namespace of the tables to retrieve.
+   * @returns A promise that resolves to the tables in the database.
+   */
+  public async getTableColumns(
+    namespace: string,
+    table: string
+  ): Promise<GenericResponse<Object[]>> {
+    if (!this.validateNamespace(namespace)) {
+      throw new Error('Please provide a valid namespace');
+    }
+
+    return await this.selectQuery(
+      'SELECT * FROM info.columns WHERE namespace = $namespace and table_name = $table',
+      {
+        $namespace: namespace,
+        $table: table,
+      }
+    );
+  }
+
+  /**
+   * Retrieves the actions in a database given its namespace.
+   *
+   * @param namespace - The namespace of the actions to retrieve.
+   * @returns A promise that resolves to the actions in the database.
+   */
+  public async getActions(namespace: string): Promise<GenericResponse<Object[]>> {
+    if (!this.validateNamespace(namespace)) {
+      throw new Error('Please provide a valid namespace');
+    }
+
+    return await this.selectQuery('SELECT * FROM info.actions WHERE namespace = $namespace', {
+      $namespace: namespace,
+    });
+  }
+
+  /**
+   * Retrieves the extensions in a database given its namespace.
+   *
+   * @param namespace - The namespace of the extensions to retrieve.
+   * @returns A promise that resolves to the extensions in the database.
+   */
+  public async getExtensions(namespace: string): Promise<GenericResponse<Object[]>> {
+    if (!this.validateNamespace(namespace)) {
+      throw new Error('Please provide a valid namespace');
+    }
+
+    return await this.selectQuery('SELECT * FROM info.extensions WHERE namespace = $namespace', {
+      $namespace: namespace,
+    });
   }
 
   /**
@@ -159,7 +230,8 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
 
     // TODO: Need to validate the inputs against the schema
 
-    if (!actionBody.nonce) {
+    if (actionBody.nonce === undefined) {
+      // TODO: This is not working.  RPC response: "missing account identifier"
       // If the nonce is not provided then calculate it using the account's most recent confirmed nonce and add 1
       const account = await this.getAccount(kwilSigner.identifier);
       actionBody.nonce = account.data?.nonce ? account.data.nonce + 1 : 0;
@@ -275,6 +347,8 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     }
 
     const formattedParams = formatParameters(params || {});
+
+    console.log('formattedParams', formattedParams);
 
     const q: SelectQueryRequest = {
       query,
@@ -626,5 +700,24 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    */
   private isFirstElementActionInput(inputs: unknown): inputs is ActionInput[] {
     return Array.isArray(inputs) && inputs[0] instanceof ActionInput;
+  }
+
+  private validateNamespace(namespace: string): boolean {
+    // Validate namespace
+    if (!namespace || typeof namespace !== 'string') {
+      return false;
+    }
+
+    // Check for SQL injection attempts in namespace
+    if (/[';{}\\]/.test(namespace)) {
+      return false;
+    }
+
+    // validate alphanumeric and underscore
+    if (!/^[a-zA-Z0-9_]+$/.test(namespace)) {
+      return false;
+    }
+
+    return true;
   }
 }

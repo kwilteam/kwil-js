@@ -251,6 +251,11 @@ export default class Client extends Api {
       // TODO: We have to use this approach as we receive column_names, column_types, and values as a response.
       // It could have performance issues, so returning the row of objects would be better.
       const { column_names, values } = r.result;
+
+      if (!values || values.length === 0) {
+        return [];
+      }
+
       const result = new Array(values.length);
 
       // Iterate over the values array and convert each row into an object

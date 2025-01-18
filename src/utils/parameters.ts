@@ -7,14 +7,18 @@ import { convertUuidToBytes, isUuid } from './uuid';
 
 /**
  *
- * @param {ValueType[][]} actionValues - An array of arrays of values to be executed by an action.
+ * @param {Record<string, ValueType>[]} actionInputs - An array of action inputs to be executed by an action.
  * @returns formatted nested values used for actions
  */
-export function formatNestedArguments(actionValues: ValueType[][]): EncodedValue[][] {
+export function formatNestedArguments(actionInputs: Record<string, ValueType>[]): EncodedValue[][] {
   // TODO: Used in prepareActions() in action.ts
-  return actionValues.map((value) => {
-    return formatArguments(value);
+  const formattedActionInputs: Record<string, EncodedValue> = {};
+
+  Object.entries(actionInputs).forEach(([key, value]) => {
+    formattedActionInputs[key] = formatValue(value);
   });
+
+  return formattedActionInputs;
 }
 
 /**

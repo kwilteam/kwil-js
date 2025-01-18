@@ -22,15 +22,19 @@ function App() {
     const provider = new BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
     const kwilSigner = new KwilSigner(signer, signer.address);
+    const nonce = await provider.getTransactionCount(signer.address);
+
     // const res = await kwil.chainInfo();
     // console.log(res);
 
-    const dbid = kwil.getDBID(signer.address, 'mydb');
-    console.log('dbid', dbid);
+    // const dbid = kwil.getDBID(signer.address, 'mydb');
 
     // await deployDb(kwilSigner);
-    // await executeAction(kwil, dbid, 'add_post', kwilSigner)
-    // await testViewWithParam(kwil, dbid)
+    const namespace = 'test';
+    // const actionInput = Utils.ActionInput.of().put('$name', 'Martin');
+
+    // await executeAction(kwil, namespace, 'insert_variables', actionInput, kwilSigner, nonce);
+    await testViewWithParam(kwil, namespace, kwilSigner);
     // await kwilAuthenticate(kwil, kwilSigner)
     // await testViewWithSign(kwil, dbid, kwilSigner)
     // await kwilLogout(kwil);
@@ -52,8 +56,13 @@ function App() {
                 "AAAAAAAAAAE="
     */
 
+    // console.log(await kwil.getTables('main'));
+    // console.log(await kwil.getTableColumns('main', 'variable_test'));
+    // console.log(await kwil.getActions('action_test'));
+    // console.log(await kwil.getExtensions('action_test'));
+
     // Deprecated
-    await kwil.selectQuery('main', 'SELECT * FROM variable_test');
+    // await kwil.selectQuery('main', 'SELECT * FROM variable_test');
     // await kwil.selectQuery('SELECT * FROM variable_test');
     // await kwil.selectQuery('{main}SELECT * FROM variable_test WHERE id = $id', {
     //   $id: '123e4567-e89b-12d3-a456-426614174000',
@@ -67,11 +76,11 @@ function App() {
     // );
 
     // UUID;
-    // console.log(
-    //   await kwil.selectQuery('{main}SELECT * FROM variable_test WHERE id = $id', {
-    //     $id: '123e4567-e89b-12d3-a456-426614174000',
-    //   })
-    // );
+    console.log(
+      await kwil.selectQuery('{test}SELECT * FROM variable_test WHERE id = $id', {
+        $id: '123e4567-e89b-12d3-a456-426614174000',
+      })
+    );
 
     // INT;
     // console.log(
@@ -95,11 +104,11 @@ function App() {
     // );
 
     // BLOB;
-    console.log(
-      await kwil.selectQuery('{main}SELECT * FROM variable_test WHERE blob_var = $blob', {
-        $blob: new Uint8Array([1]),
-      })
-    );
+    // console.log(
+    //   await kwil.selectQuery('{main}SELECT * FROM variable_test WHERE blob_var = $blob', {
+    //     $blob: new Uint8Array([1]),
+    //   })
+    // );
 
     // TEXT
     // console.log(
