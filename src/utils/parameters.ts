@@ -7,27 +7,12 @@ import { convertUuidToBytes, isUuid } from './uuid';
 
 /**
  *
- * @param {Record<string, ValueType>[]} actionInputs - An array of action inputs to be executed by an action.
- * @returns formatted nested values used for actions
- */
-export function formatNestedArguments(actionInputs: Record<string, ValueType>[]): EncodedValue[][] {
-  // TODO: Used in prepareActions() in action.ts
-  const formattedActionInputs: Record<string, EncodedValue> = {};
-
-  Object.entries(actionInputs).forEach(([key, value]) => {
-    formattedActionInputs[key] = formatValue(value);
-  });
-
-  return formattedActionInputs;
-}
-
-/**
- *
  * @param {ValueType[]} values - An array of values to be executed by an action.
  * @returns formatted values used for an action
  */
 export function formatArguments(values: ValueType[]): EncodedValue[] {
-  // TODO: Used in authenticatePrivateMode() in auth.ts
+  // TODO: Need to test and implement this method.
+  // Used in authenticatePrivateMode() in auth.ts
   return values.map(formatValue);
 }
 
@@ -54,7 +39,7 @@ function formatValue(val: ValueType): EncodedValue {
 
   let data = val;
 
-  // TODO: Test array of values
+  // TODO: Implement and test array of values
   if (Array.isArray(val) && !(val instanceof Uint8Array)) {
     data = val.map((v) => {
       return v?.toString() || '';
@@ -67,7 +52,7 @@ function formatValue(val: ValueType): EncodedValue {
   };
 }
 
-function encodeValue(type: VarType, data: ValueType): string[] {
+export function encodeValue(type: VarType, data: ValueType): string[] {
   if (data === undefined || data === null) {
     return [''];
   }
@@ -81,6 +66,7 @@ function encodeValue(type: VarType, data: ValueType): string[] {
       return [bytesToBase64(numberToBytes(Number(data)))];
     case VarType.BOOL:
       return [bytesToBase64(booleanToBytes(Boolean(data)))];
+    case VarType.BYTEA:
     case VarType.BLOB:
       if (!(data instanceof Uint8Array)) {
         throw new Error(
@@ -89,13 +75,14 @@ function encodeValue(type: VarType, data: ValueType): string[] {
       }
       return [bytesToBase64(data)];
     case VarType.DECIMAL:
+    case VarType.NUMERIC:
       return [bytesToBase64(stringToBytes(data.toString()))];
     default:
       return [bytesToBase64(stringToBytes(data.toString()))];
   }
 }
 
-function analyzeNumber(num: number) {
+export function analyzeNumber(num: number) {
   // Convert the number to a string and handle potential negative sign
   const numStr = Math.abs(num).toString();
 
@@ -137,7 +124,7 @@ function resolveValueType(value: ValueType): {
       const numAnalysis = analyzeNumber(value);
       if (numAnalysis.hasDecimal) {
         metadata = [numAnalysis.totalDigits, numAnalysis.decimalPosition];
-        varType = VarType.DECIMAL;
+        varType = VarType.NUMERIC;
       } else {
         varType = VarType.INT8;
       }
@@ -147,7 +134,7 @@ function resolveValueType(value: ValueType): {
       break;
     case 'object':
       if (value instanceof Uint8Array) {
-        varType = VarType.BLOB;
+        varType = VarType.BYTEA;
         break;
       }
       if (value === null) {

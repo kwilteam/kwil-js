@@ -24,9 +24,11 @@ export enum VarType {
   INT = 'int',
   INT8 = 'int8',
   BOOL = 'bool',
-  DECIMAL = 'decimal',
+  DECIMAL = 'decimal', // Old: now use numeric instead but keeping for compatibility
+  NUMERIC = 'numeric',
   NULL = 'null',
-  BLOB = 'blob',
+  BLOB = 'blob', // Old: now use bytea but keeping for compatibility
+  BYTEA = 'bytea',
   UNKNOWN = 'unknown',
 }
 
@@ -100,4 +102,20 @@ export enum BroadcastSyncType {
 export enum AuthErrorCodes {
   PRIVATE_MODE = -1001,
   KGW_MODE = -901,
+}
+
+// For checking the unconfirmed nonce
+export enum AccountStatus {
+  // returns the latest confirmed nonce
+  LATEST = 0,
+  // returns the latest unconfirmed nonce
+  PENDING = 1,
+}
+
+export enum AccountKeyType {
+  // Eth
+  SECP256K1 = 0,
+
+  // i.e. Near
+  ED25519 = 1,
 }

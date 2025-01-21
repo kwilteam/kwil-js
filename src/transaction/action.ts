@@ -1,13 +1,7 @@
 import { Kwil } from '../client/kwil';
-import { ActionInput } from '../core/action';
+import { ActionInput, Entries } from '../core/action';
 import { SignerSupplier } from '../core/signature';
-import {
-  BytesEncodingStatus,
-  EnvironmentType,
-  PayloadType,
-  ValueType,
-  VarType,
-} from '../core/enums';
+import { BytesEncodingStatus, EnvironmentType, PayloadType, VarType } from '../core/enums';
 import { Message } from '../core/message';
 import { EncodedValue, UnencodedActionPayload } from '../core/payload';
 import { AnySignatureType, Signature } from '../core/signature';
@@ -15,36 +9,20 @@ import { Transaction } from '../core/tx';
 import { PayloadTx } from './payloadTx';
 import { PayloadMsg } from '../message/payloadMsg';
 import { objects } from '../utils/objects';
-import { encodeNestedArguments } from '../utils/rlp';
-import { formatActionInputs, formatNestedArguments } from '../utils/parameters';
-import { stringToBytes } from '../utils/serial';
+import { analyzeNumber, encodeValue } from '../utils/parameters';
 
 export interface ActionOptions {
   actionName: string;
   namespace: string;
   chainId: string;
   description: string;
-  actionInputs: ActionInput[];
+  actionInputs: Entries[];
   signer?: SignerSupplier;
   identifier?: Uint8Array;
   signatureType?: AnySignatureType;
   nonce?: number;
   challenge?: string;
   signature?: Signature<BytesEncodingStatus.BASE64_ENCODED>;
-}
-
-interface CheckSchema {
-  dbid: string;
-  actionName: string;
-  preparedActions: EncodedValue[][];
-  modifiers?: ReadonlyArray<string>;
-}
-
-interface ExecSchema {
-  name: string;
-  public: boolean;
-  parameters: ReadonlyArray<string>;
-  modifiers: ReadonlyArray<string>;
 }
 
 export enum AccessModifier {
@@ -71,10 +49,10 @@ interface ValidatedAction {
   namespace: string;
   actionName: string;
   modifiers: ReadonlyArray<AccessModifier>;
-  encodeActionInputs: EncodedValue[][];
+  encodedActionInputs: EncodedValue[][];
 }
 
-const TXN_BUILD_IN_PROGRESS: ActionInput[] = [];
+const TXN_BUILD_IN_PROGRESS: Entries[] = [];
 
 /**
  * `Action` class creates a transaction to execute database actions on the Kwil network.
@@ -85,7 +63,7 @@ export class Action<T extends EnvironmentType> {
   public namespace: string;
   public chainId: string;
   public description: string;
-  public actionInputs: ActionInput[];
+  public actionInputs: Entries[];
   public signer?: SignerSupplier;
   public identifier?: Uint8Array;
   public signatureType?: AnySignatureType;
@@ -160,7 +138,7 @@ export class Action<T extends EnvironmentType> {
     this.actionInputs = TXN_BUILD_IN_PROGRESS;
 
     // retrieve the schema and run validations
-    const { namespace, actionName, encodeActionInputs, modifiers } =
+    const { namespace, actionName, encodedActionInputs, modifiers } =
       await this.validatedActionRequest(cached);
 
     // throw runtime error if signer is null or undefined
@@ -182,9 +160,9 @@ export class Action<T extends EnvironmentType> {
 
     // construct payload
     const payload: UnencodedActionPayload<PayloadType.EXECUTE_ACTION> = {
-      namespace: this.namespace,
+      namespace: namespace,
       action: actionName,
-      arguments: encodeActionInputs,
+      arguments: encodedActionInputs,
     };
 
     // build the transaction
@@ -215,12 +193,12 @@ export class Action<T extends EnvironmentType> {
     this.actionInputs = TXN_BUILD_IN_PROGRESS;
 
     // retrieve the schema and run validations
-    const { namespace, actionName, encodeActionInputs, modifiers } =
+    const { namespace, actionName, encodedActionInputs, modifiers } =
       await this.validatedActionRequest(cached);
 
     // TODO: Should this be called before the validatedActionRequest?
     // throw a runtime error if more than one set of inputs is trying to be executed. Call does not allow bulk execution.
-    if (encodeActionInputs && encodeActionInputs.length > 1) {
+    if (encodedActionInputs && encodedActionInputs.length > 1) {
       throw new Error(
         'Cannot pass more than one input to the call endpoint. Please pass only one input and try again.'
       );
@@ -235,7 +213,7 @@ export class Action<T extends EnvironmentType> {
     const payload: UnencodedActionPayload<PayloadType.CALL_ACTION> = {
       namespace: namespace,
       action: actionName,
-      arguments: encodeActionInputs,
+      arguments: encodedActionInputs[0], // 'Call' method is used for 'view actions' which require only one input
     };
 
     // build message
@@ -249,79 +227,21 @@ export class Action<T extends EnvironmentType> {
      * ex => if the @caller contextual variable is present in a kuneiform block for kwil.call()
      */
     if (this.signer) {
-      (msg.signer = this.signer),
-        (msg.signatureType = this.signatureType!),
-        (msg.identifier = this.identifier!);
+      msg.signer = this.signer;
+      msg.signatureType = this.signatureType!;
+      msg.identifier = this.identifier!;
     }
 
     return await msg.buildMsg().finally(() => (this.actionInputs = cached));
   }
 
   /**
-   * Checks the schema and validates the actions.
-   *
-   * @param {ActionInput[]} actions - The values of the actions to be executed.
-   * @returns {CheckSchema} - An object containing the database identifier, action name, action schema, and prepared actions.
-   */
-  // private async checkSchema(actions: ActionInput[]): Promise<CheckSchema> {
-  //   // retrieve the schema for the database
-  //   const schema = await this.kwil.getSchema(this.dbid);
-  //   // throw an error if the schema does not have any actions.
-  //   if (!schema?.data?.actions && !schema.data?.procedures) {
-  //     throw new Error(
-  //       `Could not retrieve actions or procedures for database ${this.dbid}. Please double check that you have the correct DBID.`
-  //     );
-  //   }
-  //   // validate the the name exists on the schema.
-  //   const actionSchema = schema.data.actions?.find((a) => a.name === this.actionName);
-  //   const procedureSchema = schema.data.procedures?.find((p) => p.name === this.actionName);
-  //   const foundActionOrProcedure = actionSchema || procedureSchema;
-  //   if (!foundActionOrProcedure) {
-  //     throw new Error(
-  //       `Could not find action or procedure ${this.actionName} in database ${this.dbid}. Please double check that you have the correct DBID and action name.`
-  //     );
-  //   }
-  //   const validated = objects.validateRequiredFields(foundActionOrProcedure, ['name', 'public']);
-  //   const execSchema: ExecSchema = {
-  //     name: validated.name,
-  //     public: validated.public,
-  //     ...(actionSchema
-  //       ? {
-  //           // if we have reached this point and actionSchema is not null, then we know that procedureSchema is null.
-  //           parameters: actionSchema.parameters,
-  //           modifiers: actionSchema.modifiers,
-  //         }
-  //       : {
-  //           // if we have reached this point and actionSchema is not null, then we know that procedureSchema is not null.
-  //           parameters: procedureSchema?.parameters?.map((p) => p.name) || [],
-  //           modifiers: procedureSchema?.modifiers || [],
-  //         }),
-  //   };
-  //   if (actions) {
-  //     // ensure that no action inputs or values are missing
-  //     const preparedActions = this.prepareActions(actions, execSchema, this.actionName);
-  //     return {
-  //       dbid: this.dbid,
-  //       actionName: this.actionName,
-  //       modifiers: execSchema.modifiers,
-  //       preparedActions,
-  //     };
-  //   }
-  //   return {
-  //     dbid: this.dbid,
-  //     actionName: this.actionName,
-  //     modifiers: execSchema.modifiers,
-  //     preparedActions: [],
-  //   };
-  // }
-
-  /**
-   * Checks the schema and validates the actions.
+   * Checks the action definition and validates the action inputs
    *
    * @param {ActionInput[]} actionInputs - An array of action inputs to be executed.
-   * @returns {CheckSchema} - An object containing the database identifier, action name, action schema, and prepared actions.
+   * @returns {ValidatedAction} - An object containing the database namespace, action name, modifiers, and encoded action inputs.
    */
-  private async validatedActionRequest(actionInputs: ActionInput[]): Promise<ValidatedAction> {
+  private async validatedActionRequest(actionInputs: Entries[]): Promise<ValidatedAction> {
     // retrieve the schema for the database
     const namespaceRequest = await this.kwil.getActions(this.namespace);
 
@@ -353,8 +273,6 @@ export class Action<T extends EnvironmentType> {
       throw new Error(`Action '${this.actionName}' is not a public action.`);
     }
 
-    console.log('selectedAction', selectedAction);
-
     // ensure that no action inputs or values are missing
     if (actionInputs) {
       for (const actionInput of actionInputs) {
@@ -364,23 +282,21 @@ export class Action<T extends EnvironmentType> {
         }
       }
 
-      // TODO: Next step is to encode the action inputs
-      // Update the return interface to include namespace, actionName, modifiers, and encoded action inputs
       const encodedActionInputs = this.encodeActionInputs(selectedAction, actionInputs);
 
       return {
-        namespace: this.namespace,
+        namespace: selectedAction.namespace,
         actionName: selectedAction.name,
         modifiers: selectedAction.access_modifiers,
-        encodeActionInputs: encodedActionInputs,
+        encodedActionInputs,
       };
     }
 
     return {
-      namespace: this.namespace,
-      actionName: this.actionName,
+      namespace: selectedAction.namespace,
+      actionName: selectedAction.name,
       modifiers: selectedAction.access_modifiers,
-      encodeActionInputs: [],
+      encodedActionInputs: [],
     };
   }
 
@@ -391,8 +307,11 @@ export class Action<T extends EnvironmentType> {
    * @param {ActionInput} actionInput - The values of the actions to be executed.
    * @returns {boolean} - True if the action inputs are valid, false otherwise.
    */
-  private validateActionInputs(selectedAction: NamespaceAction, actionInput: ActionInput): boolean {
-    const actionInputEntries = actionInput.toArray();
+  private validateActionInputs(
+    selectedAction: NamespaceAction,
+    actionInputEntries: Entries
+  ): boolean {
+    const actionInputKeys = Object.keys(actionInputEntries);
 
     // if action does not require parameters, return true
     if (
@@ -405,7 +324,7 @@ export class Action<T extends EnvironmentType> {
     // throw runtime error if action does not have any parameters but inputs were provided
     if (
       (!selectedAction.parameter_names || selectedAction.parameter_names.length === 0) &&
-      actionInputEntries.length > 0
+      actionInputEntries.length !== 0
     ) {
       throw new Error(`No parameters found for action: ${this.actionName}.`);
     }
@@ -422,35 +341,37 @@ export class Action<T extends EnvironmentType> {
     // Check to see if the actionInputs match the expected selectedAction parameters
     const missingParameters = new Set<string>();
     selectedAction.parameter_names.forEach((parameterName) => {
-      if (!actionInputEntries.some((actionInputEntry) => actionInputEntry[0] === parameterName)) {
+      if (!actionInputKeys.includes(parameterName)) {
         missingParameters.add(parameterName);
       }
     });
 
     if (missingParameters.size > 0) {
-      throw new Error(`Missing parameters: ${Array.from(missingParameters).join(', ')}`);
+      throw new Error(
+        `Missing parameters: ${Array.from(missingParameters).join(', ')} for action '${
+          selectedAction.name
+        }'`
+      );
     }
 
     const incorrectParameters = new Set<string>();
-    actionInputEntries.forEach((actionInputEntry) => {
+    actionInputKeys.forEach((actionInputKey) => {
       if (
-        !selectedAction.parameter_names.some(
-          (parameterName) => actionInputEntry[0] === parameterName
-        )
+        !selectedAction.parameter_names.some((parameterName) => actionInputKey === parameterName)
       ) {
-        incorrectParameters.add(actionInputEntry[0]);
+        incorrectParameters.add(actionInputKey);
       }
     });
 
     if (incorrectParameters.size > 0) {
-      throw new Error(`Incorrect parameters: ${Array.from(incorrectParameters).join(', ')}`);
+      throw new Error(
+        `Incorrect parameters: ${Array.from(incorrectParameters).join(', ')} for action '${
+          selectedAction.name
+        }'`
+      );
     }
 
-    // Now need to encode the actionInputs into the expected format depending on the parameter types
-
     return true;
-
-    // return encodeNestedArguments(preparedActions);
   }
 
   /**
@@ -460,105 +381,57 @@ export class Action<T extends EnvironmentType> {
    * @param {ActionInput[]} actionInputs - The values of the actions to be executed.
    * @returns {EncodedValue[][]} - An array of arrays of encoded values.
    */
-  private encodeActionInputs(selectedAction: NamespaceAction, actionInputs: ActionInput[]) {
-    // TODO: This is a placeholder for the actual encoding logic
-    // Needs to be updated to handle all the different parameter types (including)
-    return [
-      {
-        type: {
-          name: VarType.TEXT,
-          is_array: false,
-          metadata: [0, 0], // Must be an array of two numbers and not null
-        },
-        data: ['0x4b77696c'], // "Kwil" in hex bytes
-      },
-    ];
+  private encodeActionInputs(selectedAction: NamespaceAction, actionInputs: Entries[]) {
+    const encodedActionInputs: any[] = [];
+
+    for (let i = 0; i < actionInputs.length; i++) {
+      const actionObject = actionInputs[i];
+      for (const [parameterName, parameterValue] of Object.entries(actionObject)) {
+        // Find the array location the parameter name is at from the selectedAction
+        const parameterNameIndex = selectedAction.parameter_names.findIndex(
+          (name) => name === parameterName
+        );
+        if (parameterNameIndex === -1) {
+          throw new Error(`Parameter ${parameterName} not found in action ${this.actionName}.`);
+        }
+        let parameterType = selectedAction.parameter_types[parameterNameIndex] as VarType;
+        console.log('parameterType', parameterType);
+
+        // Add to array
+        encodedActionInputs[i] = encodedActionInputs[i] || [];
+
+        // Set metadata for all types
+        let metadata: number[] = [0, 0];
+        // Set metadata for numeric types
+        // Decimal is now deprecated and should be replaced with numeric but keeping for compatibility right now
+        if (parameterType.includes('numeric') || parameterType.includes('decimal')) {
+          parameterType = VarType.NUMERIC;
+          const analysis = analyzeNumber(Number(parameterValue));
+          metadata = [analysis.totalDigits, analysis.decimalPosition];
+        }
+
+        // Validate parameter type against VarType enum
+        if (!Object.values(VarType).includes(parameterType)) {
+          // This shouldn't happen as we are using the parameter type from the action definition
+          throw new Error(
+            `Invalid parameter type '${parameterType}' for action '${this.actionName}' parameter '${parameterName}'.  If you hit this error, please report it to the Kwil team.`
+          );
+        }
+
+        encodedActionInputs[i].push({
+          type: {
+            name: parameterType,
+            is_array: false, // TODO: Need to update to handle arrays
+            metadata,
+          },
+          data: encodeValue(parameterType, parameterValue),
+        });
+      }
+    }
+
+    console.log('encodedActionInputs', encodedActionInputs);
+    return encodedActionInputs;
   }
-
-  /**
-   * Validates that the action is not missing any inputs.
-   *
-   * @param {ActionInput[]} actions - The values of the actions to be executed.
-   * @param {ExecSchema} execSchema - The schema of the action to be executed.
-   * @param {string} actionName - The name of the action to be executed.
-   * @returns {ValueType[][]} - An array of arrays of values to be executed.
-   */
-  // private prepareActions(
-  //   actions: ActionInput[],
-  //   execSchema: ExecSchema,
-  //   actionName: string
-  // ): EncodedValue[][] {
-  //   // if action does not require parameters, return an empty array
-  //   if ((!execSchema.parameters || execSchema.parameters.length === 0) && actions.length === 0) {
-  //     return [];
-  //   }
-
-  //   // throw runtime error if action does not have any parameters but inputs were provided
-  //   if (!execSchema.parameters || execSchema.parameters.length === 0) {
-  //     throw new Error(`No parameters found for action schema: ${actionName}.`);
-  //   }
-
-  //   // throw runtime error if no actions were provided but inputs are required
-  //   if (actions.length == 0) {
-  //     throw new Error('No action data has been added to the ActionBuilder.');
-  //   }
-
-  //   // track the missing actions
-  //   const missingActions = new Set<string>();
-  //   execSchema.parameters.forEach((p) => {
-  //     const found = actions.find((a) => {
-  //       return a.containsKey && a.containsKey(p);
-  //     });
-
-  //     if (!found) {
-  //       missingActions.add(p);
-  //     }
-  //   });
-
-  //   if (missingActions.size > 0) {
-  //     throw new Error(`Actions do not match action schema inputs: ${Array.from(missingActions)}`);
-  //   }
-
-  //   const preparedActions: ValueType[][] = [];
-  //   const missingInputs = new Set<string>();
-  //   actions.forEach((a) => {
-  //     const copy = ActionInput.from(a);
-  //     execSchema.parameters?.forEach((p) => {
-  //       if (missingInputs.has(p)) {
-  //         return;
-  //       }
-
-  //       if (!copy.containsKey(p)) {
-  //         missingInputs.add(p);
-  //         return;
-  //       }
-
-  //       if (missingInputs.size > 0) {
-  //         return;
-  //       }
-
-  //       const val = copy.get(p);
-
-  //       copy.put(p, val);
-  //     });
-
-  //     if (missingInputs.size === 0) {
-  //       execSchema.parameters &&
-  //         preparedActions.push(
-  //           execSchema.parameters.map((p) => {
-  //             const val = copy.get(p);
-  //             return val;
-  //           })
-  //         );
-  //     }
-  //   });
-
-  //   if (missingInputs.size > 0) {
-  //     throw new Error(`Inputs are missing for actions: ${Array.from(missingInputs)}`);
-  //   }
-
-  //   return encodeNestedArguments(preparedActions);
-  // }
 
   private assertNotBuilding(): void {
     if (this.actionInputs === TXN_BUILD_IN_PROGRESS) {

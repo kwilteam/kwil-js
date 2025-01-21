@@ -7,7 +7,9 @@ import { Account, ChainInfo, ChainInfoOpts, DatasetInfo } from '../core/network'
 import { Cache } from '../utils/cache';
 import { TxInfoReceipt } from '../core/txQuery';
 import {
+  AccountKeyType,
   AuthenticationMode,
+  AuthErrorCodes,
   BroadcastSyncType,
   BytesEncodingStatus,
   EnvironmentType,
@@ -15,7 +17,7 @@ import {
 } from '../core/enums';
 import { hexToBytes } from '../utils/serial';
 import { isNearPubKey, nearB58ToHex } from '../utils/keys';
-import { ActionBody, ActionInput, CallBody } from '../core/action';
+import { ActionBody, ActionInput, CallBody, Entries, transformActionInput } from '../core/action';
 import { KwilSigner } from '../core/kwilSigner';
 import { wrap } from './intern';
 import { Funder } from '../funder/funder';
@@ -23,7 +25,7 @@ import { Auth } from '../auth/auth';
 import { Action } from '../transaction/action';
 import { Message, MsgReceipt } from '../core/message';
 import { AuthBody, Signature } from '../core/signature';
-import { QueryRequest, SelectQueryRequest } from '../core/jsonrpc';
+import { SelectQueryRequest } from '../core/jsonrpc';
 import { formatParameters } from '../utils/parameters';
 import { generateDBID } from '../utils/dbid';
 
@@ -185,16 +187,18 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    */
 
   public async getAccount(owner: string | Uint8Array): Promise<GenericResponse<Account>> {
+    let keyType = AccountKeyType.SECP256K1;
     if (typeof owner === 'string') {
       if (isNearPubKey(owner)) {
         owner = nearB58ToHex(owner);
+        keyType = AccountKeyType.ED25519;
       }
 
       owner = owner.toLowerCase();
       owner = hexToBytes(owner);
     }
 
-    return await this.getAccountClient(owner);
+    return await this.getAccountClient(owner, keyType);
   }
 
   /**
@@ -214,27 +218,11 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       throw new Error('name is required in actionBody');
     }
 
-    /**
-     * if actionBody.inputs are defined: check if all elements in actionBody.inputs are instances of ActionInput class
-     * if true => assign inputs directly to the existing array
-     * if an item in actionBody.inputs is NOT an instance of ActionInput => convert into an ActionInput instance
-     */
-    let inputs: ActionInput[] | undefined;
-    if (actionBody.inputs) {
-      if (this.isActionInputArray(actionBody.inputs)) {
-        inputs = actionBody.inputs;
-      } else {
-        inputs = new ActionInput().putFromObjects(actionBody.inputs);
-      }
-    }
-
-    // TODO: Need to validate the inputs against the schema
-
-    if (actionBody.nonce === undefined) {
-      // TODO: This is not working.  RPC response: "missing account identifier"
-      // If the nonce is not provided then calculate it using the account's most recent confirmed nonce and add 1
-      const account = await this.getAccount(kwilSigner.identifier);
-      actionBody.nonce = account.data?.nonce ? account.data.nonce + 1 : 0;
+    // ActionInput[] has been deprecated.
+    // This transforms the ActionInput[] into Entries[] to support legacy ActionInput[]
+    let inputs: Entries[] = [];
+    if (actionBody.inputs && transformActionInput.isActionInputArray(actionBody.inputs)) {
+      inputs = transformActionInput.toEntries(actionBody.inputs);
     }
 
     let tx = Action.createTx(this, {
@@ -246,7 +234,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       signer: kwilSigner.signer,
       signatureType: kwilSigner.signatureType,
       nonce: actionBody.nonce,
-      actionInputs: inputs || [],
+      actionInputs: inputs,
     });
 
     const transaction = await tx.buildTx();
@@ -347,8 +335,6 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     }
 
     const formattedParams = formatParameters(params || {});
-
-    console.log('formattedParams', formattedParams);
 
     const q: SelectQueryRequest = {
       query,
@@ -492,7 +478,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     actionBody: CallBody,
     kwilSigner?: KwilSigner,
     cookieHandlerCallback?: { setCookie: () => void; resetCookie: () => void }
-  ): Promise<GenericResponse<MsgReceipt>> {
+  ): Promise<GenericResponse<Object[] | MsgReceipt>> {
     // Ensure auth mode is set
     await this.ensureAuthenticationMode();
 
@@ -510,7 +496,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       }
 
       // if the user is not authenticated, prompt the user to authenticate
-      if (response.authCode === -901 && this.autoAuthenticate) {
+      if (response.authCode === AuthErrorCodes.KGW_MODE && this.autoAuthenticate) {
         await this.handleAuthenticateKGW(kwilSigner);
         return await this.callClient(message);
       }
@@ -566,11 +552,11 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       throw new Error('name is required in actionBody');
     }
 
-    let inputs: ActionInput[] | undefined;
-    if (actionBody.inputs) {
-      inputs = this.isFirstElementActionInput(actionBody.inputs)
-        ? actionBody.inputs
-        : new ActionInput().putFromObjects(actionBody.inputs);
+    let inputs: Entries[] = [];
+    if (actionBody.inputs && transformActionInput.isActionInputArray(actionBody.inputs)) {
+      inputs = transformActionInput.toSingleEntry(actionBody.inputs);
+    } else if (actionBody.inputs) {
+      inputs = actionBody.inputs;
     }
 
     // pre Challenge message
@@ -579,7 +565,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       namespace: actionBody.namespace,
       actionName: actionBody.name,
       description: actionBody.description || '',
-      actionInputs: inputs || [],
+      actionInputs: inputs,
     });
 
     /**
@@ -601,9 +587,9 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     if (kwilSigner && this.authMode === AuthenticationMode.PRIVATE) {
       if (challenge && signature) {
         // add challenge and signature to the message
-        (msg.challenge = challenge),
-          (msg.signature = signature),
-          this.addSignerToMessage(msg, kwilSigner);
+        msg.challenge = challenge;
+        msg.signature = signature;
+        this.addSignerToMessage(msg, kwilSigner);
       }
     }
 
@@ -680,26 +666,6 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     }
 
     throw new Error('Authentication process did not complete successfully');
-  }
-
-  /**
-   * Checks if all elements in the given array are instances of ActionInput.
-   *
-   * @param {unknown} inputs - The value to be checked.
-   * @returns {boolean} - True if `inputs` is an array where every element is an ActionInput, otherwise false.
-   */
-  private isActionInputArray(inputs: unknown): inputs is ActionInput[] {
-    return Array.isArray(inputs) && inputs.every((item) => item instanceof ActionInput);
-  }
-
-  /**
-   * Checks if the first element of the given array is an instance of ActionInput.
-   *
-   * @param {unknown} inputs - The value to be checked.
-   * @returns {boolean} - True if `inputs` is an array with the first element being an ActionInput, otherwise false.
-   */
-  private isFirstElementActionInput(inputs: unknown): inputs is ActionInput[] {
-    return Array.isArray(inputs) && inputs[0] instanceof ActionInput;
   }
 
   private validateNamespace(namespace: string): boolean {

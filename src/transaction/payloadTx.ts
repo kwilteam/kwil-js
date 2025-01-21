@@ -95,6 +95,7 @@ export class PayloadTx<T extends EnvironmentType> {
    */
   async buildTx(): Promise<Transaction> {
     // ensure required fields are not null or undefined
+    console.log('this.signer', this.signer);
     const { signer, payloadType, identifier, signatureType, chainId } = objects.validateFields(
       {
         signer: this.signer,
@@ -123,6 +124,7 @@ export class PayloadTx<T extends EnvironmentType> {
     // if no nonce is provided, retrieve the nonce from the account
     if (!this.nonce) {
       const acct = await this.kwil.getAccount(identifier);
+
       nonce =
         Number(
           objects.requireNonNil(

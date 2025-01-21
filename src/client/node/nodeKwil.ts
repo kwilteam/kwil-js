@@ -19,12 +19,12 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
    *
    * @param {CallBodyNode} actionBody - The body of the action to send. This should use the `CallBody` interface.
    * @param {KwilSigner} kwilSigner (optional) - KwilSigner should be passed if the action requires authentication OR if the action uses a `@caller` contextual variable. If `@caller` is used and authentication is not required, the user will not be prompted to authenticate; however, the user's identifier will be passed as the sender.
-   * @returns A promise that resolves to the receipt of the message.
+   * @returns An Object[] with the result of the action or a MsgReceipt
    */
   public async call(
     actionBody: CallBodyNode,
     kwilSigner?: KwilSigner
-  ): Promise<GenericResponse<MsgReceipt>> {
+  ): Promise<GenericResponse<Object[] | MsgReceipt>> {
     const setCookie = () => {
       // set the temporary cookie, if the user provided one
       if (actionBody.cookie) {

@@ -1,15 +1,16 @@
 import { base64ToBytes } from '../utils/base64';
 import { Account, ChainInfo, DatasetInfo } from '../core/network';
-import { Database } from '../core/database';
 import { Transaction, TxReceipt } from '../core/tx';
 import { Api } from './api';
 import { ClientConfig } from './config';
 import { GenericResponse } from '../core/resreq';
-import { base64ToHex, bytesToHex, bytesToString, hexToBase64, hexToBytes } from '../utils/serial';
+import { base64ToHex, bytesToHex, hexToBase64, hexToBytes } from '../utils/serial';
 import { TxInfoReceipt } from '../core/txQuery';
 import { CallClientResponse, Message, MsgReceipt } from '../core/message';
 import { kwilDecode } from '../utils/rlp';
 import {
+  AccountKeyType,
+  AccountStatus,
   AuthErrorCodes,
   BroadcastSyncType,
   BytesEncodingStatus,
@@ -20,7 +21,6 @@ import { AxiosResponse } from 'axios';
 import {
   AccountRequest,
   AccountResponse,
-  AccountStatus,
   AuthParamRequest,
   AuthParamResponse,
   AuthnLogoutRequest,
@@ -45,6 +45,7 @@ import {
   ListDatabasesResponse,
   PingRequest,
   PingResponse,
+  QueryResponse,
   SelectQueryRequest,
   SelectQueryResponse,
   TxQueryRequest,
@@ -133,9 +134,15 @@ export default class Client extends Api {
     return checkRes(res, (r) => r.result);
   }
 
-  protected async getAccountClient(owner: Uint8Array): Promise<GenericResponse<Account>> {
+  protected async getAccountClient(
+    owner: Uint8Array,
+    keyType: AccountKeyType
+  ): Promise<GenericResponse<Account>> {
     const body = this.buildJsonRpcRequest<AccountRequest>(JSONRPCMethod.METHOD_ACCOUNT, {
-      identifier: bytesToHex(owner),
+      id: {
+        identifier: bytesToHex(owner),
+        key_type: keyType,
+      },
       status: this.unconfirmedNonce ? AccountStatus.PENDING : AccountStatus.LATEST,
     });
 
@@ -247,31 +254,7 @@ export default class Client extends Api {
     const body = this.buildJsonRpcRequest<SelectQueryRequest>(JSONRPCMethod.METHOD_QUERY, query);
     const res = await super.post<JsonRPCResponse<SelectQueryResponse>>(`/rpc/v1`, body);
 
-    return checkRes(res, (r) => {
-      // TODO: We have to use this approach as we receive column_names, column_types, and values as a response.
-      // It could have performance issues, so returning the row of objects would be better.
-      const { column_names, values } = r.result;
-
-      if (!values || values.length === 0) {
-        return [];
-      }
-
-      const result = new Array(values.length);
-
-      // Iterate over the values array and convert each row into an object
-      for (let i = 0; i < values.length; i++) {
-        const obj: Record<string, any> = {};
-
-        // Iterate over the column_names array and convert each value into an object
-        for (let j = 0; j < column_names.length; j++) {
-          obj[column_names[j]] = values[i][j];
-        }
-
-        // Add the object to the result array
-        result[i] = obj;
-      }
-      return result;
-    });
+    return checkRes(res, (r) => this.parseQueryResponse(r.result));
   }
 
   protected async txInfoClient(tx_hash: string): Promise<GenericResponse<TxInfoReceipt>> {
@@ -302,7 +285,7 @@ export default class Client extends Api {
     });
   }
 
-  protected async callClient(msg: Message): Promise<CallClientResponse<MsgReceipt>> {
+  protected async callClient(msg: Message): Promise<CallClientResponse<Object[] | MsgReceipt>> {
     const body = this.buildJsonRpcRequest<CallRequest>(JSONRPCMethod.METHOD_CALL, {
       body: msg.body,
       auth_type: msg.auth_type,
@@ -320,11 +303,7 @@ export default class Client extends Api {
       return errorResponse;
     }
 
-    return checkRes(res, (r) => {
-      return {
-        result: JSON.parse(bytesToString(base64ToBytes(r.result.result))),
-      };
-    });
+    return checkRes(res, (r) => this.parseQueryResponse(r.result.query_result));
   }
 
   private buildJsonRpcRequest<T>(method: JSONRPCMethod, params: T): JsonRPCRequest<T> {
@@ -351,6 +330,32 @@ export default class Client extends Api {
       };
     }
     return null;
+  }
+
+  private parseQueryResponse(queryResponse: QueryResponse): Object[] {
+    // TODO: We have to use this approach as we receive column_names, column_types, and values as a response.
+    // It could have performance issues, so returning the row of objects would be better.
+    const { column_names, values } = queryResponse;
+
+    if (!values || values.length === 0) {
+      return [];
+    }
+
+    const result = new Array(values.length);
+
+    // Iterate over the values array and convert each row into an object
+    for (let i = 0; i < values.length; i++) {
+      const obj: Record<string, any> = {};
+
+      // Iterate over the column_names array and convert each value into an object
+      for (let j = 0; j < column_names.length; j++) {
+        obj[column_names[j]] = values[i][j];
+      }
+
+      // Add the object to the result array
+      result[i] = obj;
+    }
+    return result;
   }
 }
 

@@ -6,7 +6,7 @@ export type Entry<T extends ValueType | ValueType[]> = [string, T];
 
 export type EntryType = Entry<ValueType> | Entry<ValueType[]>;
 
-export type Entries = { [key: string]: ValueType | ValueType[] };
+export type Entries = Record<string, ValueType | ValueType[]>;
 
 export type Predicate = (k: [key: string, v: ValueType | ValueType[]]) => boolean;
 
@@ -28,7 +28,16 @@ export interface ActionBody {
    */
   name: string;
   /**
-   * inputs is an array of action inputs.
+   * inputs is an array of objects. Each object can contain string keys with ValueType values.
+   * ActionInput[] is deprecated. Please use Record<string, ValueType>[] instead.
+   * Example:
+   * ```
+   * // Old way (deprecated):
+   * const input = ActionInput.of().put("name", "Alice").put("age", 25);
+   *
+   * // New way:
+   * const input = { name: "Alice", age: 25 };
+   * ```
    */
   inputs?: Entries[] | ActionInput[];
   /**
@@ -74,10 +83,18 @@ export interface CallBody {
    */
   name: string;
   /**
-   * inputs is an array of action inputs.
+   * inputs is an array of objects. Each object can contain string keys with ValueType values.
+   * ActionInput[] is deprecated. Please use Record<string, ValueType>[] instead.
+   * Example:
+   * ```
+   * // Old way (deprecated):
+   * const input = ActionInput.of().put("name", "Alice").put("age", 25);
+   *
+   * // New way:
+   * const input = { name: "Alice", age: 25 };
+   * ```
    */
   inputs?: Entries[] | ActionInput[];
-
   /**
    * authBody is an optional value for the read/view action to be called in private mode
    * AuthBody interface => consisting of the signature and challenge for the message
@@ -90,6 +107,7 @@ export interface CallBodyNode extends CallBody {
 }
 
 /**
+ * @deprecated - This class is deprecated and will be removed in the next major release.  Please use the `params` instead.
  * `ActionInput` class is a utility class for creating action inputs.
  */
 
@@ -362,3 +380,60 @@ function assertKey(key: string): string {
 function lowercaseKey(key: string): string {
   return key.toLowerCase();
 }
+
+export const transformActionInput = {
+  /**
+   * Checks if all elements in the given array are instances of ActionInput.
+   *
+   * @param {unknown} inputs - The value to be checked.
+   * @returns {boolean} - True if `inputs` is an array where every element is an ActionInput, otherwise false.
+   */
+  isActionInputArray(inputs: unknown): inputs is ActionInput[] {
+    return Array.isArray(inputs) && inputs.every((item) => item instanceof ActionInput);
+  },
+
+  /**
+   * Transforms action inputs into entries format required by the API.
+   * Used to support legacy ActionInput[] when calling a view action where only one input is required.
+   *
+   * @param {ActionInput[] | Entries[]} inputs - The input array to transform
+   * @returns {Entries[]} - Array containing a single Entries object
+   * @throws {Error} - If inputs array is empty
+   */
+  toSingleEntry(inputs: ActionInput[] | Entries[]): Entries[] {
+    if (!inputs.length) {
+      throw new Error('Inputs array cannot be empty');
+    }
+
+    const firstInput = inputs[0];
+
+    if (firstInput instanceof ActionInput) {
+      return [firstInput.toEntries()];
+    }
+
+    return [firstInput];
+  },
+
+  /**
+   * Transforms action inputs into entries format required by the API.
+   * Used to support legacy ActionInput[] when calling an execute action where multiple inputs may be required.
+   *
+   * @param {ActionInput[] | Entries[]} inputs - The input array to transform
+   * @returns {Entries[]} - Array containing entries objects
+   * @throws {Error} - If inputs array is not valid
+   */
+  toEntries(inputs: ActionInput[] | Entries[]): Entries[] {
+    if (!transformActionInput.isActionInputArray(inputs)) {
+      throw new Error('Inputs array  must be an array of Entries or ActionInput objects');
+    }
+
+    const entries: Entries[] = [];
+    for (const input of inputs) {
+      if (input instanceof ActionInput) {
+        entries.push(input.toEntries());
+      }
+    }
+
+    return entries;
+  },
+};

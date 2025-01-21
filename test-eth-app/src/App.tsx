@@ -22,7 +22,6 @@ function App() {
     const provider = new BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
     const kwilSigner = new KwilSigner(signer, signer.address);
-    const nonce = await provider.getTransactionCount(signer.address);
 
     // const res = await kwil.chainInfo();
     // console.log(res);
@@ -31,9 +30,15 @@ function App() {
 
     // await deployDb(kwilSigner);
     const namespace = 'test';
-    // const actionInput = Utils.ActionInput.of().put('$name', 'Martin');
+    const actionInput = Utils.ActionInput.of()
+      .put('$id', 'f47ac10b-58cc-4372-a567-0e02b2c3d479')
+      .put('$int_var', 42)
+      .put('$text_var', 'Sample text')
+      .put('$bool_var', true)
+      .put('$decimal_var', '12.3456')
+      .put('$blob', new Uint8Array([1]));
 
-    // await executeAction(kwil, namespace, 'insert_variables', actionInput, kwilSigner, nonce);
+    // await executeAction(kwil, namespace, 'insert_variables', actionInput, kwilSigner);
     await testViewWithParam(kwil, namespace, kwilSigner);
     // await kwilAuthenticate(kwil, kwilSigner)
     // await testViewWithSign(kwil, dbid, kwilSigner)
@@ -76,11 +81,11 @@ function App() {
     // );
 
     // UUID;
-    console.log(
-      await kwil.selectQuery('{test}SELECT * FROM variable_test WHERE id = $id', {
-        $id: '123e4567-e89b-12d3-a456-426614174000',
-      })
-    );
+    // console.log(
+    //   await kwil.selectQuery('{test}SELECT * FROM variable_test WHERE id = $id', {
+    //     $id: '123e4567-e89b-12d3-a456-426614174000',
+    //   })
+    // );
 
     // INT;
     // console.log(
