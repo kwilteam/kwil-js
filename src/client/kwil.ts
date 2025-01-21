@@ -26,7 +26,7 @@ import { Action } from '../transaction/action';
 import { Message, MsgReceipt } from '../core/message';
 import { AuthBody, Signature } from '../core/signature';
 import { SelectQueryRequest } from '../core/jsonrpc';
-import { formatParameters } from '../utils/parameters';
+import { encodeParameters } from '../utils/parameters';
 import { generateDBID } from '../utils/dbid';
 
 /**
@@ -334,11 +334,11 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       return this.legacySelectQuery(query, params);
     }
 
-    const formattedParams = formatParameters(params || {});
+    const encodedParams = encodeParameters(params || {});
 
     const q: SelectQueryRequest = {
       query,
-      params: formattedParams,
+      params: encodedParams,
     };
 
     // TODO: Add support for signer

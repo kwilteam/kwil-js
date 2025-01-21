@@ -13,20 +13,20 @@ import { convertUuidToBytes, isUuid } from './uuid';
 export function formatArguments(values: ValueType[]): EncodedValue[] {
   // TODO: Need to test and implement this method.
   // Used in authenticatePrivateMode() in auth.ts
-  return values.map(formatValue);
+  return values.map(formatDataType);
 }
 
-export function formatParameters(params: Record<string, ValueType>): Record<string, EncodedValue> {
+export function encodeParameters(params: Record<string, ValueType>): Record<string, EncodedValue> {
   const formattedParams: Record<string, EncodedValue> = {};
 
   Object.entries(params).forEach(([key, value]) => {
-    formattedParams[key] = formatValue(value);
+    formattedParams[key] = formatDataType(value);
   });
 
   return formattedParams;
 }
 
-function formatValue(val: ValueType): EncodedValue {
+function formatDataType(val: ValueType): EncodedValue {
   const { metadata, varType } = resolveValueType(val);
 
   const metadataSpread = metadata ? { metadata } : {};
