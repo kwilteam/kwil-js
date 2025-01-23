@@ -29,7 +29,7 @@ let rawStmt: RawStatement = {
                 metadata: [0, 0]
             },
             data: [
-                stringToBytes('hello world')
+                encodeScalar('hello world')
             ]
         }
     }]
