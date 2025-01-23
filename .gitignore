@@ -13,3 +13,4 @@ testapp/node_modules
 /.husky
 .DS_Store
 .npmrc
+/test-eth-app/src/examples/

@@ -15,7 +15,6 @@ const nacl = require('tweetnacl');
 const { sha256BytesToBytes } = require('../dist/utils/crypto');
 const { KwilSigner } = require('../dist/core/kwilSigner');
 const { ActionInput } = require('../dist/core/action');
-const { v4 } = require('uuid');
 require('dotenv').config();
 
 const chainId = process.env.CHAIN_ID || 'SHOULD FAIL';
@@ -70,6 +69,7 @@ async function scratchpad() {
   // testMultiLogout()
 
   // const dbid = kwil.getDBID(address, 'social');
+  const dbid = 'xe3cf0579c3adeeceef9d827357316d54e12f27bfc2cfb0a1b005152c'
   // console.log("social dbid ", dbid)
   // await authenticate(kwil, kwilSigner)
   // broadcast(kwil, testDB, kwilSigner)
@@ -107,11 +107,9 @@ async function scratchpad() {
 
   const post = {
     $id: 1,
-    $title: 'dmx',
-    $content: 'lose my mind',
-    $date_string: '12-03-2024',
+    $message: "hello_world"
   };
-  executeGeneralAction(kwil, dbid, 'create_post', kwilSigner, post);
+  executeGeneralAction(kwil, dbid, 'insert_greeting', kwilSigner, post);
   // await executeGeneralView(kwil, dbid, 'get_profile', null, kwilSigner);
   // await executeGeneralView(kwil, dbid, "view_must_sign", null, kwilSigner)
 }

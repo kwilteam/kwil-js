@@ -23,7 +23,7 @@ function _objToNestedArray(input: NonNil<object>): any[] | HexString {
 }
 
 // takes any input and returns it as a hex string
-function inputToHex(
+export function inputToHex(
   val: string | number | BigInt | Uint8Array | Boolean | null | undefined
 ): HexString {
   if (typeof val === 'string') {
@@ -196,6 +196,8 @@ export function encodeSingleArguments(preparedAction: ValueType[]): EncodedValue
     };
 
     let data: string[] | Uint8Array[] = [];
+
+    console.log(val)
 
     if (Array.isArray(val) && !(val instanceof Uint8Array)) {
       data = val.map((v) => {

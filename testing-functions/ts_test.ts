@@ -1,4 +1,4 @@
-import { BrowserProvider, Wallet } from 'ethers';
+import { BrowserProvider, encodeRlp, Wallet } from 'ethers';
 import { KwilSigner, NodeKwil, Utils } from '../dist/index';
 import { ActionBody } from '../dist/core/action';
 import { DeployBody, DropBody } from '../dist/core/database';
@@ -13,6 +13,11 @@ const kwil = new NodeKwil({
 });
 
 import { JsonRpcProvider } from 'ethers';
+import { inputToHex, kwilEncode } from '../src/utils/rlp';
+import { concatBytes, numberToUint16BigEndian } from '../src/utils/bytes';
+import { EncodingType } from '../src/core/enums';
+import { hexToBytes, numberToBytes, stringToBytes } from '../src/utils/serial';
+import { bytesToBase64 } from '../src/utils/base64';
 
 // add window.ethereum to typeof globalthis
 declare global {
@@ -90,7 +95,7 @@ async function main() {
   console.log(chainInfo);
 }
 
-main();
+// main();
 
 async function nilTest() {
   const signer = await buildSigner();
@@ -137,3 +142,33 @@ async function nilTest() {
 }
 
 // nilTest();
+
+// async function rlp_test(val: string) {
+//   const rlpVal = encodeRlp(inputToHex(val));
+//   const encodingType = numberToUint16BigEndian(EncodingType.RLP_ENCODING);
+//   const bytes = concatBytes(encodingType, hexToBytes(rlpVal));
+
+//   console.log(bytesToBase64(bytes))
+// }
+
+import { parse, v4 } from 'uuid';
+
+
+
+function test() {
+  // handling numbers
+  const bytes = numberToBytes(1)
+  console.log(bytesToBase64(bytes))
+
+  // handling uuids
+  // for martin - how should we handle when a user passes a UUID to kwil-js?
+  // I see two options (if there are others though, feel free to propose):
+  //  - Option 1: We check each string that is passed to see if it conforms to a uuid string. If yes, we assume the variable is of uuid type and pass accordingly.
+  //  - Option 2: We create a class (e.g., UUID), that users must use each time they want to query. Example:
+  //    await kwil.selectQuery('SELECT * FROM my_table WHERE id = $my_uuid, {$my_uuid: new UUID("123e4567-e89b-12d3-a456-426614174000")})
+  const bt2 = parse('123e4567-e89b-12d3-a456-426614174000')
+  console.log(bytesToBase64(bt2))
+
+}
+
+test()
