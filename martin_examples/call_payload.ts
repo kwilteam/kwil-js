@@ -49,12 +49,6 @@ export function encodeActionCall(ac: ActionCall): string {
 
     const CONCACTME_params = concatBytes(numArgs, params);
 
-    console.log(concatBytes(
-        CONCACTME_version,
-        CONCATME_DBID,
-        CONCATME_action,
-        CONCACTME_params
-    ))
     return bytesToBase64(
         concatBytes(
             CONCACTME_version,
