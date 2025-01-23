@@ -1,6 +1,7 @@
 import { bytesToBase64 } from "../src/utils/base64"
 import { concatBytes, numberToUint16BigEndian } from "../src/utils/bytes"
-import { booleanToBytes, stringToBytes } from "../src/utils/serial"
+import { booleanToBytes, hexToBytes, stringToBytes } from "../src/utils/serial"
+import { numberToUint16LittleEndian, numberToUint32BigEndian, prefixBytesLength } from "./utils"
 
 // ~~TRANSACTION INTERFACE~~ - to be used on all `user.broadcast` requests
 
@@ -255,12 +256,6 @@ function encodeActionExecution(act: ActionExecution): string {
     })
     
     const CONCATME_params = concatBytes(numCalls, params);
-    console.log(concatBytes(
-        CONCACTME_version,
-        CONCACTME_dbid,
-        CONCATME_action,
-        CONCATME_params
-    ))
     return bytesToBase64(
         concatBytes(
             CONCACTME_version,
@@ -271,66 +266,57 @@ function encodeActionExecution(act: ActionExecution): string {
     )
 }
 
+interface Transfer {
+    to: AccountId,
+    amount: BigInt
+}
 
+interface AccountId {
+    // hexidecimal string of the recipient's identifier (e.g., Ethereum address, ed25519 string, etc.)
+    identifier: string
+    // key type of the recipient identifier.
+    // default to kwil are secp256k1 and ed25519. Users can add custom keys with an authenticator extension.
+    // @martin-opensky - I think we will have to create an option for the user to pass a key type if their network users an authenticator extension?
+    key_type: string
+}
 
-// ~~UTILITY FUNCTIONS~~
+function encodeTransfer(t: Transfer): string {
+    const tVersion = 0;
 
-// prefixBytesLength prefixes a Uint8array with the bytes length (uint32)
-function prefixBytesLength(bytes: Uint8Array): Uint8Array {
-    const lengthBytes = numberToUint32LittleEndian(bytes.length)
-    
-   return concatBytes(
-        lengthBytes,
-        bytes
+    const CONCACTME_version = numberToUint16LittleEndian(tVersion);
+    const CONCACTME_to = prefixBytesLength(encodeAccountId(t.to))
+    // for BigInt Serialization, add a single byte and then encode it as a string
+    const CONCATME_amt = concatBytes(
+        new Uint8Array([1]),
+        prefixBytesLength(stringToBytes(t.amount.toString()))
+    )
+
+    return bytesToBase64(
+        concatBytes(
+            CONCACTME_version,
+            CONCACTME_to,
+            CONCATME_amt
+        )
     )
 }
 
-function numberToUint16LittleEndian(number: number): Uint8Array {
-    if (number < 0 || number > 0xFFFF || !Number.isInteger(number)) {
-        throw new RangeError("The number must be an integer between 0 and 65535.");
-    }
-
-    const buffer = new ArrayBuffer(2); // Create a buffer of 2 bytes
-    const view = new DataView(buffer);
-
-    view.setUint16(0, number, true); // Set the number at byte offset 0 in little-endian
-
-    return new Uint8Array(buffer); // Convert to Uint8Array for easier use
+function encodeAccountId(a: AccountId): Uint8Array {
+    const CONCATEME_id = prefixBytesLength(hexToBytes(a.identifier))
+    const CONCATEME_type = prefixBytesLength(stringToBytes(a.key_type))
+    return concatBytes(
+        CONCATEME_id,
+        CONCATEME_type
+    )
 }
-
-function numberToUint32LittleEndian(number) {
-    if (number < 0 || number > 0xFFFFFFFF || !Number.isInteger(number)) {
-        throw new RangeError("The number must be an integer between 0 and 4294967295.");
-    }
-
-    const buffer = new ArrayBuffer(4); // Create a buffer of 4 bytes
-    const view = new DataView(buffer);
-
-    view.setUint32(0, number, true); // Write the number at byte offset 0 in little-endian
-
-    return new Uint8Array(buffer); // Convert to Uint8Array for easier use
-}
-
-function numberToUint32BigEndian(number) {
-    if (number < 0 || number > 0xFFFFFFFF || !Number.isInteger(number)) {
-      throw new RangeError("The number must be an integer between 0 and 4294967295.");
-    }
-  
-    const buffer = new ArrayBuffer(4); // Create a buffer of 4 bytes
-    const view = new DataView(buffer);
-  
-    view.setUint32(0, number, false); // Write the number in big-endian format (false)
-  
-    return new Uint8Array(buffer); // Convert to Uint8Array for easier use
-  }
-
-
-  // exporting so i can do some tests
 
   export {
     RawStatement,
     encodeRawStatement,
     PayloadType,
     ActionExecution,
-    encodeActionExecution
+    encodeActionExecution,
+    EncodedValue,
+    encodeEncodedValue,
+    Transfer,
+    encodeTransfer
   }
