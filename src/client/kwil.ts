@@ -29,6 +29,7 @@ import { AuthBody, Signature, SignatureType } from '../core/signature';
 import { ActionCall, encodeActionCall, EncodedValue } from '../martin_examples/broadcast_payloads';
 import { analyzeVariable } from '../utils/rlp';
 import { CallResponse } from '../core/jsonrpc';
+import { encodeScalar } from '../utils/scalar';
 
 /**
  * The main class for interacting with the Kwil network.
@@ -372,20 +373,17 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
           }
 
           const varAnalysis = analyzeVariable(i)
-          let varBytes: Uint8Array = new Uint8Array();
+          const varBytes: Uint8Array = encodeScalar(i)
           let varType: VarType = VarType.TEXT
 
           switch(typeof i) {
             case 'string':
-              varBytes = stringToBytes(i)
               varType = VarType.TEXT
               break;
             case 'number':
-              varBytes = numberToBytes(i)
               varType = VarType.INT
               break;
             case 'boolean':
-              varBytes = booleanToBytes(i);
               varType = VarType.BOOL
             default:
               break;
