@@ -1,32 +1,33 @@
 import { DataType } from '../core/database';
-import { ValueType, VarType } from '../core/enums';
-import { EncodedValue } from '../core/payload';
+import { VarType } from '../core/enums';
+import { EncodedParameterValue } from '../core/payload';
 import { bytesToBase64 } from './base64';
-import { booleanToBytes, numberToBytes, stringToBytes } from './serial';
-import { convertUuidToBytes, isUuid } from './uuid';
+import { encodeValue } from './kwilEncoding';
+import { EncodedQueryParams, QueryParams, ValueType } from './types';
+import { isUuid } from './uuid';
 
 /**
  *
  * @param {ValueType[]} values - An array of values to be executed by an action.
  * @returns formatted values used for an action
  */
-export function formatArguments(values: ValueType[]): EncodedValue[] {
+export function formatArguments(values: ValueType[]): EncodedParameterValue[] {
   // TODO: Need to test and implement this method.
   // Used in authenticatePrivateMode() in auth.ts
   return values.map(formatDataType);
 }
 
-export function encodeParameters(params: Record<string, ValueType>): Record<string, EncodedValue> {
-  const formattedParams: Record<string, EncodedValue> = {};
+export function encodeParameters(params: QueryParams): EncodedQueryParams {
+  const encodedParams: EncodedQueryParams = {};
 
   Object.entries(params).forEach(([key, value]) => {
-    formattedParams[key] = formatDataType(value);
+    encodedParams[key] = formatDataType(value);
   });
 
-  return formattedParams;
+  return encodedParams;
 }
 
-function formatDataType(val: ValueType): EncodedValue {
+function formatDataType(val: ValueType): EncodedParameterValue {
   const { metadata, varType } = resolveValueType(val);
 
   const metadataSpread = metadata ? { metadata } : {};
@@ -45,41 +46,16 @@ function formatDataType(val: ValueType): EncodedValue {
       return v?.toString() || '';
     });
   }
+  // else if (val instanceof Uint8Array) {
+  //   data = [val];
+  // } else {
+  //   data = [val?.toString() || ''];
+  // }
 
   return {
     type: dataType,
-    data: encodeValue(varType, data),
+    data: [bytesToBase64(encodeValue(data))],
   };
-}
-
-export function encodeValue(type: VarType, data: ValueType): string[] {
-  if (data === undefined || data === null) {
-    return [''];
-  }
-
-  switch (type) {
-    case VarType.UUID:
-      const uuidBytes = convertUuidToBytes(data.toString());
-      return [bytesToBase64(uuidBytes)];
-    case VarType.INT8:
-    case VarType.INT:
-      return [bytesToBase64(numberToBytes(Number(data)))];
-    case VarType.BOOL:
-      return [bytesToBase64(booleanToBytes(Boolean(data)))];
-    case VarType.BYTEA:
-    case VarType.BLOB:
-      if (!(data instanceof Uint8Array)) {
-        throw new Error(
-          'Unexpected BLOB data type. If using a blob, please convert to a JavaScript Uint8Array.'
-        );
-      }
-      return [bytesToBase64(data)];
-    case VarType.DECIMAL:
-    case VarType.NUMERIC:
-      return [bytesToBase64(stringToBytes(data.toString()))];
-    default:
-      return [bytesToBase64(stringToBytes(data.toString()))];
-  }
 }
 
 export function analyzeNumber(num: number) {
@@ -99,7 +75,7 @@ export function analyzeNumber(num: number) {
   };
 }
 
-function resolveValueType(value: ValueType): {
+export function resolveValueType(value: ValueType): {
   metadata: [number, number] | undefined;
   varType: VarType;
 } {
@@ -108,7 +84,7 @@ function resolveValueType(value: ValueType): {
     return resolveValueType(value[0]);
   }
 
-  let metadata: [number, number] | undefined;
+  let metadata: [number, number] = [0, 0];
   // Default to text string
   // Only other types are null or blob. For client-side tooling, everything else can be sent as a string, and Kwil will handle the conversion.
   let varType: VarType = VarType.TEXT;
@@ -154,4 +130,10 @@ function resolveValueType(value: ValueType): {
     metadata,
     varType,
   };
+}
+
+export function isDecimal(n: number): boolean {
+  const numStr = Math.abs(n).toString();
+  const decimalIdx = numStr.indexOf('.');
+  return decimalIdx !== -1;
 }

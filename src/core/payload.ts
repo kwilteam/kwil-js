@@ -28,14 +28,19 @@ export type AllPayloads =
 
 export type UnencodedActionPayload<T extends PayloadType.CALL_ACTION | PayloadType.EXECUTE_ACTION> =
   {
-    namespace: string;
+    dbid: string; // May become namespace in the future
     action: string;
     arguments: T extends PayloadType.EXECUTE_ACTION ? EncodedValue[][] : EncodedValue[];
   };
 
 export interface EncodedValue {
   type: DataType;
-  data: string[] | Uint8Array[];
+  data: Uint8Array[];
+}
+
+export interface EncodedParameterValue {
+  type: DataType;
+  data: string[];
 }
 
 /**
@@ -119,3 +124,12 @@ export type CompiledForeignProcedure = Omit<ForeignProcedure, 'return_types' | '
   parameters: ReadonlyArray<CompiledDataType>;
   return_types: CompiledProcedureReturn | Array<never>;
 };
+
+/**
+ * `ActionCall` represents a call to execute an action on a database.
+ */
+export interface ActionCall {
+  dbid: string;
+  action: string;
+  arguments: EncodedValue[];
+}

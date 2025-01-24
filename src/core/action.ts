@@ -1,5 +1,5 @@
 import { objects } from '../utils/objects';
-import { ValueType } from './enums';
+import { ValueType } from '../utils/types';
 import { AuthBody } from './signature';
 
 export type Entry<T extends ValueType | ValueType[]> = [string, T];
@@ -381,6 +381,7 @@ function lowercaseKey(key: string): string {
   return key.toLowerCase();
 }
 
+// TODO: Refactor this and consider moving
 export const transformActionInput = {
   /**
    * Checks if all elements in the given array are instances of ActionInput.

@@ -1,11 +1,11 @@
-import { HexString, NonNil } from './types';
+import { HexString, NonNil, ValueType } from './types';
 import { concatBytes, numberToUint16BigEndian, uint16BigEndianToNumber } from './bytes';
 import { bytesToEthHex, hexToBytes, numberToEthHex, stringToEthHex, hexToString } from './serial';
 import { RlpStructuredData, decodeRlp, encodeRlp } from 'ethers';
-import { EncodingType, ValueType, VarType } from '../core/enums';
+import { EncodingType, VarType } from '../core/enums';
 import { EncodedValue } from '../core/payload';
 import { DataType } from '../core/database';
-import { ActionBody } from '../core/action';
+import { resolveValueType } from './parameters';
 
 function _objToNestedArray(input: NonNil<object>): any[] | HexString {
   if (Array.isArray(input) && !(input instanceof Uint8Array)) {
@@ -97,76 +97,6 @@ function _convertDecodedType(val: string): KwilRlpDecoded {
   return val;
 }
 
-function analyzeNumber(num: number) {
-  // Convert the number to a string and handle potential negative sign
-  const numStr = Math.abs(num).toString();
-
-  // Check for the presence of a decimal point
-  const decimalIndex = numStr.indexOf('.');
-  const hasDecimal = decimalIndex !== -1;
-
-  // Calculate total digits (excluding the decimal point)
-  const totalDigits = hasDecimal ? numStr.length - 1 : numStr.length;
-
-  // Analysis object to hold the results
-  const analysis = {
-    hasDecimal: hasDecimal,
-    totalDigits: totalDigits,
-    decimalPosition: hasDecimal ? decimalIndex : -1,
-  };
-
-  return analysis;
-}
-
-function analyzeVariable(val: ValueType): {
-  metadata: [number, number] | undefined;
-  varType: VarType;
-} {
-  if (Array.isArray(val)) {
-    // In Kwil, if there is an array of values, each value in the array must be of the same type.
-    return analyzeVariable(val[0]);
-  }
-
-  let metadata: [number, number] | undefined;
-  // Default to text string
-  // Only other types are null or blob. For client-side tooling, everything else can be sent as a string, and Kwil will handle the conversion.
-  let varType: VarType = VarType.TEXT;
-
-  switch (typeof val) {
-    case 'string':
-      break;
-    case 'number':
-      const numAnalysis = analyzeNumber(val);
-      if (numAnalysis.hasDecimal) {
-        metadata = [numAnalysis.totalDigits, numAnalysis.decimalPosition];
-      }
-      break;
-    case 'boolean':
-      break;
-    case 'object':
-      if (val instanceof Uint8Array) {
-        varType = VarType.BLOB;
-        break;
-      }
-      if (val === null) {
-        varType = VarType.NULL;
-        break;
-      }
-    case 'undefined':
-      varType = VarType.NULL;
-      break;
-    default:
-      throw new Error(
-        `Unsupported type: ${typeof val}. If using a uuid, blob, or uint256, please convert to a JavaScript string.`
-      );
-  }
-
-  return {
-    metadata,
-    varType,
-  };
-}
-
 /**
  *
  * @param {ValueType[][]} preparedActions - The values of the actions to be executed.
@@ -181,11 +111,12 @@ export function encodeNestedArguments(preparedAction: ValueType[][]): EncodedVal
 /**
  *
  * @param {ValueType[]} preparedAction - The values of the actions to be executed.
+ * @deprecated This should be removed and the methods in parameters.ts should be used
  * @returns single EncodedValue (authenticatePrivateMode())
  */
 export function encodeSingleArguments(preparedAction: ValueType[]): EncodedValue[] {
   return preparedAction.map((val) => {
-    const { metadata, varType } = analyzeVariable(val);
+    const { metadata, varType } = resolveValueType(val);
 
     const metadataSpread = metadata ? { metadata } : {};
 
@@ -197,7 +128,7 @@ export function encodeSingleArguments(preparedAction: ValueType[]): EncodedValue
 
     let data: string[] | Uint8Array[] = [];
 
-    console.log(val)
+    console.log(val);
 
     if (Array.isArray(val) && !(val instanceof Uint8Array)) {
       data = val.map((v) => {

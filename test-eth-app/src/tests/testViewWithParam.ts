@@ -9,7 +9,7 @@ export async function testViewWithParam(
   //const uuid2 = 'f47ac10b58cc4372a5670e02b2c3d479';
   //const actionInput = Utils.ActionInput.of().put('$id', uuidString);
   const actionInput2 = Utils.ActionInput.of().put('$name', 'Kwil DB');
-  const newActionInput = { $name: 'Kwil DB', $id: uuidString };
+  const newActionInput = { $name: 'Kwil DB' };
 
   const res = await kwil.call(
     {
@@ -18,7 +18,7 @@ export async function testViewWithParam(
       name: 'call_name',
       // name: 'get_variable_by_id',
       // inputs: [newActionInput],
-      inputs: [actionInput2],
+      inputs: [newActionInput],
     },
     kwilSigner
   );

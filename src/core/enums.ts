@@ -1,18 +1,4 @@
 /**
- * ValueType is the type of the data in the database.
- *
- * If you are sending bytes to a blob column, you must send it as a Uint8Array. If you send a string to blob column, it will be converted to base64.
- */
-export type ValueType =
-  | string
-  | number
-  | null
-  | undefined
-  | Array<ValueType>
-  | boolean
-  | Uint8Array;
-
-/**
  * VarType is the type of the data in the database.
  *
  * Although Kwil supports text, int, bool, blob, uuid, uint256, decimal, and null types, kwil-js only supports text, int, bool, decimal, and null. If you need to send blob, uuid, or uint256 types, you should send them as a javascript string.
@@ -114,8 +100,8 @@ export enum AccountStatus {
 
 export enum AccountKeyType {
   // Eth
-  SECP256K1 = 0,
+  SECP256K1 = 'secp256k1',
 
   // i.e. Near
-  ED25519 = 1,
+  ED25519 = 'ed25519',
 }

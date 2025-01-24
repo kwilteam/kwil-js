@@ -3,13 +3,15 @@ import { deployDb } from './tests/ethersv6/testDeploy';
 // import { testV5Funding } from './tests/v5Funding'
 import { testV5Transaction } from './tests/ethersv5/v5Signing';
 import { kwil } from './tests/testUtils';
-import { BrowserProvider } from 'ethers';
+import { BrowserProvider, getBytes } from 'ethers';
 import { KwilSigner, Utils } from '../../src/index';
 import { executeAction } from './tests/ethersv6/executeAction';
 import { testViewWithParam } from './tests/testViewWithParam';
 import { testViewWithSign } from './tests/ethersv6/testViewWithSign';
 import { dropDatabase } from './tests/ethersv6/dropDatabase';
 import { kwilAuthenticate, kwilLogout } from './tests/authenticate';
+import { useState } from 'react';
+import { bytesToBase64 } from '../../src/utils/base64';
 
 declare global {
   interface Window {
@@ -22,6 +24,15 @@ function App() {
     const provider = new BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
     const kwilSigner = new KwilSigner(signer, signer.address);
+
+    // const res = await kwil.getAccount(signer.address);
+    // console.log(res);
+
+    // Convert address to Uint8Array using ethers utility
+    // const addressBytes = getBytes(signer.address);
+    // console.log(addressBytes);
+    // const accountBytesRes = await kwil.getAccount(addressBytes);
+    // console.log(accountBytesRes);
 
     // const res = await kwil.chainInfo();
     // console.log(res);
@@ -89,35 +100,41 @@ function App() {
 
     // INT;
     // console.log(
-    //   await kwil.selectQuery('{main}SELECT * FROM variable_test WHERE int_var = $int', {
+    //   await kwil.selectQuery('{test}SELECT * FROM variable_test WHERE int_var = $int', {
     //     $int: 42,
     //   })
     // );
 
     // BOOL;
     // console.log(
-    //   await kwil.selectQuery('{main}SELECT * FROM variable_test WHERE bool_var = $bool', {
+    //   await kwil.selectQuery('{test}SELECT * FROM variable_test WHERE bool_var = $bool', {
     //     $bool: true,
     //   })
     // );
 
     // DECIMAL
-    // console.log(
-    //   await kwil.selectQuery('{main}SELECT * FROM variable_test WHERE decimal_var = $decimal', {
-    //     $decimal: 12.3456,
-    //   })
-    // );
+    console.log(
+      await kwil.selectQuery('{test}SELECT * FROM variable_test WHERE decimal_var = $decimal', {
+        $decimal: 1245.34,
+      })
+    );
+
+    console.log(
+      await kwil.selectQuery('{test}SELECT * FROM variable_test WHERE decimal_var = $decimal', {
+        $decimal: 12.3456,
+      })
+    );
 
     // BLOB;
     // console.log(
-    //   await kwil.selectQuery('{main}SELECT * FROM variable_test WHERE blob_var = $blob', {
+    //   await kwil.selectQuery('{test}SELECT * FROM variable_test WHERE blob_var = $blob', {
     //     $blob: new Uint8Array([1]),
     //   })
     // );
 
     // TEXT
     // console.log(
-    //   await kwil.selectQuery('{main}SELECT * FROM variable_test WHERE text_var = $text', {
+    //   await kwil.selectQuery('{test}SELECT * FROM variable_test WHERE text_var = $text', {
     //     $text: 'Sample text',
     //   })
     // );
@@ -145,6 +162,7 @@ function App() {
       <h1>Click Button to Test</h1>
       <div className="card">
         <button onClick={() => test()}>Click me!</button>
+
         <p>
           Edit <code>src/App.tsx</code> to change the function to test.
         </p>

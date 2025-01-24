@@ -1,5 +1,5 @@
 import { Kwil } from '../client/kwil';
-import { ActionInput, Entries } from '../core/action';
+import { Entries } from '../core/action';
 import { SignerSupplier } from '../core/signature';
 import { BytesEncodingStatus, EnvironmentType, PayloadType, VarType } from '../core/enums';
 import { Message } from '../core/message';
@@ -9,8 +9,10 @@ import { Transaction } from '../core/tx';
 import { PayloadTx } from './payloadTx';
 import { PayloadMsg } from '../message/payloadMsg';
 import { objects } from '../utils/objects';
-import { analyzeNumber, encodeValue } from '../utils/parameters';
+import { analyzeNumber } from '../utils/parameters';
+import { encodeValue } from '../utils/kwilEncoding';
 
+// TODO: Move these enums / interfaces to right place
 export interface ActionOptions {
   actionName: string;
   namespace: string;
@@ -160,7 +162,7 @@ export class Action<T extends EnvironmentType> {
 
     // construct payload
     const payload: UnencodedActionPayload<PayloadType.EXECUTE_ACTION> = {
-      namespace: namespace,
+      dbid: namespace,
       action: actionName,
       arguments: encodedActionInputs,
     };
@@ -211,7 +213,7 @@ export class Action<T extends EnvironmentType> {
 
     // construct payload. If there are no prepared actions, then the payload is an empty array.
     const payload: UnencodedActionPayload<PayloadType.CALL_ACTION> = {
-      namespace: namespace,
+      dbid: namespace,
       action: actionName,
       arguments: encodedActionInputs[0], // 'Call' method is used for 'view actions' which require only one input
     };
@@ -374,6 +376,7 @@ export class Action<T extends EnvironmentType> {
     return true;
   }
 
+  // TODO: Need to implement array support for action inputs
   /**
    * Encodes the action inputs into the expected format depending on the parameter types.
    *
@@ -395,7 +398,6 @@ export class Action<T extends EnvironmentType> {
           throw new Error(`Parameter ${parameterName} not found in action ${this.actionName}.`);
         }
         let parameterType = selectedAction.parameter_types[parameterNameIndex] as VarType;
-        console.log('parameterType', parameterType);
 
         // Add to array
         encodedActionInputs[i] = encodedActionInputs[i] || [];
@@ -424,12 +426,11 @@ export class Action<T extends EnvironmentType> {
             is_array: false, // TODO: Need to update to handle arrays
             metadata,
           },
-          data: encodeValue(parameterType, parameterValue),
+          data: [encodeValue(parameterValue)],
         });
       }
     }
 
-    console.log('encodedActionInputs', encodedActionInputs);
     return encodedActionInputs;
   }
 

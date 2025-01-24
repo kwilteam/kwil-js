@@ -135,12 +135,12 @@ export default class Client extends Api {
   }
 
   protected async getAccountClient(
-    owner: Uint8Array,
+    owner: string,
     keyType: AccountKeyType
   ): Promise<GenericResponse<Account>> {
     const body = this.buildJsonRpcRequest<AccountRequest>(JSONRPCMethod.METHOD_ACCOUNT, {
       id: {
-        identifier: bytesToHex(owner),
+        identifier: owner,
         key_type: keyType,
       },
       status: this.unconfirmedNonce ? AccountStatus.PENDING : AccountStatus.LATEST,
@@ -151,7 +151,7 @@ export default class Client extends Api {
     return checkRes(res, (r) => {
       return {
         ...r.result,
-        identifier: hexToBytes(r.result.identifier || ''),
+        id: r.result.id,
       };
     });
   }
@@ -333,29 +333,23 @@ export default class Client extends Api {
   }
 
   private parseQueryResponse(queryResponse: QueryResponse): Object[] {
-    // TODO: We have to use this approach as we receive column_names, column_types, and values as a response.
-    // It could have performance issues, so returning the row of objects would be better.
     const { column_names, values } = queryResponse;
 
     if (!values || values.length === 0) {
       return [];
     }
 
-    const result = new Array(values.length);
-
-    // Iterate over the values array and convert each row into an object
-    for (let i = 0; i < values.length; i++) {
+    // Create a mapping function once that will be reused for all rows
+    const mapValueToColumn = (rowValues: any[]): Record<string, any> => {
       const obj: Record<string, any> = {};
-
-      // Iterate over the column_names array and convert each value into an object
-      for (let j = 0; j < column_names.length; j++) {
-        obj[column_names[j]] = values[i][j];
+      for (let i = 0; i < column_names.length; i++) {
+        obj[column_names[i]] = rowValues[i];
       }
+      return obj;
+    };
 
-      // Add the object to the result array
-      result[i] = obj;
-    }
-    return result;
+    // Map each row of values to an object using the column mapping
+    return values.map(mapValueToColumn);
   }
 }
 

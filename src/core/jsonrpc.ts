@@ -1,15 +1,9 @@
-import { Base64String, HexString } from '../utils/types';
+import { Base64String, EncodedQueryParams, HexString } from '../utils/types';
 import { KGWAuthInfo, AuthenticatedBody } from './auth';
 import { Database } from './database';
-import {
-  AccountKeyType,
-  AccountStatus,
-  BroadcastSyncType,
-  BytesEncodingStatus,
-  ValueType,
-} from './enums';
+import { AccountKeyType, AccountStatus, BroadcastSyncType, BytesEncodingStatus } from './enums';
 import { MsgData } from './message';
-import { DatasetInfoServer } from './network';
+import { AccountId, DatasetInfoServer } from './network';
 import { EncodedValue } from './payload';
 import { TxnData } from './tx';
 import { TxResult } from './txQuery';
@@ -45,10 +39,7 @@ export interface SchemaRequest {
 }
 
 export interface AccountRequest {
-  id: {
-    identifier: HexString;
-    key_type: AccountKeyType;
-  };
+  id: AccountId;
   status: AccountStatus;
 }
 
@@ -83,7 +74,7 @@ export interface EstimatePriceRequest {
 
 export interface SelectQueryRequest {
   query: string;
-  params: Record<string, EncodedValue>;
+  params: EncodedQueryParams;
 }
 
 export interface TxQueryRequest {
@@ -118,7 +109,7 @@ export interface SchemaResponse {
 }
 
 export interface AccountResponse {
-  identifier?: HexString;
+  id?: AccountId;
   balance: string;
   nonce: number;
 }

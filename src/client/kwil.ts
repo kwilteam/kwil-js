@@ -13,11 +13,10 @@ import {
   BroadcastSyncType,
   BytesEncodingStatus,
   EnvironmentType,
-  ValueType,
 } from '../core/enums';
-import { hexToBytes } from '../utils/serial';
+import { bytesToHex } from '../utils/serial';
 import { isNearPubKey, nearB58ToHex } from '../utils/keys';
-import { ActionBody, ActionInput, CallBody, Entries, transformActionInput } from '../core/action';
+import { ActionBody, CallBody, Entries, transformActionInput } from '../core/action';
 import { KwilSigner } from '../core/kwilSigner';
 import { wrap } from './intern';
 import { Funder } from '../funder/funder';
@@ -28,6 +27,7 @@ import { AuthBody, Signature } from '../core/signature';
 import { SelectQueryRequest } from '../core/jsonrpc';
 import { encodeParameters } from '../utils/parameters';
 import { generateDBID } from '../utils/dbid';
+import { QueryParams } from '../utils/types';
 
 /**
  * The main class for interacting with the Kwil network.
@@ -37,7 +37,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
   protected readonly chainId: string;
   private readonly autoAuthenticate: boolean;
 
-  //cache schemas
+  //TODO: cache schemas
   private schemas: Cache<GenericResponse<Database>>;
   public funder: Funder<T>;
   public auth: Auth<T>;
@@ -79,75 +79,6 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
   }
 
   /**
-   * Generates a unique database identifier (DBID) from the provided owner's identifier (e.g. wallet address, public key, etc.) and a database name.
-   *
-   * @param owner - The owner's identifier (e.g wallet address, public key, etc.). Ethereum addresses can be passed as a hex string (0x123...) or as bytes (Uint8Array). NEAR protocol public keys can be passed as the base58 encoded public key (with "ed25519:" prefix), a hex string, or bytes (Uint8Array).
-   * @param name - The name of the database. This should be a unique name to identify the database.
-   * @deprecated DBID's are no longer in use.  This method will be removed in the next major version.
-   * @returns A string that represents the unique identifier for the database.
-   */
-
-  public getDBID(owner: string | Uint8Array, name: string): string {
-    return generateDBID(owner, name);
-  }
-
-  /**
-   * Retrieves the schema of a database given its unique identifier (DBID).
-   *
-   * @param dbid - The unique identifier of the database. The DBID can be generated using the kwil.getDBID method.
-   * @deprecated Use `kwil.selectQuery(query, params?, signer?)` instead. This method will be removed in the next major version.
-   * @returns A promise that resolves to the schema of the database.
-   */
-  // TODO: Improve deprecation message with examples
-  public async getSchema(dbid: string): Promise<GenericResponse<Database>> {
-    console.warn(
-      'WARNING: `getSchema()` is deprecated and will be removed in the next major version. Please use `kwil.selectQuery()` instead.'
-    );
-    throw new Error(
-      'The `getSchema()` method is no longer supported. Please use `kwil.selectQuery(query, params?, signer?)` instead.'
-    );
-  }
-
-  /**
-   * Retrieves the tables in a database given its namespace.
-   *
-   * @param namespace - The namespace of the tables to retrieve.
-   * @returns A promise that resolves to the tables in the database.
-   */
-  public async getTables(namespace: string): Promise<GenericResponse<Object[]>> {
-    if (!this.validateNamespace(namespace)) {
-      throw new Error('Please provide a valid namespace');
-    }
-
-    return await this.selectQuery('SELECT * FROM info.tables WHERE namespace = $namespace', {
-      $namespace: namespace,
-    });
-  }
-
-  /**
-   * Retrieves the tables in a database given its namespace.
-   *
-   * @param namespace - The namespace of the tables to retrieve.
-   * @returns A promise that resolves to the tables in the database.
-   */
-  public async getTableColumns(
-    namespace: string,
-    table: string
-  ): Promise<GenericResponse<Object[]>> {
-    if (!this.validateNamespace(namespace)) {
-      throw new Error('Please provide a valid namespace');
-    }
-
-    return await this.selectQuery(
-      'SELECT * FROM info.columns WHERE namespace = $namespace and table_name = $table',
-      {
-        $namespace: namespace,
-        $table: table,
-      }
-    );
-  }
-
-  /**
    * Retrieves the actions in a database given its namespace.
    *
    * @param namespace - The namespace of the actions to retrieve.
@@ -157,45 +88,31 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     if (!this.validateNamespace(namespace)) {
       throw new Error('Please provide a valid namespace');
     }
-
     return await this.selectQuery('SELECT * FROM info.actions WHERE namespace = $namespace', {
       $namespace: namespace,
     });
   }
 
-  /**
-   * Retrieves the extensions in a database given its namespace.
-   *
-   * @param namespace - The namespace of the extensions to retrieve.
-   * @returns A promise that resolves to the extensions in the database.
-   */
-  public async getExtensions(namespace: string): Promise<GenericResponse<Object[]>> {
-    if (!this.validateNamespace(namespace)) {
-      throw new Error('Please provide a valid namespace');
-    }
-
-    return await this.selectQuery('SELECT * FROM info.extensions WHERE namespace = $namespace', {
-      $namespace: namespace,
-    });
-  }
-
+  // TODO: Update JSDoc info
   /**
    * Retrieves an account using the owner's Ethereum wallet address.
    *
    * @param owner - The owner's identifier (e.g. Ethereum wallet address or NEAR public key). Ethereum addresses can be passed as a hex string (0x123...) or as bytes (Uint8Array). NEAR protocol public keys can be passed as the base58 encoded public key (with "ed25519:" prefix), a hex string, or bytes (Uint8Array).
-   * @returns A promise that resolves to an Account object. The account object includes the owner's public key, balance, and nonce.
+   * @returns A promise that resolves to an Account object. The account object includes the account's balance, and nonce.
    */
-
   public async getAccount(owner: string | Uint8Array): Promise<GenericResponse<Account>> {
     let keyType = AccountKeyType.SECP256K1;
     if (typeof owner === 'string') {
       if (isNearPubKey(owner)) {
         owner = nearB58ToHex(owner);
         keyType = AccountKeyType.ED25519;
+      } else if (owner.startsWith('0x')) {
+        owner = owner.slice(2);
       }
 
       owner = owner.toLowerCase();
-      owner = hexToBytes(owner);
+    } else if (owner instanceof Uint8Array) {
+      owner = bytesToHex(owner);
     }
 
     return await this.getAccountClient(owner, keyType);
@@ -246,67 +163,6 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
   }
 
   /**
-   * Deploys a database to the Kwil network.
-   *
-   * @param deployBody - The body of the database to deploy. This should use the `DeployBody` interface.
-   * @param kwilSigner - The signer for the database deployment.
-   * @param synchronous - (optional) If true, the broadcast will wait for the transaction to be mined before returning. If false, the broadcast will return the transaction hash immediately, regardless of if the transaction is successful. Defaults to false.
-   * @deprecated Use `kwil.query()` instead. This method will be removed in the next major version.
-   * @returns A promise that resolves to the receipt of the transaction.
-   */
-  public async deploy(
-    deployBody: DeployBody,
-    kwilSigner: KwilSigner,
-    synchronous?: boolean
-  ): Promise<GenericResponse<TxReceipt>> {
-    console.warn(
-      'WARNING: `deploy()` is deprecated and will be removed in the next major version. Please use `kwil.query()` instead.'
-    );
-    throw new Error(
-      'The `deploy()` method is no longer supported. Please use `kwil.query()` instead.'
-    );
-  }
-
-  /**
-   * Drops a database from the Kwil network.
-   *
-   * @param dropBody - The body of the database to drop. This should use the `DropBody` interface.
-   * @param kwilSigner - The signer for the database drop.
-   * @param synchronous - (optional) If true, the broadcast will wait for the transaction to be mined before returning. If false, the broadcast will return the transaction hash immediately, regardless of if the transaction is successful. Defaults to false.
-   * @deprecated Use `kwil.query()` instead. This method will be removed in the next major version.
-   * @returns A promise that resolves to the receipt of the transaction.
-   */
-  public async drop(
-    dropBody: DropBody,
-    kwilSigner: KwilSigner,
-    synchronous?: boolean
-  ): Promise<GenericResponse<TxReceipt>> {
-    console.warn(
-      'WARNING: `drop()` is deprecated and will be removed in the next major version. Please use `kwil.query()` instead.'
-    );
-    throw new Error(
-      'The `drop()` method is no longer supported. Please use `kwil.query()` instead.'
-    );
-  }
-
-  /**
-   * Lists all databases owned by a particular owner.
-   *
-   * @param owner (optional) - Lists the databases on a network. Can pass and owner identifier to see all the databases deployed by a specific account, or leave empty to see al the databases deployed on the network. The owner's public key (Ethereum or NEAR Protocol). Ethereum keys can be passed as a hex string (0x123...) or as bytes (Uint8Array).
-   * @deprecated Use `kwil.selectQuery(query, params?, signer?)` instead. This method will be removed in the next major version.
-   * @returns A promise that resolves to a list of database names.
-   */
-
-  public async listDatabases(owner?: string | Uint8Array): Promise<GenericResponse<DatasetInfo[]>> {
-    console.warn(
-      'WARNING: `listDatabases()` is deprecated and will be removed in the next major version. Please use `kwil.selectQuery(query, params?, signer?)` instead.'
-    );
-    throw new Error(
-      'The `listDatabases()` method is no longer supported. Please use `kwil.selectQuery(query, params?, signer?)` instead.'
-    );
-  }
-
-  /**
    * Performs a read-only SELECT query on a database.
    * This operation does not modify state.
    *
@@ -317,7 +173,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    */
   public async selectQuery(
     query: string,
-    params?: Record<string, ValueType>,
+    params?: QueryParams,
     signer?: KwilSigner
   ): Promise<GenericResponse<Object[]>>;
   /**
@@ -326,7 +182,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
   public async selectQuery(dbid: string, query: string): Promise<GenericResponse<Object[]>>;
   public async selectQuery(
     query: string,
-    params?: Record<string, ValueType> | string,
+    params?: QueryParams | string,
     kwilSigner?: KwilSigner
   ): Promise<GenericResponse<Object[]>> {
     // If params is a string, we're using the legacy method call
@@ -377,27 +233,28 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    * @example
    * // Insert with parameters
    * await kwil.query(
-   *   '{mydb}INSERT INTO users (name, email) VALUES (@name, @email)',
-   *   { name: 'John', email: 'john@example.com' },
+   *   '{mydb}INSERT INTO users (name, email) VALUES ($name, $email)',
+   *   { $name: 'John', $email: 'john@example.com' },
    *   signer
    * );
    *
    * // Update with parameters
    * await kwil.query(
-   *   '{mydb}UPDATE users SET status = @status WHERE id = @id',
-   *   { status: 'active', id: 123 },
+   *   '{mydb}UPDATE users SET status = $status WHERE id = $id',
+   *   { $status: 'active', $id: 123 },
    *   signer
    * );
    *
    * // Delete with parameters
    * await kwil.query(
-   *   '{mydb}DELETE FROM users WHERE id = @id',
-   *   { id: 123 },
+   *   '{mydb}DELETE FROM users WHERE id = $id',
+   *   { $id: 123 },
    *   signer
    * );
    *
    * @returns Promise resolving to transaction receipt
    */
+
   // public async query(
   //   query: string,
   //   params: Record<string, ValueType>,
@@ -464,6 +321,98 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    */
   public async ping(): Promise<GenericResponse<string>> {
     return await this.pingClient();
+  }
+
+  // DEPRECATED APIS BELOW
+  /**
+   * Generates a unique database identifier (DBID) from the provided owner's identifier (e.g. wallet address, public key, etc.) and a database name.
+   *
+   * @param owner - The owner's identifier (e.g wallet address, public key, etc.). Ethereum addresses can be passed as a hex string (0x123...) or as bytes (Uint8Array). NEAR protocol public keys can be passed as the base58 encoded public key (with "ed25519:" prefix), a hex string, or bytes (Uint8Array).
+   * @param name - The name of the database. This should be a unique name to identify the database.
+   * @deprecated DBID's are no longer in use.  This method will be removed in the next major version.
+   * @returns A string that represents the unique identifier for the database.
+   */
+
+  public getDBID(owner: string | Uint8Array, name: string): string {
+    return generateDBID(owner, name);
+  }
+
+  /**
+   * Retrieves the schema of a database given its unique identifier (DBID).
+   *
+   * @param dbid - The unique identifier of the database. The DBID can be generated using the kwil.getDBID method.
+   * @deprecated Use `kwil.selectQuery(query, params?, signer?)` instead. This method will be removed in the next major version.
+   * @returns A promise that resolves to the schema of the database.
+   */
+  // TODO: Improve deprecation message with examples
+  public async getSchema(dbid: string): Promise<GenericResponse<Database>> {
+    console.warn(
+      'WARNING: `getSchema()` is deprecated and will be removed in the next major version. Please use `kwil.selectQuery()` instead.'
+    );
+    throw new Error(
+      'The `getSchema()` method is no longer supported. Please use `kwil.selectQuery(query, params?, signer?)` instead.'
+    );
+  }
+
+  /**
+   * Deploys a database to the Kwil network.
+   *
+   * @param deployBody - The body of the database to deploy. This should use the `DeployBody` interface.
+   * @param kwilSigner - The signer for the database deployment.
+   * @param synchronous - (optional) If true, the broadcast will wait for the transaction to be mined before returning. If false, the broadcast will return the transaction hash immediately, regardless of if the transaction is successful. Defaults to false.
+   * @deprecated Use `kwil.query()` instead. This method will be removed in the next major version.
+   * @returns A promise that resolves to the receipt of the transaction.
+   */
+  public async deploy(
+    deployBody: DeployBody,
+    kwilSigner: KwilSigner,
+    synchronous?: boolean
+  ): Promise<GenericResponse<TxReceipt>> {
+    console.warn(
+      'WARNING: `deploy()` is deprecated and will be removed in the next major version. Please use `kwil.query()` instead.'
+    );
+    throw new Error(
+      'The `deploy()` method is no longer supported. Please use `kwil.query()` instead.'
+    );
+  }
+
+  /**
+   * Drops a database from the Kwil network.
+   *
+   * @param dropBody - The body of the database to drop. This should use the `DropBody` interface.
+   * @param kwilSigner - The signer for the database drop.
+   * @param synchronous - (optional) If true, the broadcast will wait for the transaction to be mined before returning. If false, the broadcast will return the transaction hash immediately, regardless of if the transaction is successful. Defaults to false.
+   * @deprecated Use `kwil.query()` instead. This method will be removed in the next major version.
+   * @returns A promise that resolves to the receipt of the transaction.
+   */
+  public async drop(
+    dropBody: DropBody,
+    kwilSigner: KwilSigner,
+    synchronous?: boolean
+  ): Promise<GenericResponse<TxReceipt>> {
+    console.warn(
+      'WARNING: `drop()` is deprecated and will be removed in the next major version. Please use `kwil.query()` instead.'
+    );
+    throw new Error(
+      'The `drop()` method is no longer supported. Please use `kwil.query()` instead.'
+    );
+  }
+
+  /**
+   * Lists all databases owned by a particular owner.
+   *
+   * @param owner (optional) - Lists the databases on a network. Can pass and owner identifier to see all the databases deployed by a specific account, or leave empty to see al the databases deployed on the network. The owner's public key (Ethereum or NEAR Protocol). Ethereum keys can be passed as a hex string (0x123...) or as bytes (Uint8Array).
+   * @deprecated Use `kwil.selectQuery(query, params?, signer?)` instead. This method will be removed in the next major version.
+   * @returns A promise that resolves to a list of database names.
+   */
+
+  public async listDatabases(owner?: string | Uint8Array): Promise<GenericResponse<DatasetInfo[]>> {
+    console.warn(
+      'WARNING: `listDatabases()` is deprecated and will be removed in the next major version. Please use `kwil.selectQuery(query, params?, signer?)` instead.'
+    );
+    throw new Error(
+      'The `listDatabases()` method is no longer supported. Please use `kwil.selectQuery(query, params?, signer?)` instead.'
+    );
   }
 
   /**
@@ -552,8 +501,10 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       throw new Error('name is required in actionBody');
     }
 
+    // ActionInput[] is deprecated. So we are converting any ActionInput[] to an Entries[]
     let inputs: Entries[] = [];
     if (actionBody.inputs && transformActionInput.isActionInputArray(actionBody.inputs)) {
+      // For a call only one entry is allowed, so we only need to convert the first ActionInput
       inputs = transformActionInput.toSingleEntry(actionBody.inputs);
     } else if (actionBody.inputs) {
       inputs = actionBody.inputs;

@@ -123,12 +123,16 @@ export class Auth<T extends EnvironmentType> {
     const actionValues = actionBody?.inputs ? Object.values(cleanActionValues[0]) : [];
 
     // create payload
+    // TODO: Need to ensure this works
+    // encodeSingleArguments needs to be review / updated
     const payload: UnencodedActionPayload<PayloadType.CALL_ACTION> = {
-      namespace: actionBody.namespace,
+      dbid: actionBody.namespace,
       action: actionBody.name,
       arguments: encodeSingleArguments(actionValues),
     };
 
+    // TODO: Need to use encodeActionCall in kwilEncoding.ts
+    // Need to verify with Luke
     const encodedPayload = kwilEncode(payload);
     const base64Payload = bytesToBase64(encodedPayload);
 

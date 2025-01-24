@@ -1,4 +1,5 @@
-import { AttributeType, IndexType, ValueType, VarType } from './enums';
+import { QueryParams } from '../utils/types';
+import { AttributeType, IndexType, VarType } from './enums';
 import {
   CompiledForeignProcedure,
   CompiledKuneiform,
@@ -133,7 +134,7 @@ export interface ProcedureReturn {
 
 export interface SelectQuery {
   query: string;
-  params?: Record<string, ValueType>;
+  params?: QueryParams;
 }
 
 export interface ForeignProcedure {
