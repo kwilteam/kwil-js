@@ -15,6 +15,7 @@ import {
   NamedType,
 } from './database';
 import { BytesEncodingStatus, DeployOrDrop, PayloadType } from './enums';
+import { AccountId } from './network';
 
 /**
  * `AllPayloads` is the union of all payload types.
@@ -22,7 +23,7 @@ import { BytesEncodingStatus, DeployOrDrop, PayloadType } from './enums';
 // TODO: Add the new execute Sql / query() payload
 export type AllPayloads =
   | UnencodedActionPayload<PayloadType.CALL_ACTION | PayloadType.EXECUTE_ACTION>
-  | TransferPayload<BytesEncodingStatus.HEX_ENCODED>;
+  | TransferPayload;
 
 export type UnencodedActionPayload<T extends PayloadType.CALL_ACTION | PayloadType.EXECUTE_ACTION> =
   {
@@ -76,8 +77,8 @@ export interface CompiledKuneiform {
  * The `to` field is typed to either a Uint8Array or a base64 string depending on the encoding status.
  * The `amount` field is typed to a string because it is a decimal value.
  */
-export interface TransferPayload<T extends BytesEncodingStatus> {
-  to: T extends BytesEncodingStatus.BASE64_ENCODED ? string : Uint8Array;
+export interface TransferPayload {
+  to: AccountId;
   amount: string;
 }
 

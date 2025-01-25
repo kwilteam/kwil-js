@@ -15,7 +15,7 @@ import {
   EnvironmentType,
 } from '../core/enums';
 import { bytesToHex } from '../utils/serial';
-import { isNearPubKey, nearB58ToHex } from '../utils/keys';
+import { getAccountId, isNearPubKey, nearB58ToHex } from '../utils/keys';
 import { ActionBody, CallBody, Entries, transformActionInput } from '../core/action';
 import { KwilSigner } from '../core/kwilSigner';
 import { wrap } from './intern';
@@ -101,21 +101,9 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    * @returns A promise that resolves to an Account object. The account object includes the account's balance, and nonce.
    */
   public async getAccount(owner: string | Uint8Array): Promise<GenericResponse<Account>> {
-    let keyType = AccountKeyType.SECP256K1;
-    if (typeof owner === 'string') {
-      if (isNearPubKey(owner)) {
-        owner = nearB58ToHex(owner);
-        keyType = AccountKeyType.ED25519;
-      } else if (owner.startsWith('0x')) {
-        owner = owner.slice(2);
-      }
+    const accountId = getAccountId(owner);
 
-      owner = owner.toLowerCase();
-    } else if (owner instanceof Uint8Array) {
-      owner = bytesToHex(owner);
-    }
-
-    return await this.getAccountClient(owner, keyType);
+    return await this.getAccountClient(accountId);
   }
 
   /**

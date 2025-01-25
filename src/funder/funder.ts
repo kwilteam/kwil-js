@@ -12,6 +12,7 @@ import { Transaction, TxReceipt } from '../core/tx';
 import { hexToBytes } from '../utils/serial';
 import { TransferBody } from './funding_types';
 import { PayloadTx } from '../transaction/payloadTx';
+import { getAccountId } from '../utils/keys';
 
 interface FunderClient {
   broadcastClient(
@@ -36,15 +37,10 @@ export class Funder<T extends EnvironmentType> {
     signer: KwilSigner,
     synchronous?: boolean
   ): Promise<GenericResponse<TxReceipt>> {
-    let to: Uint8Array;
-    if (typeof payload.to === 'string') {
-      to = hexToBytes(payload.to);
-    } else {
-      to = payload.to;
-    }
+    const accountId = getAccountId(payload.to);
 
-    const txPayload: TransferPayload<BytesEncodingStatus.HEX_ENCODED> = {
-      to,
+    const txPayload: TransferPayload = {
+      to: accountId,
       amount: payload.amount.toString(),
     };
 
@@ -60,7 +56,8 @@ export class Funder<T extends EnvironmentType> {
 
     return await this.funderClient.broadcastClient(
       transaction,
-      synchronous ? BroadcastSyncType.COMMIT : undefined
+      // TODO: Are the sync types correct?
+      synchronous ? BroadcastSyncType.SYNC : undefined
     );
   }
 }

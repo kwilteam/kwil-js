@@ -15,7 +15,7 @@ import { sha256BytesToBytes } from '../utils/crypto';
 import { objects } from '../utils/objects';
 import { bytesToHex, stringToBytes } from '../utils/serial';
 import { strings } from '../utils/strings';
-import { encodeActionExecution } from '../utils/kwilEncoding';
+import { encodeActionExecution, encodeTransfer } from '../utils/kwilEncoding';
 
 export interface PayloadTxOptions {
   payload: AllPayloads;
@@ -95,7 +95,6 @@ export class PayloadTx<T extends EnvironmentType> {
    */
   async buildTx(): Promise<Transaction> {
     // ensure required fields are not null or undefined
-    console.log('this.signer', this.signer);
     const { signer, payloadType, identifier, signatureType, chainId } = objects.validateFields(
       {
         signer: this.signer,
@@ -235,6 +234,12 @@ Kwil Chain ID: ${tx.body.chain_id}
           throw new Error('Invalid payload type for EXECUTE_ACTION');
         }
         return encodeActionExecution(payload);
+
+      case PayloadType.TRANSFER:
+        if (!('to' in payload && 'amount' in payload)) {
+          throw new Error('Invalid payload type for TRANSFER');
+        }
+        return encodeTransfer(payload);
 
       default:
         throw new Error(`Unsupported payload type: ${payloadType}`);

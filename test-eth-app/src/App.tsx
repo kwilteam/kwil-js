@@ -12,6 +12,10 @@ import { dropDatabase } from './tests/ethersv6/dropDatabase';
 import { kwilAuthenticate, kwilLogout } from './tests/authenticate';
 import { useState } from 'react';
 import { bytesToBase64 } from '../../src/utils/base64';
+import { encodeTransfer } from '../../src/utils/kwilEncoding';
+import { getTxProperties } from './examples/test';
+import { Transfer } from './examples/broadcast_payloads';
+import { PayloadType } from '../../src/core/enums';
 
 declare global {
   interface Window {
@@ -42,16 +46,29 @@ function App() {
     // await deployDb(kwilSigner);
     const namespace = 'test';
 
+    const transfer: Transfer = {
+      to: {
+        identifier: 'affdc06cf34afd7d5801a13d48c92ad39609901d',
+        key_type: 'secp256k1',
+      },
+      amount: BigInt(100),
+    };
+
+    // console.log(
+    //   'Transfer: ',
+    //   await getTxProperties(encodeTransfer(transfer), PayloadType.TRANSFER, 'kwil-testnet', nonce)
+    // );
+
     // await executeAction(kwil, namespace, 'insert_variables', kwilSigner, nonce);
     // await testViewWithParam(kwil, namespace, kwilSigner);
     // await kwilAuthenticate(kwil, kwilSigner)
     // await testViewWithSign(kwil, dbid, kwilSigner)
     // await kwilLogout(kwil);
-    console.log(
-      await kwil.txInfo(
-        '778ddcd9cdfdd1a7bcdf6edef34d34f77d5ee78e7d6f47de738f3aebad5fe5bf3dd9eddfe76e5e73bebb7bdeb97baf1f'
-      )
-    );
+    // console.log(
+    //   await kwil.txInfo(
+    //     '778ddcd9cdfdd1a7bcdf6edef34d34f77d5ee78e7d6f47de738f3aebad5fe5bf3dd9eddfe76e5e73bebb7bdeb97baf1f'
+    //   )
+    // );
     // console.log(await kwil.listDatabases(kwilSigner.identifier));
     //console.log(await kwil.getSchema(dbid));
 
@@ -67,6 +84,16 @@ function App() {
                 "AAAAAAAAAAE="
     */
 
+    // Create transfer payload
+    const transferBody = {
+      to: signer.address, // Can be hex string or Uint8Array
+      amount: BigInt(1000000000000000000), // Amount in smallest unit (1 = 10^18)
+      description: 'Optional transfer description',
+    };
+
+    // Execute transfer
+    const result = await kwil.funder.transfer(transferBody, kwilSigner, true);
+    console.log(result);
     // console.log(await kwil.getTables('main'));
     // console.log(await kwil.getTableColumns('main', 'variable_test'));
     // console.log(await kwil.getActions('action_test'));

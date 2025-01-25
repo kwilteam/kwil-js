@@ -1,5 +1,5 @@
 import { base64ToBytes } from '../utils/base64';
-import { Account, ChainInfo, DatasetInfo } from '../core/network';
+import { Account, AccountId, ChainInfo, DatasetInfo } from '../core/network';
 import { Transaction, TxReceipt } from '../core/tx';
 import { Api } from './api';
 import { ClientConfig } from './config';
@@ -134,15 +134,9 @@ export default class Client extends Api {
     return checkRes(res, (r) => r.result);
   }
 
-  protected async getAccountClient(
-    owner: string,
-    keyType: AccountKeyType
-  ): Promise<GenericResponse<Account>> {
+  protected async getAccountClient(accountId: AccountId): Promise<GenericResponse<Account>> {
     const body = this.buildJsonRpcRequest<AccountRequest>(JSONRPCMethod.METHOD_ACCOUNT, {
-      id: {
-        identifier: owner,
-        key_type: keyType,
-      },
+      id: accountId,
       status: this.unconfirmedNonce ? AccountStatus.PENDING : AccountStatus.LATEST,
     });
 

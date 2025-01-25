@@ -16,7 +16,7 @@ export enum SignatureType {
 // Eth Signer is any class with a signMessage() method. This is supported by Ethers v5 and Ethers v6.
 export type EthSigner = {
   signMessage: (message: string | Uint8Array) => Promise<string>;
-}
+};
 
 export type CustomSigner = NonNil<(message: Uint8Array) => Promise<Uint8Array>>;
 export type SignerSupplier = Promisy<EthSigner | CustomSigner>;
@@ -82,4 +82,3 @@ export async function executeSign(
     'Could not execute signature. Make sure you pass a signer from EtherJS or a function that returns a Uint8Array.'
   );
 }
-

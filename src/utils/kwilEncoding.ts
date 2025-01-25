@@ -1,6 +1,6 @@
 import { DataType } from '../core/database';
 import { AccountId } from '../core/network';
-import { EncodedValue, UnencodedActionPayload } from '../core/payload';
+import { EncodedValue, TransferPayload, UnencodedActionPayload } from '../core/payload';
 import { bytesToBase64 } from './base64';
 import {
   concatBytes,
@@ -12,7 +12,7 @@ import {
 import { booleanToBytes, hexToBytes, numberToBytes, stringToBytes } from './serial';
 import { convertUuidToBytes, isUuid } from './uuid';
 import { ValueType } from './types';
-import { PayloadType } from '../core/enums';
+import { BytesEncodingStatus, PayloadType } from '../core/enums';
 
 export function encodeAccountId(accountId: AccountId): Uint8Array {
   const encodedId = prefixBytesLength(hexToBytes(accountId.identifier));
@@ -78,6 +78,25 @@ export function encodeActionExecution(
   return bytesToBase64(
     concatBytes(encodedVersion, encodedDbId, encodedAction, encodedActionArguments)
   );
+}
+
+interface Transfer {
+  to: AccountId;
+  amount: BigInt;
+}
+
+export function encodeTransfer(transfer: TransferPayload): string {
+  const transferVersion = 0;
+
+  const encodedVersion = numberToUint16LittleEndian(transferVersion);
+  const encodedTo = prefixBytesLength(encodeAccountId(transfer.to));
+  // for BigInt Serialization, add a single byte and then encode it as a string
+  const encodedAmount = concatBytes(
+    new Uint8Array([1]),
+    prefixBytesLength(stringToBytes(transfer.amount.toString()))
+  );
+
+  return bytesToBase64(concatBytes(encodedVersion, encodedTo, encodedAmount));
 }
 
 function encodeEncodedValue(ev: EncodedValue): Uint8Array {
