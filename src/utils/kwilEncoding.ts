@@ -1,6 +1,6 @@
 import { DataType } from '../core/database';
 import { AccountId } from '../core/network';
-import { ActionCall, EncodedValue } from '../core/payload';
+import { EncodedValue, UnencodedActionPayload } from '../core/payload';
 import { bytesToBase64 } from './base64';
 import {
   concatBytes,
@@ -10,34 +10,74 @@ import {
   prefixBytesLength,
 } from './bytes';
 import { booleanToBytes, hexToBytes, numberToBytes, stringToBytes } from './serial';
-import { isDecimal } from './parameters';
 import { convertUuidToBytes, isUuid } from './uuid';
 import { ValueType } from './types';
+import { PayloadType } from '../core/enums';
 
-export function encodeActionCall(actionCall: ActionCall): string {
-  const acVersion = 0;
-  const encodedVersion = numberToUint16LittleEndian(acVersion);
+export function encodeAccountId(accountId: AccountId): Uint8Array {
+  const encodedId = prefixBytesLength(hexToBytes(accountId.identifier));
+  const encodedKeyType = prefixBytesLength(stringToBytes(accountId.key_type));
+  return concatBytes(encodedId, encodedKeyType);
+}
+
+export function encodeActionCall(
+  actionCall: UnencodedActionPayload<PayloadType.CALL_ACTION>
+): string {
+  // // The version of the action call encoding used by the Kwil DB Engine
+  const actionCallVersion = 0;
+  const encodedVersion = numberToUint16LittleEndian(actionCallVersion);
   const encodedDbId = prefixBytesLength(stringToBytes(actionCall.dbid));
+  // Action name
   const encodedAction = prefixBytesLength(stringToBytes(actionCall.action));
   const encodedNumArgs = numberToUint16LittleEndian(actionCall.arguments.length);
-  let params: Uint8Array = new Uint8Array();
+  let actionArguments: Uint8Array = new Uint8Array();
 
   actionCall.arguments.forEach((a: EncodedValue) => {
     const aBytes = encodeEncodedValue(a);
     const prefixedABytes = prefixBytesLength(aBytes);
 
-    params = concatBytes(params, prefixedABytes);
+    actionArguments = concatBytes(actionArguments, prefixedABytes);
   });
 
-  const encodedParams = concatBytes(encodedNumArgs, params);
+  const encodedActionArguments = concatBytes(encodedNumArgs, actionArguments);
 
-  return bytesToBase64(concatBytes(encodedVersion, encodedDbId, encodedAction, encodedParams));
+  return bytesToBase64(
+    concatBytes(encodedVersion, encodedDbId, encodedAction, encodedActionArguments)
+  );
 }
 
-export function encodeAccountId(a: AccountId): Uint8Array {
-  const encodedId = prefixBytesLength(hexToBytes(a.identifier));
-  const encodedType = prefixBytesLength(stringToBytes(a.key_type));
-  return concatBytes(encodedId, encodedType);
+export function encodeActionExecution(
+  action: UnencodedActionPayload<PayloadType.EXECUTE_ACTION>
+): string {
+  // The version of the action execution encoding used by the Kwil DB Engine
+  const actionExecutionVersion = 0;
+
+  const encodedVersion = numberToUint16LittleEndian(actionExecutionVersion);
+  const encodedDbId = prefixBytesLength(stringToBytes(action.dbid));
+  // Action name
+  const encodedAction = prefixBytesLength(stringToBytes(action.action));
+
+  const encodedNumArgs = numberToUint16LittleEndian(action.arguments.length);
+  let actionArguments: Uint8Array = new Uint8Array();
+
+  action.arguments.forEach((encodedValues) => {
+    const argLength = numberToUint16LittleEndian(encodedValues.length);
+    let argBytes: Uint8Array = new Uint8Array();
+    encodedValues.forEach((value) => {
+      const evBytes = encodeEncodedValue(value);
+      const prefixedEvBytes = prefixBytesLength(evBytes);
+
+      argBytes = concatBytes(argBytes, prefixedEvBytes);
+    });
+
+    actionArguments = concatBytes(actionArguments, argLength, argBytes);
+  });
+
+  const encodedActionArguments = concatBytes(encodedNumArgs, actionArguments);
+
+  return bytesToBase64(
+    concatBytes(encodedVersion, encodedDbId, encodedAction, encodedActionArguments)
+  );
 }
 
 function encodeEncodedValue(ev: EncodedValue): Uint8Array {
@@ -117,6 +157,12 @@ export function encodeValue(value: ValueType): Uint8Array {
     default:
       throw new Error('invalid scalar value');
   }
+}
+
+function isDecimal(n: number): boolean {
+  const numStr = Math.abs(n).toString();
+  const decimalIdx = numStr.indexOf('.');
+  return decimalIdx !== -1;
 }
 
 function encodeNull(): Uint8Array {

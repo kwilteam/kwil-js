@@ -140,6 +140,8 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     let inputs: Entries[] = [];
     if (actionBody.inputs && transformActionInput.isActionInputArray(actionBody.inputs)) {
       inputs = transformActionInput.toEntries(actionBody.inputs);
+    } else {
+      inputs = actionBody.inputs || [];
     }
 
     let tx = Action.createTx(this, {
@@ -158,7 +160,8 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
 
     return await this.broadcastClient(
       transaction,
-      synchronous ? BroadcastSyncType.COMMIT : undefined
+      // TODO: check the difference between commit and sync
+      synchronous ? BroadcastSyncType.SYNC : undefined
     );
   }
 

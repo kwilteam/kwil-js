@@ -19,12 +19,10 @@ import { BytesEncodingStatus, DeployOrDrop, PayloadType } from './enums';
 /**
  * `AllPayloads` is the union of all payload types.
  */
+// TODO: Add the new execute Sql / query() payload
 export type AllPayloads =
   | UnencodedActionPayload<PayloadType.CALL_ACTION | PayloadType.EXECUTE_ACTION>
-  | DropDbPayload
-  | CompiledKuneiform
-  | TransferPayload<BytesEncodingStatus.HEX_ENCODED>
-  | EncodeableDatabase;
+  | TransferPayload<BytesEncodingStatus.HEX_ENCODED>;
 
 export type UnencodedActionPayload<T extends PayloadType.CALL_ACTION | PayloadType.EXECUTE_ACTION> =
   {
@@ -124,12 +122,3 @@ export type CompiledForeignProcedure = Omit<ForeignProcedure, 'return_types' | '
   parameters: ReadonlyArray<CompiledDataType>;
   return_types: CompiledProcedureReturn | Array<never>;
 };
-
-/**
- * `ActionCall` represents a call to execute an action on a database.
- */
-export interface ActionCall {
-  dbid: string;
-  action: string;
-  arguments: EncodedValue[];
-}

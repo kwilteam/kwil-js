@@ -1,35 +1,57 @@
 import { WebKwil, Utils, KwilSigner } from '../../../../src';
-import { ActionInput } from '../../../../src/core/action';
+import { ActionInput, Entries } from '../../../../src/core/action';
 
 export async function executeAction(
   kwil: WebKwil,
   namespace: string,
   action: string,
-  actionInput: ActionInput,
   signer: KwilSigner,
   nonce?: number
 ): Promise<void> {
-  //   const query = await kwil.selectQuery(namespace, 'SELECT COUNT(*) FROM posts');
-  //   console.log(query);
-  //@ts-ignore
-  //   const count = query.data[0][`count`];
+  // const actionInputData = Utils.ActionInput.of()
+  //   .put('$id', 'a1b2c3d4-e5f6-4a5b-9c8d-7e6f5d4c3b2a')
+  //   .put('$int_var', 42)
+  //   .put('$text_var', 'Sample text')
+  //   .put('$bool_var', true)
+  //   .put('$decimal_var', '123.45')
+  //   .put('$blob', new Uint8Array([1]));
 
-  // const actionInput = Utils.ActionInput.of()
-  //   .put('$id', Number(count + 1))
-  //   .put('$user', 'Luke')
-  //   .put('$title', 'Hello')
-  //   .put('$body', 'Hello World');
+  // const actionInputData2 = Utils.ActionInput.of()
+  //   .put('$id', 'e8b5a51d-86e2-4c1c-9d3f-b7c2a5d8f9e0')
+  //   .put('$int_var', 42)
+  //   .put('$text_var', 'Sample text')
+  //   .put('$bool_var', true)
+  //   .put('$decimal_var', '123.45')
+  //   .put('$blob', new Uint8Array([1]));
+
+  const actionInputData = {
+    $id: '123e4567-e89b-12d3-a456-426614174000',
+    $int_var: 42,
+    $text_var: 'Sample text',
+    $bool_var: true,
+    // $decimal_var: '12.345',
+    $blob: new Uint8Array([1]),
+  };
+
+  const actionInputData2 = {
+    $id: '123e4567-e89b-12d3-a456-426614174001',
+    $int_var: 42,
+    $text_var: 'Sample text',
+    $bool_var: true,
+    // $decimal_var: '12.345',
+    $blob: new Uint8Array([1]),
+  };
 
   const res = await kwil.execute(
     {
       namespace,
-      name: action,
-      inputs: [actionInput, actionInput],
+      name: 'insert_variables_no_dec',
+      inputs: [actionInputData, actionInputData2],
       description: 'This is a test action',
-      nonce,
+      nonce: nonce ? nonce + 1 : undefined,
     },
     signer,
-    true
+    false
   );
 
   console.log(res);

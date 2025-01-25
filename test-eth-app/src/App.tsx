@@ -25,8 +25,8 @@ function App() {
     const signer = await provider.getSigner();
     const kwilSigner = new KwilSigner(signer, signer.address);
 
-    // const res = await kwil.getAccount(signer.address);
-    // console.log(res);
+    const res = await kwil.getAccount(signer.address);
+    const nonce = res.data?.nonce;
 
     // Convert address to Uint8Array using ethers utility
     // const addressBytes = getBytes(signer.address);
@@ -41,22 +41,17 @@ function App() {
 
     // await deployDb(kwilSigner);
     const namespace = 'test';
-    const actionInput = Utils.ActionInput.of()
-      .put('$id', 'f47ac10b-58cc-4372-a567-0e02b2c3d479')
-      .put('$int_var', 42)
-      .put('$text_var', 'Sample text')
-      .put('$bool_var', true)
-      .put('$decimal_var', '12.3456')
-      .put('$blob', new Uint8Array([1]));
 
-    // await executeAction(kwil, namespace, 'insert_variables', actionInput, kwilSigner);
-    await testViewWithParam(kwil, namespace, kwilSigner);
+    // await executeAction(kwil, namespace, 'insert_variables', kwilSigner, nonce);
+    // await testViewWithParam(kwil, namespace, kwilSigner);
     // await kwilAuthenticate(kwil, kwilSigner)
     // await testViewWithSign(kwil, dbid, kwilSigner)
     // await kwilLogout(kwil);
-    // console.log(
-    //   await kwil.txInfo('f66d86c28a866fc23e6dc6f099f8871a2db7378706572c9a7adcc905fa2309b0')
-    // );
+    console.log(
+      await kwil.txInfo(
+        '778ddcd9cdfdd1a7bcdf6edef34d34f77d5ee78e7d6f47de738f3aebad5fe5bf3dd9eddfe76e5e73bebb7bdeb97baf1f'
+      )
+    );
     // console.log(await kwil.listDatabases(kwilSigner.identifier));
     //console.log(await kwil.getSchema(dbid));
 
@@ -113,17 +108,17 @@ function App() {
     // );
 
     // DECIMAL
-    console.log(
-      await kwil.selectQuery('{test}SELECT * FROM variable_test WHERE decimal_var = $decimal', {
-        $decimal: 1245.34,
-      })
-    );
+    // console.log(
+    //   await kwil.selectQuery('{test}SELECT * FROM variable_test WHERE decimal_var = $decimal', {
+    //     $decimal: 1245.34,
+    //   })
+    // );
 
-    console.log(
-      await kwil.selectQuery('{test}SELECT * FROM variable_test WHERE decimal_var = $decimal', {
-        $decimal: 12.3456,
-      })
-    );
+    // console.log(
+    //   await kwil.selectQuery('{test}SELECT * FROM variable_test WHERE decimal_var = $decimal', {
+    //     $decimal: 12.3456,
+    //   })
+    // );
 
     // BLOB;
     // console.log(

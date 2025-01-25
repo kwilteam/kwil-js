@@ -131,9 +131,3 @@ export function resolveValueType(value: ValueType): {
     varType,
   };
 }
-
-export function isDecimal(n: number): boolean {
-  const numStr = Math.abs(n).toString();
-  const decimalIdx = numStr.indexOf('.');
-  return decimalIdx !== -1;
-}
