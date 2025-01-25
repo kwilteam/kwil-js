@@ -15,7 +15,6 @@ import { AnySignatureType, getSignatureType, SignatureType } from '../core/signa
 import { Transaction } from '../core/tx';
 import { PayloadTx } from './payloadTx';
 import { objects } from '../utils/objects';
-import { Promisy } from '../utils/types';
 
 export interface DBOptions {
   signer: SignerSupplier;

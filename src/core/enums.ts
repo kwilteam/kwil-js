@@ -43,11 +43,13 @@ export enum EncodingType {
 
 export enum PayloadType {
   INVALID_PAYLOAD_TYPE = 'invalid',
+  // TODO:  delete deprecated payload types
   DEPLOY_DATABASE = 'deploy_schema',
   DROP_DATABASE = 'drop_schema',
   EXECUTE_ACTION = 'execute',
   CALL_ACTION = 'call_action',
   TRANSFER = 'transfer',
+  RAW_STATEMENT = 'raw_statement',
 }
 
 export type DeployOrDrop = PayloadType.DEPLOY_DATABASE | PayloadType.DROP_DATABASE;

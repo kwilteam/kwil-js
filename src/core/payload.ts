@@ -23,7 +23,8 @@ import { AccountId } from './network';
 // TODO: Add the new execute Sql / query() payload
 export type AllPayloads =
   | UnencodedActionPayload<PayloadType.CALL_ACTION | PayloadType.EXECUTE_ACTION>
-  | TransferPayload;
+  | TransferPayload
+  | RawStatementPayload;
 
 export type UnencodedActionPayload<T extends PayloadType.CALL_ACTION | PayloadType.EXECUTE_ACTION> =
   {
@@ -40,6 +41,19 @@ export interface EncodedValue {
 export interface EncodedParameterValue {
   type: DataType;
   data: string[];
+}
+
+export interface RawStatementPayload {
+  statement: string;
+  parameters: NamedValue[];
+}
+
+interface NamedValue {
+  // name is the name of the parameter
+  // E.g,. for a query `INSERT INTO table VALUES $value`, the name would be $name
+  name: string;
+  // value is same shape as `params.params[$variable_name]` from the selectQuery EXCEPT, rather than converting values to base64, you only need to conver them to Uint8array.
+  value: EncodedValue;
 }
 
 /**

@@ -1,21 +1,21 @@
 import Client from '../api_client/client';
 import { KwilConfig } from '../api_client/config';
 import { GenericResponse } from '../core/resreq';
-import { Database, DeployBody, DropBody, SelectQuery } from '../core/database';
+import { Database, DeployBody, DropBody } from '../core/database';
 import { TxReceipt } from '../core/tx';
 import { Account, ChainInfo, ChainInfoOpts, DatasetInfo } from '../core/network';
 import { Cache } from '../utils/cache';
 import { TxInfoReceipt } from '../core/txQuery';
 import {
-  AccountKeyType,
   AuthenticationMode,
   AuthErrorCodes,
   BroadcastSyncType,
   BytesEncodingStatus,
   EnvironmentType,
+  PayloadType,
 } from '../core/enums';
-import { bytesToHex } from '../utils/serial';
-import { getAccountId, isNearPubKey, nearB58ToHex } from '../utils/keys';
+
+import { getAccountId } from '../utils/keys';
 import { ActionBody, CallBody, Entries, transformActionInput } from '../core/action';
 import { KwilSigner } from '../core/kwilSigner';
 import { wrap } from './intern';
@@ -25,9 +25,11 @@ import { Action } from '../transaction/action';
 import { Message, MsgReceipt } from '../core/message';
 import { AuthBody, Signature } from '../core/signature';
 import { SelectQueryRequest } from '../core/jsonrpc';
-import { encodeParameters } from '../utils/parameters';
+import { encodeParameters, encodeRawStatementParameters } from '../utils/parameters';
 import { generateDBID } from '../utils/dbid';
 import { QueryParams } from '../utils/types';
+import { PayloadTx } from '../transaction/payloadTx';
+import { RawStatementPayload } from '../core/payload';
 
 /**
  * The main class for interacting with the Kwil network.
@@ -246,34 +248,35 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    * @returns Promise resolving to transaction receipt
    */
 
-  // public async query(
-  //   query: string,
-  //   params: Record<string, ValueType>,
-  //   kwilSigner: KwilSigner,
-  //   synchronous?: boolean
-  // ): Promise<GenericResponse<TxReceipt>> {
-  //   // TODO: Add support for signer
-  //   // TODO: Add support for synchronous
+  public async query(
+    query: string,
+    params: QueryParams,
+    signer: KwilSigner,
+    synchronous?: boolean
+  ): Promise<GenericResponse<TxReceipt>> {
+    const encodedParams = encodeRawStatementParameters(params);
 
-  //   console.log('query', query);
-  //   console.log('params', params);
-  //   console.log('kwilSigner', kwilSigner);
-  //   console.log('synchronous', synchronous);
+    const rawStatementPayload: RawStatementPayload = {
+      statement: query,
+      parameters: encodedParams,
+    };
 
-  //   const q: QueryRequest = {
-  //     query,
-  //     params: params || {},
-  //   };
+    const transaction = await PayloadTx.createTx(this, {
+      chainId: this.chainId,
+      description: `Performing a mutative query: ${query}`,
+      payload: rawStatementPayload,
+      payloadType: PayloadType.RAW_STATEMENT,
+      identifier: signer.identifier,
+      signer: signer.signer,
+      signatureType: signer.signatureType,
+    }).buildTx();
 
-  //   // Add signer information if provided
-  //   if (kwilSigner) {
-  //     // q.identifier = kwilSigner.identifier;
-  //     // q.signatureType = kwilSigner.signatureType;
-  //     // Add any other necessary signer info
-  //   }
-
-  //   // return await this.queryClient(q);
-  // }
+    return await this.broadcastClient(
+      transaction,
+      // TODO: Are the sync types correct?
+      synchronous ? BroadcastSyncType.SYNC : undefined
+    );
+  }
 
   /**
    * Retrieves information about a transaction given its hash.

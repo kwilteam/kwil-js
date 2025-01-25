@@ -1,6 +1,6 @@
 import { DataType } from '../core/database';
 import { VarType } from '../core/enums';
-import { EncodedParameterValue } from '../core/payload';
+import { EncodedParameterValue, EncodedValue } from '../core/payload';
 import { bytesToBase64 } from './base64';
 import { encodeValue } from './kwilEncoding';
 import { EncodedQueryParams, QueryParams, ValueType } from './types';
@@ -11,25 +11,32 @@ import { isUuid } from './uuid';
  * @param {ValueType[]} values - An array of values to be executed by an action.
  * @returns formatted values used for an action
  */
-export function formatArguments(values: ValueType[]): EncodedParameterValue[] {
+export function formatArguments(values: ValueType[]): EncodedValue[] {
   // TODO: Need to test and implement this method.
   // Used in authenticatePrivateMode() in auth.ts
-  return values.map(formatDataType);
+  return values.map((val) => formatEncodedValue(val));
 }
 
 export function encodeParameters(params: QueryParams): EncodedQueryParams {
   const encodedParams: EncodedQueryParams = {};
-
   Object.entries(params).forEach(([key, value]) => {
-    encodedParams[key] = formatDataType(value);
+    encodedParams[key] = formatEncodedParameterValue(value);
   });
-
   return encodedParams;
 }
 
-function formatDataType(val: ValueType): EncodedParameterValue {
-  const { metadata, varType } = resolveValueType(val);
+export function encodeRawStatementParameters(params: QueryParams) {
+  return Object.entries(params).map(([key, value]) => ({
+    name: key,
+    value: formatEncodedValue(value),
+  }));
+}
 
+function formatDataTypeBase(val: ValueType): {
+  type: DataType;
+  data: ValueType;
+} {
+  const { metadata, varType } = resolveValueType(val);
   const metadataSpread = metadata ? { metadata } : {};
 
   const dataType: DataType = {
@@ -39,22 +46,35 @@ function formatDataType(val: ValueType): EncodedParameterValue {
   };
 
   let data = val;
-
-  // TODO: Implement and test array of values
+  // TODO: Test array of values
   if (Array.isArray(val) && !(val instanceof Uint8Array)) {
     data = val.map((v) => {
       return v?.toString() || '';
     });
   }
+
   // else if (val instanceof Uint8Array) {
   //   data = [val];
   // } else {
   //   data = [val?.toString() || ''];
   // }
 
+  return { type: dataType, data };
+}
+
+function formatEncodedParameterValue(val: ValueType): EncodedParameterValue {
+  const base = formatDataTypeBase(val);
   return {
-    type: dataType,
-    data: [bytesToBase64(encodeValue(data))],
+    type: base.type,
+    data: [bytesToBase64(encodeValue(base.data))],
+  };
+}
+
+function formatEncodedValue(val: ValueType): EncodedValue {
+  const base = formatDataTypeBase(val);
+  return {
+    type: base.type,
+    data: [encodeValue(base.data)],
   };
 }
 

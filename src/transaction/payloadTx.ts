@@ -15,7 +15,7 @@ import { sha256BytesToBytes } from '../utils/crypto';
 import { objects } from '../utils/objects';
 import { bytesToHex, stringToBytes } from '../utils/serial';
 import { strings } from '../utils/strings';
-import { encodeActionExecution, encodeTransfer } from '../utils/kwilEncoding';
+import { encodeActionExecution, encodeRawStatement, encodeTransfer } from '../utils/kwilEncoding';
 
 export interface PayloadTxOptions {
   payload: AllPayloads;
@@ -240,6 +240,12 @@ Kwil Chain ID: ${tx.body.chain_id}
           throw new Error('Invalid payload type for TRANSFER');
         }
         return encodeTransfer(payload);
+
+      case PayloadType.RAW_STATEMENT:
+        if (!('statement' in payload && 'parameters' in payload)) {
+          throw new Error('Invalid payload type for RAW_STATEMENT');
+        }
+        return encodeRawStatement(payload);
 
       default:
         throw new Error(`Unsupported payload type: ${payloadType}`);

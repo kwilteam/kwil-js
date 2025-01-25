@@ -1,6 +1,11 @@
 import { DataType } from '../core/database';
 import { AccountId } from '../core/network';
-import { EncodedValue, TransferPayload, UnencodedActionPayload } from '../core/payload';
+import {
+  EncodedValue,
+  RawStatementPayload,
+  TransferPayload,
+  UnencodedActionPayload,
+} from '../core/payload';
 import { bytesToBase64 } from './base64';
 import {
   concatBytes,
@@ -12,7 +17,7 @@ import {
 import { booleanToBytes, hexToBytes, numberToBytes, stringToBytes } from './serial';
 import { convertUuidToBytes, isUuid } from './uuid';
 import { ValueType } from './types';
-import { BytesEncodingStatus, PayloadType } from '../core/enums';
+import { PayloadType } from '../core/enums';
 
 export function encodeAccountId(accountId: AccountId): Uint8Array {
   const encodedId = prefixBytesLength(hexToBytes(accountId.identifier));
@@ -80,9 +85,54 @@ export function encodeActionExecution(
   );
 }
 
-interface Transfer {
-  to: AccountId;
-  amount: BigInt;
+export function encodeRawStatement(statement: RawStatementPayload): string {
+  // to encode RawStatement, we need to concat a bytes array of all the required properties.
+  // the order of each property on the interfaces is important. If the bytes are concated in an incorrect order, the database engine will not know how to decode them.
+
+  // ~ITEMS TO ENCODE~
+
+  // Item 1. rsVersion
+  // rsVersion is a versioning number for the RawStatement interface.
+  // This is used in case we different interfaces in the future and want to maintain backwards compatibility.
+  const rawStatementVersion = 0;
+
+  // rsVersion should be converted to Uint16 and concactenated with the rest of our bytes
+  const encodedVersion = numberToUint16LittleEndian(rawStatementVersion);
+
+  // Item 2. Rawstatement.statement
+  // We first need to convert the string to bytes
+  const statementBytes = stringToBytes(statement.statement);
+
+  // then, we need to prefix the byte array with its length. The length must be represented by 4 bytes (uint32)
+
+  const encodedStatement = prefixBytesLength(statementBytes);
+
+  // Item 3. Rawstatement.parameters
+  let encodedParameters: Uint8Array;
+
+  // We first need to append the number of parameters with two bytes (uint16)
+  encodedParameters = numberToUint16LittleEndian(statement.parameters.length);
+
+  // then, for each parameter..
+  for (const param of statement.parameters) {
+    // convert the string to bytes
+    const nameBytes = stringToBytes(param.name);
+
+    // prefix bytes array with length
+    const prefixedNameBytes = prefixBytesLength(nameBytes);
+
+    // encode each value with the `encodeEncodedValue` function
+    const valueBytes = encodeEncodedValue(param.value);
+
+    // prefix value with its length
+    const valueBytesPrefix = prefixBytesLength(valueBytes);
+
+    // concatenate with our paramBytes
+    encodedParameters = concatBytes(encodedParameters, prefixedNameBytes, valueBytesPrefix);
+  }
+
+  // concat all bytes IN ORDER they appear on the interface
+  return bytesToBase64(concatBytes(encodedVersion, encodedStatement, encodedParameters));
 }
 
 export function encodeTransfer(transfer: TransferPayload): string {

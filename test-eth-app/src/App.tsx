@@ -14,8 +14,9 @@ import { useState } from 'react';
 import { bytesToBase64 } from '../../src/utils/base64';
 import { encodeTransfer } from '../../src/utils/kwilEncoding';
 import { getTxProperties } from './examples/test';
-import { Transfer } from './examples/broadcast_payloads';
+import { encodeRawStatement, RawStatement, Transfer } from './examples/broadcast_payloads';
 import { PayloadType } from '../../src/core/enums';
+import { encodeScalar } from './examples/encode_scalar';
 
 declare global {
   interface Window {
@@ -60,6 +61,22 @@ function App() {
     // );
 
     // await executeAction(kwil, namespace, 'insert_variables', kwilSigner, nonce);
+    // await kwil.query('CREATE table simple_test (text_var text PRIMARY KEY);', {}, kwilSigner, true);
+
+    await kwil.query(
+      '{test}INSERT INTO missing_table (id, int_var, text_var, bool_var, blob_var) VALUES ($id, $int_var, $text_var, $bool_var, $blob_var)',
+      {
+        $id: '123e4567-e89b-12d3-a456-426614174003',
+        $int_var: 42,
+        $text_var: 'Sample text',
+        $bool_var: true,
+        //$decimal_var: 1234.56,
+        $blob_var: new Uint8Array([1]),
+      },
+      kwilSigner,
+      true
+    );
+
     // await testViewWithParam(kwil, namespace, kwilSigner);
     // await kwilAuthenticate(kwil, kwilSigner)
     // await testViewWithSign(kwil, dbid, kwilSigner)
@@ -85,15 +102,15 @@ function App() {
     */
 
     // Create transfer payload
-    const transferBody = {
-      to: signer.address, // Can be hex string or Uint8Array
-      amount: BigInt(1000000000000000000), // Amount in smallest unit (1 = 10^18)
-      description: 'Optional transfer description',
-    };
+    // const transferBody = {
+    //   to: signer.address, // Can be hex string or Uint8Array
+    //   amount: BigInt(1000000000000000000), // Amount in smallest unit (1 = 10^18)
+    //   description: 'Optional transfer description',
+    // };
 
     // Execute transfer
-    const result = await kwil.funder.transfer(transferBody, kwilSigner, true);
-    console.log(result);
+    // const result = await kwil.funder.transfer(transferBody, kwilSigner, true);
+    // console.log(result);
     // console.log(await kwil.getTables('main'));
     // console.log(await kwil.getTableColumns('main', 'variable_test'));
     // console.log(await kwil.getActions('action_test'));
@@ -106,7 +123,7 @@ function App() {
     //   $id: '123e4567-e89b-12d3-a456-426614174000',
     // });
     // await kwil.selectQuery(
-    //   '{main}SELECT * FROM variable_test WHERE id = $id',
+    //   '{test}SELECT * FROM variable_test WHERE id = $id',
     //   {
     //     $id: '123e4567-e89b-12d3-a456-426614174000',
     //   },
