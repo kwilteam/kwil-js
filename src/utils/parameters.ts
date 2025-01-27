@@ -85,13 +85,19 @@ export function analyzeNumber(num: number) {
   const decimalIndex = numStr.indexOf('.');
   const hasDecimal = decimalIndex !== -1;
 
-  // Calculate total digits (excluding the decimal point)
-  const totalDigits = hasDecimal ? numStr.length - 1 : numStr.length;
+  // Precision represents the total number of digits (excluding the decimal point)
+  const precision = hasDecimal ? numStr.length - 1 : numStr.length;
+  // Scale represents the number of digits after the decimal point
+  const scale = hasDecimal ? numStr.length - decimalIndex - 1 : 0;
+
+  // e.g. 123.456
+  // precision = 6
+  // scale = 3
 
   return {
-    hasDecimal: hasDecimal,
-    totalDigits: totalDigits,
-    decimalPosition: hasDecimal ? decimalIndex : -1,
+    hasDecimal,
+    precision,
+    scale,
   };
 }
 
@@ -119,7 +125,7 @@ export function resolveValueType(value: ValueType): {
     case 'number':
       const numAnalysis = analyzeNumber(value);
       if (numAnalysis.hasDecimal) {
-        metadata = [numAnalysis.totalDigits, numAnalysis.decimalPosition];
+        metadata = [numAnalysis.precision, numAnalysis.scale];
         varType = VarType.NUMERIC;
       } else {
         varType = VarType.INT8;

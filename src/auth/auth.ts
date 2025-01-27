@@ -114,6 +114,7 @@ export class Auth<T extends EnvironmentType> {
     }
 
     // handle if the inputs are an array of ActionInput objects or an array of Entries objects
+    // TODO: now we are not using the ActionInput objects, we are using the Entries objects
     const cleanActionValues = actionBody?.inputs
       ? actionBody.inputs.map((input) => {
           return input instanceof ActionInput ? input.toEntries() : input;

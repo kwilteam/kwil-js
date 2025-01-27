@@ -409,7 +409,7 @@ export class Action<T extends EnvironmentType> {
         if (parameterType.includes('numeric') || parameterType.includes('decimal')) {
           parameterType = VarType.NUMERIC;
           const analysis = analyzeNumber(Number(parameterValue));
-          metadata = [analysis.totalDigits, analysis.decimalPosition];
+          metadata = [analysis.precision, analysis.scale];
         }
 
         // Validate parameter type against VarType enum

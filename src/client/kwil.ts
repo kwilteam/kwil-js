@@ -125,6 +125,8 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       throw new Error('name is required in actionBody');
     }
 
+    const namespace = this.resolveNamespace(actionBody);
+
     // ActionInput[] has been deprecated.
     // This transforms the ActionInput[] into Entries[] to support legacy ActionInput[]
     let inputs: Entries[] = [];
@@ -135,7 +137,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     }
 
     let tx = Action.createTx(this, {
-      namespace: actionBody.namespace,
+      namespace,
       actionName: actionBody.name.toLowerCase(),
       description: actionBody.description || '',
       identifier: kwilSigner.identifier,
@@ -330,6 +332,9 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    */
 
   public getDBID(owner: string | Uint8Array, name: string): string {
+    console.warn(
+      'WARNING: `getDBID()` is deprecated and will be removed in the next major version. Please use `kwil.selectQuery(query, params?, signer?)` instead.'
+    );
     return generateDBID(owner, name);
   }
 
@@ -497,6 +502,8 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       throw new Error('name is required in actionBody');
     }
 
+    const namespace = this.resolveNamespace(actionBody);
+
     // ActionInput[] is deprecated. So we are converting any ActionInput[] to an Entries[]
     let inputs: Entries[] = [];
     if (actionBody.inputs && transformActionInput.isActionInputArray(actionBody.inputs)) {
@@ -509,7 +516,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     // pre Challenge message
     let msg = Action.createTx<EnvironmentType.BROWSER>(this, {
       chainId: this.chainId,
-      namespace: actionBody.namespace,
+      namespace,
       actionName: actionBody.name,
       description: actionBody.description || '',
       actionInputs: inputs,
@@ -615,6 +622,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     throw new Error('Authentication process did not complete successfully');
   }
 
+  // TODO: Move this to a another location
   private validateNamespace(namespace: string): boolean {
     // Validate namespace
     if (!namespace || typeof namespace !== 'string') {
@@ -632,5 +640,19 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     }
 
     return true;
+  }
+
+  // TODO: Move this to a another location
+  private resolveNamespace(actionBody: ActionBody | CallBody): string {
+    if (actionBody.namespace) {
+      return actionBody.namespace;
+    }
+
+    if (actionBody.dbid) {
+      console.warn('Warning: The "dbid" field is deprecated. Please use "namespace" instead.');
+      return actionBody.dbid;
+    }
+
+    throw new Error('Either "namespace" or "dbid" must be provided');
   }
 }
