@@ -176,7 +176,7 @@ export interface EstimatePriceResponse {
 }
 
 export interface TxQueryResponse {
-  hash: string;
+  tx_hash: string;
   height: number;
   tx: TxnData<BytesEncodingStatus.BASE64_ENCODED>;
   tx_result: TxResult;

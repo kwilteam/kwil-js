@@ -7,9 +7,7 @@ import { GenericResponse } from '../core/resreq';
 import { base64ToHex, bytesToHex, hexToBase64, hexToBytes } from '../utils/serial';
 import { TxInfoReceipt } from '../core/txQuery';
 import { CallClientResponse, Message, MsgReceipt } from '../core/message';
-import { kwilDecode } from '../utils/rlp';
 import {
-  AccountKeyType,
   AccountStatus,
   AuthErrorCodes,
   BroadcastSyncType,
@@ -261,12 +259,11 @@ export default class Client extends Api {
     return checkRes(res, (r) => {
       return {
         ...r.result,
-        hash: base64ToHex(r.result.hash),
         tx: {
           ...r.result.tx,
           body: {
             ...r.result.tx.body,
-            payload: kwilDecode(base64ToBytes(r.result.tx.body.payload as string)),
+            payload: base64ToBytes(r.result.tx.body.payload as string),
             fee: BigInt(r.result.tx.body.fee || 0),
           },
           signature: {
