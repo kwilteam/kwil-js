@@ -276,7 +276,8 @@ export default class Client extends Api {
     });
   }
 
-  protected async callClient(msg: Message): Promise<CallClientResponse<Object[] | MsgReceipt>> {
+  // TODO: Ensure return type is correct (Promise<GenericResponse<Object[] | MsgReceipt>>)
+  protected async callClient(msg: Message): Promise<CallClientResponse<Object[]>> {
     const body = this.buildJsonRpcRequest<CallRequest>(JSONRPCMethod.METHOD_CALL, {
       body: msg.body,
       auth_type: msg.auth_type,
@@ -289,10 +290,12 @@ export default class Client extends Api {
 
     const res = await super.post<JsonRPCResponse<CallResponse>>(`/rpc/v1`, body);
 
-    const errorResponse = this.checkAuthError(res);
-    if (errorResponse) {
-      return errorResponse;
-    }
+    // TODO: Remove this once we have auth working
+    // TODO: What is MsgReceipt type?
+    // const errorResponse = this.checkAuthError(res);
+    // if (errorResponse) {
+    //   return errorResponse;
+    // }
 
     return checkRes(res, (r) => this.parseQueryResponse(r.result.query_result));
   }
@@ -367,6 +370,8 @@ function checkRes<T, R>(
   if (!res.data) {
     throw new Error(`failed to parse response: ${res}`);
   }
+
+  console.log('res', res);
 
   if (res.data.error) {
     const data = res.data.error.data ? `, data: ${JSON.stringify(res.data.error.data)}` : '';

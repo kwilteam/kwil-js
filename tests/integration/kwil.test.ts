@@ -4,27 +4,24 @@ const logSpy = jest.spyOn(console, 'log').mockImplementation((...args) => {
 });
 jest.resetModules();
 import {
-  deployBaseSchema,
   deployIfNoTestDb,
-  deployTempSchema,
   deriveKeyPair64,
   dropTestDb,
   kwil,
   ViewCaller,
   wallet,
-} from './testingUtils';
-import { TxReceipt } from '../dist/core/tx';
-import schema from './test_schema2.json';
-import { KwilSigner, NodeKwil, Types, Utils } from '../dist/index';
-import { MsgReceipt } from '../dist/core/message';
+} from '../testingUtils';
+import { TxReceipt } from '../../dist/core/tx';
+import schema from '../test_schema2.json';
+import { KwilSigner, NodeKwil, Types, Utils } from '../../dist/index';
+import { MsgReceipt } from '../../dist/core/message';
 import nacl from 'tweetnacl';
 import { Signer as _NearSigner } from 'near-api-js';
-import { Database, DropBody, Extension } from '../dist/core/database';
-import { EnvironmentType } from '../dist/core/enums';
+import { Database, DropBody, Extension } from '../../dist/core/database';
+import { EnvironmentType } from '../../dist/core/enums';
 import dotenv from 'dotenv';
-import { AuthSuccess, LogoutResponse } from '../dist/core/auth';
-import { Wallet } from 'ethers';
-import { Account, ChainInfo } from '../dist/core/network';
+import { AuthSuccess, LogoutResponse } from '../../dist/core/auth';
+import { Account, ChainInfo } from '../../dist/core/network';
 
 dotenv.config();
 const isKgwOn = process.env.GATEWAY_ON === 'TRUE';
@@ -33,459 +30,503 @@ const isGasOn = process.env.GAS_ON === 'TRUE';
 const address = wallet.address;
 const dbid: string = kwil.getDBID(address, 'mydb');
 const kSigner = new KwilSigner(wallet, address);
+const differentKwilSigner = new KwilSigner(wallet, '0xC0B84D0E05c59e48110577F8Ec2EEE360F804371');
 
 // TODO: Need to get correct types for these
 type ActionBody = Types.ActionBody;
 type ActionInput = Types.ActionInput;
 type ActionBodyNode = any;
 
-// Kwil methods that do NOT return another class (e.g. funder, action, and DBBuilder)
-describe('Kwil Integration Tests', () => {
-  const baseDbid = kwil.getDBID(address, 'base_schema');
-  beforeAll(async () => {
-    await deployIfNoTestDb(kSigner);
-    await deployBaseSchema(kSigner);
-  }, 20000);
+// TODO: Should be able to call an action WITHOUT a signer
+// TODO: Variable tests
+// TODO: Array Tests
+// TODO: Using Gas
+// TODO: Using Private Mode
 
-  afterAll(async () => {
-    await dropTestDb(dbid, kSigner);
-    await dropTestDb(baseDbid, kSigner);
-  }, 20000);
+// Integration tests for Kwil SQL schema deployment, actions, and database operations
+describe('SQL Schema Deployment and Management', () => {
+  const namespace = 'mydb';
+  let postId: string;
+  let actions: { name: string; sql: string }[];
 
-  afterEach(() => {
-    logSpy.mockClear();
-  });
-
-  afterAll(() => {
-    logSpy.mockRestore();
-  });
-
-  it('should return the correct value on getDBID()', () => {
-    const result = kwil.getDBID(address, 'mydb');
-    expect(result).toBe(dbid);
-  });
-
-  let schema: any;
-
-  it('getSchema should return a database object', async () => {
-    const result = await kwil.getSchema(dbid);
-    schema = result.data;
-    expect(result.data).toBeDefined();
-    expect(result.data).toMatchObject<Database>({
-      owner: expect.any(Uint8Array),
-      name: expect.any(String),
-      extensions: result.data?.extensions as Extension[], // will be tested separately
-      tables: expect.any(Array),
-      actions: expect.any(Array),
-      procedures: expect.any(Array),
-      foreign_calls: expect.any(Array),
-    });
-
-    // Extensions should be an array or null
-    expect(Array.isArray(result.data?.extensions) || result.data?.extensions === null).toBe(true);
-  });
-
-  it('should cache the getSchema() result properly', async () => {
-    jest.useFakeTimers();
-
-    const result = await kwil.getSchema(dbid);
-    expect(result.data).toStrictEqual(schema);
-
-    // Simulate the passage of 11 minutes
-    jest.advanceTimersByTime(11 * 60 * 1000);
-
-    const result2 = await kwil.getSchema(dbid);
-
-    expect(result2.data).toStrictEqual(schema);
-
-    // each server requests make two console logs. If the cache expired properly, it should make a new request.
-    expect(logSpy).toHaveBeenCalledTimes(2);
-
-    // Reset the mock to ensure it doesn't affect other tests
-    jest.resetAllMocks();
-    jest.useRealTimers();
-  });
-
-  it('getAccount should return an account object', async () => {
-    const result = await kwil.getAccount(address);
-    expect(result.data).toMatchObject<Account>({
-      id: {
-        identifier: expect.any(Uint8Array),
-        key_type: expect.any(String),
-      },
-      nonce: expect.any(Number),
-      balance: expect.any(String),
-    });
-  });
-
-  it('listDatabases should return an array of DataSetInfo', async () => {
-    const result = await kwil.listDatabases(address);
-
-    expect(result.data).toBeDefined();
-    result.data?.forEach((db) => {
-      expect(db).toMatchObject({
-        name: expect.any(String),
-        dbid: expect.any(String),
-        owner: expect.any(Uint8Array),
-      });
-    });
-
-    result.data?.forEach((db) => {
-      expect(db.owner).toBeInstanceOf(Uint8Array);
-    });
-  });
-
-  it('ping should return the pong response', async () => {
-    const result = await kwil.ping();
-    expect(result.data).toBe('pong');
-  });
-
-  it('chainInfo should match the chainInfo object', async () => {
-    const result = await kwil.chainInfo();
-    expect(result.data).toMatchObject<ChainInfo>({
-      chain_id: expect.any(String),
-      height: expect.any(String),
-      hash: expect.any(String),
-    });
-  });
-
-  (!isKwildPrivateOn ? it : it.skip)('select should return an array', async () => {
-    const result = await kwil.selectQuery(dbid, 'SELECT * FROM posts LIMIT 5');
-    expect(result.data).toMatchObject<any[]>([]);
-  });
-
-  it('should submit a tx on execute()', async () => {
-    const actionBody: ActionBody = {
-      dbid,
-      name: 'add_post',
-      inputs: [
-        {
-          $user: 'Luke',
-          $title: 'Test Post',
-          $body: 'This is a test post',
-        },
-      ],
-      description: 'This is a test action',
-    };
-
-    const result = await kwil.execute(actionBody, kSigner, true);
-
-    expect(result.data).toBeDefined();
-    expect(result.data).toMatchObject<TxReceipt>({
-      tx_hash: expect.any(String),
-    });
-  }, 10000);
-
-  it('execute should submit a procedure tx', async () => {
-    const actionBody: ActionBody = {
-      dbid,
-      name: 'proc_add_user',
-      inputs: [
-        {
-          $user: 'Luke',
-          $title: 'Test Post',
-          $body: 'This is a test post',
-        },
-      ],
-      description: 'This is a test procedure',
-    };
-
-    const result = await kwil.execute(actionBody, kSigner, true);
-
-    expect(result.data).toBeDefined();
-    expect(result.data).toMatchObject<TxReceipt>({
-      tx_hash: expect.any(String),
-    });
-  }, 10000);
-
-  // Todo: Implement this test once this issue is resolved: https://github.com/kwilteam/kwil-db/issues/740
-  // it('should execute a procedure with a foreign call to another schema on execute()', async() => {
-
-  // })
-
-  it('should submit a read_posts action on call()', async () => {
-    const body: ActionBody = {
-      dbid,
-      name: 'read_posts',
-      challenge: '',
-    };
-
-    let result;
-    if (isKwildPrivateOn || isKgwOn) {
-      result = await kwil.call(body, kSigner);
-    } else {
-      result = await kwil.call(body);
-    }
-
-    expect(result.data).toMatchObject<MsgReceipt>({
-      result: expect.any(Array),
-    });
-  }, 10000);
-
-  it('call should submit a view procedure', async () => {
-    const actionBody: ActionBody = {
-      dbid,
-      name: 'add_post',
-      inputs: [
-        {
-          $user: 'Luke',
-          $title: 'Test Post',
-          $body: 'This is a test post',
-        },
-      ],
-      description: 'This is a test procedure',
-    };
-
-    await kwil.execute(actionBody, kSigner, true);
-
-    const body: ActionBody = {
-      dbid,
-      name: 'get_post_by_title',
-      inputs: [
-        {
-          $title: 'Test Post',
-        },
-      ],
-    };
-
-    let result;
-    if (isKwildPrivateOn || isKgwOn) {
-      result = await kwil.call(body, kSigner);
-    } else {
-      result = await kwil.call(body);
-    }
-
-    expect(result.data).toBeDefined();
-    expect(result.data).toMatchObject<MsgReceipt>({
-      result: expect.any(Array),
-    });
-  }, 10000);
-
-  it('should submit a get_post_by_title procedure on call()', async () => {
-    const actionBody: ActionBody = {
-      dbid: dbid,
-      name: 'add_post',
-      inputs: [
-        {
-          $user: 'Luke',
-          $title: 'Test Post',
-          $body: 'This is a test post',
-        },
-      ],
-      description: 'This is a test procedure',
-    };
-
-    await kwil.execute(actionBody, kSigner, true);
-
-    const body: ActionBody = {
-      dbid,
-      name: 'get_post_by_title',
-      inputs: [
-        {
-          $title: 'Test Post',
-        },
-      ],
-      challenge: '',
-    };
-
-    let res;
-    if (isKwildPrivateOn || isKgwOn) {
-      res = await kwil.call(body, kSigner);
-    } else {
-      res = await kwil.call(body);
-    }
-
-    expect(res.data).toBeDefined();
-    expect(res.status).toBe(200);
-    expect(res.data).toMatchObject<MsgReceipt>({
-      result: expect.any(Array),
-    });
-  }, 10000);
-
-  it('should submit a view procedure that foreign calls a different schema on call()', async () => {
-    const body: ActionBody = {
-      dbid,
-      name: 'proc_call_base',
-      inputs: [
-        {
-          $dbid: baseDbid,
-        },
-      ],
-    };
-
-    let result;
-    if (isKwildPrivateOn || isKgwOn) {
-      result = await kwil.call(body, kSigner);
-    } else {
-      result = await kwil.call(body);
-    }
-
-    expect(result.data).toBeDefined();
-
-    expect(result.data).toMatchObject<MsgReceipt>({
-      result: expect.any(Array),
-    });
-  }, 10000);
-
-  (isGasOn ? it : it.skip)(
-    'should transfer tokens via kwil.funder',
-    async () => {
-      const funder = kwil.funder;
-      const transferBody = {
-        to: '0x6E2fA2aF9B4eF5c8A3BcF9A9B9A4F1a1a2c1c1c1',
-        amount: BigInt(1),
-      };
-      const result = await funder.transfer(transferBody, kSigner);
-      expect(result.data).toBeDefined();
+  describe('Schema Creation', () => {
+    it('should create namespace', async () => {
+      const result = await kwil.execSql(`CREATE NAMESPACE ${namespace};`, {}, kSigner);
       expect(result.data).toMatchObject<TxReceipt>({
         tx_hash: expect.any(String),
       });
-    },
-    10000
-  );
-
-  it('should deploy a database with kwil.deploy()', async () => {
-    const result = await deployTempSchema(schema, kSigner);
-    expect(result.data).toBeDefined();
-    expect(result.data).toMatchObject<TxReceipt>({
-      tx_hash: expect.any(String),
     });
-  }, 10000);
 
-  it('should drop a database with kwil.drop()', async () => {
-    const dbList = await kwil.listDatabases(kSigner.identifier);
-    const dbName = `test_db_${dbList.data?.length}`;
-    const dbidToDrop = kwil.getDBID(kSigner.identifier, dbName);
-
-    const body: DropBody = {
-      dbid: dbidToDrop,
-    };
-
-    const result = await kwil.drop(body, kSigner, true);
-
-    expect(result.data).toBeDefined();
-    expect(result.data).toMatchObject<TxReceipt>({
-      tx_hash: expect.any(String),
+    it('should not allow creating the same namespace twice', async () => {
+      await expect(kwil.execSql(`CREATE NAMESPACE ${namespace};`, {}, kSigner)).rejects.toThrow();
     });
-  }, 10000);
-});
 
-describe('Testing case sensitivity on test_db', () => {
-  let dbid: string;
+    it('should create posts table', async () => {
+      const createTable = `{${namespace}} CREATE TABLE posts (id uuid PRIMARY KEY NOT NULL, name text NOT NULL, post_title text NOT NULL, post_body text NOT NULL);`;
+      const result = await kwil.execSql(createTable, {}, kSigner, true);
+      expect(result.data).toMatchObject<TxReceipt>({
+        tx_hash: expect.any(String),
+      });
+    });
+  });
 
-  beforeAll(async () => {
-    const res = await kwil.listDatabases(kSigner.identifier);
-    const dbList = res.data;
-    if (!dbList) {
-      await deployTempSchema(schema, kSigner);
-      return;
-    }
+  describe('Action Creation', () => {
+    actions = [
+      {
+        name: 'add_post',
+        sql: `{${namespace}}CREATE ACTION add_post($id uuid, $user text, $title text, $body text) PUBLIC { INSERT INTO posts (id, name, post_title, post_body) VALUES ($id, $user, $title, $body); }`,
+      },
+      {
+        name: 'update_post',
+        sql: `{${namespace}}CREATE ACTION update_post($id uuid, $body text) PUBLIC { UPDATE posts SET post_body = $body WHERE id = $id; }`,
+      },
+      {
+        name: 'delete_post',
+        sql: `{${namespace}}CREATE ACTION delete_post($id uuid) PUBLIC { DELETE FROM posts WHERE id = $id; }`,
+      },
+      {
+        name: 'read_posts_count',
+        sql: `{${namespace}}CREATE ACTION read_posts_count() PUBLIC VIEW RETURNS (count int) { RETURN SELECT count(*) FROM posts; }`,
+      },
+      {
+        name: 'get_post_by_id',
+        sql: `{${namespace}}CREATE ACTION get_post_by_id($id uuid) PUBLIC VIEW RETURNS (post_title text, post_body text) { RETURN SELECT post_title, post_body FROM posts WHERE id = $id; }`,
+      },
+      {
+        name: 'view_with_param',
+        sql: `{${namespace}}CREATE ACTION view_with_param($title text) PUBLIC VIEW RETURNS TABLE (id uuid, name text, post_title text, post_body text) { RETURN SELECT * FROM posts WHERE post_title = $title; }`,
+      },
+      {
+        name: 'get_post_by_title',
+        sql: `{${namespace}}CREATE ACTION get_post_by_title($title text) PUBLIC VIEW RETURNS (post_title text, post_body text) { for $row in SELECT post_title, post_body FROM posts WHERE post_title = $title { RETURN $row.post_title, $row.post_body; } ERROR(format('record with title = "%s" not found', $title)); }`,
+      },
+    ];
 
-    for (const db of dbList) {
-      if (db.name.startsWith('test_db_')) {
-        dbid = db.dbid;
-        return;
+    actions.forEach((action) => {
+      it(`should create "${action.name}" action`, async () => {
+        const result = await kwil.execSql(action.sql, {}, kSigner, true);
+        expect(result.data).toMatchObject<TxReceipt>({
+          tx_hash: expect.any(String),
+        });
+      });
+    });
+  });
+
+  describe('Direct SQL Operations', () => {
+    it('should insert post using execSQL with parameters', async () => {
+      const uuid = uuidV4();
+      const sql = `{${namespace}} INSERT INTO posts (id, name, post_title, post_body) VALUES ($id, $user, $title, $body)`;
+      const params = {
+        $id: uuid,
+        $user: 'TestUser',
+        $title: 'SQL Test',
+        $body: 'Testing direct SQL insert',
+      };
+
+      const result = await kwil.execSql(sql, params, kSigner);
+      expect(result.data).toMatchObject<TxReceipt>({
+        tx_hash: expect.any(String),
+      });
+      postId = uuid;
+    });
+
+    it('should verify post exists using selectQuery', async () => {
+      const query = `{${namespace}} SELECT post_title, post_body FROM posts WHERE id = $id`;
+      const params = {
+        $id: postId,
+      };
+      const result = await kwil.selectQuery(query, params, kSigner);
+
+      expect(result.data).toHaveLength(1);
+      expect(result.data?.[0]).toMatchObject({
+        post_title: 'SQL Test',
+        post_body: 'Testing direct SQL insert',
+      });
+    });
+  });
+
+  describe('Action Testing', () => {
+    let actionPostId: string = '123e4567-e89b-12d3-a456-426614174005';
+    // let actionPostId2: string = uuidV4();
+
+    it('should execute add_post action', async () => {
+      const actionBody: ActionBody = {
+        dbid: namespace,
+        name: 'add_post',
+        inputs: [
+          {
+            $id: actionPostId,
+            $user: 'TestUser',
+            $title: 'Action Test',
+            $body: 'Testing action execution',
+          },
+        ],
+      };
+
+      const result = await kwil.execute(actionBody, kSigner);
+      expect(result.data).toMatchObject<TxReceipt>({
+        tx_hash: expect.any(String),
+      });
+    });
+
+    it('should execute update_post action', async () => {
+      const actionBody: ActionBody = {
+        dbid: namespace,
+        name: 'update_post',
+        inputs: [
+          {
+            $id: actionPostId,
+            $body: 'Updated post body',
+          },
+        ],
+      };
+
+      const result = await kwil.execute(actionBody, kSigner);
+      expect(result.data).toMatchObject<TxReceipt>({
+        tx_hash: expect.any(String),
+      });
+    });
+
+    it('should verify post exists using selectQuery', async () => {
+      const query = `{${namespace}} SELECT post_title, post_body FROM posts WHERE id = $id`;
+      const params = {
+        $id: actionPostId,
+      };
+      const result = await kwil.selectQuery(query, params, kSigner);
+      expect(result.data).toHaveLength(1);
+      expect(result.data?.[0]).toMatchObject({
+        post_title: 'Action Test',
+        post_body: 'Updated post body',
+      });
+    });
+
+    it('should execute read_posts_count view action', async () => {
+      const actionBody: ActionBody = {
+        dbid: namespace,
+        name: 'read_posts_count',
+      };
+
+      const result = await kwil.call(actionBody, kSigner);
+      if (result.data) {
+        expect(result.data[0]).toBe(2);
+      } else {
+        throw new Error('No data returned from action execution');
       }
-    }
-
-    await deployTempSchema(schema, kSigner);
-    dbid = kwil.getDBID(kSigner.identifier, `test_db_${dbList.length + 1}`);
-  }, 10000);
-
-  afterAll(async () => {
-    const body: DropBody = {
-      dbid,
-    };
-
-    await kwil.drop(body, kSigner, true);
-  }, 10000);
-
-  async function buildActionInput(): Promise<ActionInput> {
-    return {
-      $username: 'Luke',
-      $age: 25,
-    };
-  }
-
-  it('should execute createUserTest action', async () => {
-    const actionInputs = await buildActionInput();
-
-    const body: ActionBody = {
-      name: 'createUserTest',
-      dbid,
-      inputs: [actionInputs],
-    };
-
-    const result = await kwil.execute(body, kSigner, true);
-
-    expect(result.data).toBeDefined();
-    expect(result.data).toMatchObject<TxReceipt>({
-      tx_hash: expect.any(String),
     });
-  }, 10000);
 
-  it('should execute delete_user action', async () => {
-    const body: ActionBody = {
-      name: 'delete_user',
-      dbid,
-    };
+    it('should execute get_post_by_id view action', async () => {
+      const actionBody: ActionBody = {
+        dbid: namespace,
+        name: 'get_post_by_id',
+        inputs: [
+          {
+            $id: actionPostId,
+          },
+        ],
+      };
 
-    const result = await kwil.execute(body, kSigner, true);
-
-    expect(result.data).toBeDefined();
-    expect(result.data).toMatchObject<TxReceipt>({
-      tx_hash: expect.any(String),
+      const result = await kwil.call(actionBody, kSigner);
+      if (result.data) {
+        expect(result.data[0]).toMatchObject({
+          post_title: 'Action Test',
+          post_body: 'Updated post body',
+        });
+      } else {
+        throw new Error('No data returned from action execution');
+      }
     });
-  }, 10000);
 
-  it('should execute CREATEUSERTEST action', async () => {
-    const actionInputs = await buildActionInput();
+    it('should execute view_with_param view action', async () => {
+      const actionBody: ActionBody = {
+        dbid: namespace,
+        name: 'view_with_param',
+        inputs: [
+          {
+            $title: 'Action Test',
+          },
+        ],
+      };
 
-    const body: ActionBody = {
-      name: 'CREATEUSERTEST',
-      dbid,
-      inputs: [actionInputs],
-    };
-
-    const result = await kwil.execute(body, kSigner, true);
-
-    expect(result.data).toBeDefined();
-    expect(result.data).toMatchObject<TxReceipt>({
-      tx_hash: expect.any(String),
+      // TODO: Need to test without kSigner
+      const result = await kwil.call(actionBody, kSigner);
+      if (result.data) {
+        expect(result.data).toHaveLength(1);
+        expect(result.data[0]).toMatchObject({
+          post_title: 'Action Test',
+          post_body: 'Updated post body',
+        });
+      } else {
+        throw new Error('No data returned from action execution');
+      }
     });
-  }, 10000);
 
-  it('should execute DELETE_USER action', async () => {
-    const body: ActionBody = {
-      name: 'DELETE_USER',
-      dbid,
-    };
+    it('should execute view_with_param view action with ActionInputs', async () => {
+      const actionInputData = Utils.ActionInput.of().put('$title', 'Action Test');
 
-    const result = await kwil.execute(body, kSigner, true);
+      const actionBody: ActionBody = {
+        dbid: namespace,
+        name: 'view_with_param',
+        inputs: [actionInputData],
+      };
 
-    expect(result.data).toBeDefined();
-    expect(result.data).toMatchObject<TxReceipt>({
-      tx_hash: expect.any(String),
+      const result = await kwil.call(actionBody, kSigner);
+      if (result.data) {
+        expect(result.data).toHaveLength(1);
+        expect(result.data[0]).toMatchObject({
+          post_title: 'Action Test',
+          post_body: 'Updated post body',
+        });
+      } else {
+        throw new Error('No data returned from action execution');
+      }
     });
-  }, 10000);
 
-  it('should execute createusertest action', async () => {
-    const actionInputs = await buildActionInput();
+    it('should execute view_with_param view action with a different signer', async () => {
+      const actionBody: ActionBody = {
+        dbid: namespace,
+        name: 'view_with_param',
+        inputs: [
+          {
+            $title: 'Action Test',
+          },
+        ],
+      };
 
-    const body: ActionBody = {
-      name: 'createusertest',
-      dbid,
-      inputs: [actionInputs],
-    };
-
-    const result = await kwil.execute(body, kSigner, true);
-
-    expect(result.data).toBeDefined();
-    expect(result.data).toMatchObject<TxReceipt>({
-      tx_hash: expect.any(String),
+      // TODO: Need to test without kSigner
+      const result = await kwil.call(actionBody, differentKwilSigner);
+      if (result.data) {
+        expect(result.data).toHaveLength(1);
+        expect(result.data[0]).toMatchObject({
+          post_title: 'Action Test',
+          post_body: 'Updated post body',
+        });
+      } else {
+        throw new Error('No data returned from action execution');
+      }
     });
-  }, 10000);
+
+    it('should execute update_post action using namespace instead of dbid', async () => {
+      const actionBody: ActionBody = {
+        namespace,
+        name: 'update_post',
+        inputs: [
+          {
+            $id: actionPostId,
+            $body: 'Another updated post body',
+          },
+        ],
+      };
+
+      const result = await kwil.execute(actionBody, kSigner);
+      expect(result.data).toMatchObject<TxReceipt>({
+        tx_hash: expect.any(String),
+      });
+    });
+
+    it('should execute delete_post action', async () => {
+      const actionBody: ActionBody = {
+        dbid: namespace,
+        name: 'delete_post',
+        inputs: [
+          {
+            $id: actionPostId,
+          },
+        ],
+      };
+
+      const result = await kwil.execute(actionBody, kSigner);
+      expect(result.data).toMatchObject<TxReceipt>({
+        tx_hash: expect.any(String),
+      });
+    });
+  });
+
+  describe('Error Cases', () => {
+    it('should not allow calling action from non-existent namespace', async () => {
+      const actionBody: ActionBody = {
+        dbid: 'wrong_namespace',
+        name: 'add_post',
+        inputs: [
+          {
+            $user: 'TestUser',
+            $title: 'Should Fail',
+            $body: 'This should fail',
+          },
+        ],
+      };
+
+      await expect(kwil.execute(actionBody, kSigner)).rejects.toThrow();
+    });
+
+    it('should fail when calling non-existent action', async () => {
+      const actionBody: ActionBody = {
+        dbid: namespace,
+        name: 'non_existent_action',
+        inputs: [
+          {
+            $user: 'TestUser',
+          },
+        ],
+      };
+
+      await expect(kwil.execute(actionBody, kSigner)).rejects.toThrow();
+    });
+
+    it('should NOT drop posts table with wrong signer', async () => {
+      await expect(
+        kwil.execSql('DROP TABLE posts;', {}, differentKwilSigner, true)
+      ).rejects.toThrow(/JSON RPC call error: code: -200, message:/);
+    });
+  });
+
+  describe('Schema Cleanup', () => {
+    it('should drop all actions', async () => {
+      for (const action of actions) {
+        const result = await kwil.execSql(
+          `{${namespace}} DROP ACTION $actionName;`,
+          { $actionName: action.name },
+          kSigner,
+          true
+        );
+        expect(result.data).toMatchObject<TxReceipt>({
+          tx_hash: expect.any(String),
+        });
+      }
+    });
+
+    it('should drop posts table', async () => {
+      const result = await kwil.execSql('DROP TABLE posts;', {}, kSigner, true);
+      expect(result.data).toMatchObject<TxReceipt>({
+        tx_hash: expect.any(String),
+      });
+    });
+
+    it('should drop namespace', async () => {
+      const result = await kwil.execSql(`DROP NAMESPACE ${namespace};`, {}, kSigner, true);
+      expect(result.data).toMatchObject<TxReceipt>({
+        tx_hash: expect.any(String),
+      });
+    });
+  });
 });
+
+// TODO: Need to move this to edge-cases to test calling
+// describe('Testing case sensitivity on test_db', () => {
+//   let dbid: string;
+
+//   beforeAll(async () => {
+//     const res = await kwil.listDatabases(kSigner.identifier);
+//     const dbList = res.data;
+//     if (!dbList) {
+//       await deployTempSchema(schema, kSigner);
+//       return;
+//     }
+
+//     for (const db of dbList) {
+//       if (db.name.startsWith('test_db_')) {
+//         dbid = db.dbid;
+//         return;
+//       }
+//     }
+
+//     await deployTempSchema(schema, kSigner);
+//     dbid = kwil.getDBID(kSigner.identifier, `test_db_${dbList.length + 1}`);
+//   }, 10000);
+
+//   afterAll(async () => {
+//     const body: DropBody = {
+//       dbid,
+//     };
+
+//     await kwil.drop(body, kSigner, true);
+//   }, 10000);
+
+//   async function buildActionInput(): Promise<ActionInput> {
+//     return {
+//       $username: 'Luke',
+//       $age: 25,
+//     };
+//   }
+
+//   it('should execute createUserTest action', async () => {
+//     const actionInputs = await buildActionInput();
+
+//     const body: ActionBody = {
+//       name: 'createUserTest',
+//       dbid,
+//       inputs: [actionInputs],
+//     };
+
+//     const result = await kwil.execute(body, kSigner, true);
+
+//     expect(result.data).toBeDefined();
+//     expect(result.data).toMatchObject<TxReceipt>({
+//       tx_hash: expect.any(String),
+//     });
+//   }, 10000);
+
+//   it('should execute delete_user action', async () => {
+//     const body: ActionBody = {
+//       name: 'delete_user',
+//       dbid,
+//     };
+
+//     const result = await kwil.execute(body, kSigner, true);
+
+//     expect(result.data).toBeDefined();
+//     expect(result.data).toMatchObject<TxReceipt>({
+//       tx_hash: expect.any(String),
+//     });
+//   }, 10000);
+
+//   it('should execute CREATEUSERTEST action', async () => {
+//     const actionInputs = await buildActionInput();
+
+//     const body: ActionBody = {
+//       name: 'CREATEUSERTEST',
+//       dbid,
+//       inputs: [actionInputs],
+//     };
+
+//     const result = await kwil.execute(body, kSigner, true);
+
+//     expect(result.data).toBeDefined();
+//     expect(result.data).toMatchObject<TxReceipt>({
+//       tx_hash: expect.any(String),
+//     });
+//   }, 10000);
+
+//   it('should execute DELETE_USER action', async () => {
+//     const body: ActionBody = {
+//       name: 'DELETE_USER',
+//       dbid,
+//     };
+
+//     const result = await kwil.execute(body, kSigner, true);
+
+//     expect(result.data).toBeDefined();
+//     expect(result.data).toMatchObject<TxReceipt>({
+//       tx_hash: expect.any(String),
+//     });
+//   }, 10000);
+
+//   it('should execute createusertest action', async () => {
+//     const actionInputs = await buildActionInput();
+
+//     const body: ActionBody = {
+//       name: 'createusertest',
+//       dbid,
+//       inputs: [actionInputs],
+//     };
+
+//     const result = await kwil.execute(body, kSigner, true);
+
+//     expect(result.data).toBeDefined();
+//     expect(result.data).toMatchObject<TxReceipt>({
+//       tx_hash: expect.any(String),
+//     });
+//   }, 10000);
+// });
 
 (isKgwOn ? describe : describe.skip)('Testing authentication', () => {
   beforeAll(async () => {
@@ -927,10 +968,10 @@ describe('unconfirmedNonce', () => {
   });
 });
 
-import variableDb from './variable_test.json';
+import variableDb from '../variable_test.json';
 import { v4 as uuidV4 } from 'uuid';
-import { bytesToString } from '../dist/utils/serial';
-import { base64ToBytes } from '../dist/utils/base64';
+import { bytesToString } from '../../dist/utils/serial';
+import { base64ToBytes } from '../../dist/utils/base64';
 
 (!isKwildPrivateOn ? describe : describe.skip)('Kwil DB types', () => {
   const kwilSigner = new KwilSigner(wallet, address);

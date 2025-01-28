@@ -59,8 +59,8 @@ function App() {
     //   'Transfer: ',
     //   await getTxProperties(encodeTransfer(transfer), PayloadType.TRANSFER, 'kwil-testnet', nonce)
     // );
-
-    // await executeAction(kwil, namespace, 'insert_variables', kwilSigner, nonce);
+    const wrongKwilSigner = new KwilSigner(signer, '0xC0B84D0E05c59e48110577F8Ec2EEE360F804371');
+    await executeAction(kwil, namespace, 'insert_variables', wrongKwilSigner, nonce);
     // await kwil.query('CREATE table simple_test (text_var text PRIMARY KEY);', {}, kwilSigner, true);
 
     // await kwil.query(
@@ -109,8 +109,16 @@ function App() {
     };
 
     // Execute transfer
-    const result = await kwil.funder.transfer(transferBody, kwilSigner, true);
-    console.log(result);
+    // const result = await kwil.funder.transfer(transferBody, kwilSigner, true);
+    // console.log(result);
+
+    // const execResult = await kwil.execSql(
+    //   `CREATE ACTION add_post($user text, $title text, $body text) PUBLIC { $id uuid := uuid_generate_v5('455f60aa-0569-4aaa-8469-63be2ec4dd96'::uuid, @txid); INSERT INTO posts (id, name, post_title, post_body) VALUES ($id, $user, $title, $body); }`,
+    //   {},
+    //   kwilSigner,
+    //   true
+    // );
+    // console.log(execResult);
 
     // Deprecated
     // await kwil.selectQuery('main', 'SELECT * FROM variable_test');

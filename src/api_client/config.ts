@@ -15,8 +15,8 @@ export interface ClientConfig extends ApiConfig {
 }
 
 export interface KwilConfig extends ClientConfig {
-    chainId: string;
-    autoAuthenticate?: boolean;
+  chainId: string;
+  autoAuthenticate?: boolean;
 }
 
 /**
@@ -28,6 +28,6 @@ export interface KwilConfig extends ClientConfig {
  * @property {number} [timeout] - timeout for requests in milliseconds
  * @property {boolean} [logging] - enable logging
  * @property {Function} [logger] - custom logger function
- * @property {number} [cache] - Time to live cache in seconds. Only getSchema requests are cached. Default is 10 minutes.
+ * @property {number} [cache] - @deprecated Cache is no longer supported.
  */
 export type Config = KwilConfig;

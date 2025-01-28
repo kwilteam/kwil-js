@@ -57,7 +57,7 @@ export class Funder<T extends EnvironmentType> {
     return await this.funderClient.broadcastClient(
       transaction,
       // TODO: Are the sync types correct?
-      synchronous ? BroadcastSyncType.SYNC : undefined
+      synchronous ? BroadcastSyncType.SYNC : BroadcastSyncType.COMMIT
     );
   }
 }

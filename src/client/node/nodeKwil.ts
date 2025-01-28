@@ -24,7 +24,8 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
   public async call(
     actionBody: CallBodyNode,
     kwilSigner?: KwilSigner
-  ): Promise<GenericResponse<Object[] | MsgReceipt>> {
+    // TODO: Ensure return type is correct (Promise<GenericResponse<Object[] | MsgReceipt>>)
+  ): Promise<GenericResponse<Object[]>> {
     const setCookie = () => {
       // set the temporary cookie, if the user provided one
       if (actionBody.cookie) {

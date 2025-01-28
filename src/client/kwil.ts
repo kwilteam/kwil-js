@@ -4,7 +4,6 @@ import { GenericResponse } from '../core/resreq';
 import { Database, DeployBody, DropBody } from '../core/database';
 import { TxReceipt } from '../core/tx';
 import { Account, ChainInfo, ChainInfoOpts, DatasetInfo } from '../core/network';
-import { Cache } from '../utils/cache';
 import { TxInfoReceipt } from '../core/txQuery';
 import {
   AuthenticationMode,
@@ -39,8 +38,6 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
   protected readonly chainId: string;
   private readonly autoAuthenticate: boolean;
 
-  //TODO: cache schemas
-  private schemas: Cache<GenericResponse<Database>>;
   public funder: Funder<T>;
   public auth: Auth<T>;
 
@@ -48,7 +45,6 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
 
   protected constructor(opts: KwilConfig) {
     super(opts);
-    this.schemas = Cache.passive(opts.cache);
 
     // set chainId
     this.chainId = opts.chainId;
@@ -153,7 +149,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     return await this.broadcastClient(
       transaction,
       // TODO: check the difference between commit and sync
-      synchronous ? BroadcastSyncType.SYNC : undefined
+      synchronous ? BroadcastSyncType.SYNC : BroadcastSyncType.COMMIT
     );
   }
 
@@ -228,21 +224,21 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    *
    * @example
    * // Insert with parameters
-   * await kwil.query(
+   * await kwil.execSql(
    *   '{mydb}INSERT INTO users (name, email) VALUES ($name, $email)',
    *   { $name: 'John', $email: 'john@example.com' },
    *   signer
    * );
    *
    * // Update with parameters
-   * await kwil.query(
+   * await kwil.execSql(
    *   '{mydb}UPDATE users SET status = $status WHERE id = $id',
    *   { $status: 'active', $id: 123 },
    *   signer
    * );
    *
    * // Delete with parameters
-   * await kwil.query(
+   * await kwil.execSql(
    *   '{mydb}DELETE FROM users WHERE id = $id',
    *   { $id: 123 },
    *   signer
@@ -251,7 +247,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    * @returns Promise resolving to transaction receipt
    */
 
-  public async query(
+  public async execSql(
     query: string,
     params: QueryParams,
     signer: KwilSigner,
@@ -267,7 +263,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
 
     const transaction = await PayloadTx.createTx(this, {
       chainId: this.chainId,
-      description: `Performing a mutative query: ${query}`,
+      description: `Performing a mutative query`,
       payload: rawStatementPayload,
       payloadType: PayloadType.RAW_STATEMENT,
       identifier: signer.identifier,
@@ -277,8 +273,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
 
     return await this.broadcastClient(
       transaction,
-      // TODO: Are the sync types correct?
-      synchronous ? BroadcastSyncType.SYNC : undefined
+      synchronous ? BroadcastSyncType.SYNC : BroadcastSyncType.COMMIT
     );
   }
 
@@ -428,7 +423,8 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     actionBody: CallBody,
     kwilSigner?: KwilSigner,
     cookieHandlerCallback?: { setCookie: () => void; resetCookie: () => void }
-  ): Promise<GenericResponse<Object[] | MsgReceipt>> {
+    // TODO: Ensure return type is correct (Promise<GenericResponse<Object[] | MsgReceipt>>)
+  ): Promise<GenericResponse<Object[]>> {
     // Ensure auth mode is set
     await this.ensureAuthenticationMode();
 

@@ -22,7 +22,8 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
   public async call(
     actionBody: CallBody,
     kwilSigner?: KwilSigner
-  ): Promise<GenericResponse<Object[] | MsgReceipt>> {
+    // TODO: Ensure return type is correct (Promise<GenericResponse<Object[] | MsgReceipt>>)
+  ): Promise<GenericResponse<Object[]>> {
     return await this.baseCall(actionBody, kwilSigner);
   }
 }

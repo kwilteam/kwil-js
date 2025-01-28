@@ -82,9 +82,8 @@ export type PayloadBytesTypes =
   | BytesEncodingStatus.UINT8_ENCODED;
 
 export enum BroadcastSyncType {
-  ASYNC = 0,
-  SYNC = 1,
-  COMMIT = 2,
+  SYNC = 0, // Waits for the TX to be confirmed before returning
+  COMMIT = 1, // Returns TX immediately, even if the transaction succeeds or fails
 }
 
 export enum AuthErrorCodes {

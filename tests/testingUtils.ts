@@ -3,12 +3,8 @@ import { KwilSigner, NodeKwil } from '../dist';
 import scrypt from 'scrypt-js';
 import nacl from 'tweetnacl';
 import mydb from '../testing-functions/mydb.json';
-import baseSchema from '../testing-functions/base_schema.json';
 import { DeployBody } from '../dist/core/database';
-import { CompiledKuneiform } from '../dist/core/payload';
 import { GenericResponse } from '../dist/core/resreq';
-import { TxReceipt } from '../dist/core/tx';
-import { DatasetInfo } from '../dist/core/network';
 import { TxInfoReceipt } from '../dist/core/txQuery';
 require('dotenv').config();
 
@@ -25,6 +21,7 @@ export async function isTestDbDeployed(address: string | Uint8Array): Promise<bo
   return false;
 }
 
+// TODO: Deploy a test db with namespace, tables, actions
 export async function deployTestDb(signer: KwilSigner): Promise<void> {
   const body: DeployBody = {
     schema: mydb,
@@ -34,50 +31,12 @@ export async function deployTestDb(signer: KwilSigner): Promise<void> {
   if (!hash) throw new Error('No tx hash returned from Kwil Network');
 }
 
-export async function deployBaseSchema(signer: KwilSigner): Promise<void> {
-  const { data } = await kwil.listDatabases(signer.identifier);
-  if (!data) throw new Error('No data returned from list databases call');
-  let isBaseSchemaDeployed = false;
-
-  for (const db of data) {
-    if (db.name === 'base_schema') {
-      isBaseSchemaDeployed = true;
-      break;
-    }
-  }
-
-  if (!isBaseSchemaDeployed) {
-    await kwil.deploy(
-      {
-        schema: baseSchema,
-      },
-      signer,
-      true
-    );
-  }
-}
-
 export async function deployIfNoTestDb(signer: KwilSigner): Promise<void> {
   const isDeployed = await isTestDbDeployed(signer.identifier);
   if (!isDeployed) await deployTestDb(signer);
 }
 
-export async function deployTempSchema(
-  schema: CompiledKuneiform,
-  signer: KwilSigner
-): Promise<GenericResponse<TxReceipt>> {
-  const dbAmount = await kwil.listDatabases(signer.identifier);
-  const count = dbAmount.data as DatasetInfo[];
-  schema.name = `test_db_${count.length + 1}`;
-  const payload: DeployBody = {
-    schema,
-  };
-  const res = await kwil.deploy(payload, signer, true);
-  const hash = res.data?.tx_hash;
-  if (!hash) throw new Error('No hash returned from deploy');
-  return res;
-}
-
+// TODO: Drop a namespace
 export async function dropTestDb(dbid: string, signer: KwilSigner): Promise<void> {
   await kwil.drop(
     {
@@ -135,8 +94,8 @@ export interface ActionObj {
 }
 
 export interface ViewCaller {
-    caller: string;
-  }
+  caller: string;
+}
 
 export const kwil = new NodeKwil({
   kwilProvider: process.env.KWIL_PROVIDER || 'SHOULD FAIL',

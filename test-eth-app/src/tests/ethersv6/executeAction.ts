@@ -25,7 +25,7 @@ export async function executeAction(
   //   .put('$blob', new Uint8Array([1]));
 
   const actionInputData = {
-    $id: '123e4567-e89b-12d3-a456-426614174000',
+    $id: '123e4567-e89b-12d3-a456-426614174005',
     $int_var: 42,
     $text_var: 'Sample text',
     $bool_var: true,
@@ -34,7 +34,7 @@ export async function executeAction(
   };
 
   const actionInputData2 = {
-    $id: '123e4567-e89b-12d3-a456-426614174001',
+    $id: '123e4567-e89b-12d3-a456-426614174006',
     $int_var: 42,
     $text_var: 'Sample text',
     $bool_var: true,

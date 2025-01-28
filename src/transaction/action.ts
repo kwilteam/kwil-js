@@ -385,6 +385,7 @@ export class Action<T extends EnvironmentType> {
    * @returns {EncodedValue[][]} - An array of arrays of encoded values.
    */
   private encodeActionInputs(selectedAction: NamespaceAction, actionInputs: Entries[]) {
+    // TODO: Shouldn't need to use any[]
     const encodedActionInputs: any[] = [];
 
     for (let i = 0; i < actionInputs.length; i++) {
