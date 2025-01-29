@@ -15,12 +15,11 @@ import { objects } from '../utils/objects';
 import { AuthBody, executeSign, Signature } from '../core/signature';
 import { bytesToHex, hexToBytes, stringToBytes } from '../utils/serial';
 import { base64ToBytes, bytesToBase64 } from '../utils/base64';
-import { ActionBody, ActionInput, Entries, transformActionInput } from '../core/action';
+import { ActionBody, Entries, transformActionInput } from '../core/action';
 import { sha256BytesToBytes } from '../utils/crypto';
 import { UnencodedActionPayload } from '../core/payload';
-import { encodeActionCall, encodeValue } from '../utils/kwilEncoding';
-import { analyzeNumber, formatArguments } from '../utils/parameters';
-import { ValidatedAction, NamespaceAction, AccessModifier } from '../transaction/action';
+import { encodeActionCall } from '../utils/kwilEncoding';
+import { AccessModifier } from '../transaction/action';
 import ActionValidator from '../utils/actionValidator';
 
 interface AuthClient {
@@ -151,12 +150,13 @@ export class Auth<T extends EnvironmentType> {
     console.log(payload);
 
     // TODO: Need to use encodeActionCall in kwilEncoding.ts
-    // Need to verify with Luke
+    // OLD CODE:
     // const encodedPayload = kwilEncode(payload);
     // const base64Payload = bytesToBase64(encodedPayload);
     // create the digest, which is the first bytes of the sha256 hash of the rlp-encoded payload
     // const uInt8ArrayPayload = base64ToBytes(base64Payload);
 
+    // Updated to use encodeActionCall
     const encodedPayload = encodeActionCall(payload);
     const uInt8ArrayPayload = base64ToBytes(encodedPayload);
 
@@ -168,7 +168,7 @@ export class Auth<T extends EnvironmentType> {
       msgChallenge
     );
 
-    console.log(actionBody.namespace, actionBody.name, bytesToHex(digest), msgChallenge);
+    // console.log(actionBody.namespace, actionBody.name, bytesToHex(digest), msgChallenge);
 
     const signature = await executeSign(stringToBytes(msg), signer.signer, signer.signatureType);
     const sig = bytesToBase64(signature);

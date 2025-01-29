@@ -75,7 +75,7 @@ function App() {
     // );
 
     await testViewWithParam(kwil, namespace, kwilSigner);
-    await executeAction(kwil, namespace, 'insert_variables', kwilSigner, nonce);
+    // await executeAction(kwil, namespace, 'insert_variables', kwilSigner, nonce);
     // await kwilAuthenticate(kwil, kwilSigner)
     // await testViewWithSign(kwil, dbid, kwilSigner)
     // await kwilLogout(kwil);
