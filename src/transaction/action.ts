@@ -2,7 +2,7 @@ import { Kwil } from '../client/kwil';
 import { Entries } from '../core/action';
 import { SignerSupplier } from '../core/signature';
 import { BytesEncodingStatus, EnvironmentType, PayloadType, VarType } from '../core/enums';
-import { Message } from '../core/message';
+// import { Message } from '../core/message';
 import { EncodedValue, UnencodedActionPayload } from '../core/payload';
 import { AnySignatureType, Signature } from '../core/signature';
 import { Transaction } from '../core/tx';
@@ -69,7 +69,7 @@ export class Action<T extends EnvironmentType> {
   public signatureType?: AnySignatureType;
   public nonce?: number;
   public challenge?: string;
-  public signature?: BytesEncodingStatus.BASE64_ENCODED;
+  public signature?: string;
 
   /**
    * Initializes a new `Action` instance.
@@ -183,7 +183,7 @@ export class Action<T extends EnvironmentType> {
   /**
    * Builds the message structure for view actions. This can be provided to the `kwil.call()` api.
    */
-  async buildMsg(): Promise<Message> {
+  async buildMsg(): Promise<any> {
     this.assertNotBuilding();
 
     // cache the action

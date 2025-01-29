@@ -76,6 +76,7 @@ function App() {
 
     await testViewWithParam(kwil, namespace, kwilSigner);
     // await executeAction(kwil, namespace, 'insert_variables', kwilSigner, nonce);
+    // await kwil.execSql('{main}SELECT * FROM info.actions', {}, kwilSigner, true);
     // await kwilAuthenticate(kwil, kwilSigner)
     // await testViewWithSign(kwil, dbid, kwilSigner)
     // await kwilLogout(kwil);
@@ -84,6 +85,7 @@ function App() {
     //     '778ddcd9cdfdd1a7bcdf6edef34d34f77d5ee78e7d6f47de738f3aebad5fe5bf3dd9eddfe76e5e73bebb7bdeb97baf1f'
     //   )
     // );
+
     // console.log(await kwil.listDatabases(kwilSigner.identifier));
     //console.log(await kwil.getSchema(dbid));
 
@@ -100,11 +102,11 @@ function App() {
     */
 
     // Create transfer payload
-    const transferBody = {
-      to: signer.address, // Can be hex string or Uint8Array
-      amount: BigInt(5000000000000000000000000000), // Amount in smallest unit (1 = 10^18)
-      description: 'Optional transfer description',
-    };
+    // const transferBody = {
+    //   to: signer.address, // Can be hex string or Uint8Array
+    //   amount: BigInt(5000000000000000000000000000), // Amount in smallest unit (1 = 10^18)
+    //   description: 'Optional transfer description',
+    // };
 
     // Execute transfer
     // const result = await kwil.funder.transfer(transferBody, kwilSigner, true);
@@ -120,7 +122,7 @@ function App() {
 
     // Deprecated
     // await kwil.selectQuery('main', 'SELECT * FROM variable_test');
-    // await kwil.selectQuery('SELECT * FROM variable_test');
+    // await kwil.selectQuery('{main}SELECT * FROM info.actions');
     // await kwil.selectQuery('{main}SELECT * FROM variable_test WHERE id = $id', {
     //   $id: '123e4567-e89b-12d3-a456-426614174000',
     // });

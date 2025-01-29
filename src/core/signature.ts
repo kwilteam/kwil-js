@@ -23,7 +23,8 @@ export type SignerSupplier = Promisy<EthSigner | CustomSigner>;
 
 export interface AuthBody {
   // signature: Signature<BytesEncodingStatus.BASE64_ENCODED>;
-  signature: BytesEncodingStatus.BASE64_ENCODED;
+  // signature: BytesEncodingStatus.BASE64_ENCODED;
+  signature: string;
   challenge: HexString;
 }
 

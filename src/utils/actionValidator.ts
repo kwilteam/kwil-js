@@ -59,8 +59,6 @@ const ActionValidator = {
       ],
     };
 
-    // console.log('namespaceRequest', namespaceRequest);
-
     // Check if the request was successful
     if (namespaceRequest.status !== 200) {
       throw new Error(
