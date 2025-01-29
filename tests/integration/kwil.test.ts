@@ -34,8 +34,8 @@ const differentKwilSigner = new KwilSigner(wallet, '0xC0B84D0E05c59e48110577F8Ec
 
 // TODO: Need to get correct types for these
 type ActionBody = Types.ActionBody;
-type ActionInput = Types.ActionInput;
-type ActionBodyNode = any;
+// type ActionInput = Types.ActionInput;
+type ActionBodyNode = ActionBody; // Is this correct?
 
 // TODO: Should be able to call an action WITHOUT a signer
 // TODO: Variable tests
@@ -206,7 +206,7 @@ describe('SQL Schema Deployment and Management', () => {
         name: 'read_posts_count',
       };
 
-      const result = await kwil.call(actionBody, kSigner);
+      const result = await kwil.call(actionBody);
       if (result.data) {
         expect(result.data[0]).toBe(2);
       } else {

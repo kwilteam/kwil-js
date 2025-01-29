@@ -17,8 +17,8 @@ import { bytesToHex, hexToBytes, stringToBytes } from '../utils/serial';
 import { base64ToBytes, bytesToBase64 } from '../utils/base64';
 import { ActionBody, ActionInput } from '../core/action';
 import { sha256BytesToBytes } from '../utils/crypto';
-import { encodeSingleArguments, kwilEncode } from '../utils/rlp';
 import { UnencodedActionPayload } from '../core/payload';
+import { encodeActionCall } from '../utils/kwilEncoding';
 
 interface AuthClient {
   getAuthenticateClient(): Promise<GenericResponse<KGWAuthInfo>>;
@@ -124,18 +124,21 @@ export class Auth<T extends EnvironmentType> {
     const actionValues = actionBody?.inputs ? Object.values(cleanActionValues[0]) : [];
 
     // create payload
-    // TODO: Need to ensure this works
+    // TODO: Need to test and update
     // encodeSingleArguments needs to be review / updated
     const payload: UnencodedActionPayload<PayloadType.CALL_ACTION> = {
       dbid: actionBody.namespace,
       action: actionBody.name,
-      arguments: encodeSingleArguments(actionValues),
+      //arguments: encodeSingleArguments(actionValues),
+      arguments: [],
     };
 
     // TODO: Need to use encodeActionCall in kwilEncoding.ts
     // Need to verify with Luke
-    const encodedPayload = kwilEncode(payload);
-    const base64Payload = bytesToBase64(encodedPayload);
+    //const encodedPayload = kwilEncode(payload);
+    const encodedPayload = encodeActionCall(payload);
+    // const base64Payload = bytesToBase64(encodedPayload);
+    const base64Payload = 'test';
 
     // create the digest, which is the first bytes of the sha256 hash of the rlp-encoded payload
     const uInt8ArrayPayload = base64ToBytes(base64Payload);

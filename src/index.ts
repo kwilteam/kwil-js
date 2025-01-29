@@ -61,7 +61,7 @@ namespace Utils {
    * `ActionInput` class is a utility class for creating action inputs.
    * @deprecated This class is deprecated and will be removed in the next major release.  Please use the `params` instead.
    */
-  export class ActionInput extends _ActionInput {}
+  export const ActionInput = _ActionInput;
 
   /**
    * Generates a unique database identifier (DBID) from the provided owner's public key and a database name.

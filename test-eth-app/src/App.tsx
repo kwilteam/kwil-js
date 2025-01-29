@@ -47,20 +47,18 @@ function App() {
     // await deployDb(kwilSigner);
     const namespace = 'test';
 
-    const transfer: Transfer = {
-      to: {
-        identifier: 'affdc06cf34afd7d5801a13d48c92ad39609901d',
-        key_type: 'secp256k1',
-      },
-      amount: BigInt(100),
-    };
+    // const transferBody = {
+    //   to: {
+    //     identifier: 'affdc06cf34afd7d5801a13d48c92ad39609901d',
+    //     key_type: 'secp256k1',
+    //   },
+    //   amount: BigInt(100),
+    // };
 
-    // console.log(
-    //   'Transfer: ',
-    //   await getTxProperties(encodeTransfer(transfer), PayloadType.TRANSFER, 'kwil-testnet', nonce)
-    // );
-    const wrongKwilSigner = new KwilSigner(signer, '0xC0B84D0E05c59e48110577F8Ec2EEE360F804371');
-    await executeAction(kwil, namespace, 'insert_variables', wrongKwilSigner, nonce);
+    // const result = await kwil.funder.transfer(transferBody, kwilSigner, true);
+    // console.log(result);
+
+    // await executeAction(kwil, namespace, 'insert_variables', wrongKwilSigner, nonce);
     // await kwil.query('CREATE table simple_test (text_var text PRIMARY KEY);', {}, kwilSigner, true);
 
     // await kwil.query(
@@ -77,7 +75,7 @@ function App() {
     //   true
     // );
 
-    // await testViewWithParam(kwil, namespace, kwilSigner);
+    await testViewWithParam(kwil, namespace, kwilSigner);
     // await kwilAuthenticate(kwil, kwilSigner)
     // await testViewWithSign(kwil, dbid, kwilSigner)
     // await kwilLogout(kwil);
@@ -104,7 +102,7 @@ function App() {
     // Create transfer payload
     const transferBody = {
       to: signer.address, // Can be hex string or Uint8Array
-      amount: BigInt(1000000000000000000), // Amount in smallest unit (1 = 10^18)
+      amount: BigInt(5000000000000000000000000000), // Amount in smallest unit (1 = 10^18)
       description: 'Optional transfer description',
     };
 

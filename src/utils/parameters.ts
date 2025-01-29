@@ -45,21 +45,7 @@ function formatDataTypeBase(val: ValueType): {
     ...metadataSpread,
   };
 
-  let data = val;
-  // TODO: Test array of values
-  if (Array.isArray(val) && !(val instanceof Uint8Array)) {
-    data = val.map((v) => {
-      return v?.toString() || '';
-    });
-  }
-
-  // else if (val instanceof Uint8Array) {
-  //   data = [val];
-  // } else {
-  //   data = [val?.toString() || ''];
-  // }
-
-  return { type: dataType, data };
+  return { type: dataType, data: val };
 }
 
 function formatEncodedParameterValue(val: ValueType): EncodedParameterValue {

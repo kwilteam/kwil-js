@@ -371,8 +371,6 @@ function checkRes<T, R>(
     throw new Error(`failed to parse response: ${res}`);
   }
 
-  console.log('res', res);
-
   if (res.data.error) {
     const data = res.data.error.data ? `, data: ${JSON.stringify(res.data.error.data)}` : '';
     throw new Error(

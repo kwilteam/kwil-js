@@ -256,9 +256,8 @@ export class Action<T extends EnvironmentType> {
 
     // Check if namespace has actions
     if (!namespaceRequest.data || namespaceRequest.data.length === 0) {
-      console.log('namespaceRequest', namespaceRequest, 'actionName', this.actionName);
       throw new Error(
-        `No actions found for namespace ${this.namespace}. Please verify the namespace exists and contains actions.`
+        `No actions found for the namespace '${this.namespace}'. Please verify the namespace exists and contains the '${this.actionName}' action.`
       );
     }
 
