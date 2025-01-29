@@ -6,13 +6,14 @@ import { AnySignatureType, Signature, SignatureType } from '../core/signature';
 import { objects } from '../utils/objects';
 import { bytesToHex } from '../utils/serial';
 import { encodeActionCall } from '../utils/kwilEncoding';
+// import { base64ToBytes } from '../utils/serial';
 
 export interface PayloadMsgOptions {
   challenge: string;
   signatureType: AnySignatureType;
   identifier: Uint8Array;
   signer: SignerSupplier;
-  signature: Signature<BytesEncodingStatus.BASE64_ENCODED>;
+  signature: BytesEncodingStatus.BASE64_ENCODED;
 }
 
 /**
@@ -24,7 +25,7 @@ export class PayloadMsg {
   public signatureType: AnySignatureType;
   public identifier: Uint8Array;
   public signer: SignerSupplier;
-  public signature: Signature<BytesEncodingStatus.BASE64_ENCODED>;
+  public signature: BytesEncodingStatus.BASE64_ENCODED;
 
   /**
    * Initializes a new `PayloadMsg` instance.

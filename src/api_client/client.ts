@@ -282,10 +282,7 @@ export default class Client extends Api {
       body: msg.body,
       auth_type: msg.auth_type,
       sender: msg.sender || '',
-      signature: {
-        sig: msg.signature?.sig || '',
-        type: msg.signature?.type || '',
-      },
+      signature: msg.signature || '',
     });
 
     const res = await super.post<JsonRPCResponse<CallResponse>>(`/rpc/v1`, body);

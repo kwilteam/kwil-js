@@ -10,15 +10,18 @@ import {
   removeTrailingSlash,
   verifyAuthProperties,
 } from '../core/auth';
-import { BytesEncodingStatus, EnvironmentType, PayloadType } from '../core/enums';
+import { BytesEncodingStatus, EnvironmentType, PayloadType, VarType } from '../core/enums';
 import { objects } from '../utils/objects';
 import { AuthBody, executeSign, Signature } from '../core/signature';
 import { bytesToHex, hexToBytes, stringToBytes } from '../utils/serial';
 import { base64ToBytes, bytesToBase64 } from '../utils/base64';
-import { ActionBody, ActionInput } from '../core/action';
+import { ActionBody, ActionInput, Entries, transformActionInput } from '../core/action';
 import { sha256BytesToBytes } from '../utils/crypto';
 import { UnencodedActionPayload } from '../core/payload';
-import { encodeActionCall } from '../utils/kwilEncoding';
+import { encodeActionCall, encodeValue } from '../utils/kwilEncoding';
+import { analyzeNumber, formatArguments } from '../utils/parameters';
+import { ValidatedAction, NamespaceAction, AccessModifier } from '../transaction/action';
+import ActionValidator from '../utils/actionValidator';
 
 interface AuthClient {
   getAuthenticateClient(): Promise<GenericResponse<KGWAuthInfo>>;
@@ -113,35 +116,50 @@ export class Auth<T extends EnvironmentType> {
       );
     }
 
-    // handle if the inputs are an array of ActionInput objects or an array of Entries objects
-    // TODO: now we are not using the ActionInput objects, we are using the Entries objects
-    const cleanActionValues = actionBody?.inputs
-      ? actionBody.inputs.map((input) => {
-          return input instanceof ActionInput ? input.toEntries() : input;
-        })
-      : [];
+    // ActionInput[] is deprecated. So we are converting any ActionInput[] to an Entries[]
+    let inputs: Entries[] = [];
+    if (actionBody.inputs && transformActionInput.isActionInputArray(actionBody.inputs)) {
+      // For a call only one entry is allowed, so we only need to convert the first ActionInput
+      inputs = transformActionInput.toSingleEntry(actionBody.inputs);
+    } else if (actionBody.inputs) {
+      inputs = actionBody.inputs;
+    }
 
-    const actionValues = actionBody?.inputs ? Object.values(cleanActionValues[0]) : [];
+    // retrieve the schema and run validations
+    const { namespace, actionName, encodedActionInputs, modifiers } =
+      await ActionValidator.validateActionRequest(actionBody.namespace, actionBody.name, inputs);
 
-    // create payload
-    // TODO: Need to test and update
-    // encodeSingleArguments needs to be review / updated
+    // throw a runtime error if more than one set of inputs is trying to be executed. Call does not allow bulk execution.
+    if (encodedActionInputs && encodedActionInputs.length > 1) {
+      throw new Error(
+        'Cannot pass more than one input to the call endpoint. Please pass only one input and try again.'
+      );
+    }
+
+    // throw runtime error if action is not a view action. transactions require a different payload structure than view actions.
+    if (modifiers && modifiers.includes(AccessModifier.VIEW) === false) {
+      throw new Error(`Action ${actionName} is not a view only action. Please use kwil.execute().`);
+    }
+
+    // construct payload. If there are no prepared actions, then the payload is an empty array.
     const payload: UnencodedActionPayload<PayloadType.CALL_ACTION> = {
-      dbid: actionBody.namespace,
-      action: actionBody.name,
-      //arguments: encodeSingleArguments(actionValues),
-      arguments: [],
+      dbid: namespace,
+      action: actionName,
+      arguments: encodedActionInputs[0], // 'Call' method is used for 'view actions' which require only one input
     };
+
+    console.log(payload);
 
     // TODO: Need to use encodeActionCall in kwilEncoding.ts
     // Need to verify with Luke
-    //const encodedPayload = kwilEncode(payload);
-    const encodedPayload = encodeActionCall(payload);
+    // const encodedPayload = kwilEncode(payload);
     // const base64Payload = bytesToBase64(encodedPayload);
-    const base64Payload = 'test';
-
     // create the digest, which is the first bytes of the sha256 hash of the rlp-encoded payload
-    const uInt8ArrayPayload = base64ToBytes(base64Payload);
+    // const uInt8ArrayPayload = base64ToBytes(base64Payload);
+
+    const encodedPayload = encodeActionCall(payload);
+    const uInt8ArrayPayload = base64ToBytes(encodedPayload);
+
     const digest = sha256BytesToBytes(uInt8ArrayPayload).subarray(0, 20);
     const msg = generateSignatureText(
       actionBody.namespace,
@@ -150,19 +168,22 @@ export class Auth<T extends EnvironmentType> {
       msgChallenge
     );
 
+    console.log(actionBody.namespace, actionBody.name, bytesToHex(digest), msgChallenge);
+
     const signature = await executeSign(stringToBytes(msg), signer.signer, signer.signatureType);
     const sig = bytesToBase64(signature);
 
-    const privateSignature: Signature<BytesEncodingStatus.BASE64_ENCODED> = {
-      sig: sig,
-      type: signer.signatureType,
-    };
+    // const privateSignature: Signature<BytesEncodingStatus.BASE64_ENCODED> = {
+    //   sig: sig,
+    //   type: signer.signatureType,
+    // };
 
     const byteChallenge = hexToBytes(msgChallenge);
     const base64Challenge = bytesToBase64(byteChallenge); // Challenge needs to be Base64 in the message
 
     const res = {
-      signature: privateSignature,
+      // signature: privateSignature,
+      signature: sig,
       challenge: base64Challenge,
     };
     return res;

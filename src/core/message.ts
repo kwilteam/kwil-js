@@ -13,12 +13,12 @@ export interface MsgReceipt {
 /**
  * `MsgData` is the interface for a payload structure for a request to the Kwil `call` GRPC endpoint {@link https://github.com/kwilteam/proto/blob/main/kwil/tx/v1/call.proto}.
  */
+
 export interface MsgData<T extends PayloadBytesTypes> {
   body: MsgBody<T>;
   auth_type: AnySignatureType;
-  // when the other bytes are base64, it means it is time to turn the sender bytes to hex string
   sender: Nillable<T extends BytesEncodingStatus.BASE64_ENCODED ? HexString : Uint8Array>;
-  signature: Nillable<Signature<BytesEncodingStatus.BASE64_ENCODED>>;
+  signature: Nillable<T extends BytesEncodingStatus.BASE64_ENCODED ? Base64String : Uint8Array>;
 }
 
 interface MsgBody<T extends PayloadBytesTypes> {
@@ -63,10 +63,7 @@ export class BaseMessage<T extends PayloadBytesTypes> implements MsgData<T> {
       },
       auth_type: SignatureType.SECP256K1_PERSONAL,
       sender: null,
-      signature: {
-        sig: '',
-        type: SignatureType.SECP256K1_PERSONAL,
-      },
+      signature: null,
     };
   }
 
@@ -79,12 +76,14 @@ export class BaseMessage<T extends PayloadBytesTypes> implements MsgData<T> {
   }
 
   public get sender(): Nillable<
-    T extends BytesEncodingStatus.BASE64_ENCODED ? Base64String : Uint8Array
+    T extends BytesEncodingStatus.BASE64_ENCODED ? HexString : Uint8Array
   > {
     return this.data.sender;
   }
 
-  public get signature(): Nillable<Signature<BytesEncodingStatus.BASE64_ENCODED>> {
+  public get signature(): Nillable<
+    T extends BytesEncodingStatus.BASE64_ENCODED ? Base64String : Uint8Array
+  > {
     return this.data.signature;
   }
 }
@@ -110,10 +109,7 @@ export namespace Msg {
       },
       auth_type: SignatureType.SECP256K1_PERSONAL,
       sender: null,
-      signature: {
-        sig: '',
-        type: SignatureType.SECP256K1_PERSONAL,
-      },
+      signature: null,
     };
 
     // Pass the 'msg' object to the 'configure' function allowing external modification of its propoerties before instantiation of BaseMessage.

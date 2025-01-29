@@ -189,7 +189,18 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       params: encodedParams,
     };
 
-    // TODO: Add support for signer
+    // TODO: Add support for signer if in private mode
+
+    // if (kwilSigner && this.authMode === AuthenticationMode.PRIVATE) {
+    //   const authBody = await this.handleAuthenticatePrivate(actionBody, kwilSigner);
+    //   const message = await this.buildMessage(
+    //     actionBody,
+    //     kwilSigner,
+    //     authBody.challenge,
+    //     authBody.signature
+    //   );
+    //   return await this.callClient(message);
+    // }
 
     return await this.selectQueryClient(q);
   }
@@ -492,7 +503,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     actionBody: ActionBody,
     kwilSigner?: KwilSigner,
     challenge?: string,
-    signature?: Signature<BytesEncodingStatus.BASE64_ENCODED>
+    signature?: BytesEncodingStatus.BASE64_ENCODED
   ): Promise<Message> {
     if (!actionBody.name) {
       throw new Error('name is required in actionBody');

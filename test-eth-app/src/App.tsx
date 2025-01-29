@@ -58,7 +58,6 @@ function App() {
     // const result = await kwil.funder.transfer(transferBody, kwilSigner, true);
     // console.log(result);
 
-    // await executeAction(kwil, namespace, 'insert_variables', wrongKwilSigner, nonce);
     // await kwil.query('CREATE table simple_test (text_var text PRIMARY KEY);', {}, kwilSigner, true);
 
     // await kwil.query(
@@ -76,6 +75,7 @@ function App() {
     // );
 
     await testViewWithParam(kwil, namespace, kwilSigner);
+    await executeAction(kwil, namespace, 'insert_variables', kwilSigner, nonce);
     // await kwilAuthenticate(kwil, kwilSigner)
     // await testViewWithSign(kwil, dbid, kwilSigner)
     // await kwilLogout(kwil);

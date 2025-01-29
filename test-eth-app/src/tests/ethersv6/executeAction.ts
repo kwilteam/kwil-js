@@ -1,5 +1,6 @@
 import { WebKwil, Utils, KwilSigner } from '../../../../src';
 import { ActionInput, Entries } from '../../../../src/core/action';
+import { v4 as uuidV4 } from 'uuid';
 
 export async function executeAction(
   kwil: WebKwil,
@@ -25,27 +26,28 @@ export async function executeAction(
   //   .put('$blob', new Uint8Array([1]));
 
   const actionInputData = {
-    $id: '123e4567-e89b-12d3-a456-426614174005',
+    $id: uuidV4(),
     $int_var: 42,
     $text_var: 'Sample text',
     $bool_var: true,
-    // $decimal_var: '12.345',
+    $decimal_var: '123.34',
     $blob: new Uint8Array([1]),
   };
 
   const actionInputData2 = {
-    $id: '123e4567-e89b-12d3-a456-426614174006',
+    //$id: '123e4567-e89b-12d3-a456-426614174006',
+    $id: uuidV4(),
     $int_var: 42,
     $text_var: 'Sample text',
     $bool_var: true,
-    // $decimal_var: '12.345',
+    $decimal_var: '123.34',
     $blob: new Uint8Array([1]),
   };
 
   const res = await kwil.execute(
     {
       namespace,
-      name: 'insert_variables_no_dec',
+      name: action,
       inputs: [actionInputData, actionInputData2],
       description: 'This is a test action',
       nonce: nonce ? nonce + 1 : undefined,
