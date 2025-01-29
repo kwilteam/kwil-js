@@ -9,12 +9,22 @@ export async function testViewWithParam(
   const newActionInput = { $name: 'Kwil DB' };
   // const actionInput2 = { $name: 'Test' };
 
+  // const res = await kwil.call(
+  //   {
+  //     namespace,
+  //     dbid: 'test',
+  //     name: 'call_name',
+  //     inputs: [newActionInput],
+  //   },
+  //   kwilSigner
+  // );
+
   const res = await kwil.call(
     {
       namespace,
       dbid: 'test',
-      name: 'call_name',
-      inputs: [newActionInput],
+      name: 'read_variables_count',
+      inputs: [],
     },
     kwilSigner
   );

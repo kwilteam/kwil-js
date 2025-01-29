@@ -11,12 +11,12 @@ import { isUuid } from './uuid';
  * @param {ValueType[]} values - An array of values to be executed by an action.
  * @returns formatted values used for an action
  */
-export function formatArguments(values: ValueType[]): EncodedValue[] {
-  // TODO: Need to test and implement this method.
-  // Used in authenticatePrivateMode() in auth.ts
+// TODO: Add comments about usage of this function
+export function encodeActionInputs(values: ValueType[]): EncodedValue[] {
   return values.map((val) => formatEncodedValue(val));
 }
 
+// TODO: Add comments about usage of this function
 export function encodeParameters(params: QueryParams): EncodedQueryParams {
   const encodedParams: EncodedQueryParams = {};
   Object.entries(params).forEach(([key, value]) => {
@@ -48,6 +48,7 @@ function formatDataTypeBase(val: ValueType): {
   return { type: dataType, data: val };
 }
 
+// TODO: Add comments about usage of this function
 function formatEncodedParameterValue(val: ValueType): EncodedParameterValue {
   const base = formatDataTypeBase(val);
   return {
@@ -56,6 +57,7 @@ function formatEncodedParameterValue(val: ValueType): EncodedParameterValue {
   };
 }
 
+// TODO: Add comments about usage of this function i.e. what is the difference between formatEncodedParameterValue and formatEncodedValue
 function formatEncodedValue(val: ValueType): EncodedValue {
   const base = formatDataTypeBase(val);
   return {
@@ -105,18 +107,16 @@ export function resolveValueType(value: ValueType): {
     case 'string':
       if (isUuid(value)) {
         varType = VarType.UUID;
+      } else {
+        // This enables us to detect if the number has been passed as a string
+        const parsedNum = Number(value);
+        if (!isNaN(parsedNum)) {
+          return inferNumericType(parsedNum);
+        }
       }
-
       break;
     case 'number':
-      const numAnalysis = analyzeNumber(value);
-      if (numAnalysis.hasDecimal) {
-        metadata = [numAnalysis.precision, numAnalysis.scale];
-        varType = VarType.NUMERIC;
-      } else {
-        varType = VarType.INT8;
-      }
-      break;
+      return inferNumericType(value);
     case 'boolean':
       varType = VarType.BOOL;
       break;
@@ -141,5 +141,16 @@ export function resolveValueType(value: ValueType): {
   return {
     metadata,
     varType,
+  };
+}
+
+function inferNumericType(num: number): {
+  metadata: [number, number];
+  varType: VarType;
+} {
+  const numAnalysis = analyzeNumber(num);
+  return {
+    metadata: [numAnalysis.precision, numAnalysis.scale],
+    varType: numAnalysis.hasDecimal ? VarType.NUMERIC : VarType.INT8,
   };
 }

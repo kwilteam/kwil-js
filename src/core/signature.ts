@@ -22,9 +22,7 @@ export type CustomSigner = NonNil<(message: Uint8Array) => Promise<Uint8Array>>;
 export type SignerSupplier = Promisy<EthSigner | CustomSigner>;
 
 export interface AuthBody {
-  // signature: Signature<BytesEncodingStatus.BASE64_ENCODED>;
-  // signature: BytesEncodingStatus.BASE64_ENCODED;
-  signature: string;
+  signature: Base64String;
   challenge: HexString;
 }
 

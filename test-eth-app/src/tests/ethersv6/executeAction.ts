@@ -40,7 +40,7 @@ export async function executeAction(
     $int_var: 42,
     $text_var: 'Sample text',
     $bool_var: true,
-    $decimal_var: '123.34',
+    $decimal_var: 123.34,
     $blob: new Uint8Array([1]),
   };
 

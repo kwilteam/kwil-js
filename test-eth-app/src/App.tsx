@@ -75,7 +75,7 @@ function App() {
     // );
 
     await testViewWithParam(kwil, namespace, kwilSigner);
-    // await executeAction(kwil, namespace, 'insert_variables', kwilSigner, nonce);
+    await executeAction(kwil, namespace, 'insert_variables', kwilSigner, nonce);
     // await kwil.execSql('{main}SELECT * FROM info.actions', {}, kwilSigner, true);
     // await kwilAuthenticate(kwil, kwilSigner)
     // await testViewWithSign(kwil, dbid, kwilSigner)

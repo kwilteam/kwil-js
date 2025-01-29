@@ -34,10 +34,13 @@ export function encodeActionCall(
   const encodedDbId = prefixBytesLength(stringToBytes(actionCall.dbid));
   // Action name
   const encodedAction = prefixBytesLength(stringToBytes(actionCall.action));
-  const encodedNumArgs = numberToUint16LittleEndian(actionCall.arguments.length);
+
+  const encodedNumArgs = numberToUint16LittleEndian(
+    actionCall.arguments ? actionCall.arguments.length : 0
+  );
   let actionArguments: Uint8Array = new Uint8Array();
 
-  actionCall.arguments.forEach((a: EncodedValue) => {
+  actionCall.arguments?.forEach((a: EncodedValue) => {
     const aBytes = encodeEncodedValue(a);
     const prefixedABytes = prefixBytesLength(aBytes);
 
@@ -62,10 +65,10 @@ export function encodeActionExecution(
   // Action name
   const encodedAction = prefixBytesLength(stringToBytes(action.action));
 
-  const encodedNumArgs = numberToUint16LittleEndian(action.arguments.length);
+  const encodedNumArgs = numberToUint16LittleEndian(action.arguments ? action.arguments.length : 0);
   let actionArguments: Uint8Array = new Uint8Array();
 
-  action.arguments.forEach((encodedValues) => {
+  action.arguments?.forEach((encodedValues) => {
     const argLength = numberToUint16LittleEndian(encodedValues.length);
     let argBytes: Uint8Array = new Uint8Array();
     encodedValues.forEach((value) => {
@@ -111,7 +114,9 @@ export function encodeRawStatement(statement: RawStatementPayload): string {
   let encodedParameters: Uint8Array;
 
   // We first need to append the number of parameters with two bytes (uint16)
-  encodedParameters = numberToUint16LittleEndian(statement.parameters.length);
+  encodedParameters = numberToUint16LittleEndian(
+    statement.parameters ? statement.parameters.length : 0
+  );
 
   // then, for each parameter..
   for (const param of statement.parameters) {

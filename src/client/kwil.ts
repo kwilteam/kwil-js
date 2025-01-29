@@ -26,7 +26,7 @@ import { AuthBody, Signature } from '../core/signature';
 import { SelectQueryRequest } from '../core/jsonrpc';
 import { encodeParameters, encodeRawStatementParameters } from '../utils/parameters';
 import { generateDBID } from '../utils/dbid';
-import { QueryParams } from '../utils/types';
+import { Base64String, QueryParams } from '../utils/types';
 import { PayloadTx } from '../transaction/payloadTx';
 import { RawStatementPayload } from '../core/payload';
 
@@ -121,6 +121,9 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       throw new Error('name is required in actionBody');
     }
 
+    // Ensure auth mode is set
+    await this.ensureAuthenticationMode();
+
     const namespace = this.resolveNamespace(actionBody);
 
     // ActionInput[] has been deprecated.
@@ -144,7 +147,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       actionInputs: inputs,
     });
 
-    const transaction = await tx.buildTx();
+    const transaction = await tx.buildTx(this.authMode === AuthenticationMode.PRIVATE);
 
     return await this.broadcastClient(
       transaction,
@@ -190,8 +193,6 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     };
 
     // TODO: Add support for signer if in private mode
-    // if (kwilSigner && this.authMode === AuthenticationMode.PRIVATE) {
-    // }
 
     return await this.selectQueryClient(q);
   }
@@ -494,7 +495,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     actionBody: ActionBody,
     kwilSigner?: KwilSigner,
     challenge?: string,
-    signature?: string
+    signature?: Base64String
   ): Promise<Message> {
     if (!actionBody.name) {
       throw new Error('name is required in actionBody');
@@ -545,7 +546,9 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       }
     }
 
-    return await msg.buildMsg();
+    console.log('Private mode: ', this.authMode === AuthenticationMode.PRIVATE);
+
+    return await msg.buildMsg(this.authMode === AuthenticationMode.PRIVATE);
   }
 
   /**

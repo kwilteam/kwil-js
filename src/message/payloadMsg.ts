@@ -6,14 +6,14 @@ import { AnySignatureType, Signature, SignatureType } from '../core/signature';
 import { objects } from '../utils/objects';
 import { bytesToHex } from '../utils/serial';
 import { encodeActionCall } from '../utils/kwilEncoding';
-// import { base64ToBytes } from '../utils/serial';
+import { Base64String } from '../utils/types';
 
 export interface PayloadMsgOptions {
   challenge: string;
   signatureType: AnySignatureType;
   identifier: Uint8Array;
   signer: SignerSupplier;
-  signature: BytesEncodingStatus.BASE64_ENCODED;
+  signature: Base64String;
 }
 
 /**
@@ -25,7 +25,7 @@ export class PayloadMsg {
   public signatureType: AnySignatureType;
   public identifier: Uint8Array;
   public signer: SignerSupplier;
-  public signature: BytesEncodingStatus.BASE64_ENCODED;
+  public signature: Base64String;
 
   /**
    * Initializes a new `PayloadMsg` instance.
@@ -74,7 +74,7 @@ export class PayloadMsg {
    * Build the payload structure for a message.
    */
   async buildMsg(): Promise<Message> {
-    let msg = Msg.create<BytesEncodingStatus.UINT8_ENCODED>((msg) => {
+    let msg = Msg.create((msg) => {
       msg.body.payload = this.payload;
       msg.body.challenge = this.challenge;
       msg.signature = this.signature;

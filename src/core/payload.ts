@@ -30,7 +30,7 @@ export type UnencodedActionPayload<T extends PayloadType.CALL_ACTION | PayloadTy
   {
     dbid: string; // May become namespace in the future
     action: string;
-    arguments: T extends PayloadType.EXECUTE_ACTION ? EncodedValue[][] : EncodedValue[];
+    arguments: T extends PayloadType.EXECUTE_ACTION ? EncodedValue[][] : EncodedValue[] | undefined;
   };
 
 export interface EncodedValue {

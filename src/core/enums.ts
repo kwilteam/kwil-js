@@ -106,3 +106,9 @@ export enum AccountKeyType {
   // i.e. Near
   ED25519 = 'ed25519',
 }
+
+export enum AccessModifier {
+  PUBLIC = 'PUBLIC',
+  PRIVATE = 'PRIVATE',
+  VIEW = 'VIEW',
+}

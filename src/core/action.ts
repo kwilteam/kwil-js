@@ -1,6 +1,9 @@
 import { objects } from '../utils/objects';
 import { ValueType } from '../utils/types';
-import { AuthBody } from './signature';
+import { AccessModifier } from './enums';
+import { BytesEncodingStatus } from './enums';
+import { EncodedValue } from './payload';
+import { AnySignatureType, AuthBody, SignerSupplier } from './signature';
 
 export type Entry<T extends ValueType | ValueType[]> = [string, T];
 
@@ -104,6 +107,39 @@ export interface CallBody {
 
 export interface CallBodyNode extends CallBody {
   cookie?: string;
+}
+
+export interface ActionOptions {
+  actionName: string;
+  namespace: string;
+  chainId: string;
+  description: string;
+  actionInputs: Entries[];
+  signer?: SignerSupplier;
+  identifier?: Uint8Array;
+  signatureType?: AnySignatureType;
+  nonce?: number;
+  challenge?: string;
+  signature?: BytesEncodingStatus.BASE64_ENCODED;
+}
+
+export interface NamespaceAction {
+  name: string;
+  namespace: string;
+  parameter_names: ReadonlyArray<string>;
+  parameter_types: ReadonlyArray<string>;
+  return_names: ReadonlyArray<string>;
+  return_types: ReadonlyArray<string>;
+  returns_table: boolean;
+  access_modifiers: ReadonlyArray<AccessModifier>;
+  built_in: boolean;
+  raw_statement: string;
+}
+
+export interface ValidatedAction {
+  actionName: string;
+  modifiers: ReadonlyArray<AccessModifier>;
+  encodedActionInputs: EncodedValue[][];
 }
 
 /**
@@ -403,7 +439,7 @@ export const transformActionInput = {
    */
   toSingleEntry(inputs: ActionInput[] | Entries[]): Entries[] {
     if (!inputs.length) {
-      throw new Error('Inputs array cannot be empty');
+      return [];
     }
 
     const firstInput = inputs[0];

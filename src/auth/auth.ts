@@ -10,7 +10,7 @@ import {
   removeTrailingSlash,
   verifyAuthProperties,
 } from '../core/auth';
-import { BytesEncodingStatus, EnvironmentType, PayloadType, VarType } from '../core/enums';
+import { BytesEncodingStatus, EnvironmentType, PayloadType } from '../core/enums';
 import { objects } from '../utils/objects';
 import { AuthBody, executeSign } from '../core/signature';
 import { bytesToHex, hexToBytes, stringToBytes } from '../utils/serial';
@@ -19,8 +19,7 @@ import { ActionBody, Entries, transformActionInput } from '../core/action';
 import { sha256BytesToBytes } from '../utils/crypto';
 import { UnencodedActionPayload } from '../core/payload';
 import { encodeActionCall } from '../utils/kwilEncoding';
-import { AccessModifier } from '../transaction/action';
-import ActionValidator from '../utils/actionValidator';
+import { encodeActionInputs } from '../utils/parameters';
 
 interface AuthClient {
   getAuthenticateClient(): Promise<GenericResponse<KGWAuthInfo>>;
@@ -124,27 +123,13 @@ export class Auth<T extends EnvironmentType> {
       inputs = actionBody.inputs;
     }
 
-    // retrieve the schema and run validations
-    const { namespace, actionName, encodedActionInputs, modifiers } =
-      await ActionValidator.validateActionRequest(actionBody.namespace, actionBody.name, inputs);
-
-    // throw a runtime error if more than one set of inputs is trying to be executed. Call does not allow bulk execution.
-    if (encodedActionInputs && encodedActionInputs.length > 1) {
-      throw new Error(
-        'Cannot pass more than one input to the call endpoint. Please pass only one input and try again.'
-      );
-    }
-
-    // throw runtime error if action is not a view action. transactions require a different payload structure than view actions.
-    if (modifiers && modifiers.includes(AccessModifier.VIEW) === false) {
-      throw new Error(`Action ${actionName} is not a view only action. Please use kwil.execute().`);
-    }
+    const actionValues = actionBody?.inputs ? Object.values(inputs[0]) : [];
 
     // construct payload. If there are no prepared actions, then the payload is an empty array.
     const payload: UnencodedActionPayload<PayloadType.CALL_ACTION> = {
-      dbid: namespace,
-      action: actionName,
-      arguments: encodedActionInputs[0], // 'Call' method is used for 'view actions' which require only one input
+      dbid: actionBody.namespace,
+      action: actionBody.name,
+      arguments: encodeActionInputs(actionValues),
     };
 
     const encodedPayload = encodeActionCall(payload);
