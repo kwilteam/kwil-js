@@ -1,6 +1,5 @@
-import { v4 as uuidV4 } from 'uuid';
 import { base64ToBytes } from '../../dist/utils/base64';
-import { isKwildPrivateOn, kwilSigner } from './setup';
+import { isKwildPrivateOn, kwilSigner, uuidV4 } from './setup';
 import { kwil } from './setup';
 import { TxReceipt } from '../../src/core/tx';
 

@@ -1,3 +1,4 @@
+import { v4 as uuidV4 } from 'uuid';
 import { KwilSigner } from '../../dist/index';
 import dotenv from 'dotenv';
 import { kwil, wallet, deriveKeyPair64 } from '../testingUtils';
@@ -53,4 +54,5 @@ export {
   address,
   kwilSigner,
   differentKwilSigner,
+  uuidV4,
 };

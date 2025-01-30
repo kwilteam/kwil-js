@@ -1,20 +1,27 @@
+import { address, kwil, uuidV4 } from './setup';
+
+import { ActionBody } from '../../src/core/action';
+import { kwilSigner } from './setup';
+import { createTestSchema, dropTestSchema } from './utils';
+
 describe('unconfirmedNonce', () => {
-  const kwilSigner = new KwilSigner(wallet, address);
+  const namespace = 'nonce_test';
 
   beforeAll(async () => {
-    await deployIfNoTestDb(kwilSigner);
+    await createTestSchema(namespace, kwil, kwilSigner);
   }, 10000);
 
   afterAll(async () => {
-    await dropTestDb(dbid, kwilSigner);
+    await dropTestSchema(namespace, kwil, kwilSigner);
   }, 10000);
 
   it('should return a nonce that is 1 greater than the current nonce immediately after a transaction', async () => {
     const actionBody: ActionBody = {
-      dbid,
+      namespace,
       name: 'add_post',
       inputs: [
         {
+          $id: uuidV4(),
           $user: 'Luke',
           $title: 'Test Post',
           $body: 'This is a test post',
@@ -35,7 +42,7 @@ describe('unconfirmedNonce', () => {
     const nonce = Number(acct.data?.nonce);
     if (!nonce) throw new Error('No nonce found');
     const actionBody: ActionBody = {
-      dbid,
+      namespace,
       name: 'add_post',
       inputs: [
         {
@@ -48,6 +55,6 @@ describe('unconfirmedNonce', () => {
       nonce: nonce - 1,
     };
 
-    await expect(kwil.execute(actionBody, kwilSigner)).rejects.toThrowError();
+    await expect(kwil.execute(actionBody, kwilSigner)).rejects.toThrow();
   });
 });

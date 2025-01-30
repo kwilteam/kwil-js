@@ -390,7 +390,6 @@ export class Action<T extends EnvironmentType> {
     return true;
   }
 
-  // TODO: Need to implement array support for action inputs
   /**
    * Encodes the action inputs into the expected format depending on the parameter types for the action.
    *

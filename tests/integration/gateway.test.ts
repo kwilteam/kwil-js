@@ -1,16 +1,30 @@
+import { Wallet } from 'ethers';
+import { ActionBody, ActionBodyNode } from '../../src/core/action';
+import { AuthSuccess, LogoutResponse } from '../../src/core/auth';
+import { EnvironmentType } from '../../src/core/enums';
+import { MsgReceipt } from '../../src/core/message';
+import { isKgwOn, isKwildPrivateOn, kwil, kwilSigner } from './setup';
+import { createTestSchema, dropTestSchema } from './utils';
+import { KwilSigner, NodeKwil } from '../../src';
+import { ViewCaller } from '../testingUtils';
+
+// TODO: These tests have been updated to work with new API but KGW but it is not fully implemented
+// TODO: There will be changes to schema creation to enable the KGW tests to work (i.e. with the write definition of the actions)
 (isKgwOn ? describe : describe.skip)('Testing authentication', () => {
+  const namespace = 'gateway_test';
+
   beforeAll(async () => {
-    await deployIfNoTestDb(kwilSigner);
+    // await createTestSchema(namespace, kwil, kwilSigner);
   }, 10000);
 
   afterAll(async () => {
-    await dropTestDb(dbid, kwilSigner);
+    // await dropTestSchema(namespace, kwil, kwilSigner);
   }, 10000);
 
   it('should authenticate and return data automatically', async () => {
     const body: ActionBody = {
       name: 'view_must_sign',
-      dbid,
+      namespace,
     };
 
     const result = await kwil.call(body, kwilSigner);
@@ -50,7 +64,7 @@
 
     const body: ActionBody = {
       name: 'view_caller',
-      dbid,
+      namespace,
     };
 
     let result;
@@ -80,7 +94,7 @@
       it('should not authenticate automatically', async () => {
         const body: ActionBody = {
           name: 'view_must_sign',
-          dbid,
+          namespace,
         };
 
         const result = await newKwil.call(body, kwilSigner);
@@ -108,7 +122,7 @@
 
         const body: ActionBodyNode = {
           name: 'view_must_sign',
-          dbid,
+          namespace,
           cookie,
         };
 
@@ -123,7 +137,7 @@
       it('should not authenticate when a bad cookie is passed back to the action', async () => {
         const body: ActionBodyNode = {
           name: 'view_must_sign',
-          dbid,
+          namespace,
           cookie: 'badCookie',
         };
 
@@ -137,7 +151,7 @@
       it('should continue authenticating after a bad cookie was passed to the previous action', async () => {
         const body: ActionBody = {
           name: 'view_must_sign',
-          dbid,
+          namespace,
         };
 
         const result = await newKwil.call(body, kwilSigner);

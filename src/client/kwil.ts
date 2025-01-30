@@ -29,6 +29,7 @@ import { generateDBID } from '../utils/dbid';
 import { Base64String, QueryParams } from '../utils/types';
 import { PayloadTx } from '../transaction/payloadTx';
 import { RawStatementPayload } from '../core/payload';
+import { resolveNamespace, validateNamespace } from '../utils/namespace';
 
 /**
  * The main class for interacting with the Kwil network.
@@ -83,7 +84,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    * @returns A promise that resolves to the actions in the database.
    */
   public async getActions(namespace: string): Promise<GenericResponse<Object[]>> {
-    if (!this.validateNamespace(namespace)) {
+    if (!validateNamespace(namespace)) {
       throw new Error('Please provide a valid namespace');
     }
     return await this.selectQuery('SELECT * FROM info.actions WHERE namespace = $namespace', {
@@ -91,12 +92,11 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     });
   }
 
-  // TODO: Update JSDoc info
   /**
    * Retrieves an account using the owner's Ethereum wallet address.
    *
    * @param owner - The owner's identifier (e.g. Ethereum wallet address or NEAR public key). Ethereum addresses can be passed as a hex string (0x123...) or as bytes (Uint8Array). NEAR protocol public keys can be passed as the base58 encoded public key (with "ed25519:" prefix), a hex string, or bytes (Uint8Array).
-   * @returns A promise that resolves to an Account object. The account object includes the account's balance, and nonce.
+   * @returns A promise that resolves to an Account object. The account object includes the account's id, balance, and nonce.
    */
   public async getAccount(owner: string | Uint8Array): Promise<GenericResponse<Account>> {
     const accountId = getAccountId(owner);
@@ -124,7 +124,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     // Ensure auth mode is set
     await this.ensureAuthenticationMode();
 
-    const namespace = this.resolveNamespace(actionBody);
+    const namespace = resolveNamespace(actionBody);
 
     // ActionInput[] has been deprecated.
     // This transforms the ActionInput[] into Entries[] to support legacy ActionInput[]
@@ -184,8 +184,6 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       query,
       params: encodedParams,
     };
-
-    // TODO: Add support for signer if in private mode
 
     return await this.selectQueryClient(q);
   }
@@ -336,7 +334,6 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    * @deprecated Use `kwil.selectQuery(query, params?)` instead. This method will be removed in the next major version.
    * @returns A promise that resolves to the schema of the database.
    */
-  // TODO: Improve deprecation message with examples
   public async getSchema(dbid: string): Promise<GenericResponse<Database>> {
     console.warn(
       'WARNING: `getSchema()` is deprecated and will be removed in the next major version. Please use `kwil.selectQuery()` instead.'
@@ -419,7 +416,6 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     actionBody: CallBody,
     kwilSigner?: KwilSigner,
     cookieHandlerCallback?: { setCookie: () => void; resetCookie: () => void }
-    // TODO: Ensure return type is correct (Promise<GenericResponse<Object[] | MsgReceipt>>)
   ): Promise<GenericResponse<Object[]>> {
     // Ensure auth mode is set
     await this.ensureAuthenticationMode();
@@ -494,7 +490,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       throw new Error('name is required in actionBody');
     }
 
-    const namespace = this.resolveNamespace(actionBody);
+    const namespace = resolveNamespace(actionBody);
 
     // ActionInput[] is deprecated. So we are converting any ActionInput[] to an Entries[]
     let inputs: Entries[] = [];
@@ -614,39 +610,5 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     }
 
     throw new Error('Authentication process did not complete successfully');
-  }
-
-  // TODO: Move this to a another location
-  private validateNamespace(namespace: string): boolean {
-    // Validate namespace
-    if (!namespace || typeof namespace !== 'string') {
-      return false;
-    }
-
-    // Check for SQL injection attempts in namespace
-    if (/[';{}\\]/.test(namespace)) {
-      return false;
-    }
-
-    // validate alphanumeric and underscore
-    if (!/^[a-zA-Z0-9_]+$/.test(namespace)) {
-      return false;
-    }
-
-    return true;
-  }
-
-  // TODO: Move this to a another location
-  private resolveNamespace(actionBody: ActionBody | CallBody): string {
-    if (actionBody.namespace) {
-      return actionBody.namespace;
-    }
-
-    if (actionBody.dbid) {
-      console.warn('Warning: The "dbid" field is deprecated. Please use "namespace" instead.');
-      return actionBody.dbid;
-    }
-
-    throw new Error('Either "namespace" or "dbid" must be provided');
   }
 }

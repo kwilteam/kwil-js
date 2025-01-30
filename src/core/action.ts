@@ -417,7 +417,6 @@ function lowercaseKey(key: string): string {
   return key.toLowerCase();
 }
 
-// TODO: Refactor this and consider moving
 export const transformActionInput = {
   /**
    * Checks if all elements in the given array are instances of ActionInput.

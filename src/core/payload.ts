@@ -20,7 +20,6 @@ import { AccountId } from './network';
 /**
  * `AllPayloads` is the union of all payload types.
  */
-// TODO: Add the new execute Sql / query() payload
 export type AllPayloads =
   | UnencodedActionPayload<PayloadType.CALL_ACTION | PayloadType.EXECUTE_ACTION>
   | TransferPayload

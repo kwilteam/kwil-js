@@ -1,12 +1,15 @@
-import { kwilSigner, deriveKeyPair64, kwil } from './setup';
+import { deriveKeyPair64, kwil } from './setup';
 import { KwilSigner, Types, Utils } from '../../src/index';
 
 import nacl from 'tweetnacl';
 import { ActionBody } from '../../src/core/action';
 import { TxReceipt } from '../../src/core/tx';
 import { MsgReceipt } from '../../src/core/message';
+import { createTestSchema, dropTestSchema } from './utils';
 
-describe('Testing custom signers', () => {
+// TODO: This needs to be updated to allow for a signer other than the db owner to create DBs
+// These tests will only work if the edSigner has permissions to deploy the schema
+describe.skip('Testing custom signers', () => {
   let edSigner: KwilSigner;
   let input: Types.ActionInput;
   const namespace = 'signers_test';
@@ -23,11 +26,12 @@ describe('Testing custom signers', () => {
   beforeAll(async () => {
     const edKeys = await getEdKeys();
     edSigner = new KwilSigner(customEdSigner, edKeys.publicKey, 'ed25519');
-    // TODO: Need to deploy simple schema
+
+    await createTestSchema(namespace, kwil, edSigner);
   }, 10000);
 
   afterAll(async () => {
-    // TODO: Need to drop simple schema
+    await dropTestSchema(namespace, kwil, edSigner);
   }, 10000);
 
   beforeEach(async () => {

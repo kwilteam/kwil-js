@@ -51,6 +51,14 @@ import {
 } from '../core/jsonrpc';
 import { HexString } from '../utils/types';
 
+interface AuthError {
+  status: number;
+  data: {
+    result: null;
+  };
+  authCode: AuthErrorCodes;
+}
+
 export default class Client extends Api {
   private unconfirmedNonce: boolean;
   private jsonRpcId: number = 1;
@@ -276,7 +284,6 @@ export default class Client extends Api {
     });
   }
 
-  // TODO: Ensure return type is correct (Promise<GenericResponse<Object[] | MsgReceipt>>)
   protected async callClient(msg: Message): Promise<CallClientResponse<Object[]>> {
     const body = this.buildJsonRpcRequest<CallRequest>(JSONRPCMethod.METHOD_CALL, {
       body: msg.body,
@@ -287,12 +294,10 @@ export default class Client extends Api {
 
     const res = await super.post<JsonRPCResponse<CallResponse>>(`/rpc/v1`, body);
 
-    // TODO: Remove this once we have auth working
-    // TODO: What is MsgReceipt type?
-    // const errorResponse = this.checkAuthError(res);
-    // if (errorResponse) {
-    //   return errorResponse;
-    // }
+    const errorResponse = this.checkAuthError(res);
+    if (errorResponse) {
+      throw new Error(`Auth error: ${errorResponse.authCode}`);
+    }
 
     return checkRes(res, (r) => this.parseQueryResponse(r.result.query_result));
   }
@@ -309,14 +314,13 @@ export default class Client extends Api {
   // Check for specific error codes and return http status, result of view action, and rpc authError code (if applicable)
   private checkAuthError<T>(
     res: AxiosResponse<JsonRPCResponse<T>>
-  ): CallClientResponse<MsgReceipt> | null {
+  ): CallClientResponse<AuthError> | null {
     const errorCode = res.data.error?.code;
+
     if (errorCode === AuthErrorCodes.PRIVATE_MODE || errorCode === AuthErrorCodes.KGW_MODE) {
       return {
         status: res.status,
-        data: {
-          result: null,
-        },
+        data: undefined,
         authCode: errorCode,
       };
     }

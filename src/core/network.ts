@@ -6,7 +6,7 @@ import { AccountKeyType, BytesEncodingStatus } from './enums';
 // TODO: Support for other key types / string
 export interface AccountId {
   identifier: string;
-  key_type: AccountKeyType | string;
+  key_type: AccountKeyType;
 }
 
 export interface Account {

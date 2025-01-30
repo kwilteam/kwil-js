@@ -5,19 +5,9 @@ const logSpy = jest.spyOn(console, 'log').mockImplementation((...args) => {
 jest.resetModules();
 import { kwil, kwilSigner, differentKwilSigner } from './setup';
 import { TxReceipt } from '../../src/core/tx';
-import { Types, Utils } from '../../src/index';
-import { MsgReceipt } from '../../src/core/message';
-import { Signer as _NearSigner } from 'near-api-js';
-import { Database, DropBody, Extension } from '../../src/core/database';
-import { EnvironmentType } from '../../src/core/enums';
-import { AuthSuccess, LogoutResponse } from '../../src/core/auth';
-import { Account, ChainInfo } from '../../src/core/network';
-import { v4 as uuidV4 } from 'uuid';
-
-// TODO: Need to get correct types for these
-type ActionBody = Types.ActionBody;
-// type ActionInput = Types.ActionInput;
-type ActionBodyNode = ActionBody; // Is this correct?
+import { Utils } from '../../src/index';
+import { ActionBody } from '../../src/core/action';
+import { uuidV4 } from './setup';
 
 // Primary integration tests for Kwil SQL namespace, table and action deployment, calling and executing actions, and dropping operations
 describe('SQL Schema Deployment and Management', () => {

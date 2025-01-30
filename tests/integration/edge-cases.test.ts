@@ -1,3 +1,4 @@
+// TODO: Requires updating to new syntax in order to work
 // describe('Testing case sensitivity on test_db', () => {
 //   let dbid: string;
 
