@@ -1,4 +1,4 @@
-import { NonNil, PartialNillable } from '../utils/types';
+import { Base64String, NonNil, PartialNillable } from '../utils/types';
 import {
   ActionSchema,
   Attribute,
@@ -39,7 +39,7 @@ export interface EncodedValue {
 
 export interface EncodedParameterValue {
   type: DataType;
-  data: string[];
+  data: Base64String[];
 }
 
 export interface RawStatementPayload {

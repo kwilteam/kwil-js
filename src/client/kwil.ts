@@ -250,6 +250,8 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     // TODO: refactor / move into client
     const encodedParams = encodeRawStatementParameters(params);
 
+    console.log(`Encoded params:`, encodedParams);
+
     const rawStatementPayload: RawStatementPayload = {
       statement: query,
       parameters: encodedParams,

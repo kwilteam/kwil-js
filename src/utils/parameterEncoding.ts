@@ -3,7 +3,7 @@ import { VarType } from '../core/enums';
 import { EncodedParameterValue, EncodedValue } from '../core/payload';
 import { bytesToBase64 } from './base64';
 import { encodeValue } from './kwilEncoding';
-import { EncodedQueryParams, QueryParams, ValueType } from './types';
+import { Base64String, EncodedQueryParams, QueryParams, ValueType } from './types';
 import { isUuid } from './uuid';
 
 // Used by the selectQuery() method
@@ -20,6 +20,16 @@ function formatEncodedValueBase64(val: ValueType | ValueType[]): EncodedParamete
   const base = formatDataType(val);
 
   // If the value is an array, we need to encode each value in the array
+  if (Array.isArray(val)) {
+    const encodedValues: Base64String[] = [];
+    for (const v of val) {
+      encodedValues.push(bytesToBase64(encodeValue(v)));
+    }
+    return {
+      type: base.type,
+      data: encodedValues,
+    };
+  }
   return {
     type: base.type,
     data: [bytesToBase64(encodeValue(base.data))],
@@ -30,15 +40,31 @@ function formatEncodedValueBase64(val: ValueType | ValueType[]): EncodedParamete
 // The executeSql() method has the entire payload encoded into a base64 string when being sent to the server
 // And the structure of the parameters is different as we have name (of the parameter) and value which is not the same as selectQuery()
 export function encodeRawStatementParameters(params: QueryParams) {
-  return Object.entries(params).map(([key, value]) => ({
-    name: key,
-    value: formatEncodedValue(value),
-  }));
+  return Object.entries(params).map(([key, value]) => {
+    const encodedValue = formatEncodedValue(value);
+
+    return {
+      name: key,
+      value: encodedValue,
+    };
+  });
 }
 
 // Used by the executeSql() method and the encodeActionInputs() method
 function formatEncodedValue(val: ValueType | ValueType[]): EncodedValue {
   const base = formatDataType(val);
+
+  if (Array.isArray(val)) {
+    const encodedValues: Uint8Array[] = [];
+    for (const v of val) {
+      encodedValues.push(encodeValue(v));
+    }
+
+    return {
+      type: base.type,
+      data: encodedValues,
+    };
+  }
 
   return {
     type: base.type,

@@ -17,6 +17,7 @@ import { getTxProperties } from './examples/test';
 import { encodeRawStatement, RawStatement, Transfer } from './examples/broadcast_payloads';
 import { PayloadType } from '../../src/core/enums';
 import { encodeScalar } from './examples/encode_scalar';
+import { executeActionArray } from './tests/ethersv6/executeActionArray';
 
 declare global {
   interface Window {
@@ -77,32 +78,24 @@ function App() {
     // await testViewWithParam(kwil, namespace, kwilSigner);
     // await executeAction(kwil, namespace, 'insert_variables', kwilSigner, nonce);
     // ./kwil-cli exec-sql -s 'CREATE TABLE saved_arrays(id uuid primary key, text_arr text[], int_arr text[])' --sync
-    await kwil.execSql(
-      'INSERT INTO saved_arrays (id, text_arr, int_arr) VALUES ($id, $text_arr, $int_arr)',
-      {
-        $id: '123e4567-e89b-12d3-a456-426614174000',
+    // await kwil.execSql(
+    //   'INSERT INTO saved_arrays_2 (id, text_arr, int_arr) VALUES ($id, $text_arr, $int_arr)',
+    //   {
+    //     $id: '123e4567-e89b-12d3-a456-426614174001',
+    //     $text_arr: ['test', 'test2'],
+    //     $int_arr: [1, 2],
+    //   },
+    //   kwilSigner,
+    //   true
+    // );
+
+    console.log(
+      await kwil.selectQuery('SELECT * FROM saved_arrays_2 WHERE text_arr = $text_arr', {
         $text_arr: ['test', 'test2'],
-        $int_arr: [1, 2],
-        // $text_arr: 'test',
-        // $int_arr: 1,
-      },
-      kwilSigner,
-      true
+      })
     );
 
-    await kwil.execSql(
-      '{test}INSERT INTO variable_test (id, int_var, text_var, bool_var, decimal_var, blob_var) VALUES ($id, $int_var, $text_var, $bool_var, $decimal_var, $blob);',
-      {
-        $id: '123e4567-e89b-12d3-a456-426614174000',
-        $int_var: 42,
-        $text_var: 'Sample text',
-        $bool_var: true,
-        $decimal_var: 123.45,
-        $blob: new Uint8Array([1]),
-      },
-      kwilSigner,
-      true
-    );
+    await executeActionArray(kwil, 'main', 'insert_saved_arr', kwilSigner, nonce);
 
     // await kwilAuthenticate(kwil, kwilSigner)
     // await testViewWithSign(kwil, dbid, kwilSigner)
