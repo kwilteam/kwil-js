@@ -3,10 +3,8 @@ import { ActionOptions, Entries, NamespaceAction, ValidatedAction } from '../cor
 import { SignerSupplier } from '../core/signature';
 import {
   AccessModifier,
-  BytesEncodingStatus,
   EnvironmentType,
   PayloadType,
-  VarType,
 } from '../core/enums';
 import { Message } from '../core/message';
 import { EncodedValue, UnencodedActionPayload } from '../core/payload';
@@ -15,8 +13,7 @@ import { Transaction } from '../core/tx';
 import { PayloadTx } from './payloadTx';
 import { PayloadMsg } from '../message/payloadMsg';
 import { objects } from '../utils/objects';
-import { analyzeNumber, encodeActionInputs } from '../utils/parameterEncoding';
-import { encodeValue } from '../utils/kwilEncoding';
+import { encodeActionInputs } from '../utils/parameterEncoding';
 import { Base64String } from '../utils/types';
 
 const TXN_BUILD_IN_PROGRESS: Entries[] = [];
@@ -226,7 +223,7 @@ export class Action<T extends EnvironmentType> {
 
     // In private mode, we cannot validate the action inputs as we cannot run the selectQuery to get the schema.
     if (privateMode) {
-      const actionValues = actionInputs ? Object.values(actionInputs[0]) : [];
+      const actionValues = actionInputs.length > 0 ? Object.values(actionInputs[0]) : [];
       payload.arguments = encodeActionInputs(actionValues);
 
       return payload;

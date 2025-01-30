@@ -4,7 +4,6 @@ import { Database } from './database';
 import { AccountKeyType, AccountStatus, BroadcastSyncType, BytesEncodingStatus } from './enums';
 import { MsgData } from './message';
 import { AccountId, DatasetInfoServer } from './network';
-import { EncodedValue } from './payload';
 import { TxnData } from './tx';
 import { TxResult } from './txQuery';
 

@@ -143,7 +143,7 @@ export interface ValidatedAction {
 }
 
 /**
- * @deprecated - This class is deprecated and will be removed in the next major release.  Please use the `params` instead.
+ * @deprecated - This class is deprecated and will be removed in the next major release.  Please pass action inputs as an array of objects.
  * `ActionInput` class is a utility class for creating action inputs.
  */
 

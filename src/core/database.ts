@@ -1,10 +1,7 @@
 import { QueryParams } from '../utils/types';
 import { AttributeType, IndexType, VarType } from './enums';
 import {
-  CompiledForeignProcedure,
   CompiledKuneiform,
-  CompiledProcedure,
-  CompiledTable,
 } from './payload';
 
 /**
@@ -33,12 +30,19 @@ export interface DropBody {
   nonce?: number;
 }
 
-// Encodable database is the same as database but procedures.returns can be an empty array
-export type EncodeableDatabase = Omit<Database, 'tables' | 'procedures' | 'foreign_calls'> & {
-  tables: ReadonlyArray<CompiledTable>;
-  procedures: ReadonlyArray<CompiledProcedure>;
-  foreign_calls: ReadonlyArray<CompiledForeignProcedure>;
-};
+/**
+ * @typedef {Object} SelectQuery is the interface for selecting data from a database with the `kwil.selectQuery()` method.
+ * 
+ * @property {string} query - The query to execute.
+ * @property {QueryParams?} params (optional) - The parameters for the query.
+ */
+export interface SelectQuery {
+  query: string;
+  params?: QueryParams;
+}
+
+/** DEPRECATED */
+/* EVERYTHNG BELOW CAN BE REMOVED WHEN DEPRECATED APIS ARE REMOVED */
 
 export interface Database {
   owner: Uint8Array;
@@ -130,11 +134,6 @@ export interface DataType {
 export interface ProcedureReturn {
   is_table: boolean;
   fields: ReadonlyArray<NamedType>;
-}
-
-export interface SelectQuery {
-  query: string;
-  params?: QueryParams;
 }
 
 export interface ForeignProcedure {

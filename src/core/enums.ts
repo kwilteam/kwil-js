@@ -10,10 +10,8 @@ export enum VarType {
   INT = 'int',
   INT8 = 'int8',
   BOOL = 'bool',
-  DECIMAL = 'decimal', // Old: now use numeric instead but keeping for compatibility
   NUMERIC = 'numeric',
   NULL = 'null',
-  BLOB = 'blob', // Old: now use bytea but keeping for compatibility
   BYTEA = 'bytea',
   UNKNOWN = 'unknown',
 }
@@ -43,16 +41,11 @@ export enum EncodingType {
 
 export enum PayloadType {
   INVALID_PAYLOAD_TYPE = 'invalid',
-  // TODO:  delete deprecated payload types
-  DEPLOY_DATABASE = 'deploy_schema',
-  DROP_DATABASE = 'drop_schema',
   EXECUTE_ACTION = 'execute',
   CALL_ACTION = 'call_action',
   TRANSFER = 'transfer',
   RAW_STATEMENT = 'raw_statement',
 }
-
-export type DeployOrDrop = PayloadType.DEPLOY_DATABASE | PayloadType.DROP_DATABASE;
 
 export enum SerializationType {
   INVALID_SERIALIZATION_TYPE = 'invalid',
@@ -103,7 +96,7 @@ export enum AccountKeyType {
   // Eth
   SECP256K1 = 'secp256k1',
 
-  // i.e. Near
+  // ED25519
   ED25519 = 'ed25519',
 }
 

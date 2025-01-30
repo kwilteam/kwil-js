@@ -91,7 +91,7 @@ async function scratchpad() {
   // await julioSignature(kwil, dbid)
   // await customEd25519(kwil, dbid)
   // await dropDb(kwil, kwilSigner, dbid);
-  // await transfer(kwil, "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf", 20, kwilSigner)
+  await transfer(kwil, "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf", 20, kwilSigner)
   // bulkActionInput(kwil, kwilSigner)
   // console.log(base64ToBytes('QVFJREJBVUdCd2dKQ2c9PQ=='))
 
@@ -109,7 +109,7 @@ async function scratchpad() {
     $id: 1,
     $message: "hello_world"
   };
-  executeGeneralAction(kwil, dbid, 'insert_greeting', kwilSigner, post);
+  // executeGeneralAction(kwil, dbid, 'insert_greeting', kwilSigner, post);
   // await executeGeneralView(kwil, dbid, 'get_profile', null, kwilSigner);
   // await executeGeneralView(kwil, dbid, "view_must_sign", null, kwilSigner)
 }
@@ -492,7 +492,7 @@ async function customEd25519(kwil, dbid) {
 async function transfer(kwil, to, tokenAmnt, signer) {
   const payload = {
     to,
-    amount: BigInt(tokenAmnt * 10 ** 18),
+    amount: BigInt(tokenAmnt),
   };
 
   const res = await kwil.funder.transfer(payload, signer);

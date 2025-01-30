@@ -1,8 +1,5 @@
-import { address, kwil, uuidV4 } from './setup';
-
 import { ActionBody } from '../../src/core/action';
-import { kwilSigner } from './setup';
-import { createTestSchema, dropTestSchema } from './utils';
+import { createTestSchema, dropTestSchema, kwil, kwilSigner, address, uuidV4 } from './setup';
 
 // TODO: Needs more tests and testing.  Seems the createTestSchema & dropTestSchema is not working as expected. Namespace is not being dropped.
 describe.skip('unconfirmedNonce', () => {

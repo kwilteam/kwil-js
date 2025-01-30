@@ -1,15 +1,16 @@
-import { deriveKeyPair64, kwil } from './setup';
+import { deriveKeyPair64, grantAdminAccess, kwil } from './setup';
 import { KwilSigner, Types, Utils } from '../../src/index';
 
 import nacl from 'tweetnacl';
-import { ActionBody } from '../../src/core/action';
+import { ActionBody, CallBodyNode } from '../../src/core/action';
 import { TxReceipt } from '../../src/core/tx';
 import { MsgReceipt } from '../../src/core/message';
-import { createTestSchema, dropTestSchema } from './utils';
+import { createTestSchema, dropTestSchema } from './setup';
+import { bytesToHex } from '../../src/utils/serial';
+import { GenericResponse } from '../../src/core/resreq';
+import { Account } from '../../src/core/network';
 
-// TODO: This needs to be updated to allow for a signer other than the db owner to create DBs
-// These tests will only work if the edSigner has permissions to deploy the schema
-describe.skip('Testing custom signers', () => {
+describe('Testing custom signers', () => {
   let edSigner: KwilSigner;
   let input: Types.ActionInput;
   const namespace = 'signers_test';
@@ -27,15 +28,17 @@ describe.skip('Testing custom signers', () => {
     const edKeys = await getEdKeys();
     edSigner = new KwilSigner(customEdSigner, edKeys.publicKey, 'ed25519');
 
+    await grantAdminAccess(bytesToHex(edSigner.identifier))
     await createTestSchema(namespace, kwil, edSigner);
-  }, 10000);
+  }, 20000);
 
   afterAll(async () => {
     await dropTestSchema(namespace, kwil, edSigner);
-  }, 10000);
+  }, 20000);
 
   beforeEach(async () => {
     input = new Utils.ActionInput();
+    input.put('$id', '3515e7c2-3333-4a75-bbba-91c4e6691a65')
     input.put('$user', 'Luke');
     input.put('$title', 'Test Post');
     input.put('$body', 'This is a test post');
@@ -54,19 +57,36 @@ describe.skip('Testing custom signers', () => {
     expect(result.data).toMatchObject<TxReceipt>({
       tx_hash: expect.any(String),
     });
-  }, 10000);
+  }, 20000);
 
-  it('should call ed25519 signed msgs correctly', async () => {
-    const payload: ActionBody = {
-      namespace,
-      name: 'view_must_sign',
-    };
+  // it('should call ed25519 signed msgs correctly', async () => {
+  //   const payload: CallBodyNode = {
+  //     namespace,
+  //     name: 'view_must_sign',
+  //   };
 
-    const result = await kwil.call(payload, edSigner);
+  //   const result = await kwil.call(payload, edSigner);
 
-    expect(result.data).toBeDefined();
-    expect(result.data).toMatchObject<MsgReceipt>({
-      result: expect.any(Array),
+  //   expect(result.data).toBeDefined();
+  //   expect(result.data).toMatchObject<MsgReceipt>({
+  //     result: expect.any(Array),
+  //   });
+  // });
+
+  it('should get account for an ed25519 account', async () => {
+    const acct = await kwil.getAccount(edSigner.identifier);
+
+    expect(acct).toBeDefined();
+    expect(acct).toMatchObject<GenericResponse<Account>>({
+      data: {
+        balance: expect.any(String),
+        nonce: expect.any(Number),
+        id: {
+          identifier: expect.any(String),
+          key_type: expect.any(String),
+        },
+      },
+      status: 200,
     });
   });
 });

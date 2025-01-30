@@ -9,20 +9,17 @@ import {
   AuthenticationMode,
   AuthErrorCodes,
   BroadcastSyncType,
-  BytesEncodingStatus,
   EnvironmentType,
   PayloadType,
 } from '../core/enums';
-
-import { getAccountId } from '../utils/keys';
 import { ActionBody, CallBody, Entries, transformActionInput } from '../core/action';
 import { KwilSigner } from '../core/kwilSigner';
 import { wrap } from './intern';
 import { Funder } from '../funder/funder';
 import { Auth } from '../auth/auth';
 import { Action } from '../transaction/action';
-import { Message, MsgReceipt } from '../core/message';
-import { AuthBody, Signature } from '../core/signature';
+import { Message } from '../core/message';
+import { AuthBody } from '../core/signature';
 import { SelectQueryRequest } from '../core/jsonrpc';
 import { encodeParameters, encodeRawStatementParameters } from '../utils/parameterEncoding';
 import { generateDBID } from '../utils/dbid';
@@ -30,6 +27,8 @@ import { Base64String, QueryParams } from '../utils/types';
 import { PayloadTx } from '../transaction/payloadTx';
 import { RawStatementPayload } from '../core/payload';
 import { resolveNamespace, validateNamespace } from '../utils/namespace';
+import { inferKeyType } from '../utils/keys';
+import { bytesToHex } from '../utils/serial';
 
 /**
  * The main class for interacting with the Kwil network.
@@ -95,13 +94,22 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
   /**
    * Retrieves an account using the owner's Ethereum wallet address.
    *
-   * @param owner - The owner's identifier (e.g. Ethereum wallet address or NEAR public key). Ethereum addresses can be passed as a hex string (0x123...) or as bytes (Uint8Array). NEAR protocol public keys can be passed as the base58 encoded public key (with "ed25519:" prefix), a hex string, or bytes (Uint8Array).
+   * @param owner - The owner's identifier (e.g. Ethereum wallet address or ED25119 keys). Ethereum addresses and ED25519 public keys can be passed as a hex string (0x123...) or as bytes (Uint8Array).
    * @returns A promise that resolves to an Account object. The account object includes the account's id, balance, and nonce.
    */
-  public async getAccount(owner: string | Uint8Array): Promise<GenericResponse<Account>> {
-    const accountId = getAccountId(owner);
+  public async getAccount(owner: string | Uint8Array, keyType?: string): Promise<GenericResponse<Account>> {
+    if (!keyType) {
+      keyType = inferKeyType(owner);
+    }
 
-    return await this.getAccountClient(accountId);
+    if(owner instanceof Uint8Array) {
+      owner = bytesToHex(owner);
+    }
+
+    return await this.getAccountClient({
+      identifier: owner,
+      key_type: keyType,
+    });
   }
 
   /**
@@ -347,7 +355,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    * @param deployBody - The body of the database to deploy. This should use the `DeployBody` interface.
    * @param kwilSigner - The signer for the database deployment.
    * @param synchronous - (optional) If true, the broadcast will wait for the transaction to be mined before returning. If false, the broadcast will return the transaction hash immediately, regardless of if the transaction is successful. Defaults to false.
-   * @deprecated Use `kwil.query()` instead. This method will be removed in the next major version.
+   * @deprecated Use `kwil.execSql()` instead. This method will be removed in the next major version.
    * @returns A promise that resolves to the receipt of the transaction.
    */
   public async deploy(
@@ -356,10 +364,10 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     synchronous?: boolean
   ): Promise<GenericResponse<TxReceipt>> {
     console.warn(
-      'WARNING: `deploy()` is deprecated and will be removed in the next major version. Please use `kwil.query()` instead.'
+      'WARNING: `deploy()` is deprecated and will be removed in the next major version. Please use `kwil.execSql()` instead.'
     );
     throw new Error(
-      'The `deploy()` method is no longer supported. Please use `kwil.query()` instead.'
+      'The `deploy()` method is no longer supported. Please use `kwil.execSql()` instead.'
     );
   }
 
@@ -369,7 +377,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    * @param dropBody - The body of the database to drop. This should use the `DropBody` interface.
    * @param kwilSigner - The signer for the database drop.
    * @param synchronous - (optional) If true, the broadcast will wait for the transaction to be mined before returning. If false, the broadcast will return the transaction hash immediately, regardless of if the transaction is successful. Defaults to false.
-   * @deprecated Use `kwil.query()` instead. This method will be removed in the next major version.
+   * @deprecated Use `kwil.execSql()` instead. This method will be removed in the next major version.
    * @returns A promise that resolves to the receipt of the transaction.
    */
   public async drop(
@@ -378,10 +386,10 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     synchronous?: boolean
   ): Promise<GenericResponse<TxReceipt>> {
     console.warn(
-      'WARNING: `drop()` is deprecated and will be removed in the next major version. Please use `kwil.query()` instead.'
+      'WARNING: `drop()` is deprecated and will be removed in the next major version. Please use `kwil.execSql()` instead.'
     );
     throw new Error(
-      'The `drop()` method is no longer supported. Please use `kwil.query()` instead.'
+      'The `drop()` method is no longer supported. Please use `kwil.execSql()` instead.'
     );
   }
 
@@ -411,7 +419,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    * @returns A promise that resolves to the receipt of the message.
    */
   protected async baseCall(
-    actionBody: CallBody,
+    callBody: CallBody,
     kwilSigner?: KwilSigner,
     cookieHandlerCallback?: { setCookie: () => void; resetCookie: () => void }
   ): Promise<GenericResponse<Object[]>> {
@@ -423,7 +431,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       if (cookieHandlerCallback) {
         cookieHandlerCallback.setCookie();
       }
-      const message = await this.buildMessage(actionBody, kwilSigner);
+      const message = await this.buildMessage(callBody, kwilSigner);
       const response = await this.callClient(message);
 
       // if nodeJS user passes a cookie, reset it after the call
@@ -439,9 +447,9 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       return response;
     }
     if (this.authMode === AuthenticationMode.PRIVATE) {
-      const authBody = await this.handleAuthenticatePrivate(actionBody, kwilSigner);
+      const authBody = await this.handleAuthenticatePrivate(callBody, kwilSigner);
       const message = await this.buildMessage(
-        actionBody,
+        callBody,
         kwilSigner,
         authBody.challenge,
         authBody.signature
@@ -532,8 +540,6 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
         this.addSignerToMessage(msg, kwilSigner);
       }
     }
-
-    console.log('Private mode: ', this.authMode === AuthenticationMode.PRIVATE);
 
     return await msg.buildMsg(this.authMode === AuthenticationMode.PRIVATE);
   }

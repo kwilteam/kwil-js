@@ -86,12 +86,11 @@ function formatDataType(val: ValueType | ValueType[]): {
   data: ValueType;
 } {
   const { metadata, varType } = resolveValueType(val);
-  const metadataSpread = metadata ? { metadata } : {};
 
   const dataType: DataType = {
     name: varType,
     is_array: Array.isArray(val),
-    ...metadataSpread,
+    metadata,
   };
 
   return { type: dataType, data: val };
@@ -121,7 +120,7 @@ export function analyzeNumber(num: number) {
 }
 
 export function resolveValueType(value: ValueType | ValueType[]): {
-  metadata: [number, number] | undefined;
+  metadata: [number, number];
   varType: VarType;
 } {
   if (Array.isArray(value)) {

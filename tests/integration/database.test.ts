@@ -1,9 +1,4 @@
-const originalLog = console.log;
-const logSpy = jest.spyOn(console, 'log').mockImplementation((...args) => {
-  originalLog(...args);
-});
-jest.resetModules();
-import { kwil, kwilSigner, differentKwilSigner } from './setup';
+import { kwil, kwilSigner, differentKwilSigner, isKwildPrivateOn } from './setup';
 import { TxReceipt } from '../../src/core/tx';
 import { Utils } from '../../src/index';
 import { ActionBody } from '../../src/core/action';
@@ -98,7 +93,7 @@ describe('SQL Schema Deployment and Management', () => {
       postId = uuid;
     });
 
-    it('should verify post exists using selectQuery', async () => {
+    (!isKwildPrivateOn ? it : it.skip)('should verify post exists using selectQuery', async () => {
       const query = `{${namespace}} SELECT post_title, post_body FROM posts WHERE id = $id`;
       const params = {
         $id: postId,
@@ -154,7 +149,7 @@ describe('SQL Schema Deployment and Management', () => {
       });
     });
 
-    it('should verify post exists using selectQuery', async () => {
+    (!isKwildPrivateOn ? it : it.skip)('should verify post exists using selectQuery', async () => {
       const query = `{${namespace}} SELECT post_title, post_body FROM posts WHERE id = $id`;
       const params = {
         $id: actionPostId,
@@ -167,7 +162,7 @@ describe('SQL Schema Deployment and Management', () => {
       });
     });
 
-    it('should execute read_posts_count view action without signer or inputs', async () => {
+    (!isKwildPrivateOn ? it : it.skip)('should execute read_posts_count view action without signer or inputs', async () => {
       const actionBody: ActionBody = {
         namespace,
         name: 'read_posts_count',
@@ -272,8 +267,8 @@ describe('SQL Schema Deployment and Management', () => {
     });
 
     it('should execute update_post action using dbid instead of namespace', async () => {
-      // @ts-ignore
       const actionBody: ActionBody = {
+        namespace,
         dbid: namespace,
         name: 'update_post',
         inputs: [
@@ -322,7 +317,7 @@ describe('SQL Schema Deployment and Management', () => {
         ],
       };
 
-      await expect(kwil.execute(actionBody, kwilSigner)).rejects.toThrow();
+      await expect(kwil.execute(actionBody, kwilSigner, true)).rejects.toThrow();
     });
 
     it('should fail when calling non-existent action', async () => {
@@ -336,13 +331,13 @@ describe('SQL Schema Deployment and Management', () => {
         ],
       };
 
-      await expect(kwil.execute(actionBody, kwilSigner)).rejects.toThrow();
+      await expect(kwil.execute(actionBody, kwilSigner, true)).rejects.toThrow();
     });
 
     it('should NOT drop posts table with wrong signer', async () => {
       await expect(
         kwil.execSql('DROP TABLE posts;', {}, differentKwilSigner, true)
-      ).rejects.toThrow(/JSON RPC call error: code: -200, message:/);
+      ).rejects.toThrow(/JSON RPC call error: code: -201, message:/);
     });
   });
 

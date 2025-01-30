@@ -12,11 +12,7 @@ const kwil = new NodeKwil({
   logging: true,
 });
 
-import { JsonRpcProvider } from 'ethers';
-import { inputToHex, kwilEncode } from '../src/utils/rlp';
-import { concatBytes, numberToUint16BigEndian } from '../src/utils/bytes';
-import { EncodingType } from '../src/core/enums';
-import { hexToBytes, numberToBytes, stringToBytes } from '../src/utils/serial';
+import { numberToBytes } from '../src/utils/serial';
 import { bytesToBase64 } from '../src/utils/base64';
 
 // add window.ethereum to typeof globalthis
@@ -37,8 +33,8 @@ async function main() {
   // actions
   const actionBody: ActionBody = {
     dbid: kwil.getDBID(signer.identifier, 'mydb'),
-    name: '',
-    action: 'add_post',
+    name: 'add_post',
+    namespace: 'main',
     inputs: [
       {
         $id: 69,

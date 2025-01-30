@@ -1,4 +1,3 @@
-import { base64ToBytes } from '../../dist/utils/base64';
 import { isKwildPrivateOn, kwilSigner, uuidV4 } from './setup';
 import { kwil } from './setup';
 import { TxReceipt } from '../../src/core/tx';
@@ -320,7 +319,6 @@ import { TxReceipt } from '../../src/core/tx';
       expect(Array.isArray(query.data)).toBe(true);
       expect(query.data?.length).toBeGreaterThan(0);
 
-      // @ts-ignore
       // base64
       //   const blobVal = query.data[0]?.blob_col as string;
       // expect(base64ToBytes(blobVal)).toStrictEqual(blobArray);

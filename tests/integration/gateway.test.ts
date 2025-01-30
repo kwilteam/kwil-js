@@ -1,12 +1,9 @@
-import { Wallet } from 'ethers';
 import { ActionBody, ActionBodyNode } from '../../src/core/action';
 import { AuthSuccess, LogoutResponse } from '../../src/core/auth';
 import { EnvironmentType } from '../../src/core/enums';
 import { MsgReceipt } from '../../src/core/message';
-import { isKgwOn, isKwildPrivateOn, kwil, kwilSigner } from './setup';
-import { createTestSchema, dropTestSchema } from './utils';
-import { KwilSigner, NodeKwil } from '../../src';
-import { ViewCaller } from '../testingUtils';
+import { isKgwOn, kwil, kwilSigner } from './setup';
+import { NodeKwil } from '../../src';
 
 // TODO: These tests have been updated to work with new API but KGW but it is not fully implemented
 // TODO: There will be changes to schema creation to enable the KGW tests to work (i.e. with the write definition of the actions)

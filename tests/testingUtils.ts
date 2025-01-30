@@ -8,41 +8,24 @@ require('dotenv').config();
 const provider = new JsonRpcProvider(process.env.ETH_PROVIDER);
 export const wallet = new Wallet(process.env.PRIVATE_KEY as string, provider);
 
-export async function isTestDbDeployed(address: string | Uint8Array): Promise<boolean> {
-  const res = await kwil.listDatabases(address);
-  const dbList = res.data;
-  if (!dbList) return false;
-  for (const db of dbList) {
-    if (db.name === 'mydb') return true;
-  }
-  return false;
-}
+export const kwil = new NodeKwil({
+  kwilProvider: process.env.KWIL_PROVIDER || 'SHOULD FAIL',
+  chainId: process.env.CHAIN_ID || 'SHOULD FAIL',
+  timeout: 10000,
+  logging: true,
+  unconfirmedNonce: true,
+});
 
-// // TODO: Deploy a test db with namespace, tables, actions
-// export async function deployTestDb(signer: KwilSigner): Promise<void> {
-//   const body: DeployBody = {
-//     schema: mydb,
-//   };
-//   const res = await kwil.deploy(body, signer, true);
-//   const hash = res.data?.tx_hash;
-//   if (!hash) throw new Error('No tx hash returned from Kwil Network');
-// }
+export const deriveKeyPair64 = async (password: string, humanId: string) => {
+  const encoder = new TextEncoder();
 
-// export async function deployIfNoTestDb(signer: KwilSigner): Promise<void> {
-//   const isDeployed = await isTestDbDeployed(signer.identifier);
-//   if (!isDeployed) await deployTestDb(signer);
-// }
+  const normalizedPassword = encoder.encode(password.normalize('NFKC'));
+  const salt = encoder.encode(humanId);
 
-// // TODO: Drop a namespace
-// export async function dropTestDb(dbid: string, signer: KwilSigner): Promise<void> {
-//   await kwil.drop(
-//     {
-//       dbid,
-//     },
-//     signer,
-//     true
-//   );
-// }
+  const derivedKey = await scrypt.scrypt(normalizedPassword, salt, 1024, 8, 1, 32);
+
+  return nacl.sign.keyPair.fromSeed(derivedKey);
+};
 
 export interface ActionObj {
   dbid: string;
@@ -93,22 +76,3 @@ export interface ActionObj {
 export interface ViewCaller {
   caller: string;
 }
-
-export const kwil = new NodeKwil({
-  kwilProvider: process.env.KWIL_PROVIDER || 'SHOULD FAIL',
-  chainId: process.env.CHAIN_ID || 'SHOULD FAIL',
-  timeout: 10000,
-  logging: true,
-  unconfirmedNonce: true,
-});
-
-export const deriveKeyPair64 = async (password: string, humanId: string) => {
-  const encoder = new TextEncoder();
-
-  const normalizedPassword = encoder.encode(password.normalize('NFKC'));
-  const salt = encoder.encode(humanId);
-
-  const derivedKey = await scrypt.scrypt(normalizedPassword, salt, 1024, 8, 1, 32);
-
-  return nacl.sign.keyPair.fromSeed(derivedKey);
-};

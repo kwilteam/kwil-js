@@ -59,7 +59,7 @@ function App() {
     // const result = await kwil.funder.transfer(transferBody, kwilSigner, true);
     // console.log(result);
 
-    // await kwil.query('CREATE table simple_test (text_var text PRIMARY KEY);', {}, kwilSigner, true);
+    // await kwil.execSql('CREATE table simple_test (text_var text PRIMARY KEY);', {}, kwilSigner, true);
 
     // await kwil.query(
     //   '{test}INSERT INTO missing_table (id, int_var, text_var, bool_var, blob_var) VALUES ($id, $int_var, $text_var, $bool_var, $blob_var)',
@@ -75,6 +75,11 @@ function App() {
     //   true
     // );
 
+    console.log(await kwil.call({
+      namespace: 'main',
+      name: 'view_call',
+    }, kwilSigner))
+
     // await testViewWithParam(kwil, namespace, kwilSigner);
     // await executeAction(kwil, namespace, 'insert_variables', kwilSigner, nonce);
     // ./kwil-cli exec-sql -s 'CREATE TABLE saved_arrays(id uuid primary key, text_arr text[], int_arr text[])' --sync
@@ -89,13 +94,13 @@ function App() {
     //   true
     // );
 
-    console.log(
-      await kwil.selectQuery('SELECT * FROM saved_arrays_2 WHERE text_arr = $text_arr', {
-        $text_arr: ['test', 'test2'],
-      })
-    );
+    // console.log(
+    //   await kwil.selectQuery('SELECT * FROM saved_arrays_2 WHERE text_arr = $text_arr', {
+    //     $text_arr: ['test', 'test2'],
+    //   })
+    // );
 
-    await executeActionArray(kwil, 'main', 'insert_saved_arr', kwilSigner, nonce);
+    // await executeActionArray(kwil, 'main', 'insert_saved_arr', kwilSigner, nonce);
 
     // await kwilAuthenticate(kwil, kwilSigner)
     // await testViewWithSign(kwil, dbid, kwilSigner)

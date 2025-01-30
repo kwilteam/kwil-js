@@ -23,7 +23,6 @@ import { GenericResponse as _GenericResponse } from './core/resreq';
 import { TxResult as _TxResult, TxInfoReceipt as _TxInfoReceipt } from './core/txQuery';
 import { Account as _Account, DatasetInfo as _DatasetInfo } from './core/network';
 import { MsgReceipt as _MsgReceipt, Message as _Message } from './core/message';
-import { recoverSecp256k1PubKey as _recoverSecp256k1PubKey } from './utils/keys';
 import { KwilSigner } from './core/kwilSigner';
 import { PayloadType as _PayloadType } from './core/enums';
 import Client from './api_client/client';
