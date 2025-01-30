@@ -6,25 +6,29 @@ import { encodeValue } from './kwilEncoding';
 import { EncodedQueryParams, QueryParams, ValueType } from './types';
 import { isUuid } from './uuid';
 
-/**
- *
- * @param {ValueType[]} values - An array of input values to be executed by an action.
- * @returns formatted values used for an action
- */
-// TODO: Add comments about usage of this function
-export function encodeActionInputs(values: ValueType[]): EncodedValue[] {
-  return values.map((val) => formatEncodedValue(val));
-}
-
-// TODO: Add comments about usage of this function
+// Used by the selectQuery() method
 export function encodeParameters(params: QueryParams): EncodedQueryParams {
   const encodedParams: EncodedQueryParams = {};
   Object.entries(params).forEach(([key, value]) => {
-    encodedParams[key] = formatEncodedParameterValue(value);
+    encodedParams[key] = formatEncodedValueBase64(value);
   });
   return encodedParams;
 }
 
+// The selectQuery() method uses base64 encoding for the values here because they are not encoded into a base64 payload string when sent to the server
+function formatEncodedValueBase64(val: ValueType | ValueType[]): EncodedParameterValue {
+  const base = formatDataType(val);
+
+  // If the value is an array, we need to encode each value in the array
+  return {
+    type: base.type,
+    data: [bytesToBase64(encodeValue(base.data))],
+  };
+}
+
+// Used by the executeSql() method
+// The executeSql() method has the entire payload encoded into a base64 string when being sent to the server
+// And the structure of the parameters is different as we have name (of the parameter) and value which is not the same as selectQuery()
 export function encodeRawStatementParameters(params: QueryParams) {
   return Object.entries(params).map(([key, value]) => ({
     name: key,
@@ -32,7 +36,26 @@ export function encodeRawStatementParameters(params: QueryParams) {
   }));
 }
 
-function formatDataTypeBase(val: ValueType): {
+// Used by the executeSql() method and the encodeActionInputs() method
+function formatEncodedValue(val: ValueType | ValueType[]): EncodedValue {
+  const base = formatDataType(val);
+
+  return {
+    type: base.type,
+    data: [encodeValue(base.data)],
+  };
+}
+
+/**
+ * Used when encoding values for an action
+ * @param {ValueType[]} values - An array of input values to be executed by an action.
+ * @returns formatted values used for an action
+ */
+export function encodeActionInputs(values: ValueType[]): EncodedValue[] {
+  return values.map((val) => formatEncodedValue(val));
+}
+
+function formatDataType(val: ValueType | ValueType[]): {
   type: DataType;
   data: ValueType;
 } {
@@ -46,24 +69,6 @@ function formatDataTypeBase(val: ValueType): {
   };
 
   return { type: dataType, data: val };
-}
-
-// TODO: Add comments about usage of this function
-function formatEncodedParameterValue(val: ValueType): EncodedParameterValue {
-  const base = formatDataTypeBase(val);
-  return {
-    type: base.type,
-    data: [bytesToBase64(encodeValue(base.data))],
-  };
-}
-
-// TODO: Add comments about usage of this function i.e. what is the difference between formatEncodedParameterValue and formatEncodedValue
-function formatEncodedValue(val: ValueType): EncodedValue {
-  const base = formatDataTypeBase(val);
-  return {
-    type: base.type,
-    data: [encodeValue(base.data)],
-  };
 }
 
 export function analyzeNumber(num: number) {
@@ -89,7 +94,7 @@ export function analyzeNumber(num: number) {
   };
 }
 
-export function resolveValueType(value: ValueType): {
+export function resolveValueType(value: ValueType | ValueType[]): {
   metadata: [number, number] | undefined;
   varType: VarType;
 } {

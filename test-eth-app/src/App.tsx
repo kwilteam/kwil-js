@@ -81,10 +81,10 @@ function App() {
       'INSERT INTO saved_arrays (id, text_arr, int_arr) VALUES ($id, $text_arr, $int_arr)',
       {
         $id: '123e4567-e89b-12d3-a456-426614174000',
-        // $text_arr: ['test', 'test2'],
-        // $int_arr: [1, 2],
-        $text_arr: 'test',
-        $int_arr: 1,
+        $text_arr: ['test', 'test2'],
+        $int_arr: [1, 2],
+        // $text_arr: 'test',
+        // $int_arr: 1,
       },
       kwilSigner,
       true
