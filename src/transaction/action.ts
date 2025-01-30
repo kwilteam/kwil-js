@@ -300,7 +300,10 @@ export class Action<T extends EnvironmentType> {
         }
       }
 
-      const encodedActionInputs = this.encodeActionInputs(selectedAction, actionInputs);
+      const encodedActionInputs: EncodedValue[][] = [];
+      for (const actionInput of actionInputs) {
+        encodedActionInputs.push(encodeActionInputs(Object.values(actionInput)));
+      }
 
       return {
         actionName: selectedAction.name,
@@ -388,69 +391,6 @@ export class Action<T extends EnvironmentType> {
     }
 
     return true;
-  }
-
-  /**
-   * Encodes the action inputs into the expected format depending on the parameter types for the action.
-   *
-   * @param {NamespaceAction} selectedAction - The schema of the action to be executed.
-   * @param {ActionInput[]} actionInputs - The values of the actions to be executed.
-   * @returns {EncodedValue[][]} - An array of arrays of encoded values.
-   */
-  private encodeActionInputs(
-    selectedAction: NamespaceAction,
-    actionInputs: Entries[]
-  ): EncodedValue[][] {
-    const encodedActionInputs: EncodedValue[][] = [];
-
-    for (let i = 0; i < actionInputs.length; i++) {
-      const actionObject = actionInputs[i];
-
-      for (const [parameterName, parameterValue] of Object.entries(actionObject)) {
-        // Find the array location the parameter name is at from the selectedAction
-        const parameterNameIndex = selectedAction.parameter_names.findIndex(
-          (name) => name === parameterName
-        );
-        if (parameterNameIndex === -1) {
-          throw new Error(`Parameter ${parameterName} not found in action ${this.actionName}.`);
-        }
-        // We determine the parameter type from the action definition, instead of inferring it from the parameter value
-        let parameterType = selectedAction.parameter_types[parameterNameIndex] as VarType;
-
-        // Initialize the encodedActionInputs array if it doesn't exist
-        encodedActionInputs[i] = encodedActionInputs[i] || [];
-
-        // Set metadata for all types
-        let metadata: number[] = [0, 0];
-
-        // Set metadata for numeric types
-        // Decimal is now deprecated and should be replaced with numeric but keeping for compatibility right now
-        if (parameterType.includes('numeric') || parameterType.includes('decimal')) {
-          parameterType = VarType.NUMERIC;
-          const analysis = analyzeNumber(Number(parameterValue));
-          metadata = [analysis.precision, analysis.scale];
-        }
-
-        // Validate parameter type against VarType enum
-        if (!Object.values(VarType).includes(parameterType)) {
-          // This shouldn't happen as we are using the parameter type from the action definition
-          throw new Error(
-            `Invalid parameter type '${parameterType}' for action '${this.actionName}' parameter '${parameterName}'.  If you hit this error, please report it to the Kwil team.`
-          );
-        }
-
-        encodedActionInputs[i].push({
-          type: {
-            name: parameterType,
-            is_array: false, // TODO: Need to update to handle arrays
-            metadata,
-          },
-          data: [encodeValue(parameterValue)],
-        });
-      }
-    }
-
-    return encodedActionInputs;
   }
 
   private assertNotBuilding(): void {
