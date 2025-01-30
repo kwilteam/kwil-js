@@ -74,9 +74,15 @@ function App() {
     //   true
     // );
 
-    await testViewWithParam(kwil, namespace, kwilSigner);
-    await executeAction(kwil, namespace, 'insert_variables', kwilSigner, nonce);
-    // await kwil.execSql('{main}SELECT * FROM info.actions', {}, kwilSigner, true);
+    // await testViewWithParam(kwil, namespace, kwilSigner);
+    // await executeAction(kwil, namespace, 'insert_variables', kwilSigner, nonce);
+    await kwil.execSql(
+      '{variable_test}CREATE TABLE var_table_3 (uuid_col uuid PRIMARY KEY, text_col text, int_col int, bool_col bool, dec_col numeric(5,2), big_dec_col numeric(20,10), blob_col bytea);',
+      {},
+      kwilSigner,
+      true
+    );
+
     // await kwilAuthenticate(kwil, kwilSigner)
     // await testViewWithSign(kwil, dbid, kwilSigner)
     // await kwilLogout(kwil);

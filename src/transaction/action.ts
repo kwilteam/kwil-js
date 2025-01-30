@@ -15,7 +15,7 @@ import { Transaction } from '../core/tx';
 import { PayloadTx } from './payloadTx';
 import { PayloadMsg } from '../message/payloadMsg';
 import { objects } from '../utils/objects';
-import { analyzeNumber, encodeActionInputs } from '../utils/parameters';
+import { analyzeNumber, encodeActionInputs } from '../utils/parameterEncoding';
 import { encodeValue } from '../utils/kwilEncoding';
 import { Base64String } from '../utils/types';
 
@@ -105,8 +105,6 @@ export class Action<T extends EnvironmentType> {
     this.actionInputs = TXN_BUILD_IN_PROGRESS;
 
     const payload = await this.buildTxPayload(privateMode, cachedActionInputs);
-
-    console.log('TX payload', payload);
 
     // throw runtime error if signer is null or undefined
     const { signer, identifier, signatureType } = objects.validateFields(
@@ -417,9 +415,10 @@ export class Action<T extends EnvironmentType> {
         if (parameterNameIndex === -1) {
           throw new Error(`Parameter ${parameterName} not found in action ${this.actionName}.`);
         }
-        // We determine the parameter type from the action definition, instead of the parameter value
+        // We determine the parameter type from the action definition, instead of inferring it from the parameter value
         let parameterType = selectedAction.parameter_types[parameterNameIndex] as VarType;
 
+        // Initialize the encodedActionInputs array if it doesn't exist
         encodedActionInputs[i] = encodedActionInputs[i] || [];
 
         // Set metadata for all types

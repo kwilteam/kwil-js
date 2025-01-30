@@ -8,7 +8,7 @@ import { isUuid } from './uuid';
 
 /**
  *
- * @param {ValueType[]} values - An array of values to be executed by an action.
+ * @param {ValueType[]} values - An array of input values to be executed by an action.
  * @returns formatted values used for an action
  */
 // TODO: Add comments about usage of this function
@@ -107,16 +107,15 @@ export function resolveValueType(value: ValueType): {
     case 'string':
       if (isUuid(value)) {
         varType = VarType.UUID;
-      } else {
-        // This enables us to detect if the number has been passed as a string
-        const parsedNum = Number(value);
-        if (!isNaN(parsedNum)) {
-          return inferNumericType(parsedNum);
-        }
       }
       break;
     case 'number':
-      return inferNumericType(value);
+      const numAnalysis = analyzeNumber(value);
+
+      return {
+        metadata: [numAnalysis.precision, numAnalysis.scale],
+        varType: numAnalysis.hasDecimal ? VarType.NUMERIC : VarType.INT8,
+      };
     case 'boolean':
       varType = VarType.BOOL;
       break;
@@ -141,16 +140,5 @@ export function resolveValueType(value: ValueType): {
   return {
     metadata,
     varType,
-  };
-}
-
-function inferNumericType(num: number): {
-  metadata: [number, number];
-  varType: VarType;
-} {
-  const numAnalysis = analyzeNumber(num);
-  return {
-    metadata: [numAnalysis.precision, numAnalysis.scale],
-    varType: numAnalysis.hasDecimal ? VarType.NUMERIC : VarType.INT8,
   };
 }

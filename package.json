@@ -24,7 +24,7 @@
     "pack_pre": "copyfiles package.json README.md dist && rimraf ./kwil*.tgz",
     "pack_post": "copyfiles ./kwil*.tgz ./pkg && rimraf ./kwil*.tgz",
     "pack": "npm run pack_build && npm run pack_pre && npm --prefix ./dist pack && npm run pack_post",
-    "integration": "npx jest ./tests/integration/**/*.test.ts",
+    "integration": "jest --runInBand --testPathPattern=tests/integration --testTimeout=30000",
     "scratchpad": "ts-node testing-functions/scratchpad.js"
   },
   "author": "Kwil, Inc. <luke@kwil.com>",

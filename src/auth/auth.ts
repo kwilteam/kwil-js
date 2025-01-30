@@ -19,7 +19,7 @@ import { ActionBody, Entries, transformActionInput } from '../core/action';
 import { sha256BytesToBytes } from '../utils/crypto';
 import { UnencodedActionPayload } from '../core/payload';
 import { encodeActionCall } from '../utils/kwilEncoding';
-import { encodeActionInputs } from '../utils/parameters';
+import { encodeActionInputs } from '../utils/parameterEncoding';
 
 interface AuthClient {
   getAuthenticateClient(): Promise<GenericResponse<KGWAuthInfo>>;

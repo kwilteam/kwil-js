@@ -24,7 +24,7 @@ import { Action } from '../transaction/action';
 import { Message, MsgReceipt } from '../core/message';
 import { AuthBody, Signature } from '../core/signature';
 import { SelectQueryRequest } from '../core/jsonrpc';
-import { encodeParameters, encodeRawStatementParameters } from '../utils/parameters';
+import { encodeParameters, encodeRawStatementParameters } from '../utils/parameterEncoding';
 import { generateDBID } from '../utils/dbid';
 import { Base64String, QueryParams } from '../utils/types';
 import { PayloadTx } from '../transaction/payloadTx';
@@ -151,8 +151,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
 
     return await this.broadcastClient(
       transaction,
-      // TODO: check the difference between commit and sync
-      synchronous ? BroadcastSyncType.SYNC : BroadcastSyncType.COMMIT
+      synchronous ? BroadcastSyncType.COMMIT : BroadcastSyncType.SYNC
     );
   }
 
@@ -162,22 +161,16 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    *
    * @param query - The SELECT query to execute
    * @param params - Optional array of parameters to bind to the query ($1, $2, etc.)
-   * @param signer - Optional signer for authenticated queries
    * @returns Promise resolving to query results
    */
-  public async selectQuery(
-    query: string,
-    params?: QueryParams,
-    signer?: KwilSigner
-  ): Promise<GenericResponse<Object[]>>;
+  public async selectQuery(query: string, params?: QueryParams): Promise<GenericResponse<Object[]>>;
   /**
-   * @deprecated Use selectQuery(query, params?, signer?) instead. This method will be removed in next major version.
+   * @deprecated Use selectQuery(query, params?) instead. This method will be removed in next major version.
    */
   public async selectQuery(dbid: string, query: string): Promise<GenericResponse<Object[]>>;
   public async selectQuery(
     query: string,
-    params?: QueryParams | string,
-    kwilSigner?: KwilSigner
+    params?: QueryParams | string
   ): Promise<GenericResponse<Object[]>> {
     // If params is a string, we're using the legacy method call
     if (typeof params === 'string') {
@@ -199,7 +192,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
 
   private async legacySelectQuery(dbid: string, query: string): Promise<GenericResponse<Object[]>> {
     console.warn(
-      'WARNING: selectQuery(dbid, query) is deprecated and will be removed in the next major version. Use selectQuery(query, params?, signer?) instead.'
+      'WARNING: selectQuery(dbid, query) is deprecated and will be removed in the next major version. Use selectQuery(query, params?) instead.'
     );
 
     const q: SelectQueryRequest = {
@@ -276,7 +269,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
 
     return await this.broadcastClient(
       transaction,
-      synchronous ? BroadcastSyncType.SYNC : BroadcastSyncType.COMMIT
+      synchronous ? BroadcastSyncType.COMMIT : BroadcastSyncType.SYNC
     );
   }
 
@@ -331,7 +324,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
 
   public getDBID(owner: string | Uint8Array, name: string): string {
     console.warn(
-      'WARNING: `getDBID()` is deprecated and will be removed in the next major version. Please use `kwil.selectQuery(query, params?, signer?)` instead.'
+      'WARNING: `getDBID()` is deprecated and will be removed in the next major version. Please use `kwil.selectQuery(query, params?)` instead.'
     );
     return generateDBID(owner, name);
   }
@@ -340,7 +333,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    * Retrieves the schema of a database given its unique identifier (DBID).
    *
    * @param dbid - The unique identifier of the database. The DBID can be generated using the kwil.getDBID method.
-   * @deprecated Use `kwil.selectQuery(query, params?, signer?)` instead. This method will be removed in the next major version.
+   * @deprecated Use `kwil.selectQuery(query, params?)` instead. This method will be removed in the next major version.
    * @returns A promise that resolves to the schema of the database.
    */
   // TODO: Improve deprecation message with examples
@@ -349,7 +342,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       'WARNING: `getSchema()` is deprecated and will be removed in the next major version. Please use `kwil.selectQuery()` instead.'
     );
     throw new Error(
-      'The `getSchema()` method is no longer supported. Please use `kwil.selectQuery(query, params?, signer?)` instead.'
+      'The `getSchema()` method is no longer supported. Please use `kwil.selectQuery(query, params?)` instead.'
     );
   }
 
@@ -401,16 +394,16 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    * Lists all databases owned by a particular owner.
    *
    * @param owner (optional) - Lists the databases on a network. Can pass and owner identifier to see all the databases deployed by a specific account, or leave empty to see al the databases deployed on the network. The owner's public key (Ethereum or NEAR Protocol). Ethereum keys can be passed as a hex string (0x123...) or as bytes (Uint8Array).
-   * @deprecated Use `kwil.selectQuery(query, params?, signer?)` instead. This method will be removed in the next major version.
+   * @deprecated Use `kwil.selectQuery(query, params?)` instead. This method will be removed in the next major version.
    * @returns A promise that resolves to a list of database names.
    */
 
   public async listDatabases(owner?: string | Uint8Array): Promise<GenericResponse<DatasetInfo[]>> {
     console.warn(
-      'WARNING: `listDatabases()` is deprecated and will be removed in the next major version. Please use `kwil.selectQuery(query, params?, signer?)` instead.'
+      'WARNING: `listDatabases()` is deprecated and will be removed in the next major version. Please use `kwil.selectQuery(query, params?)` instead.'
     );
     throw new Error(
-      'The `listDatabases()` method is no longer supported. Please use `kwil.selectQuery(query, params?, signer?)` instead.'
+      'The `listDatabases()` method is no longer supported. Please use `kwil.selectQuery(query, params?)` instead.'
     );
   }
 
