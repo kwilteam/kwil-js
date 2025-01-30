@@ -53,7 +53,7 @@ export async function executeAction(
       nonce: nonce ? nonce + 1 : undefined,
     },
     signer,
-    false
+    true
   );
 
   console.log(res);

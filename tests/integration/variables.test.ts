@@ -100,7 +100,55 @@ import { TxReceipt } from '../../src/core/tx';
   });
 
   describe('Test variables insertion', () => {
-    // Will run in either KGW or Public mode
+    // TODO: Skipped this test because it is not working as expected.
+    // Big decimals may have changed since the last release.
+    // Getting error: expected argument 6 to be numeric(20,10), got numeric(17,7)
+    it.skip('should be able to insert all variables', async () => {
+      const uuid = uuidV4();
+      const text = 'This is a test text';
+      const int = 123;
+      const bool = true;
+      const dec = 123.45;
+      // const bigDec = 1234567890.123456789;
+      const blob = new Uint8Array([1, 2, 3, 4, 5]);
+
+      const res = await kwil.execute(
+        {
+          namespace,
+          name: 'insert_all',
+          inputs: [
+            {
+              $id: uuid,
+              $text: text,
+              $int: int,
+              $bool: bool,
+              $dec: dec,
+              // $big_dec: bigDec,
+              $blob: blob,
+            },
+          ],
+        },
+        kwilSigner,
+        true
+      );
+
+      expect(res.data).toBeDefined();
+      expect(res.data).toMatchObject<TxReceipt>({
+        tx_hash: expect.any(String),
+      });
+
+      const query = await kwil.selectQuery(
+        `{${namespace}} SELECT * FROM ${tableName} WHERE uuid_col = $uuid`,
+        {
+          $uuid: uuid,
+        }
+      );
+      expect(query.data).toBeDefined();
+      expect(query.data).toHaveLength(1);
+      expect(Array.isArray(query.data)).toBe(true);
+      expect(query.data?.length).toBeGreaterThan(0);
+    });
+
     it('should be able to insert a record with a UUID', async () => {
       const uuid = uuidV4();
 

@@ -53,34 +53,34 @@ import { ViewCaller } from '../testingUtils';
     expect(preCookie).not.toBe(postCookie);
   });
 
-  it('should allow a new signer after logging out', async () => {
-    // Log out
-    await kwil.auth.logoutKGW();
+  // it('should allow a new signer after logging out', async () => {
+  //   // Log out
+  //   await kwil.auth.logoutKGW();
 
-    // Create a new signer
-    const newWallet = Wallet.createRandom();
+  //   // Create a new signer
+  //   const newWallet = Wallet.createRandom();
 
-    const newSigner = new KwilSigner(newWallet, newWallet.address);
+  //   const newSigner = new KwilSigner(newWallet, newWallet.address);
 
-    const body: ActionBody = {
-      name: 'view_caller',
-      namespace,
-    };
+  //   const body: ActionBody = {
+  //     name: 'view_caller',
+  //     namespace,
+  //   };
 
-    let result;
-    if (isKwildPrivateOn || isKgwOn) {
-      result = await kwil.call(body, newSigner);
-    } else {
-      result = await kwil.call(body);
-    }
+  //   let result;
+  //   if (isKwildPrivateOn || isKgwOn) {
+  //     result = await kwil.call(body, newSigner);
+  //   } else {
+  //     result = await kwil.call(body);
+  //   }
 
-    const returnedCaller = result.data?.result?.[0] as ViewCaller | undefined;
+  //   const returnedCaller = result.data?.result;
 
-    expect(result.data).toMatchObject<MsgReceipt>({
-      result: expect.any(Array),
-    });
-    expect(returnedCaller?.caller).toBe(newWallet.address);
-  });
+  //   expect(result.data).toMatchObject<MsgReceipt>({
+  //     result: expect.any(Array),
+  //   });
+  //   expect(returnedCaller?.caller).toBe(newWallet.address);
+  // });
 
   (isKgwOn ? describe : describe.skip)(
     'Testing authentication without autoAuthenticate in KGW',

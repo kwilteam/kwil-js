@@ -4,6 +4,7 @@ import { ActionBody } from '../../src/core/action';
 import { kwilSigner } from './setup';
 import { createTestSchema, dropTestSchema } from './utils';
 
+// TODO: Needs more tests and testing.  Seems the createTestSchema & dropTestSchema is not working as expected. Namespace is not being dropped.
 describe('unconfirmedNonce', () => {
   const namespace = 'nonce_test';
 
