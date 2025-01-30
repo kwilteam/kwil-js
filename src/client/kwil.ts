@@ -177,7 +177,6 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       return this.legacySelectQuery(query, params);
     }
 
-    // TODO: consider moving into the client?
     const encodedParams = encodeParameters(params || {});
 
     const q: SelectQueryRequest = {
@@ -247,10 +246,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     signer: KwilSigner,
     synchronous?: boolean
   ): Promise<GenericResponse<TxReceipt>> {
-    // TODO: refactor / move into client
     const encodedParams = encodeRawStatementParameters(params);
-
-    console.log(`Encoded params:`, encodedParams);
 
     const rawStatementPayload: RawStatementPayload = {
       statement: query,
