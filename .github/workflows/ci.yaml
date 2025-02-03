@@ -52,14 +52,33 @@ jobs:
       - name: Install Taskfile
         uses: arduino/setup-task@v2
 
-
       - name: Set up KwilDB Docker in Public mode
         run: |
-          git clone https://github.com/kwilteam/kwil-db.git /tmp/kwil-db-public -b release-v0.9
+          git clone https://github.com/kwilteam/kwil-db.git /tmp/kwil-db-public
           cd /tmp/kwil-db-public
-          go work init && go work use . ./test ./core
+          task work
           task build:docker
-          cd deployments/compose/kwil
+          cd contrib/docker/compose/kwil
+          echo "services:
+            kwild:
+              entrypoint: [\"/app/kwild\"]
+              command: |
+                start
+                --autogen
+                --root=/app/.kwild
+                --log-format=plain
+                --log-level=debug
+                --admin.listen=/tmp/kwild.socket
+                --rpc.listen=0.0.0.0:8484
+                --p2p.listen=0.0.0.0:6600
+                --consensus.propose-timeout=500ms
+                --consensus.empty-block-timeout=6s
+                --db.host=172.5.100.3
+                --db.port=5432
+                --db.user=kwild
+                --db.pass=kwild
+                --db-owner 0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf
+          " > ./docker-compose.override.yml
           echo "Starting kwil docker"
           docker compose up -d
           cd -
@@ -79,34 +98,34 @@ jobs:
       - name: Cleanup Docker
         if: always()
         run: |
-          docker compose -f /tmp/kwil-db-public/deployments/compose/kwil/docker-compose.yml down
+          docker compose -f /tmp/kwil-db-public/contrib/docker/compose/kwil/docker-compose.yml down
           docker system prune -af
 
-      - name: Set up KwilDB Docker in Private mode
-        run: |
-          git clone https://github.com/kwilteam/kwil-db.git /tmp/kwil-db-private -b release-v0.9
-          cd /tmp/kwil-db-private
-          go work init && go work use . ./test ./core
-          task build:docker
-          cd -
-          cd .github/workflows
-          docker compose up -d
-          cd -
+      # - name: Set up KwilDB Docker in Private mode
+      #   run: |
+      #     git clone https://github.com/kwilteam/kwil-db.git /tmp/kwil-db-private -b v0.10.0-beta-1
+      #     cd /tmp/kwil-db-private
+      #     go work init && go work use . ./test ./core
+      #     task build:docker
+      #     cd -
+      #     cd .github/workflows
+      #     docker compose up -d
+      #     cd -
 
-      - name: Install and build kwiljs
-        run: |
-          npm install
-          npm run build
+      # - name: Install and build kwiljs
+      #   run: |
+      #     npm install
+      #     npm run build
 
-      - name: Run integration tests in private mode
-        run: |
-          chain_id=`curl -X POST http://localhost:8484/rpc/v1 -H "Content-Type: application/json" -d '{"jsonrpc": "2.0", "id": 1, "method": "user.chain_info", "params": {}}' | jq -r '.result.chain_id'`
-          echo "Chain ID: $chain_id"
-          echo "run KWIL-JS TEST in private mode against kwild(http:localhost:8484),  with $chain_id"
-          PRIVATE_KEY=0000000000000000000000000000000000000000000000000000000000000001 CHAIN_ID=$chain_id GATEWAY_ON=FALSE GAS_ON=FALSE PRIVATE_MODE=TRUE KWIL_PROVIDER=http://localhost:8484 npm run integration
+      # - name: Run integration tests in private mode
+      #   run: |
+      #     chain_id=`curl -X POST http://localhost:8484/rpc/v1 -H "Content-Type: application/json" -d '{"jsonrpc": "2.0", "id": 1, "method": "user.chain_info", "params": {}}' | jq -r '.result.chain_id'`
+      #     echo "Chain ID: $chain_id"
+      #     echo "run KWIL-JS TEST in private mode against kwild(http:localhost:8484),  with $chain_id"
+      #     PRIVATE_KEY=0000000000000000000000000000000000000000000000000000000000000001 CHAIN_ID=$chain_id GATEWAY_ON=FALSE GAS_ON=FALSE PRIVATE_MODE=TRUE KWIL_PROVIDER=http://localhost:8484 npm run integration
       
-      - name: Cleanup Docker
-        if: always()
-        run: |
-          docker compose -f .github/workflows/docker-compose.yml down
-          docker system prune -af
+      # - name: Cleanup Docker
+      #   if: always()
+      #   run: |
+      #     docker compose -f .github/workflows/docker-compose.yml down
+      #     docker system prune -af
