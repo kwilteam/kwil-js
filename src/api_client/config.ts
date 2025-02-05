@@ -6,7 +6,7 @@ export interface ApiConfig {
   kwilProvider: string;
   timeout?: number;
   logging?: boolean;
-  logger?: Function;
+  logger?: (msg: string) => any;
   /**
    * @deprecated - Cache is deprecated.
    */

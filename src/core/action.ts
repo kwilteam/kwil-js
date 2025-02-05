@@ -13,7 +13,7 @@ export type NamedParams = Record<string, ValueType | ValueType[]>;
 
 export type Predicate = (k: [key: string, v: ValueType | ValueType[]]) => boolean;
 
-export type PositionalParam = ValueType[]
+export type PositionalParams = ValueType[]
 
 /**
  * ActionBody is the interface for executing an action with the `kwil.execute()` method.
@@ -47,7 +47,7 @@ export interface ActionBody {
    * const input = ["Alice", 25];
    * ```
    */
-  inputs?: NamedParams[] | PositionalParam[] | ActionInput[];
+  inputs?: NamedParams[] | PositionalParams[] | ActionInput[];
   /**
    * description is an optional description of the action.
    */
@@ -90,7 +90,7 @@ export interface CallBody {
    * const input = ["Alice", 25];
    * ```
    */
-  inputs?: NamedParams | PositionalParam | ActionInput[];
+  inputs?: NamedParams | PositionalParams | ActionInput[];
   /**
    * authBody is an optional value for the read/view action to be called in private mode
    * AuthBody interface => consisting of the signature and challenge for the message
@@ -213,7 +213,7 @@ export const transformPositionalParam = {
  * @param {unknown} i - The value to be checked.
  * @returns {boolean} - True if `inputs` is an array where every element is a PositionalParam, otherwise false.
  */
-  isPositionalParams(i: unknown): i is PositionalParam[] {
+  isPositionalParams(i: unknown): i is PositionalParams[] {
     return Array.isArray(i) && i.every((p) => isValueType(p));
   },
 
@@ -223,23 +223,23 @@ export const transformPositionalParam = {
    * @returns {boolean} - True if `i` is a PositionalParam, otherwise false.
    */
 
-  isPositionalParam(i: unknown): i is PositionalParam {
+  isPositionalParam(i: unknown): i is PositionalParams {
     return isValueType(i);
   },
 
   /** 
    * Transforms positional parameters into named parameters to be used for validation
    * 
-   * @param {PositionalParam[]} inputs - The input array to transform
+   * @param {PositionalParams[]} inputs - The input array to transform
    * @returns {NamedParams[]} - Array containing entries objects
    */
-  toNamedParams(inputs: PositionalParam[]): NamedParams[] {
+  toNamedParams(inputs: PositionalParams[]): NamedParams[] {
     return inputs.map((i) => {
       return transformPositionalParam.toNamedParam(i);
     });
   },
 
-  toNamedParam(i: PositionalParam): NamedParams {
+  toNamedParam(i: PositionalParams): NamedParams {
     const np: NamedParams = {};
     i.forEach((v, idx) => {
       np[`$pstn_${idx}`] = v;

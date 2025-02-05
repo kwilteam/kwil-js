@@ -22,7 +22,7 @@ npm i @kwilteam/kwil-js ethers
 
 Configure your `NodeKwil` or `WebKwil` class by providing the required configurations and any [optional configurations](https://docs.kwil.com/docs/sdks/js-ts/overview#optional-configuration).
 
-### Web
+### Browser
 
 ```javascript
 import { BrowserProvider } from 'ethers';
@@ -63,31 +63,40 @@ Secp256k1 signers use **Ethereum wallet addresses** as identifiers. ED25519 sign
 
 ## Signers
 
-Certain operations in Kwil require signature authentication from the user (e.g. deploy database, drop database, execute CRUD actions, etc).
+Certain operations in Kwil require signature authentication from the user (e.g. execute action, INSERT/UPDATE/DELETE/CREATE/DROP, transfer funds, etc).
 
-To manage signing, Kwil-JS uses a `KwilSigner` class. Out of the box, Kwil-JS supports signers from [EthersJS](https://github.com/ethers-io/ethers.js) (v5 and v6). You can also pass a signing callback function (see below).
+To manage signing, Kwil-JS uses a `KwilSigner` class. Out of the box, Kwil-JS supports signers from [ethers.js](https://github.com/ethers-io/ethers.js) (v5 and v6). You can also pass a custom signing callback function (see [below](#custom-signers)).
 
 The account identifier can be passed as a hex string or as bytes.
 
+### Browser
+
 ```javascript
-import { Utils, KwilSigner } from '@kwilteam/kwil-js';
+import { KwilSigner } from '@kwilteam/kwil-js';
 import { BrowserProvider } from 'ethers';
 
-// if in browser, use BrowserProvider
 const provider = new BrowserProvider(window.ethereum)
 const signer = await provider.getSigner();
 
 // get ethereum address
 const identifier = await signer.getAddress();
 
-// if in NodeJS, use Wallet
+// create kwil signer
+const kwilSigner = new KwilSigner(signer, identifier);
+
+```
+
+### NodeJS
+
+```javascript
+import { KwilSigner } from '@kwilteam/kwil-js';
 import { Wallet } from 'ethers';
+
 const signer = new Wallet("my_ethereum_private_key");
 const identifier = await signer.getAddress();
 
 // create kwil signer
 const kwilSigner = new KwilSigner(signer, identifier);
-
 ```
 
 ## Writing Data
@@ -120,18 +129,20 @@ const res = await kwil.execSql(
 
 Actions are pre-defined operations that can be executed on the database.
 
-You can bulk execute an action by passing an array of objects to the `inputs` field.
+You can bulk execute an action by passing an array of objects to the `inputs` field (to name each parameter), or an array of tuples (for unnamed parameters).
+
+To execute an action once, pass only one tuple to the inputs array.
 
 ```javascript
 const res = await kwil.execute(
     {
         namespace: 'db_namespace' // e.g., 'main',
         name: 'action_name', // e.g., 'create_user',
-        inputs: [{
-            $input_name_1: 'input_value_1',
-            $input_name_2: 'input_value_2',
-            $input_name_3: 'input_value_3'
-        }],
+        // execute the same action two times:
+        inputs: [
+            ['iter_1_value_1', 'iter_1_value_2', 'iter_1_value_3'],
+            ['iter_2_value_1', 'iter_2_value_2', 'iter_2_value_3'],
+        ],
         description: 'Click sign to execute'
     },
     kwilSigner,
@@ -170,23 +181,20 @@ const res = await kwil.selectQuery(
 
 View actions are read-only actions that return data without having to wait for a transaction to be mined on Kwil.
 
-If the `view` actions uses a `@caller` contextual variable, you must pass a `KwilSigner` as the second argument to the `kwil.call()` method to identify the caller.
+If the `view` action uses a `@caller` contextual variable, you must pass a `KwilSigner` as the second argument to the `kwil.call()` method to identify the caller.
 
 ```javascript
 const res = await kwil.call(
     {
         namespace: 'db_namespace',
         name: 'action_name',
-        inputs: [{
-            $input_name_1: 'input_value_1',
-            $input_name_2: 'input_value_2',
-            $input_name_3: 'input_value_3'
-        }]
-    }
+        inputs: ['input_value_1', 'input_value_2']
+    },
+    kwilSigner
 )
 ```
 
-## Network Info
+## Database Info
 
 ### ChainID and Status
 
@@ -261,10 +269,7 @@ Private RPC is a server-side configuration in kwild that enforces user authentic
 const body: CallBody = {
         namespace,
         name: 'your_action_name',
-        inputs: [{
-            $input_name_1: 'input_value_1',
-            $input_name_2: ...
-          }]
+        inputs: ['input_value_1', 'input_value_2']
 };
 
 // pass body AND kwilSigner if in Private Mode

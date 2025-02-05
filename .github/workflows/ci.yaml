@@ -54,7 +54,7 @@ jobs:
 
       - name: Set up KwilDB Docker in Public mode
         run: |
-          git clone https://github.com/kwilteam/kwil-db.git /tmp/kwil-db-public
+          git clone https://github.com/kwilteam/kwil-db.git /tmp/kwil-db-public -b v0.10.0-beta.2
           cd /tmp/kwil-db-public
           task work
           task build:docker
@@ -71,9 +71,9 @@ jobs:
                 --admin.listen=/tmp/kwild.socket
                 --rpc.listen=0.0.0.0:8484
                 --p2p.listen=0.0.0.0:6600
-                --consensus.propose-timeout=500ms
-                --consensus.empty-block-timeout=6s
-                --db.host=172.5.100.3
+                --consensus.propose-timeout=1s
+                --consensus.empty-block-timeout=1s
+                --db.host=172.5.200.3
                 --db.port=5432
                 --db.user=kwild
                 --db.pass=kwild
