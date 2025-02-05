@@ -12,7 +12,7 @@ import {
   EnvironmentType,
   PayloadType,
 } from '../core/enums';
-import { ActionBody, CallBody, Entries, transformActionInput } from '../core/action';
+import { ActionBody, CallBody, NamedParams, transformActionInput, transformPositionalParam } from '../core/action';
 import { KwilSigner } from '../core/kwilSigner';
 import { wrap } from './intern';
 import { Funder } from '../funder/funder';
@@ -135,11 +135,15 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     const namespace = resolveNamespace(actionBody);
 
     // ActionInput[] has been deprecated.
-    // This transforms the ActionInput[] into Entries[] to support legacy ActionInput[]
-    let inputs: Entries[] = [];
+    // This transforms the ActionInput[] into NamedInput[] to support legacy ActionInput[]
+    let inputs: NamedParams[] = [];
     if (actionBody.inputs && transformActionInput.isActionInputArray(actionBody.inputs)) {
-      inputs = transformActionInput.toEntries(actionBody.inputs);
+      inputs = transformActionInput.toNamedParams(actionBody.inputs);
+    } else if (actionBody.inputs && transformPositionalParam.isPositionalParams(actionBody.inputs)) {
+      // handle positional parameters
+      inputs = transformPositionalParam.toNamedParams(actionBody.inputs); 
     } else {
+      // If the inputs are not an ActionInput[] or PositionalParam[], we assume they are NamedParams[]
       inputs = actionBody.inputs || [];
     }
 
@@ -478,7 +482,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    * Builds a message with a chainId, namespace, name, and description of the action.
    * NOT INCLUDED => challenge, sender, signature
    *
-   * @param actionBody - The message to send. The message can be built using the buildMsg() method in the Action class.
+   * @param callBody - The message to send. The message can be built using the buildMsg() method in the Action class.
    * @param kwilSigner (optional) - KwilSigner should be passed if the action requires authentication OR if the action uses a `@caller` contextual variable. If `@caller` is used and authentication is not required, the user will not be prompted to authenticate; however, the user's identifier will be passed as the sender.
    * @param challenge (optional) - To ensure a challenge is passed into the message before the signer in PRIVATE mode
    * @param signature (optional) - To ensure a signature is passed into the message before the signer in PRIVATE mode
@@ -487,33 +491,36 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    * @throws — Will throw an error if the action is not a view action.
    */
   private async buildMessage(
-    actionBody: ActionBody,
+    callBody: CallBody,
     kwilSigner?: KwilSigner,
     challenge?: string,
     signature?: Base64String
   ): Promise<Message> {
-    if (!actionBody.name) {
+    if (!callBody.name) {
       throw new Error('name is required in actionBody');
     }
 
-    const namespace = resolveNamespace(actionBody);
+    const namespace = resolveNamespace(callBody);
 
     // ActionInput[] is deprecated. So we are converting any ActionInput[] to an Entries[]
-    let inputs: Entries[] = [];
-    if (actionBody.inputs && transformActionInput.isActionInputArray(actionBody.inputs)) {
+    let inputs: NamedParams = {};
+    if (callBody.inputs && transformActionInput.isActionInputArray(callBody.inputs)) {
       // For a call only one entry is allowed, so we only need to convert the first ActionInput
-      inputs = transformActionInput.toSingleEntry(actionBody.inputs);
-    } else if (actionBody.inputs) {
-      inputs = actionBody.inputs;
+      inputs = transformActionInput.toSingleEntry(callBody.inputs);
+    } else if (callBody.inputs && transformPositionalParam.isPositionalParam(callBody.inputs)) {
+      // handle positional parameters
+      inputs = transformPositionalParam.toNamedParam(callBody.inputs);
+    } else if (callBody.inputs) {
+      inputs = callBody.inputs;
     }
 
     // pre Challenge message
     let msg = Action.createTx<EnvironmentType.BROWSER>(this, {
       chainId: this.chainId,
       namespace,
-      actionName: actionBody.name,
-      description: actionBody.description || '',
-      actionInputs: inputs,
+      actionName: callBody.name,
+      description: '',
+      actionInputs: [inputs],
     });
 
     /**
@@ -589,13 +596,13 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    * Checks authentication errors for PRIVATE mode
    * Signs message and then retries request for successful response
    *
-   * @param {ActionBodyNode} actionBody - The message to send. The message can be built using the buildMsg() method in the Action class.
+   * @param {CallBodyNode} actionBody - The message to send. The message can be built using the buildMsg() method in the Action class.
    * @param {KwilSigner} kwilSigner (optional) - KwilSigner should be passed if the action requires authentication OR if the action uses a `@caller` contextual variable. If `@caller` is used and authentication is not required, the user will not be prompted to authenticate; however, the user's identifier will be passed as the sender.
    * @returns the authentication body that consists of the challenge and signature required for PRIVATE mode
    */
 
   private async handleAuthenticatePrivate(
-    actionBody: ActionBody,
+    actionBody: CallBody,
     kwilSigner?: KwilSigner
   ): Promise<AuthBody> {
     if (this.autoAuthenticate) {

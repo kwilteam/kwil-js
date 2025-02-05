@@ -1,10 +1,8 @@
 import { deriveKeyPair64, grantAdminAccess, kwil } from './setup';
 import { KwilSigner, Types, Utils } from '../../src/index';
-
 import nacl from 'tweetnacl';
-import { ActionBody, CallBodyNode } from '../../src/core/action';
+import { ActionBody } from '../../src/core/action';
 import { TxReceipt } from '../../src/core/tx';
-import { MsgReceipt } from '../../src/core/message';
 import { createTestSchema, dropTestSchema } from './setup';
 import { bytesToHex } from '../../src/utils/serial';
 import { GenericResponse } from '../../src/core/resreq';

@@ -83,6 +83,24 @@ export type ValueType =
   | Uint8Array
   | UUID;
 
+  export function isValueType(v: unknown): v is ValueType {
+    if (
+      v === null ||
+      v === undefined ||
+      typeof v === "string" ||
+      typeof v === "number" ||
+      typeof v === "boolean" ||
+      v instanceof Uint8Array
+    ) {
+      return true;
+    }
+  
+    if (Array.isArray(v)) {
+      return v.every(isValueType);
+    }
+  
+    return false;
+  }
 /**
  * QueryParams is a type for the parameters used within query.
  */

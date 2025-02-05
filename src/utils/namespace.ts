@@ -1,4 +1,4 @@
-import { ActionBody, ActionBodyNode, CallBody } from '../core/action';
+import { ActionBody, CallBody } from '../core/action';
 
 export const validateNamespace = (namespace: string): boolean => {
   // Validate namespace
@@ -19,7 +19,7 @@ export const validateNamespace = (namespace: string): boolean => {
   return true;
 };
 
-export const resolveNamespace = (actionBody: ActionBody | ActionBodyNode | CallBody): string => {
+export const resolveNamespace = (actionBody: ActionBody | CallBody): string => {
   if (actionBody.namespace) {
     return actionBody.namespace;
   }

@@ -1,4 +1,4 @@
-import { ActionBody, ActionBodyNode } from '../../src/core/action';
+import { CallBody, CallBodyNode } from '../../src/core/action';
 import { AuthSuccess, LogoutResponse } from '../../src/core/auth';
 import { EnvironmentType } from '../../src/core/enums';
 import { MsgReceipt } from '../../src/core/message';
@@ -19,7 +19,7 @@ import { NodeKwil } from '../../src';
   }, 10000);
 
   it('should authenticate and return data automatically', async () => {
-    const body: ActionBody = {
+    const body: CallBody = {
       name: 'view_must_sign',
       namespace,
     };
@@ -59,7 +59,7 @@ import { NodeKwil } from '../../src';
 
   //   const newSigner = new KwilSigner(newWallet, newWallet.address);
 
-  //   const body: ActionBody = {
+  //   const body: CallBody = {
   //     name: 'view_caller',
   //     namespace,
   //   };
@@ -89,7 +89,7 @@ import { NodeKwil } from '../../src';
       });
 
       it('should not authenticate automatically', async () => {
-        const body: ActionBody = {
+        const body: CallBody = {
           name: 'view_must_sign',
           namespace,
         };
@@ -117,7 +117,7 @@ import { NodeKwil } from '../../src';
 
         if (!cookie) throw new Error('No cookie found');
 
-        const body: ActionBodyNode = {
+        const body: CallBodyNode = {
           name: 'view_must_sign',
           namespace,
           cookie,
@@ -132,7 +132,7 @@ import { NodeKwil } from '../../src';
       });
 
       it('should not authenticate when a bad cookie is passed back to the action', async () => {
-        const body: ActionBodyNode = {
+        const body: CallBodyNode = {
           name: 'view_must_sign',
           namespace,
           cookie: 'badCookie',
@@ -146,7 +146,7 @@ import { NodeKwil } from '../../src';
 
       // cookies are not needed in private mode
       it('should continue authenticating after a bad cookie was passed to the previous action', async () => {
-        const body: ActionBody = {
+        const body: CallBody = {
           name: 'view_must_sign',
           namespace,
         };

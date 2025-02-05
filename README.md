@@ -90,31 +90,6 @@ const kwilSigner = new KwilSigner(signer, identifier);
 
 ```
 
-### Custom Signers
-
-If you wish to sign with something other than an EtherJS signer, you may pass a callback function that accepts and returns a `Uint8Array()` and the enumerator for the signature type used.
-
-Currently, Kwil supports two signature types:
-
-| Type      |   Enumerator   |   Identifier   | Description |
-| :-------- | :------------: | ----------- | ----------- |
-| Secp256k1 | 'secp256k1' | Ethereum Wallet Address | The Kwil Signer will use Ethereum Personal Sign (EIP-191). |
-| ED25519   |   'ed25519'    | ED25519 Public Key | The Kwil Signer will use an ED25519 signature. |
-
-To use an ED25519 signature:
-
-```javascript
-import nacl from 'tweetnacl';
-import { KwilSigner } from '@kwilteam/kwil-js';
-
-// create keypair and signer
-const keys = nacl.sign.keyPair();
-const customSigner = (msg) => nacl.sign.detached(msg, keys.secretKey);
-const identifier = keys.publicKey;
-
-const kwilSigner = new KwilSigner(customSigner, identifier, 'ed25519');
-```
-
 ## Writing Data
 
 To write data on Kwil, you can (1) execute an ad-hoc SQL query or (2) execute an action.
@@ -252,6 +227,31 @@ const res = await kwil.getAccount("account_identifier", "custom_signer_enumerato
 ```
 
 ## Advanced Usage
+
+### Custom Signers
+
+If you wish to sign with something other than an EtherJS signer, you may pass a callback function that accepts and returns a `Uint8Array()` and the enumerator for the signature type used.
+
+Currently, Kwil supports two signature types:
+
+| Type      |   Enumerator   |   Identifier   | Description |
+| :-------- | :------------: | ----------- | ----------- |
+| Secp256k1 | 'secp256k1' | Ethereum Wallet Address | The Kwil Signer will use Ethereum Personal Sign (EIP-191). |
+| ED25519   |   'ed25519'    | ED25519 Public Key | The Kwil Signer will use an ED25519 signature. |
+
+To use an ED25519 signature:
+
+```javascript
+import nacl from 'tweetnacl';
+import { KwilSigner } from '@kwilteam/kwil-js';
+
+// create keypair and signer
+const keys = nacl.sign.keyPair();
+const customSigner = (msg) => nacl.sign.detached(msg, keys.secretKey);
+const identifier = keys.publicKey;
+
+const kwilSigner = new KwilSigner(customSigner, identifier, 'ed25519');
+```
 
 ### Private Mode
 

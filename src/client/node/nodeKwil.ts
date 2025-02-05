@@ -1,8 +1,7 @@
 import { Config } from '../../api_client/config';
-import { ActionBodyNode, CallBodyNode } from '../../core/action';
+import { CallBodyNode } from '../../core/action';
 import { EnvironmentType } from '../../core/enums';
 import { KwilSigner } from '../../core/kwilSigner';
-import { MsgReceipt } from '../../core/message';
 import { GenericResponse } from '../../core/resreq';
 import { Kwil } from '../kwil';
 

@@ -1,5 +1,5 @@
 import { Kwil } from '../client/kwil';
-import { ActionOptions, Entries, NamespaceAction, ValidatedAction } from '../core/action';
+import { ActionOptions, NamedParams, NamespaceAction, ValidatedAction } from '../core/action';
 import { SignerSupplier } from '../core/signature';
 import {
   AccessModifier,
@@ -16,7 +16,7 @@ import { objects } from '../utils/objects';
 import { encodeActionInputs } from '../utils/parameterEncoding';
 import { Base64String } from '../utils/types';
 
-const TXN_BUILD_IN_PROGRESS: Entries[] = [];
+const TXN_BUILD_IN_PROGRESS: NamedParams[] = [];
 
 /**
  * `Action` class creates a transaction to execute database actions on the Kwil network.
@@ -27,7 +27,7 @@ export class Action<T extends EnvironmentType> {
   public namespace: string;
   public chainId: string;
   public description: string;
-  public actionInputs: Entries[];
+  public actionInputs: NamedParams[];
   public signer?: SignerSupplier;
   public identifier?: Uint8Array;
   public signatureType?: AnySignatureType;
@@ -170,7 +170,7 @@ export class Action<T extends EnvironmentType> {
    */
   private async buildTxPayload(
     privateMode: boolean,
-    actionInputs: Entries[]
+    actionInputs: NamedParams[]
   ): Promise<UnencodedActionPayload<PayloadType.EXECUTE_ACTION>> {
     const payload: UnencodedActionPayload<PayloadType.EXECUTE_ACTION> = {
       dbid: this.namespace,
@@ -213,7 +213,7 @@ export class Action<T extends EnvironmentType> {
    */
   private async buildMsgPayload(
     privateMode: boolean,
-    actionInputs: Entries[]
+    actionInputs: NamedParams[]
   ): Promise<UnencodedActionPayload<PayloadType.CALL_ACTION>> {
     const payload: UnencodedActionPayload<PayloadType.CALL_ACTION> = {
       dbid: this.namespace,
@@ -245,7 +245,6 @@ export class Action<T extends EnvironmentType> {
     if (modifiers && modifiers.includes(AccessModifier.VIEW) === false) {
       throw new Error(`Action ${actionName} is not a view only action. Please use kwil.execute().`);
     }
-
     payload.arguments = encodedActionInputs[0];
 
     return payload;
@@ -257,7 +256,7 @@ export class Action<T extends EnvironmentType> {
    * @param {ActionInput[]} actionInputs - An array of action inputs to be executed.
    * @returns {ValidatedAction} - An object containing the database namespace, action name, modifiers, and encoded action inputs.
    */
-  private async validatedActionRequest(actionInputs: Entries[]): Promise<ValidatedAction> {
+  private async validatedActionRequest(actionInputs: NamedParams[]): Promise<ValidatedAction> {
     // retrieve the schema for the database
     const namespaceRequest = await this.kwil.getActions(this.namespace);
 
@@ -325,14 +324,14 @@ export class Action<T extends EnvironmentType> {
    */
   private validateActionInputs(
     selectedAction: NamespaceAction,
-    actionInputEntries: Entries
+    actionInputEntries: NamedParams
   ): boolean {
     const actionInputKeys = Object.keys(actionInputEntries);
 
     // if action does not require parameters, return true
     if (
       (!selectedAction.parameter_names || selectedAction.parameter_names.length === 0) &&
-      actionInputEntries.length === 0
+      Object.keys(actionInputEntries).length === 0
     ) {
       return true;
     }
@@ -352,6 +351,11 @@ export class Action<T extends EnvironmentType> {
           ', '
         )}`
       );
+    }
+
+    // return true if using positional parameters
+    if(Object.keys(actionInputEntries).every(key => key.startsWith('$pstn_'))) {
+      return true;
     }
 
     // Check to see if the actionInputs match the expected selectedAction parameters

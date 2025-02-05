@@ -1,7 +1,7 @@
 import { kwil, kwilSigner, differentKwilSigner, isKwildPrivateOn } from './setup';
 import { TxReceipt } from '../../src/core/tx';
 import { Utils } from '../../src/index';
-import { ActionBody } from '../../src/core/action';
+import { ActionBody, CallBody, CallBodyNode } from '../../src/core/action';
 import { uuidV4 } from './setup';
 
 // Primary integration tests for Kwil SQL namespace, table and action deployment, calling and executing actions, and dropping operations
@@ -61,7 +61,7 @@ describe('SQL Schema Deployment and Management', () => {
       },
       {
         name: 'get_post_by_title',
-        sql: `{${namespace}}CREATE ACTION get_post_by_title($title text) PUBLIC VIEW RETURNS (post_title text, post_body text) { for $row in SELECT post_title, post_body FROM posts WHERE post_title = $title { RETURN $row.post_title, $row.post_body; } ERROR(format('record with title = "%s" not found', $title)); }`,
+        sql: `{${namespace}}CREATE ACTION get_post_by_title($title text) PUBLIC VIEW RETURNS (post_title text, post_body text) { for $row in SELECT post_title, post_body FROM posts WHERE post_title = $title { RETURN $row.post_title, $row.post_body; } }`,
       },
     ];
 
@@ -131,6 +131,32 @@ describe('SQL Schema Deployment and Management', () => {
       });
     });
 
+    it('should bulk execute actions', async () => {
+      const actionBody: ActionBody = {
+        namespace,
+        name: 'add_post',
+        inputs: [
+          {
+            $id: uuidV4(),
+            $user: 'TestUser',
+            $title: 'Bulk Test 1',
+            $body: 'Testing bulk action execution 1',
+          },
+          {
+            $id: uuidV4(),
+            $user: 'TestUser',
+            $title: 'Bulk Test 2',
+            $body: 'Testing bulk action execution 2',
+          },
+        ],
+      }
+
+      const result = await kwil.execute(actionBody, kwilSigner, true);
+      expect(result.data).toMatchObject<TxReceipt>({
+        tx_hash: expect.any(String),
+      });
+    });
+
     it('should execute update_post action', async () => {
       const actionBody: ActionBody = {
         namespace,
@@ -163,28 +189,26 @@ describe('SQL Schema Deployment and Management', () => {
     });
 
     (!isKwildPrivateOn ? it : it.skip)('should execute read_posts_count view action without signer or inputs', async () => {
-      const actionBody: ActionBody = {
+      const actionBody: CallBody = {
         namespace,
         name: 'read_posts_count',
       };
 
       const result = await kwil.call(actionBody);
       if (result.data) {
-        expect(result.data[0]).toMatchObject({ count: 2 });
+        expect(result.data[0]).toMatchObject({ count: 4 });
       } else {
         throw new Error('No data returned from action execution');
       }
     });
 
     it('should execute get_post_by_id view action with signer', async () => {
-      const actionBody: ActionBody = {
+      const actionBody: CallBody = {
         namespace,
         name: 'get_post_by_id',
-        inputs: [
-          {
-            $id: actionPostId,
-          },
-        ],
+        inputs: {
+          $id: actionPostId,
+        },
       };
 
       const result = await kwil.call(actionBody, kwilSigner);
@@ -199,14 +223,13 @@ describe('SQL Schema Deployment and Management', () => {
     });
 
     it('should execute view_with_param view action', async () => {
-      const actionBody: ActionBody = {
+      const actionBody: CallBody = {
         namespace,
         name: 'view_with_param',
-        inputs: [
-          {
-            $title: 'Action Test',
-          },
-        ],
+        inputs: {
+          $title: 'Action Test',
+        },
+
       };
 
       const result = await kwil.call(actionBody, kwilSigner);
@@ -217,14 +240,14 @@ describe('SQL Schema Deployment and Management', () => {
           post_body: 'Updated post body',
         });
       } else {
-        throw new Error('No data returned from action execution');
+        throw new Error('No data returned from action call');
       }
     });
 
     it('should execute view_with_param view action with ActionInputs', async () => {
       const actionInputData = Utils.ActionInput.of().put('$title', 'Action Test');
 
-      const actionBody: ActionBody = {
+      const actionBody: CallBody = {
         namespace,
         name: 'view_with_param',
         inputs: [actionInputData],
@@ -243,14 +266,12 @@ describe('SQL Schema Deployment and Management', () => {
     });
 
     it('should execute view_with_param view action with a different signer', async () => {
-      const actionBody: ActionBody = {
+      const actionBody: CallBody = {
         namespace,
         name: 'view_with_param',
-        inputs: [
-          {
+        inputs: {
             $title: 'Action Test',
-          },
-        ],
+        },
       };
 
       // TODO: Need to test without kwilSigner
@@ -279,7 +300,7 @@ describe('SQL Schema Deployment and Management', () => {
         ],
       };
 
-      const result = await kwil.execute(actionBody, kwilSigner);
+      const result = await kwil.execute(actionBody, kwilSigner, true);
       expect(result.data).toMatchObject<TxReceipt>({
         tx_hash: expect.any(String),
       });
@@ -296,11 +317,76 @@ describe('SQL Schema Deployment and Management', () => {
         ],
       };
 
-      const result = await kwil.execute(actionBody, kwilSigner);
+      const result = await kwil.execute(actionBody, kwilSigner, true);
       expect(result.data).toMatchObject<TxReceipt>({
         tx_hash: expect.any(String),
       });
     });
+
+    it('should execute an action with positional parameters', async () => {
+      const actionBody: ActionBody = {
+        namespace,
+        name: 'add_post',
+        inputs: [
+          [
+            uuidV4(),
+            'TestUser',
+            'Positional Test',
+            'Testing positional parameters',
+          ]
+        ]
+      }
+
+      const result = await kwil.execute(actionBody, kwilSigner, true);
+      expect(result.data).toMatchObject<TxReceipt>({
+        tx_hash: expect.any(String),
+      });
+    });
+
+    it('should bulk execute actions with positional parameters', async () => {
+      const actionBody: ActionBody = {
+        namespace,
+        name: 'add_post',
+        inputs: [
+          [
+            uuidV4(),
+            'TestUser',
+            'Bulk Positional 1',
+            'Testing bulk positional parameters 1',
+          ],
+          [
+            uuidV4(),
+            'TestUser',
+            'Bulk Positional 2',
+            'Testing bulk positional parameters 2',
+          ],
+        ]
+      }
+
+      const result = await kwil.execute(actionBody, kwilSigner, true);
+      expect(result.data).toMatchObject<TxReceipt>({
+        tx_hash: expect.any(String),
+      });
+    })
+
+    it('should call an action with positional parameters', async () => {
+      const actionBody: CallBodyNode = {
+        namespace,
+        name: 'get_post_by_title',
+        inputs: ['Positional Test']
+      }
+
+      const result = await kwil.call(actionBody, kwilSigner);
+      if (result.data) {
+        expect(result.data).toHaveLength(1);
+        expect(result.data[0]).toMatchObject({
+          post_title: 'Positional Test',
+          post_body: 'Testing positional parameters',
+        });
+      } else {
+        throw new Error('No data returned from action call');
+      }
+    })
   });
 
   describe('Error Cases', () => {

@@ -15,6 +15,7 @@ const nacl = require('tweetnacl');
 const { sha256BytesToBytes } = require('../dist/utils/crypto');
 const { KwilSigner } = require('../dist/core/kwilSigner');
 const { ActionInput } = require('../dist/core/action');
+const { randomUUID } = require('crypto');
 require('dotenv').config();
 
 const chainId = process.env.CHAIN_ID || 'SHOULD FAIL';
@@ -91,7 +92,7 @@ async function scratchpad() {
   // await julioSignature(kwil, dbid)
   // await customEd25519(kwil, dbid)
   // await dropDb(kwil, kwilSigner, dbid);
-  await transfer(kwil, "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf", 20, kwilSigner)
+  // await transfer(kwil, "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf", 20, kwilSigner)
   // bulkActionInput(kwil, kwilSigner)
   // console.log(base64ToBytes('QVFJREJBVUdCd2dKQ2c9PQ=='))
 
@@ -106,15 +107,31 @@ async function scratchpad() {
   }
 
   const post = {
-    $id: 1,
-    $message: "hello_world"
+    $id: randomUUID(),
+    $user: 'Luke',
+    $title: 'Positional Test',
+    $body: 'Hello World',
   };
-  // executeGeneralAction(kwil, dbid, 'insert_greeting', kwilSigner, post);
+  // executeGeneralAction(kwil, 'mydb', 'add_post', kwilSigner, post);
   // await executeGeneralView(kwil, dbid, 'get_profile', null, kwilSigner);
   // await executeGeneralView(kwil, dbid, "view_must_sign", null, kwilSigner)
+  // await executePositionalView(kwil, 'mydb', 'get_post_by_title')
 }
 
 scratchpad();
+
+async function executePositionalView(kwil, namespace, name) {
+  const body = {
+    namespace,
+    name,
+    inputs: [
+      'Positional Test'
+    ]
+  };
+
+  const res = await kwil.call(body);
+  logger(res);
+}
 
 async function executeGeneralView(kwil, dbid, name, input, signer) {
   const body = {
@@ -130,7 +147,7 @@ async function executeGeneralView(kwil, dbid, name, input, signer) {
 async function executeGeneralAction(kwil, dbid, name, wallet, input) {
   const body = {
     name,
-    dbid,
+    namespace: dbid,
     ...(input ? { inputs: [input] } : {}),
   };
 

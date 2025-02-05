@@ -7,6 +7,9 @@ export interface ApiConfig {
   timeout?: number;
   logging?: boolean;
   logger?: Function;
+  /**
+   * @deprecated - Cache is deprecated.
+   */
   cache?: seconds;
 }
 
@@ -28,6 +31,6 @@ export interface KwilConfig extends ClientConfig {
  * @property {number} [timeout] - timeout for requests in milliseconds
  * @property {boolean} [logging] - enable logging
  * @property {Function} [logger] - custom logger function
- * @property {number} [cache] - @deprecated Cache is no longer supported.
+ * @property {number} [cache] 
  */
 export type Config = KwilConfig;

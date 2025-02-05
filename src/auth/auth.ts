@@ -15,7 +15,7 @@ import { objects } from '../utils/objects';
 import { AuthBody, executeSign } from '../core/signature';
 import { bytesToHex, hexToBytes, stringToBytes } from '../utils/serial';
 import { base64ToBytes, bytesToBase64 } from '../utils/base64';
-import { ActionBody, Entries, transformActionInput } from '../core/action';
+import { CallBody, NamedParams, transformActionInput, transformPositionalParam } from '../core/action';
 import { sha256BytesToBytes } from '../utils/crypto';
 import { UnencodedActionPayload } from '../core/payload';
 import { encodeActionCall } from '../utils/kwilEncoding';
@@ -90,12 +90,12 @@ export class Auth<T extends EnvironmentType> {
    * This method should only be used if your Kwil Network is in private mode.
    *
    * @param {KwilSigner} signer - The signer for the authentication.
-   * @param {ActionBody} actionBody - The body of the action to send. This should use the `ActionBody` interface.
+   * @param {CallBody} actionBody - The body of the action to send. This should use the `ActionBody` interface.
    * @returns A promise that resolves a privateSignature => privateSignature = {sig: string (Base64), type: AnySignatureType}
    */
 
   public async authenticatePrivateMode(
-    actionBody: ActionBody,
+    actionBody: CallBody,
     signer: KwilSigner
   ): Promise<AuthBody> {
     // get Challenge
@@ -107,23 +107,19 @@ export class Auth<T extends EnvironmentType> {
       throw new Error('Challenge data is undefined. Something went wrong.');
     }
 
-    // Check if multiple inputs were provided
-    if (actionBody.inputs && actionBody.inputs.length > 1) {
-      throw new Error(
-        'Only one input is allowed for call requests. Please pass only one input and try again.'
-      );
-    }
-
+ 
     // ActionInput[] is deprecated. So we are converting any ActionInput[] to an Entries[]
-    let inputs: Entries[] = [];
+    let inputs: NamedParams = {};
     if (actionBody.inputs && transformActionInput.isActionInputArray(actionBody.inputs)) {
       // For a call only one entry is allowed, so we only need to convert the first ActionInput
       inputs = transformActionInput.toSingleEntry(actionBody.inputs);
+    } else if(actionBody.inputs && transformPositionalParam.isPositionalParam(actionBody.inputs)) {
+      inputs = transformPositionalParam.toNamedParam(actionBody.inputs);
     } else if (actionBody.inputs) {
       inputs = actionBody.inputs;
     }
 
-    const actionValues = actionBody?.inputs ? Object.values(inputs[0]) : [];
+    const actionValues = actionBody?.inputs ? Object.values(inputs) : [];
 
     // construct payload. If there are no prepared actions, then the payload is an empty array.
     const payload: UnencodedActionPayload<PayloadType.CALL_ACTION> = {
