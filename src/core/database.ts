@@ -30,16 +30,7 @@ export interface DropBody {
   nonce?: number;
 }
 
-/**
- * @typedef {Object} SelectQuery is the interface for selecting data from a database with the `kwil.selectQuery()` method.
- * 
- * @property {string} query - The query to execute.
- * @property {QueryParams?} params (optional) - The parameters for the query.
- */
-export interface SelectQuery {
-  query: string;
-  params?: QueryParams;
-}
+
 
 /** DEPRECATED */
 /* EVERYTHNG BELOW CAN BE REMOVED WHEN DEPRECATED APIS ARE REMOVED */
