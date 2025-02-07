@@ -2,6 +2,49 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.9.0-beta.1](https://github.com/kwilteam/kwil-js/compare/v0.8.6...v0.9.0-beta.1) (2025-02-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* For the `kwil.call` api, the `inputs` field only takes an object or a tuple of
+scalar values. Previously, `inputs` received an array of only one object. We determined the single
+length array was unncessary and therefore removed it.
+
+fix: minor bug fixes
+* Now when calling txInfo() the response data includes the transaction hash in the
+'tx_hash' property instead of 'hash'
+* deprecate dbid field in call() actionBody.  Require namespace instead.
+* Deprecate selectQuery(dbid, query) signature. The new signature selectQuery(query,
+params?, signer?) should be used instead
+* Remove broadcast() method and deprecate database management APIs (deploy, drop,
+getDBID, getSchema, listDatabases) in favor of executeSQL and selectQuery APIs
+
+### Features
+
+* add action input encoding for private kwild nodes / update encoding for authenticating call() ([4b0fb18](https://github.com/kwilteam/kwil-js/commit/4b0fb18e141f37fbb6bbee8d72acb05ead66d9b4))
+* add array integration tests ([9501f11](https://github.com/kwilteam/kwil-js/commit/9501f11565b895e09bb0181b0251153ff4be205b))
+* add call action encoding and selectQuery params encoding ([7c5b60a](https://github.com/kwilteam/kwil-js/commit/7c5b60a4274ca110b3d58e2847213cac04acf904))
+* add completed call() action code / deprecate ActionInputs ([6bbd109](https://github.com/kwilteam/kwil-js/commit/6bbd1091586092f99d4f4be147ea68d764a259f8))
+* add new encoding for auth transfer ([89257f5](https://github.com/kwilteam/kwil-js/commit/89257f5fa0ffdceeba187d512d9a38180ff1aca4))
+* add new query API for exec queries ([e8674d6](https://github.com/kwilteam/kwil-js/commit/e8674d65be8f2825cd74dd29bf69df2f87c73a7e))
+* add new validation for action inputs when calling action ([e291e94](https://github.com/kwilteam/kwil-js/commit/e291e940cf1eb0483beb274f201c2df7e78f32e5))
+* add support for arrays in parameter encoding for queries and actions ([bb7c6f8](https://github.com/kwilteam/kwil-js/commit/bb7c6f89836ba905cb3d8f94dd16bb5f569e7eb2))
+* add support for encoded params in selectQuery API ([2910b49](https://github.com/kwilteam/kwil-js/commit/2910b49b1b2dd9819346110b37294b99be022d66))
+* add support for exec action encoding ([ca33346](https://github.com/kwilteam/kwil-js/commit/ca33346b49278995fbe2ecf05bbb92cbe0ca2a15))
+* deprecate DBID in call() requests and require namespace instead ([a982de1](https://github.com/kwilteam/kwil-js/commit/a982de187bc0dbb0c02cd414f0a1ef09565c02de))
+* deprecate legacy database APIs ([8c3a135](https://github.com/kwilteam/kwil-js/commit/8c3a1352fefb200ec5fc21f3dbf98b7b6e626186))
+* deprecate legacy selectQuery signature ([d9b8541](https://github.com/kwilteam/kwil-js/commit/d9b85411c3679a661dc9d3242ece509c4157c305))
+* **index.ts:** update type exports ([a4fc70f](https://github.com/kwilteam/kwil-js/commit/a4fc70f3df2274aa254365f1841b03f6c0fd4486))
+* positional arguments ([e6eff93](https://github.com/kwilteam/kwil-js/commit/e6eff93e74edca1a280f333a646b67150efeeb3a))
+* update txInfo() response to reflect change in kwild (hash -> tx_hash) ([9769be3](https://github.com/kwilteam/kwil-js/commit/9769be316b6421c11230ab026e01c8efbc09f279))
+
+
+### Bug Fixes
+
+* fix the action call() signer when kwild in private mode ([e646ff3](https://github.com/kwilteam/kwil-js/commit/e646ff3d8152e7e2476919b86a475d7c2e955058))
+* remove params required in selectQuery signature / add dbid to deprecated queries ([9ce78ad](https://github.com/kwilteam/kwil-js/commit/9ce78ad8ed63c2a4bf4c8dd33137646edf202d0e))
+
 ### [0.8.6](https://github.com/kwilteam/kwil-js/compare/v0.8.5...v0.8.6) (2024-11-21)
 
 
