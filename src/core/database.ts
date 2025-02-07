@@ -1,9 +1,7 @@
+import { QueryParams } from '../utils/types';
 import { AttributeType, IndexType, VarType } from './enums';
 import {
-  CompiledForeignProcedure,
   CompiledKuneiform,
-  CompiledProcedure,
-  CompiledTable,
 } from './payload';
 
 /**
@@ -32,12 +30,10 @@ export interface DropBody {
   nonce?: number;
 }
 
-// Encodable database is the same as database but procedures.returns can be an empty array
-export type EncodeableDatabase = Omit<Database, 'tables' | 'procedures' | 'foreign_calls'> & {
-  tables: ReadonlyArray<CompiledTable>;
-  procedures: ReadonlyArray<CompiledProcedure>;
-  foreign_calls: ReadonlyArray<CompiledForeignProcedure>;
-};
+
+
+/** DEPRECATED */
+/* EVERYTHNG BELOW CAN BE REMOVED WHEN DEPRECATED APIS ARE REMOVED */
 
 export interface Database {
   owner: Uint8Array;
@@ -129,11 +125,6 @@ export interface DataType {
 export interface ProcedureReturn {
   is_table: boolean;
   fields: ReadonlyArray<NamedType>;
-}
-
-export interface SelectQuery {
-  dbid: string;
-  query: string;
 }
 
 export interface ForeignProcedure {

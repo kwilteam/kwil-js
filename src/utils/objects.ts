@@ -71,12 +71,23 @@ export const objects = {
 
     throw new Error('value is not a number, it is a ' + typeof value);
   },
-  requireMaxLength: <T>(
+  requireMaxLength: <T extends { toString(): string }>(
     value: T,
     maxLength: number,
     message?: string | ((v: T) => Error)
   ): NonNil<T> => {
-    if (value && value.toString().length > maxLength) {
+    if (!value) {
+      if (typeof message === 'function') {
+        throw message(value);
+      }
+      throw new Error(message || 'value is null or undefined');
+    }
+
+    if (typeof value.toString !== 'function') {
+      throw new Error('value does not have a toString() method');
+    }
+
+    if (value.toString().length > maxLength) {
       if (typeof message === 'function') {
         throw message(value);
       }

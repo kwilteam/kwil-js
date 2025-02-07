@@ -15,7 +15,7 @@ const nacl = require('tweetnacl');
 const { sha256BytesToBytes } = require('../dist/utils/crypto');
 const { KwilSigner } = require('../dist/core/kwilSigner');
 const { ActionInput } = require('../dist/core/action');
-const { v4 } = require('uuid');
+const { randomUUID } = require('crypto');
 require('dotenv').config();
 
 const chainId = process.env.CHAIN_ID || 'SHOULD FAIL';
@@ -70,6 +70,7 @@ async function scratchpad() {
   // testMultiLogout()
 
   // const dbid = kwil.getDBID(address, 'social');
+  const dbid = 'xe3cf0579c3adeeceef9d827357316d54e12f27bfc2cfb0a1b005152c'
   // console.log("social dbid ", dbid)
   // await authenticate(kwil, kwilSigner)
   // broadcast(kwil, testDB, kwilSigner)
@@ -106,17 +107,31 @@ async function scratchpad() {
   }
 
   const post = {
-    $id: 1,
-    $title: 'dmx',
-    $content: 'lose my mind',
-    $date_string: '12-03-2024',
+    $id: randomUUID(),
+    $user: 'Luke',
+    $title: 'Positional Test',
+    $body: 'Hello World',
   };
-  executeGeneralAction(kwil, dbid, 'create_post', kwilSigner, post);
+  // executeGeneralAction(kwil, 'mydb', 'add_post', kwilSigner, post);
   // await executeGeneralView(kwil, dbid, 'get_profile', null, kwilSigner);
   // await executeGeneralView(kwil, dbid, "view_must_sign", null, kwilSigner)
+  // await executePositionalView(kwil, 'mydb', 'get_post_by_title')
 }
 
 scratchpad();
+
+async function executePositionalView(kwil, namespace, name) {
+  const body = {
+    namespace,
+    name,
+    inputs: [
+      'Positional Test'
+    ]
+  };
+
+  const res = await kwil.call(body);
+  logger(res);
+}
 
 async function executeGeneralView(kwil, dbid, name, input, signer) {
   const body = {
@@ -132,7 +147,7 @@ async function executeGeneralView(kwil, dbid, name, input, signer) {
 async function executeGeneralAction(kwil, dbid, name, wallet, input) {
   const body = {
     name,
-    dbid,
+    namespace: dbid,
     ...(input ? { inputs: [input] } : {}),
   };
 
@@ -494,7 +509,7 @@ async function customEd25519(kwil, dbid) {
 async function transfer(kwil, to, tokenAmnt, signer) {
   const payload = {
     to,
-    amount: BigInt(tokenAmnt * 10 ** 18),
+    amount: BigInt(tokenAmnt),
   };
 
   const res = await kwil.funder.transfer(payload, signer);

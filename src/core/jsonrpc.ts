@@ -1,9 +1,9 @@
-import { Base64String, HexString } from '../utils/types';
+import { Base64String, EncodedQueryParams, HexString } from '../utils/types';
 import { KGWAuthInfo, AuthenticatedBody } from './auth';
 import { Database } from './database';
-import { BroadcastSyncType, BytesEncodingStatus } from './enums';
+import { AccountKeyType, AccountStatus, BroadcastSyncType, BytesEncodingStatus } from './enums';
 import { MsgData } from './message';
-import { ChainInfo, DatasetInfoServer } from './network';
+import { AccountId, DatasetInfoServer } from './network';
 import { TxnData } from './tx';
 import { TxResult } from './txQuery';
 
@@ -34,20 +34,12 @@ export enum JSONRPCMethod {
 }
 
 export interface SchemaRequest {
-  dbid: string;
+  namespace: string;
 }
 
 export interface AccountRequest {
-  identifier: HexString;
+  id: AccountId;
   status: AccountStatus;
-}
-
-// For checking the unconfirmed nonce
-export enum AccountStatus {
-  // returns the latest confirmed nonce
-  LATEST = 0,
-  // returns the latest unconfirmed nonce
-  PENDING = 1,
 }
 
 export interface BroadcastRequest {
@@ -79,13 +71,21 @@ export interface EstimatePriceRequest {
   tx: TxnData<BytesEncodingStatus.BASE64_ENCODED>;
 }
 
-export interface QueryRequest {
-  dbid: string;
+export interface SelectQueryRequest {
   query: string;
+  params: EncodedQueryParams;
 }
 
 export interface TxQueryRequest {
   tx_hash: string;
+}
+
+export type AuthParamRequest = EmptyRequest;
+
+export type AuthnRequest = AuthenticatedBody<BytesEncodingStatus.HEX_ENCODED>;
+
+export interface AuthnLogoutRequest {
+  account: Base64String;
 }
 
 export interface JsonRPCResponse<T> {
@@ -108,7 +108,7 @@ export interface SchemaResponse {
 }
 
 export interface AccountResponse {
-  identifier?: HexString;
+  id?: AccountId;
   balance: string;
   nonce: number;
 }
@@ -117,12 +117,10 @@ export interface BroadcastResponse {
   tx_hash: Base64String;
 }
 
-export type CallResponse = Result;
-
 export interface ChainInfoResponse {
-    chain_id: string;
-    block_height: number;
-    block_hash: string;
+  chain_id: string;
+  block_height: number;
+  block_hash: string;
 }
 
 export interface ChallengeResponse {
@@ -142,10 +140,26 @@ export interface HealthResponse {
   mode: string;
 }
 
-export type QueryResponse = Result;
+export type SelectQueryResponse = QueryResponse;
+export type CallResponse = {
+  query_result: QueryResponse;
+};
 
-interface Result {
+// This is the older response type for query.  Keeping now for reference.
+interface EncodedResult {
   result: Base64String;
+}
+
+export interface QueryResponse {
+  column_names: string[];
+  column_types: ColumnType[];
+  values: any[];
+}
+
+export interface ColumnType {
+  name: string;
+  is_array: boolean;
+  metadata: Array<number>;
 }
 
 export interface ListDatabasesResponse {
@@ -161,22 +175,14 @@ export interface EstimatePriceResponse {
 }
 
 export interface TxQueryResponse {
-  hash: string;
+  tx_hash: string;
   height: number;
   tx: TxnData<BytesEncodingStatus.BASE64_ENCODED>;
   tx_result: TxResult;
 }
 
-export type AuthParamRequest = EmptyRequest;
-
 export type AuthParamResponse = KGWAuthInfo;
-
-export type AuthnRequest = AuthenticatedBody<BytesEncodingStatus.HEX_ENCODED>;
 
 export interface AuthnResponse {
   result: string;
-}
-
-export interface AuthnLogoutRequest {
-  account: Base64String;
 }

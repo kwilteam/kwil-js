@@ -75,14 +75,14 @@ export function composeAuthMsg(
 }
 
 export function generateSignatureText(
-  dbid: string,
+  namespace: string,
   action: string,
   digest: HexString,
   challenge: string
 ): string {
   let sigText = 'Kwil view call.\n';
   sigText += '\n';
-  sigText += `DBID: ${dbid}\n`;
+  sigText += `Namespace: ${namespace}\n`;
   sigText += `Method: ${action}\n`;
   sigText += `Digest: ${digest}\n`;
   sigText += `Challenge: ${challenge}\n`;

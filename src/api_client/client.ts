@@ -1,15 +1,14 @@
 import { base64ToBytes } from '../utils/base64';
-import { Account, ChainInfo, DatasetInfo } from '../core/network';
-import { Database, SelectQuery } from '../core/database';
+import { Account, AccountId, ChainInfo, DatasetInfo } from '../core/network';
 import { Transaction, TxReceipt } from '../core/tx';
 import { Api } from './api';
 import { ClientConfig } from './config';
 import { GenericResponse } from '../core/resreq';
-import { base64ToHex, bytesToHex, bytesToString, hexToBase64, hexToBytes } from '../utils/serial';
+import { base64ToHex, bytesToHex, hexToBase64, hexToBytes } from '../utils/serial';
 import { TxInfoReceipt } from '../core/txQuery';
 import { CallClientResponse, Message, MsgReceipt } from '../core/message';
-import { kwilDecode } from '../utils/rlp';
 import {
+  AccountStatus,
   AuthErrorCodes,
   BroadcastSyncType,
   BytesEncodingStatus,
@@ -20,7 +19,6 @@ import { AxiosResponse } from 'axios';
 import {
   AccountRequest,
   AccountResponse,
-  AccountStatus,
   AuthParamRequest,
   AuthParamResponse,
   AuthnLogoutRequest,
@@ -45,14 +43,21 @@ import {
   ListDatabasesResponse,
   PingRequest,
   PingResponse,
-  QueryRequest,
   QueryResponse,
-  SchemaRequest,
-  SchemaResponse,
+  SelectQueryRequest,
+  SelectQueryResponse,
   TxQueryRequest,
   TxQueryResponse,
 } from '../core/jsonrpc';
 import { HexString } from '../utils/types';
+
+interface AuthError {
+  status: number;
+  data: {
+    result: null;
+  };
+  authCode: AuthErrorCodes;
+}
 
 export default class Client extends Api {
   private unconfirmedNonce: boolean;
@@ -61,19 +66,6 @@ export default class Client extends Api {
   constructor(opts: ClientConfig) {
     super(opts);
     this.unconfirmedNonce = opts.unconfirmedNonce || false;
-  }
-
-  protected async getSchemaClient(dbid: string): Promise<GenericResponse<Database>> {
-    const body = this.buildJsonRpcRequest<SchemaRequest>(JSONRPCMethod.METHOD_SCHEMA, { dbid });
-
-    const res = await super.post<JsonRPCResponse<SchemaResponse>>(`/rpc/v1`, body);
-
-    return checkRes(res, (r) => {
-      return {
-        ...r.result.schema,
-        owner: hexToBytes(r.result.schema.owner || ''),
-      };
-    });
   }
 
   protected async getAuthenticateClient(): Promise<GenericResponse<KGWAuthInfo>> {
@@ -148,9 +140,9 @@ export default class Client extends Api {
     return checkRes(res, (r) => r.result);
   }
 
-  protected async getAccountClient(owner: Uint8Array): Promise<GenericResponse<Account>> {
+  protected async getAccountClient(accountId: AccountId): Promise<GenericResponse<Account>> {
     const body = this.buildJsonRpcRequest<AccountRequest>(JSONRPCMethod.METHOD_ACCOUNT, {
-      identifier: bytesToHex(owner),
+      id: accountId,
       status: this.unconfirmedNonce ? AccountStatus.PENDING : AccountStatus.LATEST,
     });
 
@@ -159,7 +151,7 @@ export default class Client extends Api {
     return checkRes(res, (r) => {
       return {
         ...r.result,
-        identifier: hexToBytes(r.result.identifier || ''),
+        id: r.result.id,
       };
     });
   }
@@ -258,14 +250,11 @@ export default class Client extends Api {
     return checkRes(res, (r) => r.result.challenge);
   }
 
-  protected async selectQueryClient(query: SelectQuery): Promise<GenericResponse<Object[]>> {
-    const body = this.buildJsonRpcRequest<QueryRequest>(JSONRPCMethod.METHOD_QUERY, query);
+  protected async selectQueryClient(query: SelectQueryRequest): Promise<GenericResponse<Object[]>> {
+    const body = this.buildJsonRpcRequest<SelectQueryRequest>(JSONRPCMethod.METHOD_QUERY, query);
+    const res = await super.post<JsonRPCResponse<SelectQueryResponse>>(`/rpc/v1`, body);
 
-    const res = await super.post<JsonRPCResponse<QueryResponse>>(`/rpc/v1`, body);
-
-    return checkRes(res, (r) => {
-      return JSON.parse(bytesToString(base64ToBytes(r.result.result))) as Object[];
-    });
+    return checkRes(res, (r) => this.parseQueryResponse(r.result));
   }
 
   protected async txInfoClient(tx_hash: string): Promise<GenericResponse<TxInfoReceipt>> {
@@ -278,12 +267,11 @@ export default class Client extends Api {
     return checkRes(res, (r) => {
       return {
         ...r.result,
-        hash: base64ToHex(r.result.hash),
         tx: {
           ...r.result.tx,
           body: {
             ...r.result.tx.body,
-            payload: kwilDecode(base64ToBytes(r.result.tx.body.payload as string)),
+            payload: base64ToBytes(r.result.tx.body.payload as string),
             fee: BigInt(r.result.tx.body.fee || 0),
           },
           signature: {
@@ -296,29 +284,22 @@ export default class Client extends Api {
     });
   }
 
-  protected async callClient(msg: Message): Promise<CallClientResponse<MsgReceipt>> {
+  protected async callClient(msg: Message): Promise<CallClientResponse<Object[]>> {
     const body = this.buildJsonRpcRequest<CallRequest>(JSONRPCMethod.METHOD_CALL, {
       body: msg.body,
       auth_type: msg.auth_type,
       sender: msg.sender || '',
-      signature: {
-        sig: msg.signature?.sig || '',
-        type: msg.signature?.type || '',
-      },
+      signature: msg.signature || '',
     });
 
     const res = await super.post<JsonRPCResponse<CallResponse>>(`/rpc/v1`, body);
 
     const errorResponse = this.checkAuthError(res);
     if (errorResponse) {
-      return errorResponse;
+      throw new Error(`Auth error: ${errorResponse.authCode}`);
     }
 
-    return checkRes(res, (r) => {
-      return {
-        result: JSON.parse(bytesToString(base64ToBytes(r.result.result))),
-      };
-    });
+    return checkRes(res, (r) => this.parseQueryResponse(r.result.query_result));
   }
 
   private buildJsonRpcRequest<T>(method: JSONRPCMethod, params: T): JsonRPCRequest<T> {
@@ -333,18 +314,37 @@ export default class Client extends Api {
   // Check for specific error codes and return http status, result of view action, and rpc authError code (if applicable)
   private checkAuthError<T>(
     res: AxiosResponse<JsonRPCResponse<T>>
-  ): CallClientResponse<MsgReceipt> | null {
+  ): CallClientResponse<AuthError> | null {
     const errorCode = res.data.error?.code;
+
     if (errorCode === AuthErrorCodes.PRIVATE_MODE || errorCode === AuthErrorCodes.KGW_MODE) {
       return {
         status: res.status,
-        data: {
-          result: null,
-        },
+        data: undefined,
         authCode: errorCode,
       };
     }
     return null;
+  }
+
+  private parseQueryResponse(queryResponse: QueryResponse): Object[] {
+    const { column_names, values } = queryResponse;
+
+    if (!values || values.length === 0) {
+      return [];
+    }
+
+    // Create a mapping function once that will be reused for all rows
+    const mapValueToColumn = (rowValues: any[]): Record<string, any> => {
+      const obj: Record<string, any> = {};
+      for (let i = 0; i < column_names.length; i++) {
+        obj[column_names[i]] = rowValues[i];
+      }
+      return obj;
+    };
+
+    // Map each row of values to an object using the column mapping
+    return values.map(mapValueToColumn);
   }
 }
 

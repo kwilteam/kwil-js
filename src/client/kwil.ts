@@ -1,30 +1,34 @@
-import { generateDBID } from '../utils/dbid';
 import Client from '../api_client/client';
 import { KwilConfig } from '../api_client/config';
 import { GenericResponse } from '../core/resreq';
-import { Database, DeployBody, DropBody, SelectQuery } from '../core/database';
-import { BaseTransaction, TxReceipt } from '../core/tx';
+import { Database, DeployBody, DropBody } from '../core/database';
+import { TxReceipt } from '../core/tx';
 import { Account, ChainInfo, ChainInfoOpts, DatasetInfo } from '../core/network';
-import { DB } from '../transaction/db';
-import { Cache } from '../utils/cache';
 import { TxInfoReceipt } from '../core/txQuery';
 import {
   AuthenticationMode,
+  AuthErrorCodes,
   BroadcastSyncType,
-  BytesEncodingStatus,
   EnvironmentType,
   PayloadType,
 } from '../core/enums';
-import { hexToBytes } from '../utils/serial';
-import { isNearPubKey, nearB58ToHex } from '../utils/keys';
-import { ActionBody, ActionInput } from '../core/action';
+import { ActionBody, CallBody, NamedParams, transformActionInput, transformPositionalParam } from '../core/action';
 import { KwilSigner } from '../core/kwilSigner';
 import { wrap } from './intern';
 import { Funder } from '../funder/funder';
 import { Auth } from '../auth/auth';
 import { Action } from '../transaction/action';
-import { Message, MsgReceipt } from '../core/message';
-import { AuthBody, Signature } from '../core/signature';
+import { Message } from '../core/message';
+import { AuthBody } from '../core/signature';
+import { SelectQueryRequest } from '../core/jsonrpc';
+import { encodeParameters, encodeRawStatementParameters } from '../utils/parameterEncoding';
+import { generateDBID } from '../utils/dbid';
+import { Base64String, QueryParams } from '../utils/types';
+import { PayloadTx } from '../transaction/payloadTx';
+import { RawStatementPayload } from '../core/payload';
+import { resolveNamespace, validateNamespace } from '../utils/namespace';
+import { inferKeyType } from '../utils/keys';
+import { bytesToHex } from '../utils/serial';
 
 /**
  * The main class for interacting with the Kwil network.
@@ -34,8 +38,6 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
   protected readonly chainId: string;
   private readonly autoAuthenticate: boolean;
 
-  //cache schemas
-  private schemas: Cache<GenericResponse<Database>>;
   public funder: Funder<T>;
   public auth: Auth<T>;
 
@@ -43,7 +45,6 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
 
   protected constructor(opts: KwilConfig) {
     super(opts);
-    this.schemas = Cache.passive(opts.cache);
 
     // set chainId
     this.chainId = opts.chainId;
@@ -76,75 +77,39 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
   }
 
   /**
-   * Generates a unique database identifier (DBID) from the provided owner's identifier (e.g. wallet address, public key, etc.) and a database name.
+   * Retrieves the actions in a database given its namespace.
    *
-   * @param owner - The owner's identifier (e.g wallet address, public key, etc.). Ethereum addresses can be passed as a hex string (0x123...) or as bytes (Uint8Array). NEAR protocol public keys can be passed as the base58 encoded public key (with "ed25519:" prefix), a hex string, or bytes (Uint8Array).
-   * @param name - The name of the database. This should be a unique name to identify the database.
-   * @returns A string that represents the unique identifier for the database.
+   * @param namespace - The namespace of the actions to retrieve.
+   * @returns A promise that resolves to the actions in the database.
    */
-
-  public getDBID(owner: string | Uint8Array, name: string): string {
-    return generateDBID(owner, name);
-  }
-
-  /**
-   * Retrieves the schema of a database given its unique identifier (DBID).
-   *
-   * @param dbid - The unique identifier of the database. The DBID can be generated using the kwil.getDBID method.
-   * @returns A promise that resolves to the schema of the database.
-   */
-
-  public async getSchema(dbid: string): Promise<GenericResponse<Database>> {
-    // check cache
-    const schema = this.schemas.get(dbid);
-    if (schema) {
-      return schema;
+  public async getActions(namespace: string): Promise<GenericResponse<Object[]>> {
+    if (!validateNamespace(namespace)) {
+      throw new Error('Please provide a valid namespace');
     }
-
-    //fetch from server
-    const res = await this.getSchemaClient(dbid);
-
-    //cache result
-    if (res.status === 200) {
-      this.schemas.set(dbid, res);
-    }
-
-    return res;
+    return await this.selectQuery('SELECT * FROM info.actions WHERE namespace = $namespace', {
+      $namespace: namespace,
+    });
   }
 
   /**
    * Retrieves an account using the owner's Ethereum wallet address.
    *
-   * @param owner - The owner's identifier (e.g. Ethereum wallet address or NEAR public key). Ethereum addresses can be passed as a hex string (0x123...) or as bytes (Uint8Array). NEAR protocol public keys can be passed as the base58 encoded public key (with "ed25519:" prefix), a hex string, or bytes (Uint8Array).
-   * @returns A promise that resolves to an Account object. The account object includes the owner's public key, balance, and nonce.
+   * @param owner - The owner's identifier (e.g. Ethereum wallet address or ED25119 keys). Ethereum addresses and ED25519 public keys can be passed as a hex string (0x123...) or as bytes (Uint8Array).
+   * @returns A promise that resolves to an Account object. The account object includes the account's id, balance, and nonce.
    */
-
-  public async getAccount(owner: string | Uint8Array): Promise<GenericResponse<Account>> {
-    if (typeof owner === 'string') {
-      if (isNearPubKey(owner)) {
-        owner = nearB58ToHex(owner);
-      }
-
-      owner = owner.toLowerCase();
-      owner = hexToBytes(owner);
+  public async getAccount(owner: string | Uint8Array, keyType?: string): Promise<GenericResponse<Account>> {
+    if (!keyType) {
+      keyType = inferKeyType(owner);
     }
 
-    return await this.getAccountClient(owner);
-  }
+    if(owner instanceof Uint8Array) {
+      owner = bytesToHex(owner);
+    }
 
-  /**
-   * Broadcasts a transaction on the network.
-   *
-   * @param tx - The transaction to broadcast. The transaction can be built using the ActionBuilder or DBBuilder.
-   * @returns A promise that resolves to the receipt of the transaction. The transaction receipt includes the transaction hash, fee, and body.
-   * @deprecated Use `kwil.execute()` or `kwil.deploy()` instead. See: {@link https://github.com/kwilteam/kwil-js/issues/32}.
-   */
-
-  public async broadcast(
-    tx: BaseTransaction<BytesEncodingStatus.BASE64_ENCODED>,
-    sync?: BroadcastSyncType
-  ): Promise<GenericResponse<TxReceipt>> {
-    return await this.broadcastClient(tx, sync);
+    return await this.getAccountClient({
+      identifier: owner,
+      key_type: keyType,
+    });
   }
 
   /**
@@ -160,135 +125,160 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     kwilSigner: KwilSigner,
     synchronous?: boolean
   ): Promise<GenericResponse<TxReceipt>> {
-    const name = !actionBody.name && actionBody.action ? actionBody.action : actionBody.name;
+    if (!actionBody.name) {
+      throw new Error('name is required in actionBody');
+    }
 
-    /**
-     * if actionBody.inputs are defined: check if all elements in actionBody.inputs are instances of ActionInput class
-     * if true => assign inputs directly to the existing array
-     * if an item in actionBody.inputs is NOT an instance of ActionInput => convert into an ActionInput instance
-     */
-    let inputs: ActionInput[] | undefined;
-    if (actionBody.inputs) {
-      if (this.isActionInputArray(actionBody.inputs)) {
-        inputs = actionBody.inputs;
-      } else {
-        inputs = new ActionInput().putFromObjects(actionBody.inputs);
-      }
+    // Ensure auth mode is set
+    await this.ensureAuthenticationMode();
+
+    const namespace = resolveNamespace(actionBody);
+
+    // ActionInput[] has been deprecated.
+    // This transforms the ActionInput[] into NamedInput[] to support legacy ActionInput[]
+    let inputs: NamedParams[] = [];
+    if (actionBody.inputs && transformActionInput.isActionInputArray(actionBody.inputs)) {
+      inputs = transformActionInput.toNamedParams(actionBody.inputs);
+    } else if (actionBody.inputs && transformPositionalParam.isPositionalParams(actionBody.inputs)) {
+      // handle positional parameters
+      inputs = transformPositionalParam.toNamedParams(actionBody.inputs); 
+    } else {
+      // If the inputs are not an ActionInput[] or PositionalParam[], we assume they are NamedParams[]
+      inputs = actionBody.inputs || [];
     }
 
     let tx = Action.createTx(this, {
-      dbid: actionBody.dbid,
-      actionName: name.toLowerCase(),
+      namespace,
+      actionName: actionBody.name.toLowerCase(),
       description: actionBody.description || '',
       identifier: kwilSigner.identifier,
       chainId: this.chainId,
       signer: kwilSigner.signer,
       signatureType: kwilSigner.signatureType,
       nonce: actionBody.nonce,
-      actionInputs: inputs || [],
+      actionInputs: inputs,
     });
 
-    const transaction = await tx.buildTx();
+    const transaction = await tx.buildTx(this.authMode === AuthenticationMode.PRIVATE);
 
     return await this.broadcastClient(
       transaction,
-      synchronous ? BroadcastSyncType.COMMIT : undefined
+      synchronous ? BroadcastSyncType.COMMIT : BroadcastSyncType.SYNC
     );
   }
 
   /**
-   * Deploys a database to the Kwil network.
+   * Performs a read-only SELECT query on a database.
+   * This operation does not modify state.
    *
-   * @param deployBody - The body of the database to deploy. This should use the `DeployBody` interface.
-   * @param kwilSigner - The signer for the database deployment.
-   * @param synchronous - (optional) If true, the broadcast will wait for the transaction to be mined before returning. If false, the broadcast will return the transaction hash immediately, regardless of if the transaction is successful. Defaults to false.
-   * @returns A promise that resolves to the receipt of the transaction.
+   * @param query - The SELECT query to execute
+   * @param params - Optional array of parameters to bind to the query ($1, $2, etc.)
+   * @returns Promise resolving to query results
    */
-  public async deploy(
-    deployBody: DeployBody,
-    kwilSigner: KwilSigner,
-    synchronous?: boolean
-  ): Promise<GenericResponse<TxReceipt>> {
-    let transaction = await DB.createTx(this, PayloadType.DEPLOY_DATABASE, {
-      description: deployBody.description || '',
-      payload: deployBody.schema,
-      identifier: kwilSigner.identifier,
-      signer: kwilSigner.signer,
-      signatureType: kwilSigner.signatureType,
-      chainId: this.chainId,
-      nonce: deployBody.nonce,
-    }).buildTx();
-
-    return await this.broadcastClient(
-      transaction,
-      synchronous ? BroadcastSyncType.COMMIT : undefined
-    );
-  }
-
+  public async selectQuery(query: string, params?: QueryParams): Promise<GenericResponse<Object[]>>;
   /**
-   * Drops a database from the Kwil network.
-   *
-   * @param dropBody - The body of the database to drop. This should use the `DropBody` interface.
-   * @param kwilSigner - The signer for the database drop.
-   * @param synchronous - (optional) If true, the broadcast will wait for the transaction to be mined before returning. If false, the broadcast will return the transaction hash immediately, regardless of if the transaction is successful. Defaults to false.
-   * @returns A promise that resolves to the receipt of the transaction.
+   * @deprecated Use selectQuery(query, params?) instead. This method will be removed in next major version.
    */
-  public async drop(
-    dropBody: DropBody,
-    kwilSigner: KwilSigner,
-    synchronous?: boolean
-  ): Promise<GenericResponse<TxReceipt>> {
-    let transaction = await DB.createTx(this, PayloadType.DROP_DATABASE, {
-      description: dropBody.description || '',
-      payload: { dbid: dropBody.dbid },
-      identifier: kwilSigner.identifier,
-      signer: kwilSigner.signer,
-      signatureType: kwilSigner.signatureType,
-      chainId: this.chainId,
-      nonce: dropBody.nonce,
-    }).buildTx();
-
-    return await this.broadcastClient(
-      transaction,
-      synchronous ? BroadcastSyncType.COMMIT : undefined
-    );
-  }
-
-  /**
-   * Lists all databases owned by a particular owner.
-   *
-   * @param owner (optional) - Lists the databases on a network. Can pass and owner identifier to see all the databases deployed by a specific account, or leave empty to see al the databases deployed on the network. The owner's public key (Ethereum or NEAR Protocol). Ethereum keys can be passed as a hex string (0x123...) or as bytes (Uint8Array).
-   * @returns A promise that resolves to a list of database names.
-   */
-
-  public async listDatabases(owner?: string | Uint8Array): Promise<GenericResponse<DatasetInfo[]>> {
-    if (typeof owner === 'string') {
-      if (isNearPubKey(owner)) {
-        owner = nearB58ToHex(owner);
-      }
-
-      owner = owner.toLowerCase();
-      owner = hexToBytes(owner);
+  public async selectQuery(dbid: string, query: string): Promise<GenericResponse<Object[]>>;
+  public async selectQuery(
+    query: string,
+    params?: QueryParams | string
+  ): Promise<GenericResponse<Object[]>> {
+    // If params is a string, we're using the legacy method call
+    if (typeof params === 'string') {
+      return this.legacySelectQuery(query, params);
     }
 
-    return await this.listDatabasesClient(owner);
-  }
+    const encodedParams = encodeParameters(params || {});
 
-  /**
-   * Performs a SELECT query on a database. The query must be a read-only query.
-   *
-   * @param dbid - The unique identifier of the database. The DBID can be generated using the kwil.getDBID method.
-   * @param query - The SELECT query to execute.
-   * @returns A promise that resolves to a list of objects resulting from the query.
-   */
-
-  public async selectQuery(dbid: string, query: string): Promise<GenericResponse<Object[]>> {
-    const q: SelectQuery = {
-      dbid: dbid,
-      query: query,
+    const q: SelectQueryRequest = {
+      query,
+      params: encodedParams,
     };
 
     return await this.selectQueryClient(q);
+  }
+
+  private async legacySelectQuery(dbid: string, query: string): Promise<GenericResponse<Object[]>> {
+    console.warn(
+      'WARNING: selectQuery(dbid, query) is deprecated and will be removed in the next major version. Use selectQuery(query, params?) instead.'
+    );
+
+    const q: SelectQueryRequest = {
+      query: `{${dbid}}${query}`, // Append the dbid to the query to set the namespace
+      params: {},
+    };
+
+    return await this.selectQueryClient(q);
+  }
+
+  /**
+   * Executes a mutative SQL query (INSERT, UPDATE, DELETE) on a database.
+   *
+   * @param query - The SQL query to execute, including the database identifier in curly braces.
+   *               Use parameterized queries with @paramName placeholders for better security (recommended):
+   *               '{dbname}INSERT INTO users (name) VALUES (@name)'
+   *
+   *               Raw queries are possible but discouraged:
+   *               '{dbname}INSERT INTO users (name) VALUES ('john')'
+   *
+   * @param params - Object containing named parameters to bind to the query. Parameters are referenced
+   *                using @paramName syntax in the query.
+   * @param kwilSigner - Required signer for executing mutative queries
+   * @param synchronous - (optional) If true, waits for transaction to be mined
+   *
+   * @example
+   * // Insert with parameters
+   * await kwil.execSql(
+   *   '{mydb}INSERT INTO users (name, email) VALUES ($name, $email)',
+   *   { $name: 'John', $email: 'john@example.com' },
+   *   signer
+   * );
+   *
+   * // Update with parameters
+   * await kwil.execSql(
+   *   '{mydb}UPDATE users SET status = $status WHERE id = $id',
+   *   { $status: 'active', $id: 123 },
+   *   signer
+   * );
+   *
+   * // Delete with parameters
+   * await kwil.execSql(
+   *   '{mydb}DELETE FROM users WHERE id = $id',
+   *   { $id: 123 },
+   *   signer
+   * );
+   *
+   * @returns Promise resolving to transaction receipt
+   */
+
+  public async execSql(
+    query: string,
+    params: QueryParams,
+    signer: KwilSigner,
+    synchronous?: boolean
+  ): Promise<GenericResponse<TxReceipt>> {
+    const encodedParams = encodeRawStatementParameters(params);
+
+    const rawStatementPayload: RawStatementPayload = {
+      statement: query,
+      parameters: encodedParams,
+    };
+
+    const transaction = await PayloadTx.createTx(this, {
+      chainId: this.chainId,
+      description: `Performing a mutative query`,
+      payload: rawStatementPayload,
+      payloadType: PayloadType.RAW_STATEMENT,
+      identifier: signer.identifier,
+      signer: signer.signer,
+      signatureType: signer.signatureType,
+    }).buildTx();
+
+    return await this.broadcastClient(
+      transaction,
+      synchronous ? BroadcastSyncType.COMMIT : BroadcastSyncType.SYNC
+    );
   }
 
   /**
@@ -330,19 +320,113 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     return await this.pingClient();
   }
 
+  // DEPRECATED APIS BELOW
+  /**
+   * Generates a unique database identifier (DBID) from the provided owner's identifier (e.g. wallet address, public key, etc.) and a database name.
+   *
+   * @param owner - The owner's identifier (e.g wallet address, public key, etc.). Ethereum addresses can be passed as a hex string (0x123...) or as bytes (Uint8Array). NEAR protocol public keys can be passed as the base58 encoded public key (with "ed25519:" prefix), a hex string, or bytes (Uint8Array).
+   * @param name - The name of the database. This should be a unique name to identify the database.
+   * @deprecated DBID's are no longer in use.  This method will be removed in the next major version.
+   * @returns A string that represents the unique identifier for the database.
+   */
+
+  public getDBID(owner: string | Uint8Array, name: string): string {
+    console.warn(
+      'WARNING: `getDBID()` is deprecated and will be removed in the next major version. Please use `kwil.selectQuery(query, params?)` instead.'
+    );
+    return generateDBID(owner, name);
+  }
+
+  /**
+   * Retrieves the schema of a database given its unique identifier (DBID).
+   *
+   * @param dbid - The unique identifier of the database. The DBID can be generated using the kwil.getDBID method.
+   * @deprecated Use `kwil.selectQuery(query, params?)` instead. This method will be removed in the next major version.
+   * @returns A promise that resolves to the schema of the database.
+   */
+  public async getSchema(dbid: string): Promise<GenericResponse<Database>> {
+    console.warn(
+      'WARNING: `getSchema()` is deprecated and will be removed in the next major version. Please use `kwil.selectQuery()` instead.'
+    );
+    throw new Error(
+      'The `getSchema()` method is no longer supported. Please use `kwil.selectQuery(query, params?)` instead.'
+    );
+  }
+
+  /**
+   * Deploys a database to the Kwil network.
+   *
+   * @param deployBody - The body of the database to deploy. This should use the `DeployBody` interface.
+   * @param kwilSigner - The signer for the database deployment.
+   * @param synchronous - (optional) If true, the broadcast will wait for the transaction to be mined before returning. If false, the broadcast will return the transaction hash immediately, regardless of if the transaction is successful. Defaults to false.
+   * @deprecated Use `kwil.execSql()` instead. This method will be removed in the next major version.
+   * @returns A promise that resolves to the receipt of the transaction.
+   */
+  public async deploy(
+    deployBody: DeployBody,
+    kwilSigner: KwilSigner,
+    synchronous?: boolean
+  ): Promise<GenericResponse<TxReceipt>> {
+    console.warn(
+      'WARNING: `deploy()` is deprecated and will be removed in the next major version. Please use `kwil.execSql()` instead.'
+    );
+    throw new Error(
+      'The `deploy()` method is no longer supported. Please use `kwil.execSql()` instead.'
+    );
+  }
+
+  /**
+   * Drops a database from the Kwil network.
+   *
+   * @param dropBody - The body of the database to drop. This should use the `DropBody` interface.
+   * @param kwilSigner - The signer for the database drop.
+   * @param synchronous - (optional) If true, the broadcast will wait for the transaction to be mined before returning. If false, the broadcast will return the transaction hash immediately, regardless of if the transaction is successful. Defaults to false.
+   * @deprecated Use `kwil.execSql()` instead. This method will be removed in the next major version.
+   * @returns A promise that resolves to the receipt of the transaction.
+   */
+  public async drop(
+    dropBody: DropBody,
+    kwilSigner: KwilSigner,
+    synchronous?: boolean
+  ): Promise<GenericResponse<TxReceipt>> {
+    console.warn(
+      'WARNING: `drop()` is deprecated and will be removed in the next major version. Please use `kwil.execSql()` instead.'
+    );
+    throw new Error(
+      'The `drop()` method is no longer supported. Please use `kwil.execSql()` instead.'
+    );
+  }
+
+  /**
+   * Lists all databases owned by a particular owner.
+   *
+   * @param owner (optional) - Lists the databases on a network. Can pass and owner identifier to see all the databases deployed by a specific account, or leave empty to see al the databases deployed on the network. The owner's public key (Ethereum or NEAR Protocol). Ethereum keys can be passed as a hex string (0x123...) or as bytes (Uint8Array).
+   * @deprecated Use `kwil.selectQuery(query, params?)` instead. This method will be removed in the next major version.
+   * @returns A promise that resolves to a list of database names.
+   */
+
+  public async listDatabases(owner?: string | Uint8Array): Promise<GenericResponse<DatasetInfo[]>> {
+    console.warn(
+      'WARNING: `listDatabases()` is deprecated and will be removed in the next major version. Please use `kwil.selectQuery(query, params?)` instead.'
+    );
+    throw new Error(
+      'The `listDatabases()` method is no longer supported. Please use `kwil.selectQuery(query, params?)` instead.'
+    );
+  }
+
   /**
    * Calls a Kwil node. This can be used to execute read-only ('view') actions on Kwil.
    *
-   * @param {ActionBody} actionBody - The message to send. The message can be built using the buildMsg() method in the Action class.
+   * @param {CallBody} callBody - The message to send. The message can be built using the buildMsg() method in the Action class.
    * @param {KwilSigner} kwilSigner (optional) - KwilSigner should be passed if the action requires authentication OR if the action uses a `@caller` contextual variable. If `@caller` is used and authentication is not required, the user will not be prompted to authenticate; however, the user's identifier will be passed as the sender.
    * @param {(...args: any) => void} cookieHandlerCallback (optional) - the callback to handle the cookie if in the NODE environment
    * @returns A promise that resolves to the receipt of the message.
    */
   protected async baseCall(
-    actionBody: ActionBody,
+    callBody: CallBody,
     kwilSigner?: KwilSigner,
     cookieHandlerCallback?: { setCookie: () => void; resetCookie: () => void }
-  ): Promise<GenericResponse<MsgReceipt>> {
+  ): Promise<GenericResponse<Object[]>> {
     // Ensure auth mode is set
     await this.ensureAuthenticationMode();
 
@@ -351,7 +435,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       if (cookieHandlerCallback) {
         cookieHandlerCallback.setCookie();
       }
-      const message = await this.buildMessage(actionBody, kwilSigner);
+      const message = await this.buildMessage(callBody, kwilSigner);
       const response = await this.callClient(message);
 
       // if nodeJS user passes a cookie, reset it after the call
@@ -360,16 +444,16 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       }
 
       // if the user is not authenticated, prompt the user to authenticate
-      if (response.authCode === -901 && this.autoAuthenticate) {
+      if (response.authCode === AuthErrorCodes.KGW_MODE && this.autoAuthenticate) {
         await this.handleAuthenticateKGW(kwilSigner);
         return await this.callClient(message);
       }
       return response;
     }
     if (this.authMode === AuthenticationMode.PRIVATE) {
-      const authBody = await this.handleAuthenticatePrivate(actionBody, kwilSigner);
+      const authBody = await this.handleAuthenticatePrivate(callBody, kwilSigner);
       const message = await this.buildMessage(
-        actionBody,
+        callBody,
         kwilSigner,
         authBody.challenge,
         authBody.signature
@@ -395,10 +479,10 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
   }
 
   /**
-   * Builds a message with a chainId, dbid, name, and description of the action.
+   * Builds a message with a chainId, namespace, name, and description of the action.
    * NOT INCLUDED => challenge, sender, signature
    *
-   * @param actionBody - The message to send. The message can be built using the buildMsg() method in the Action class.
+   * @param callBody - The message to send. The message can be built using the buildMsg() method in the Action class.
    * @param kwilSigner (optional) - KwilSigner should be passed if the action requires authentication OR if the action uses a `@caller` contextual variable. If `@caller` is used and authentication is not required, the user will not be prompted to authenticate; however, the user's identifier will be passed as the sender.
    * @param challenge (optional) - To ensure a challenge is passed into the message before the signer in PRIVATE mode
    * @param signature (optional) - To ensure a signature is passed into the message before the signer in PRIVATE mode
@@ -407,27 +491,36 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    * @throws — Will throw an error if the action is not a view action.
    */
   private async buildMessage(
-    actionBody: ActionBody,
+    callBody: CallBody,
     kwilSigner?: KwilSigner,
     challenge?: string,
-    signature?: Signature<BytesEncodingStatus.BASE64_ENCODED>
+    signature?: Base64String
   ): Promise<Message> {
-    const name = !actionBody.name && actionBody.action ? actionBody.action : actionBody.name;
+    if (!callBody.name) {
+      throw new Error('name is required in actionBody');
+    }
 
-    let inputs: ActionInput[] | undefined;
-    if (actionBody.inputs) {
-      inputs = this.isFirstElementActionInput(actionBody.inputs)
-        ? actionBody.inputs
-        : new ActionInput().putFromObjects(actionBody.inputs);
+    const namespace = resolveNamespace(callBody);
+
+    // ActionInput[] is deprecated. So we are converting any ActionInput[] to an Entries[]
+    let inputs: NamedParams = {};
+    if (callBody.inputs && transformActionInput.isActionInputArray(callBody.inputs)) {
+      // For a call only one entry is allowed, so we only need to convert the first ActionInput
+      inputs = transformActionInput.toSingleEntry(callBody.inputs);
+    } else if (callBody.inputs && transformPositionalParam.isPositionalParam(callBody.inputs)) {
+      // handle positional parameters
+      inputs = transformPositionalParam.toNamedParam(callBody.inputs);
+    } else if (callBody.inputs) {
+      inputs = callBody.inputs;
     }
 
     // pre Challenge message
     let msg = Action.createTx<EnvironmentType.BROWSER>(this, {
       chainId: this.chainId,
-      dbid: actionBody.dbid,
-      actionName: name,
-      description: actionBody.description || '',
-      actionInputs: inputs || [],
+      namespace,
+      actionName: callBody.name,
+      description: '',
+      actionInputs: [inputs],
     });
 
     /**
@@ -449,13 +542,13 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     if (kwilSigner && this.authMode === AuthenticationMode.PRIVATE) {
       if (challenge && signature) {
         // add challenge and signature to the message
-        (msg.challenge = challenge),
-          (msg.signature = signature),
-          this.addSignerToMessage(msg, kwilSigner);
+        msg.challenge = challenge;
+        msg.signature = signature;
+        this.addSignerToMessage(msg, kwilSigner);
       }
     }
 
-    return await msg.buildMsg();
+    return await msg.buildMsg(this.authMode === AuthenticationMode.PRIVATE);
   }
 
   /**
@@ -470,9 +563,9 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     msg: Action<EnvironmentType.BROWSER>,
     kwilSigner: KwilSigner
   ): Action<EnvironmentType.BROWSER> {
-    (msg.signer = kwilSigner.signer),
-      (msg.signatureType = kwilSigner.signatureType),
-      (msg.identifier = kwilSigner.identifier);
+    msg.signer = kwilSigner.signer;
+    msg.signatureType = kwilSigner.signatureType;
+    msg.identifier = kwilSigner.identifier;
 
     return msg;
   }
@@ -503,13 +596,13 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    * Checks authentication errors for PRIVATE mode
    * Signs message and then retries request for successful response
    *
-   * @param {ActionBodyNode} actionBody - The message to send. The message can be built using the buildMsg() method in the Action class.
+   * @param {CallBodyNode} actionBody - The message to send. The message can be built using the buildMsg() method in the Action class.
    * @param {KwilSigner} kwilSigner (optional) - KwilSigner should be passed if the action requires authentication OR if the action uses a `@caller` contextual variable. If `@caller` is used and authentication is not required, the user will not be prompted to authenticate; however, the user's identifier will be passed as the sender.
    * @returns the authentication body that consists of the challenge and signature required for PRIVATE mode
    */
 
   private async handleAuthenticatePrivate(
-    actionBody: ActionBody,
+    actionBody: CallBody,
     kwilSigner?: KwilSigner
   ): Promise<AuthBody> {
     if (this.autoAuthenticate) {
@@ -528,25 +621,5 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     }
 
     throw new Error('Authentication process did not complete successfully');
-  }
-
-  /**
- * Checks if all elements in the given array are instances of ActionInput.
- *
- * @param {unknown} inputs - The value to be checked.
- * @returns {boolean} - True if `inputs` is an array where every element is an ActionInput, otherwise false.
- */
-  private isActionInputArray(inputs: unknown): inputs is ActionInput[] {
-    return Array.isArray(inputs) && inputs.every((item) => item instanceof ActionInput);
-  }
-
-  /**
- * Checks if the first element of the given array is an instance of ActionInput.
- *
- * @param {unknown} inputs - The value to be checked.
- * @returns {boolean} - True if `inputs` is an array with the first element being an ActionInput, otherwise false.
- */
-  private isFirstElementActionInput(inputs: unknown): inputs is ActionInput[] {
-    return Array.isArray(inputs) && inputs[0] instanceof ActionInput;
   }
 }

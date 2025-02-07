@@ -1,4 +1,4 @@
-import { NonNil, PartialNillable } from '../utils/types';
+import { Base64String, PartialNillable } from '../utils/types';
 import {
   ActionSchema,
   Attribute,
@@ -9,49 +9,64 @@ import {
   Database,
   Procedure,
   ForeignProcedure,
-  EncodeableDatabase,
   DataType,
   ProcedureReturn,
   NamedType,
 } from './database';
-import { BytesEncodingStatus, DeployOrDrop, PayloadType } from './enums';
+import { PayloadType } from './enums';
+import { AccountId } from './network';
 
 /**
  * `AllPayloads` is the union of all payload types.
  */
 export type AllPayloads =
   | UnencodedActionPayload<PayloadType.CALL_ACTION | PayloadType.EXECUTE_ACTION>
-  | DropDbPayload
-  | CompiledKuneiform
-  | TransferPayload<BytesEncodingStatus.HEX_ENCODED>
-  | EncodeableDatabase;
+  | TransferPayload
+  | RawStatementPayload;
 
 export type UnencodedActionPayload<T extends PayloadType.CALL_ACTION | PayloadType.EXECUTE_ACTION> =
   {
-    dbid: string;
+    dbid: string; // May become namespace in the future
     action: string;
-    arguments: T extends PayloadType.EXECUTE_ACTION ? EncodedValue[][] : EncodedValue[];
+    arguments: T extends PayloadType.EXECUTE_ACTION ? EncodedValue[][] : EncodedValue[] | undefined;
   };
 
 export interface EncodedValue {
   type: DataType;
-  data: string[] | Uint8Array[];
+  data: Uint8Array[];
+}
+
+export interface EncodedParameterValue {
+  type: DataType;
+  data: Base64String[];
+}
+
+export interface RawStatementPayload {
+  statement: string;
+  parameters: NamedValue[];
+}
+
+interface NamedValue {
+  // name is the name of the parameter
+  // E.g,. for a query `INSERT INTO table VALUES $value`, the name would be $name
+  name: string;
+  // value is same shape as `params.params[$variable_name]` from the selectQuery EXCEPT, rather than converting values to base64, you only need to conver them to Uint8array.
+  value: EncodedValue;
 }
 
 /**
- * `DBPayloadType` is the the payload type for deploying and dropping databases.
+ * `TransferPayload` is the payload for transferring funds.
  * The generic allows the Builder to be typed to the correct payload type.
+ * The `to` field is typed to either a Uint8Array or a base64 string depending on the encoding status.
+ * The `amount` field is typed to a string because it is a decimal value.
  */
-export type DbPayloadType<T extends DeployOrDrop> = T extends PayloadType.DEPLOY_DATABASE
-  ? (() => NonNil<CompiledKuneiform>) | NonNil<CompiledKuneiform>
-  : (() => NonNil<DropDbPayload>) | NonNil<DropDbPayload>;
-
-/**
- * `DropDbPayload` is the payload for dropping a database.
- */
-export interface DropDbPayload {
-  dbid: string;
+export interface TransferPayload {
+  to: AccountId;
+  amount: string;
 }
+
+/** DEPRECATED */
+/* EVERYTHNG BELOW CAN BE REMOVED WHEN DEPRECATED APIS ARE REMOVED */
 
 /**
  * `CompiledKuneiform` is the compiled version of the Kuneiform schema. This is the schema that is used to deploy a database.
@@ -67,16 +82,7 @@ export interface CompiledKuneiform {
   foreign_calls: PartialNillable<CompiledForeignProcedure>[] | null;
 }
 
-/**
- * `TransferPayload` is the payload for transferring funds.
- * The generic allows the Builder to be typed to the correct payload type.
- * The `to` field is typed to either a Uint8Array or a base64 string depending on the encoding status.
- * The `amount` field is typed to a string because it is a decimal value.
- */
-export interface TransferPayload<T extends BytesEncodingStatus> {
-  to: T extends BytesEncodingStatus.BASE64_ENCODED ? string : Uint8Array;
-  amount: string;
-}
+
 
 // The CompiledXXX types are used to replace the enums in the Database interface with strings.
 export type CompiledTable = Omit<Table, 'columns' | 'indexes'> & {

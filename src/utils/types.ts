@@ -1,3 +1,4 @@
+import { EncodedParameterValue } from '../core/payload';
 import { NillableError, objects } from './objects';
 
 // represents a value that can be either null or undefined.
@@ -64,3 +65,45 @@ export namespace Lazy {
     };
   }
 }
+
+type UUID = string;
+
+/**
+ * ValueType is the type of the data in the database.
+ *
+ * If you are sending bytes to a blob column, you must send it as a Uint8Array. If you send a string to blob column, it will be converted to base64.
+ */
+export type ValueType =
+  | string
+  | number
+  | null
+  | undefined
+  | Array<ValueType>
+  | boolean
+  | Uint8Array
+  | UUID;
+
+  export function isValueType(v: unknown): v is ValueType {
+    if (
+      v === null ||
+      v === undefined ||
+      typeof v === "string" ||
+      typeof v === "number" ||
+      typeof v === "boolean" ||
+      v instanceof Uint8Array
+    ) {
+      return true;
+    }
+  
+    if (Array.isArray(v)) {
+      return v.every(isValueType);
+    }
+  
+    return false;
+  }
+/**
+ * QueryParams is a type for the parameters used within query.
+ */
+export type QueryParams = Record<string, ValueType>;
+
+export type EncodedQueryParams = Record<string, EncodedParameterValue>;

@@ -1,30 +1,36 @@
 // network.ts contains interfaces for network-related data structures.
 
-import { Base64String } from "../utils/types";
-import { BytesEncodingStatus } from "./enums";
+import { HexString } from '../utils/types';
+import { AccountKeyType, BytesEncodingStatus } from './enums';
+
+export interface AccountId {
+  identifier: string;
+  // can be a built in key type, or a string if using a custom signer
+  key_type: AccountKeyType | string;
+}
 
 export interface Account {
-    identifier: Uint8Array | string;
-    balance: string;
-    nonce: number;
+  id?: AccountId;
+  balance: string;
+  nonce: number;
 }
 
 export interface ChainInfo {
-    chain_id: string;
-    height: string;
-    hash: string;
+  chain_id: string;
+  height: string;
+  hash: string;
 }
 
 export interface ChainInfoOpts {
-    disableWarning?: boolean;
+  disableWarning?: boolean;
 }
 
-export type DatasetInfo = DatasetInfoBase<BytesEncodingStatus.HEX_ENCODED>;
+export type DatasetInfo = DatasetInfoBase<BytesEncodingStatus.UINT8_ENCODED>;
 
-export type DatasetInfoServer = DatasetInfoBase<BytesEncodingStatus.BASE64_ENCODED>
+export type DatasetInfoServer = DatasetInfoBase<BytesEncodingStatus.HEX_ENCODED>;
 
 export interface DatasetInfoBase<T extends BytesEncodingStatus> {
-    name: string;
-    owner: T extends BytesEncodingStatus.BASE64_ENCODED ? Base64String : Uint8Array;
-    dbid: string;
+  name: string;
+  owner: T extends BytesEncodingStatus.HEX_ENCODED ? HexString : Uint8Array;
+  dbid: string;
 }

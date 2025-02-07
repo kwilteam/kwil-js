@@ -1,23 +1,18 @@
 /**
- * ValueType is the type of the data in the database.
- * 
- * If you are sending bytes to a blob column, you must send it as a Uint8Array. If you send a string to blob column, it will be converted to base64.
- */
-export type ValueType = string | number | null | undefined | Array<ValueType> | boolean | Uint8Array;
-
-/**
  * VarType is the type of the data in the database.
- * 
+ *
  * Although Kwil supports text, int, bool, blob, uuid, uint256, decimal, and null types, kwil-js only supports text, int, bool, decimal, and null. If you need to send blob, uuid, or uint256 types, you should send them as a javascript string.
- * 
+ *
  */
 export enum VarType {
+  UUID = 'uuid',
   TEXT = 'text',
   INT = 'int',
+  INT8 = 'int8',
   BOOL = 'bool',
-  DECIMAL = 'decimal',
+  NUMERIC = 'numeric',
   NULL = 'null',
-  BLOB = 'blob',
+  BYTEA = 'bytea',
   UNKNOWN = 'unknown',
 }
 
@@ -46,14 +41,11 @@ export enum EncodingType {
 
 export enum PayloadType {
   INVALID_PAYLOAD_TYPE = 'invalid',
-  DEPLOY_DATABASE = 'deploy_schema',
-  DROP_DATABASE = 'drop_schema',
   EXECUTE_ACTION = 'execute',
   CALL_ACTION = 'call_action',
   TRANSFER = 'transfer',
+  RAW_STATEMENT = 'raw_statement',
 }
-
-export type DeployOrDrop = PayloadType.DEPLOY_DATABASE | PayloadType.DROP_DATABASE;
 
 export enum SerializationType {
   INVALID_SERIALIZATION_TYPE = 'invalid',
@@ -83,12 +75,33 @@ export type PayloadBytesTypes =
   | BytesEncodingStatus.UINT8_ENCODED;
 
 export enum BroadcastSyncType {
-  ASYNC = 0,
-  SYNC = 1,
-  COMMIT = 2,
+  SYNC = 0, // Ensures the transaction is accepted to mempool before responding (default behavior).
+  COMMIT = 1, // Will wait for the transaction to be included in a block.
 }
 
 export enum AuthErrorCodes {
   PRIVATE_MODE = -1001,
   KGW_MODE = -901,
+}
+
+// For checking the unconfirmed nonce
+export enum AccountStatus {
+  // returns the latest confirmed nonce
+  LATEST = 0,
+  // returns the latest unconfirmed nonce
+  PENDING = 1,
+}
+
+export enum AccountKeyType {
+  // Eth
+  SECP256K1 = 'secp256k1',
+
+  // ED25519
+  ED25519 = 'ed25519',
+}
+
+export enum AccessModifier {
+  PUBLIC = 'PUBLIC',
+  PRIVATE = 'PRIVATE',
+  VIEW = 'VIEW',
 }

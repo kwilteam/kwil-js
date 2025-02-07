@@ -7,7 +7,7 @@ import { PayloadType, SerializationType, BytesEncodingStatus, PayloadBytesTypes 
  * `TxReceipt` is the interface for a payload structure for a a response from the Kwil `broadcast` GRPC endpoint {@link https://github.com/kwilteam/proto/blob/main/kwil/tx/v1/broadcast.proto}.
 */
 export interface TxReceipt {
-    get tx_hash(): Base64String;
+    get tx_hash(): HexString;
 }
 
 /**

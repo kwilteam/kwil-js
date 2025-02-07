@@ -13,9 +13,9 @@ import { BaseTransaction, Transaction, Txn } from '../core/tx';
 import { base64ToBytes, bytesToBase64 } from '../utils/base64';
 import { sha256BytesToBytes } from '../utils/crypto';
 import { objects } from '../utils/objects';
-import { kwilEncode } from '../utils/rlp';
 import { bytesToHex, stringToBytes } from '../utils/serial';
 import { strings } from '../utils/strings';
+import { encodeActionExecution, encodeRawStatement, encodeTransfer } from '../utils/kwilEncoding';
 
 export interface PayloadTxOptions {
   payload: AllPayloads;
@@ -83,7 +83,10 @@ export class PayloadTx<T extends EnvironmentType> {
    * @param kwil - The Kwil client.
    * @param options - The options to configure the Payload instance.
    */
-  static createTx<T extends EnvironmentType>(kwil: Kwil<T>, options: PayloadTxOptions): PayloadTx<T> {
+  static createTx<T extends EnvironmentType>(
+    kwil: Kwil<T>,
+    options: PayloadTxOptions
+  ): PayloadTx<T> {
     return new PayloadTx<T>(kwil, options);
   }
 
@@ -105,8 +108,8 @@ export class PayloadTx<T extends EnvironmentType> {
 
     // create transaction payload for estimating cost. Set the Tx bytes type to base64 encoded because we need to make GRPC estimate cost request.
     const preEstTxn = Txn.create<BytesEncodingStatus.BASE64_ENCODED>((tx) => {
-      // rlp encode the payload and convert to base64
-      tx.body.payload = bytesToBase64(kwilEncode(this.payload));
+      // Encode the payload depending on the payload type
+      tx.body.payload = this.encodePayload(this.payloadType, this.payload);
       tx.body.type = payloadType;
       tx.sender = bytesToHex(identifier);
     });
@@ -120,6 +123,7 @@ export class PayloadTx<T extends EnvironmentType> {
     // if no nonce is provided, retrieve the nonce from the account
     if (!this.nonce) {
       const acct = await this.kwil.getAccount(identifier);
+
       nonce =
         Number(
           objects.requireNonNil(
@@ -129,7 +133,10 @@ export class PayloadTx<T extends EnvironmentType> {
         ) + 1;
     }
 
-    const encodedPayload = objects.requireNonNil(preEstTxn.body.payload, 'encoded payload is null. This is likely an internal error, please create an issue.');
+    const encodedPayload = objects.requireNonNil(
+      preEstTxn.body.payload,
+      'encoded payload is null. This is likely an internal error, please create an issue.'
+    );
 
     // add the nonce and fee to the transaction. Set the tx bytes back to uint8 so we can do the signature.
     const postEstTxn = Txn.copy<BytesEncodingStatus.UINT8_ENCODED>(preEstTxn, (tx) => {
@@ -194,7 +201,10 @@ Kwil Chain ID: ${tx.body.chain_id}
     // sign the above message
     const signedMessage = await executeSign(stringToBytes(signatureMessage), signer, signatureType);
 
-    const encodedPayload = objects.requireNonNil(tx.body.payload, 'encoded payload is null. This is likely an internal error, please create an issue.');
+    const encodedPayload = objects.requireNonNil(
+      tx.body.payload,
+      'encoded payload is null. This is likely an internal error, please create an issue.'
+    );
 
     // copy the transaction and add the signature
     return Txn.copy<BytesEncodingStatus.BASE64_ENCODED>(tx, (newTx) => {
@@ -215,5 +225,30 @@ Kwil Chain ID: ${tx.body.chain_id}
       newTx.sender = bytesToHex(identifier);
       newTx.serialization = SerializationType.SIGNED_MSG_CONCAT;
     });
+  }
+
+  private encodePayload(payloadType: PayloadType, payload: AllPayloads): string {
+    switch (payloadType) {
+      case PayloadType.EXECUTE_ACTION:
+        if (!('action' in payload && 'arguments' in payload)) {
+          throw new Error('Invalid payload type for EXECUTE_ACTION');
+        }
+        return encodeActionExecution(payload);
+
+      case PayloadType.TRANSFER:
+        if (!('to' in payload && 'amount' in payload)) {
+          throw new Error('Invalid payload type for TRANSFER');
+        }
+        return encodeTransfer(payload);
+
+      case PayloadType.RAW_STATEMENT:
+        if (!('statement' in payload && 'parameters' in payload)) {
+          throw new Error('Invalid payload type for RAW_STATEMENT');
+        }
+        return encodeRawStatement(payload);
+
+      default:
+        throw new Error(`Unsupported payload type: ${payloadType}`);
+    }
   }
 }

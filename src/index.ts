@@ -2,7 +2,13 @@ import { NodeKwil } from './client/node/nodeKwil';
 import { WebKwil } from './client/web/webKwil';
 import { generateDBID as _generateDBID } from './utils/dbid';
 import { TxReceipt as _TxReceipt } from './core/tx';
-import { ActionInput as _ActionInput, ActionBody as _ActionBody } from './core/action';
+import { 
+  ActionInput as _ActionInput,
+  ActionBody as _ActionBody, CallBody as _CallBody,
+  CallBodyNode as _CallBodyNode,
+  NamedParams as _NamedParams,
+  PositionalParams as _PositionalParams 
+} from './core/action';
 import { Transaction as _Transaction } from './core/tx';
 import {
   Database as _Database,
@@ -11,7 +17,6 @@ import {
   Attribute as _Attribute,
   Index as _Index,
   ActionSchema as _ActionSchema,
-  SelectQuery as _SelectQuery,
   ForeignKey as _ForeignKey,
   ForeignKeyAction as _ForeignKeyAction,
   Extension as _Extension,
@@ -21,19 +26,41 @@ import {
 } from './core/database';
 import { GenericResponse as _GenericResponse } from './core/resreq';
 import { TxResult as _TxResult, TxInfoReceipt as _TxInfoReceipt } from './core/txQuery';
-import { Account as _Account, DatasetInfo as _DatasetInfo } from './core/network';
+import { Account as _Account, DatasetInfo as _DatasetInfo, ChainInfo as _ChainInfo, ChainInfoOpts as _ChainInfoOpts } from './core/network';
 import { MsgReceipt as _MsgReceipt, Message as _Message } from './core/message';
-import { recoverSecp256k1PubKey as _recoverSecp256k1PubKey } from './utils/keys';
 import { KwilSigner } from './core/kwilSigner';
-import { PayloadType as _PayloadType } from './core/enums';
+import { EnvironmentType } from './core/enums';
+import { QueryParams as _QueryParams, ValueType as _ValueType } from './utils/types';
 import Client from './api_client/client';
+import { AuthSuccess as _AuthSuccess, LogoutResponse as _LogoutResponse} from './core/auth';
+import { AuthBody as _AuthBody } from './core/signature';
+import { TransferBody as _TransferBody } from './funder/funding_types';
+import { Config as _Config } from './api_client/config';
 
 namespace Types {
   export type TxReceipt = _TxReceipt;
   export type MsgReceipt = _MsgReceipt;
   export type ActionInput = _ActionInput;
-  export type Transaction = _Transaction;
-  export type Message = _Message;
+  export type GenericResponse<T> = _GenericResponse<T>;
+  export type TxResult = _TxResult;
+  export type TxInfoReceipt = _TxInfoReceipt;
+  export type Account = _Account;
+  export type ActionBody = _ActionBody;
+  export type CallBody = _CallBody;
+  export type CallBodyNode = _CallBodyNode;
+  export type QueryParams = _QueryParams;
+  export type ChainInfo = _ChainInfo;
+  export type ChainInfoOpts = _ChainInfoOpts
+  export type AuthSuccess<T extends EnvironmentType> = _AuthSuccess<T>;
+  export type AuthBody = _AuthBody;
+  export type LogoutResponse<T extends EnvironmentType> = _LogoutResponse<T>;
+  export type TransferBody = _TransferBody;
+  export type Config = _Config
+  export type NamedParams = _NamedParams
+  export type PositionalParams = _PositionalParams
+  export type ValueType = _ValueType
+
+  // below are deprecated and can be removed on next release (kwil-js v0.10)
   export type Database = _Database;
   export type Table = _Table;
   export type Column = _Column;
@@ -44,26 +71,21 @@ namespace Types {
   export type ActionSchema = _ActionSchema;
   export type Extension = _Extension;
   export type ExtensionConfig = _ExtensionConfig;
-  export type SelectQuery = _SelectQuery;
-  export type GenericResponse<T> = _GenericResponse<T>;
-  export type TxResult = _TxResult;
-  export type TxInfoReceipt = _TxInfoReceipt;
-  export type Account = _Account;
-  export type PayloadType = _PayloadType;
   export type DeployBody = _DeployBody;
   export type DropBody = _DropBody;
-  export type ActionBody = _ActionBody;
   export type DatasetInfo = _DatasetInfo;
 }
 
 namespace Utils {
   /**
    * `ActionInput` class is a utility class for creating action inputs.
+   * @deprecated This class is deprecated and will be removed in the next major release.  Please use the `params` instead.
    */
-  export class ActionInput extends _ActionInput {}
+  export const ActionInput = _ActionInput;
 
   /**
    * Generates a unique database identifier (DBID) from the provided owner's public key and a database name.
+   * @deprecated This function is deprecated and will be removed in the next major release.
    */
   export const generateDBID = _generateDBID;
 }

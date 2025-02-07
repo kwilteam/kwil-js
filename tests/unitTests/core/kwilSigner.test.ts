@@ -12,7 +12,7 @@ describe('KwilSigner Unit Tests', () => {
         const kSigner = new KwilSigner(ethSigner, publicKey);
 
         expect(kSigner).toBeDefined();
-        expect(kSigner.publicKey).toBe(publicKey);
+        expect(kSigner.identifier).toBe(publicKey);
         expect(kSigner.signer).toBe(ethSigner);
         expect(kSigner.signatureType).toBe('secp256k1_ep');
         expect(kSigner).toBeInstanceOf(KwilSigner);
@@ -25,7 +25,7 @@ describe('KwilSigner Unit Tests', () => {
         const kSigner = new KwilSigner(customSigner, keyPair.publicKey, SignatureType.ED25519);
 
         expect(kSigner).toBeDefined();
-        expect(kSigner.publicKey).toBe(keyPair.publicKey);
+        expect(kSigner.identifier).toBe(keyPair.publicKey);
         expect(kSigner.signer).toBe(customSigner);
         expect(kSigner.signatureType).toBe('ed25519');
         expect(kSigner).toBeInstanceOf(KwilSigner);
@@ -38,6 +38,6 @@ describe('KwilSigner Unit Tests', () => {
         expect(() => {
             // @ts-ignore
             new KwilSigner(customSigner, keyPair.publicKey);
-        }).toThrowError('Could not determine signature type from signer. Please pass a signature type to the KwilSigner constructor.');
+        }).toThrow('Could not determine signature type from signer. Please pass a signature type to the KwilSigner constructor.');
     });
 })

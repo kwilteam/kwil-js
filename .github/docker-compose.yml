@@ -54,7 +54,6 @@ services:
     command: |
       --autogen
       --root-dir=/app/.kwild
-      --app.private-rpc
       --log.level=debug
       --app.admin-listen-addr=/tmp/admin.socket
       --chain.p2p.external-address=tcp://0.0.0.0:26656

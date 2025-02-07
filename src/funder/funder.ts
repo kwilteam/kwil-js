@@ -1,7 +1,7 @@
 import { Kwil } from '../client/kwil';
 import {
+  AccountKeyType,
   BroadcastSyncType,
-  BytesEncodingStatus,
   EnvironmentType,
   PayloadType,
 } from '../core/enums';
@@ -9,9 +9,9 @@ import { KwilSigner } from '../core/kwilSigner';
 import { TransferPayload } from '../core/payload';
 import { GenericResponse } from '../core/resreq';
 import { Transaction, TxReceipt } from '../core/tx';
-import { hexToBytes } from '../utils/serial';
 import { TransferBody } from './funding_types';
 import { PayloadTx } from '../transaction/payloadTx';
+import { bytesToHex } from '../utils/serial';
 
 interface FunderClient {
   broadcastClient(
@@ -36,21 +36,25 @@ export class Funder<T extends EnvironmentType> {
     signer: KwilSigner,
     synchronous?: boolean
   ): Promise<GenericResponse<TxReceipt>> {
-    let to: Uint8Array;
-    if (typeof payload.to === 'string') {
-      to = hexToBytes(payload.to);
-    } else {
-      to = payload.to;
+    if (!payload.keyType) {
+      payload.keyType = AccountKeyType.SECP256K1
     }
 
-    const txPayload: TransferPayload<BytesEncodingStatus.HEX_ENCODED> = {
-      to,
+    if (payload.to instanceof Uint8Array) {
+      payload.to = bytesToHex(payload.to);
+    }
+
+    const txPayload: TransferPayload = {
+      to: {
+        identifier: payload.to,
+        key_type: payload.keyType,
+      },
       amount: payload.amount.toString(),
     };
 
     const transaction = await PayloadTx.createTx(this.kwil, {
       chainId: this.chainId,
-      description: payload.description!,
+      description: payload.description || '',
       payload: txPayload,
       payloadType: PayloadType.TRANSFER,
       identifier: signer.identifier,
@@ -60,7 +64,7 @@ export class Funder<T extends EnvironmentType> {
 
     return await this.funderClient.broadcastClient(
       transaction,
-      synchronous ? BroadcastSyncType.COMMIT : undefined
+      synchronous ? BroadcastSyncType.COMMIT : BroadcastSyncType.SYNC
     );
   }
 }
