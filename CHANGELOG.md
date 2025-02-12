@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.9.0-beta.2](https://github.com/kwilteam/kwil-js/compare/v0.9.0-beta.1...v0.9.0-beta.2) (2025-02-12)
+
+
+### Features
+
+* **call, selectquery:** typescript generics for call/selectQuery reesponse ([92d932a](https://github.com/kwilteam/kwil-js/commit/92d932a6a208f2d7374fcbbf7ee2b404ccd6026e))
+
 ## [0.9.0-beta.1](https://github.com/kwilteam/kwil-js/compare/v0.8.6...v0.9.0-beta.1) (2025-02-07)
 
 
