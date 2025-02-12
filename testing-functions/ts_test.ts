@@ -1,97 +1,93 @@
-// import { BrowserProvider, encodeRlp, Wallet } from 'ethers';
-// import { KwilSigner, NodeKwil, Utils } from '../src/index';
-import { ActionBody, PositionalParam, transformPositionalParam } from '../src/core/action';
+import { BrowserProvider, encodeRlp, Wallet } from 'ethers';
+import { KwilSigner, NodeKwil, Utils } from '../src/index';
+import { ActionBody, PositionalParams, transformPositionalParam } from '../src/core/action';
 // import { DeployBody, DropBody } from '../dist/core/database';
 // import compiledKf from './mydb.json';
 // import { TransferBody } from '../dist/funder/funding_types';
 // require('dotenv').config();
 
-// const kwil = new NodeKwil({
-//   kwilProvider: process.env.KWIL_PROVIDER as string,
-//   chainId: "",
-//   logging: true,
-// });
+const kwil = new NodeKwil({
+  kwilProvider: process.env.KWIL_PROVIDER as string,
+  chainId: "",
+  logging: true,
+});
 
-// import { numberToBytes } from '../src/utils/serial';
-// import { bytesToBase64 } from '../src/utils/base64';
+import { numberToBytes } from '../src/utils/serial';
+import { bytesToBase64 } from '../src/utils/base64';
 
-// // add window.ethereum to typeof globalthis
-// declare global {
-//   interface Window {
-//     ethereum: any;
-//   }
-// } 
+// add window.ethereum to typeof globalthis
+declare global {
+  interface Window {
+    ethereum: any;
+  }
+} 
 
-// async function buildSigner() {
-//     const wallet = new Wallet(process.env.PRIVATE_KEY as string)
-//     return new KwilSigner(wallet, await wallet.getAddress());
-// }
+async function buildSigner() {
+    const wallet = new Wallet(process.env.PRIVATE_KEY as string)
+    return new KwilSigner(wallet, await wallet.getAddress());
+}
 
-// async function main() {
-//   const signer = await buildSigner();
+async function main() {
+  const signer = await buildSigner();
 
-//   // actions
-//   const actionBody: ActionBody = {
-//     dbid: kwil.getDBID(signer.identifier, 'mydb'),
-//     name: 'add_post',
-//     namespace: 'main',
-//     inputs: [
-//       {
-//         $id: 69,
-//         $user: 'Luke',
-//         $title: 'Test Post',
-//         $body: 'This is a test post',
-//       },
-//     ],
-//     description: 'Add a post',
-//   };
+  // // actions
+  // const actionBody: ActionBody = {
+  //   dbid: kwil.getDBID(signer.identifier, 'mydb'),
+  //   name: 'add_post',
+  //   namespace: 'main',
+  //   inputs: [
+  //     {
+  //       $id: 69,
+  //       $user: 'Luke',
+  //       $title: 'Test Post',
+  //       $body: 'This is a test post',
+  //     },
+  //   ],
+  //   description: 'Add a post',
+  // };
 
-//   // execute
-//   await kwil.execute(actionBody, signer);
+  // // execute
+  // await kwil.execute(actionBody, signer);
 
-//   //call with signer
-//   // const callRes = await kwil.call(actionBody, signer);
-//   // console.log(callRes);
+  // //call with signer
+  // // const callRes = await kwil.call(actionBody, signer);
+  // // console.log(callRes);
 
-//   //call without signer
-//   // await kwil.call(actionBody);
+  // //call without signer
+  // // await kwil.call(actionBody);
 
-//   // deploy database
-//   const deployBody: DeployBody = {
-//     schema: compiledKf,
-//     description: 'My first database',
-//   };
+  // // deploy database
+  // const deployBody: DeployBody = {
+  //   schema: compiledKf,
+  //   description: 'My first database',
+  // };
 
-//   // deploy
-//   // await kwil.deploy(deployBody, signer, true);
+  // // deploy
+  // // await kwil.deploy(deployBody, signer, true);
 
-//   // drop database
-//   const dropBody: DropBody = {
-//     dbid: 'abc123',
-//     description: 'Drop this database',
-//   };
+  // // drop database
+  // const dropBody: DropBody = {
+  //   dbid: 'abc123',
+  //   description: 'Drop this database',
+  // };
 
-//   // drop
-//   // await kwil.drop(dropBody, signer);
+  // // drop
+  // // await kwil.drop(dropBody, signer);
 
-//   const funderTest: TransferBody = {
-//     to: '0xdB8C53Cd9be615934da491A7476f3f3288d98fEb',
-//     amount: BigInt(1 * 10 ** 18),
-//   };
+  // const funderTest: TransferBody = {
+  //   to: '0xdB8C53Cd9be615934da491A7476f3f3288d98fEb',
+  //   amount: BigInt(1 * 10 ** 18),
+  // };
 
-//   // transfer
-//   // const res = await kwil.funder.transfer(funderTest, signer);
-//   // console.log(res);
+  // transfer
+  // const res = await kwil.funder.transfer(funderTest, signer);
+  // console.log(res);
 
-//   // chainInfo
-//   const chainInfo = await kwil.chainInfo({
-//     disableWarning: true
-//   });
+  // chainInfo
 
-//   console.log(chainInfo);
-// }
+}
 
-// // main();
+main();
 
 // async function nilTest() {
 //   const signer = await buildSigner();
@@ -168,14 +164,3 @@ import { ActionBody, PositionalParam, transformPositionalParam } from '../src/co
 // }
 
 // // test()
-
-function positionalParamTest() {
-  const positionalParam: PositionalParam[] =[
-    ['Luke', 'hello'],
-    [1, true]
-  ]
-
-  console.log(transformPositionalParam.toNamedParams(positionalParam))
-}
-
-positionalParamTest()

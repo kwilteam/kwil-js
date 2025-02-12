@@ -175,7 +175,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    * @param params - Optional array of parameters to bind to the query ($1, $2, etc.)
    * @returns Promise resolving to query results
    */
-  public async selectQuery(query: string, params?: QueryParams): Promise<GenericResponse<Object[]>>;
+  public async selectQuery<T extends Object>(query: string, params?: QueryParams): Promise<GenericResponse<T[]>>;
   /**
    * @deprecated Use selectQuery(query, params?) instead. This method will be removed in next major version.
    */
@@ -422,11 +422,11 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
    * @param {(...args: any) => void} cookieHandlerCallback (optional) - the callback to handle the cookie if in the NODE environment
    * @returns A promise that resolves to the receipt of the message.
    */
-  protected async baseCall(
+  protected async baseCall<T extends Object>(
     callBody: CallBody,
     kwilSigner?: KwilSigner,
     cookieHandlerCallback?: { setCookie: () => void; resetCookie: () => void }
-  ): Promise<GenericResponse<Object[]>> {
+  ): Promise<GenericResponse<T[]>> {
     // Ensure auth mode is set
     await this.ensureAuthenticationMode();
 
@@ -448,7 +448,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
         await this.handleAuthenticateKGW(kwilSigner);
         return await this.callClient(message);
       }
-      return response;
+      return response
     }
     if (this.authMode === AuthenticationMode.PRIVATE) {
       const authBody = await this.handleAuthenticatePrivate(callBody, kwilSigner);

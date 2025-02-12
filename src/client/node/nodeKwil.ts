@@ -20,10 +20,10 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
    * @param {KwilSigner} kwilSigner (optional) - KwilSigner should be passed if the action requires authentication OR if the action uses a `@caller` contextual variable. If `@caller` is used and authentication is not required, the user will not be prompted to authenticate; however, the user's identifier will be passed as the sender.
    * @returns An Object[] with the result of the action
    */
-  public async call(
+  public async call<T extends Object>(
     actionBody: CallBodyNode,
     kwilSigner?: KwilSigner
-  ): Promise<GenericResponse<Object[]>> {
+  ): Promise<GenericResponse<T[]>> {
     const setCookie = () => {
       // set the temporary cookie, if the user provided one
       if (actionBody.cookie) {
