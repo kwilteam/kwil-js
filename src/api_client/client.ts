@@ -202,6 +202,14 @@ export default class Client extends Api {
 
     const res = await super.post<JsonRPCResponse<BroadcastResponse>>(`/rpc/v1`, body);
     return checkRes(res, (r) => {
+      // if r.result.result is included, it means that the user sent the transaction with a sync type of COMMIT
+      // if any error occured when submitting the transaction will be included in r.result.result
+      // if r.result.result.code is not zero, it means that an error occured when committing the transaction to a block
+      
+      if(r.result.result && r.result.result?.code !== 0) {
+        throw new Error(JSON.stringify(r.result) || `Transaction failed after broadcast.`);
+      }
+
       return {
         tx_hash: base64ToHex(r.result.tx_hash),
       };
@@ -284,7 +292,7 @@ export default class Client extends Api {
     });
   }
 
-  protected async callClient(msg: Message): Promise<CallClientResponse<any[]>> {
+  protected async callClient(msg: Message): Promise<CallClientResponse<any>> {
     const body = this.buildJsonRpcRequest<CallRequest>(JSONRPCMethod.METHOD_CALL, {
       body: msg.body,
       auth_type: msg.auth_type,
@@ -296,10 +304,14 @@ export default class Client extends Api {
 
     const errorResponse = this.checkAuthError(res);
     if (errorResponse) {
-      throw new Error(`Auth error: ${errorResponse.authCode}`);
+      return errorResponse;
     }
 
-    return checkRes(res, (r) => this.parseQueryResponse(r.result.query_result));
+    return checkRes(res, (r) => {
+      return {
+        result: this.parseQueryResponse(r.result.query_result)
+      }
+    });
   }
 
   private buildJsonRpcRequest<T>(method: JSONRPCMethod, params: T): JsonRPCRequest<T> {

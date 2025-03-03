@@ -18,7 +18,7 @@ import { wrap } from './intern';
 import { Funder } from '../funder/funder';
 import { Auth } from '../auth/auth';
 import { Action } from '../transaction/action';
-import { Message } from '../core/message';
+import { Message, MsgReceipt } from '../core/message';
 import { AuthBody } from '../core/signature';
 import { SelectQueryRequest } from '../core/jsonrpc';
 import { encodeParameters, encodeRawStatementParameters } from '../utils/parameterEncoding';
@@ -49,7 +49,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     // set chainId
     this.chainId = opts.chainId;
 
-    this.autoAuthenticate = opts.autoAuthenticate || true;
+    this.autoAuthenticate = opts.autoAuthenticate ?? true;
 
     // create funder
     this.funder = new Funder<T>(
@@ -426,7 +426,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     callBody: CallBody,
     kwilSigner?: KwilSigner,
     cookieHandlerCallback?: { setCookie: () => void; resetCookie: () => void }
-  ): Promise<GenericResponse<T[]>> {
+  ): Promise<GenericResponse<MsgReceipt<T>>> {
     // Ensure auth mode is set
     await this.ensureAuthenticationMode();
 
@@ -445,7 +445,15 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
 
       // if the user is not authenticated, prompt the user to authenticate
       if (response.authCode === AuthErrorCodes.KGW_MODE && this.autoAuthenticate) {
-        await this.handleAuthenticateKGW(kwilSigner);
+        if (!kwilSigner) {
+          throw new Error('KGW authentication requires a KwilSigner');
+        }
+        const res = await this.auth.authenticateKGW(kwilSigner);
+        
+        // if cookie was returned with res.data, we are in nodejs and need to set the cookie
+        if (res.data && 'cookie' in res.data) {
+          this.cookie = res.data.cookie;
+        }
         return await this.callClient(message);
       }
       return response
@@ -568,28 +576,6 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     msg.identifier = kwilSigner.identifier;
 
     return msg;
-  }
-
-  /**
-   * Checks authentication errors for PUBLIC (KGW)
-   * Signs message and then retries request for successful response
-   *
-   * @param kwilSigner kwilSigner (optional) - KwilSigner should be passed if the action requires authentication OR if the action uses a `@caller` contextual variable. If `@caller` is used and authentication is not required, the user will not be prompted to authenticate; however, the user's identifier will be passed as the sender.
-   * @returns
-   */
-
-  private async handleAuthenticateKGW(kwilSigner?: KwilSigner) {
-    if (this.autoAuthenticate) {
-      try {
-        // KGW AUTHENTICATION
-        if (!kwilSigner) {
-          throw new Error('KGW authentication requires a KwilSigner.');
-        }
-        await this.auth.authenticateKGW(kwilSigner);
-      } catch (error) {
-        throw new Error(`Authentication failed: ${error}`);
-      }
-    }
   }
 
   /**

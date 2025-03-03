@@ -2,6 +2,7 @@ import { Config } from '../../api_client/config';
 import { CallBodyNode } from '../../core/action';
 import { EnvironmentType } from '../../core/enums';
 import { KwilSigner } from '../../core/kwilSigner';
+import { MsgReceipt } from '../../core/message';
 import { GenericResponse } from '../../core/resreq';
 import { Kwil } from '../kwil';
 
@@ -23,7 +24,7 @@ export class NodeKwil extends Kwil<EnvironmentType.NODE> {
   public async call<T extends Object>(
     actionBody: CallBodyNode,
     kwilSigner?: KwilSigner
-  ): Promise<GenericResponse<T[]>> {
+  ): Promise<GenericResponse<MsgReceipt<T>>> {
     const setCookie = () => {
       // set the temporary cookie, if the user provided one
       if (actionBody.cookie) {
