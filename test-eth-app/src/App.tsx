@@ -13,10 +13,7 @@ import { kwilAuthenticate, kwilLogout } from './tests/authenticate';
 import { useState } from 'react';
 import { bytesToBase64 } from '../../src/utils/base64';
 import { encodeTransfer } from '../../src/utils/kwilEncoding';
-import { getTxProperties } from './examples/test';
-import { encodeRawStatement, RawStatement, Transfer } from './examples/broadcast_payloads';
 import { PayloadType } from '../../src/core/enums';
-import { encodeScalar } from './examples/encode_scalar';
 import { executeActionArray } from './tests/ethersv6/executeActionArray';
 
 declare global {
@@ -30,9 +27,6 @@ function App() {
     const provider = new BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
     const kwilSigner = new KwilSigner(signer, signer.address);
-
-    const res = await kwil.getAccount(signer.address);
-    const nonce = res.data?.nonce;
 
     // Convert address to Uint8Array using ethers utility
     // const addressBytes = getBytes(signer.address);

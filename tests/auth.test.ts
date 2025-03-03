@@ -1,5 +1,5 @@
 import { KwilSigner } from '../dist';
-import { ActionBody } from '../dist/core/action';
+import { ActionBody, CallBody } from '../dist/core/action';
 import { objects } from '../dist/utils/objects';
 import dotenv from 'dotenv';
 import { kwil, wallet } from './testingUtils';
@@ -16,8 +16,8 @@ const kSigner = new KwilSigner(wallet, pk);
 describe('Authentication Tests', () => {
   (isKwildPrivateOn ? describe : describe.skip)('Testing authentication with private mode', () => {
     it('should return a signature', async () => {
-      const body: ActionBody = {
-        dbid,
+      const body: CallBody = {
+        namespace: dbid,
         name: 'view_must_sign',
       };
 

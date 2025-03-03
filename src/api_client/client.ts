@@ -292,7 +292,7 @@ export default class Client extends Api {
     });
   }
 
-  protected async callClient(msg: Message): Promise<CallClientResponse<any[]>> {
+  protected async callClient(msg: Message): Promise<CallClientResponse<any>> {
     const body = this.buildJsonRpcRequest<CallRequest>(JSONRPCMethod.METHOD_CALL, {
       body: msg.body,
       auth_type: msg.auth_type,
@@ -304,10 +304,14 @@ export default class Client extends Api {
 
     const errorResponse = this.checkAuthError(res);
     if (errorResponse) {
-      throw new Error(`Auth error: ${errorResponse.authCode}`);
+      return errorResponse;
     }
 
-    return checkRes(res, (r) => this.parseQueryResponse(r.result.query_result));
+    return checkRes(res, (r) => {
+      return {
+        result: this.parseQueryResponse(r.result.query_result)
+      }
+    });
   }
 
   private buildJsonRpcRequest<T>(method: JSONRPCMethod, params: T): JsonRPCRequest<T> {

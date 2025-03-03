@@ -1,4 +1,4 @@
-import { kwil, kwilSigner, differentKwilSigner, isKwildPrivateOn } from './setup';
+import { kwil, kwilSigner, differentKwilSigner, isKwildPrivateOn, isKgwOn } from './setup';
 import { TxReceipt } from '../../src/core/tx';
 import { Utils } from '../../src/index';
 import { ActionBody, CallBody, CallBodyNode } from '../../src/core/action';
@@ -188,7 +188,7 @@ describe('SQL Schema Deployment and Management', () => {
       });
     });
 
-    (!isKwildPrivateOn ? it : it.skip)('should execute read_posts_count view action without signer or inputs', async () => {
+    ((!isKwildPrivateOn && !isKgwOn) ? it : it.skip)('should execute read_posts_count view action without signer or inputs', async () => {
       const actionBody: CallBody = {
         namespace,
         name: 'read_posts_count',
@@ -196,7 +196,9 @@ describe('SQL Schema Deployment and Management', () => {
 
       const result = await kwil.call(actionBody);
       if (result.data) {
-        expect(result.data[0]).toMatchObject({ count: "4" });
+        expect(result.data).toMatchObject({
+          result: [{ count: "4" }],
+        });
       } else {
         throw new Error('No data returned from action execution');
       }
@@ -213,7 +215,7 @@ describe('SQL Schema Deployment and Management', () => {
 
       const result = await kwil.call(actionBody, kwilSigner);
       if (result.data) {
-        expect(result.data[0]).toMatchObject({
+        expect(result.data?.result && result.data.result[0]).toMatchObject({
           post_title: 'Action Test',
           post_body: 'Updated post body',
         });
@@ -234,8 +236,8 @@ describe('SQL Schema Deployment and Management', () => {
 
       const result = await kwil.call(actionBody, kwilSigner);
       if (result.data) {
-        expect(result.data).toHaveLength(1);
-        expect(result.data[0]).toMatchObject({
+        expect(result.data.result).toHaveLength(1);
+        expect(result.data?.result && result.data.result[0]).toMatchObject({
           post_title: 'Action Test',
           post_body: 'Updated post body',
         });
@@ -255,8 +257,8 @@ describe('SQL Schema Deployment and Management', () => {
 
       const result = await kwil.call(actionBody, kwilSigner);
       if (result.data) {
-        expect(result.data).toHaveLength(1);
-        expect(result.data[0]).toMatchObject({
+        expect(result.data.result).toHaveLength(1);
+        expect(result.data?.result && result.data.result[0]).toMatchObject({
           post_title: 'Action Test',
           post_body: 'Updated post body',
         });
@@ -275,10 +277,18 @@ describe('SQL Schema Deployment and Management', () => {
       };
 
       // TODO: Need to test without kwilSigner
-      const result = await kwil.call(actionBody, differentKwilSigner);
+
+      interface ViewWithParam {
+        id: string;
+        name: string;
+        post_title: string;
+        post_body: string;
+      }
+
+      const result = await kwil.call<ViewWithParam>(actionBody, differentKwilSigner);
       if (result.data) {
-        expect(result.data).toHaveLength(1);
-        expect(result.data[0]).toMatchObject({
+        expect(result.data.result).toHaveLength(1);
+        expect(result.data?.result && result.data.result[0]).toMatchObject({
           post_title: 'Action Test',
           post_body: 'Updated post body',
         });
@@ -376,10 +386,15 @@ describe('SQL Schema Deployment and Management', () => {
         inputs: ['Positional Test']
       }
 
-      const result = await kwil.call(actionBody, kwilSigner);
+      interface GetPostByTitle {
+        post_title: string;
+        post_body: string;
+      }
+
+      const result = await kwil.call<GetPostByTitle>(actionBody, kwilSigner);
       if (result.data) {
-        expect(result.data).toHaveLength(1);
-        expect(result.data[0]).toMatchObject({
+        expect(result.data.result).toHaveLength(1);
+        expect(result.data?.result && result.data.result[0]).toMatchObject({
           post_title: 'Positional Test',
           post_body: 'Testing positional parameters',
         });

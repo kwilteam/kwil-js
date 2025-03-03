@@ -39,7 +39,7 @@ import { Config as _Config } from './api_client/config';
 
 namespace Types {
   export type TxReceipt = _TxReceipt;
-  export type MsgReceipt = _MsgReceipt;
+  export type MsgReceipt<T extends object> = _MsgReceipt<T>;
   export type ActionInput = _ActionInput;
   export type GenericResponse<T> = _GenericResponse<T>;
   export type TxResult = _TxResult;

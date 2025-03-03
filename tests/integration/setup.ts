@@ -103,6 +103,17 @@ const testActions = [
   }
 ];
 
+const gatewayActions = [
+  {
+    name: 'view_must_sign',
+    sql: `CREATE ACTION view_must_sign() PUBLIC VIEW RETURNS TABLE (id uuid, name text, post_title text, post_body text) { RETURN SELECT * FROM posts; }`,
+  },
+  {
+    name: 'view_caller',
+    sql: `CREATE ACTION view_caller() PUBLIC VIEW RETURNS (caller text) { RETURN @caller; }`,
+  }
+]
+
 async function createTestSchema(namespace: string, kwil: any, kwilSigner: any) {
   // Create namespace
   await kwil.execSql(`CREATE NAMESPACE ${namespace};`, {}, kwilSigner, true);
@@ -113,6 +124,12 @@ async function createTestSchema(namespace: string, kwil: any, kwilSigner: any) {
 
   // Create actions
   for (const action of testActions) {
+    await kwil.execSql(`{${namespace}} ${action.sql}`, {}, kwilSigner, true);
+  }
+}
+
+async function createGatewayActions(namespace: string, kwil: any, kwilSigner: any) {
+  for (const action of gatewayActions) {
     await kwil.execSql(`{${namespace}} ${action.sql}`, {}, kwilSigner, true);
   }
 }
@@ -143,6 +160,7 @@ export {
   differentKwilSigner,
   uuidV4,
   createTestSchema,
+  createGatewayActions,
   dropTestSchema,
   testActions,
   grantAdminAccess

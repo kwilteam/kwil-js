@@ -112,16 +112,16 @@ async function scratchpad() {
     $title: 'Positional Test',
     $body: 'Hello World',
   };
-  // executeGeneralAction(kwil, 'mydb', 'add_post', kwilSigner, post);
-  // await executeGeneralView(kwil, dbid, 'get_profile', null, kwilSigner);
+  // executeGeneralAction(kwil, 'main', 'add_post', kwilSigner, post);
+  await executeGeneralView(kwil, 'main', 'return_caller', null, kwilSigner);
   // await executeGeneralView(kwil, dbid, "view_must_sign", null, kwilSigner)
   // await executePositionalView(kwil, 'mydb', 'get_post_by_title')
 
-  await execSql(kwil,
-    'INSERT INTO number (id) VALUES ($id)',
-    { $id: 4 },
-    kwilSigner
-  )
+  // await execSql(kwil,
+  //   'INSERT INTO number (id) VALUES ($id)',
+  //   { $id: 4 },
+  //   kwilSigner
+  // )
 }
 
 scratchpad();

@@ -6,8 +6,8 @@ import { AnySignatureType, Signature, SignatureType } from './signature';
 /**
  * `MsgReceipt` is the interface for a payload structure for a response from the Kwil `call` GRPC endpoint {@link https://github.com/kwilteam/proto/blob/main/kwil/tx/v1/call.proto}.
  */
-export interface MsgReceipt {
-  get result(): Nillable<Base64String>;
+export interface MsgReceipt<T extends object> {
+  get result(): Nillable<T[]>;
 }
 
 /**

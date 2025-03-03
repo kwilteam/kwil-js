@@ -1,5 +1,5 @@
 import { Config } from '../../api_client/config';
-import { ActionBody, CallBody } from '../../core/action';
+import { CallBody } from '../../core/action';
 import { EnvironmentType } from '../../core/enums';
 import { KwilSigner } from '../../core/kwilSigner';
 import { MsgReceipt } from '../../core/message';
@@ -22,7 +22,7 @@ export class WebKwil extends Kwil<EnvironmentType.BROWSER> {
   public async call<T extends Object>(
     actionBody: CallBody,
     kwilSigner?: KwilSigner
-  ): Promise<GenericResponse<T[]>> {
+  ): Promise<GenericResponse<MsgReceipt<T>>> {
     return await this.baseCall(actionBody, kwilSigner);
   }
 }
