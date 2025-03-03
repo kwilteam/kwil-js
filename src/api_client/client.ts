@@ -202,6 +202,14 @@ export default class Client extends Api {
 
     const res = await super.post<JsonRPCResponse<BroadcastResponse>>(`/rpc/v1`, body);
     return checkRes(res, (r) => {
+      // if r.result.result is included, it means that the user sent the transaction with a sync type of COMMIT
+      // if any error occured when submitting the transaction will be included in r.result.result
+      // if r.result.result.code is not zero, it means that an error occured when committing the transaction to a block
+      
+      if(r.result.result && r.result.result?.code !== 0) {
+        throw new Error(JSON.stringify(r.result) || `Transaction failed after broadcast.`);
+      }
+
       return {
         tx_hash: base64ToHex(r.result.tx_hash),
       };

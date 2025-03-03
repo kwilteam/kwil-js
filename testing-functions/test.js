@@ -116,9 +116,20 @@ async function scratchpad() {
   // await executeGeneralView(kwil, dbid, 'get_profile', null, kwilSigner);
   // await executeGeneralView(kwil, dbid, "view_must_sign", null, kwilSigner)
   // await executePositionalView(kwil, 'mydb', 'get_post_by_title')
+
+  await execSql(kwil,
+    'INSERT INTO number (id) VALUES ($id)',
+    { $id: 4 },
+    kwilSigner
+  )
 }
 
 scratchpad();
+
+async function execSql(kwil, query, params, signer) {
+  const res = await kwil.execSql(query, params, signer, false);
+  logger(res);
+}
 
 async function executePositionalView(kwil, namespace, name) {
   const body = {

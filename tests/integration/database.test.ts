@@ -196,7 +196,7 @@ describe('SQL Schema Deployment and Management', () => {
 
       const result = await kwil.call(actionBody);
       if (result.data) {
-        expect(result.data[0]).toMatchObject({ count: 4 });
+        expect(result.data[0]).toMatchObject({ count: "4" });
       } else {
         throw new Error('No data returned from action execution');
       }
@@ -423,7 +423,7 @@ describe('SQL Schema Deployment and Management', () => {
     it('should NOT drop posts table with wrong signer', async () => {
       await expect(
         kwil.execSql('DROP TABLE posts;', {}, differentKwilSigner, true)
-      ).rejects.toThrow(/JSON RPC call error: code: -201, message:/);
+      ).rejects.toThrow(/user does not have privilege DROP on namespace/);
     });
   });
 

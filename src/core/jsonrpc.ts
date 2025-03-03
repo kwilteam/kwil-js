@@ -115,6 +115,12 @@ export interface AccountResponse {
 
 export interface BroadcastResponse {
   tx_hash: Base64String;
+  result?: {
+    code: number;
+    gas: number;
+    log: string;
+    events: any[]
+  }
 }
 
 export interface ChainInfoResponse {
