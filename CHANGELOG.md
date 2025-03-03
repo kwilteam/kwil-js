@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.9.0-beta.3](https://github.com/kwilteam/kwil-js/compare/v0.9.0-beta.2...v0.9.0-beta.3) (2025-03-03)
+
+
+### Bug Fixes
+
+* **broadcast:** fix error handling for broadcast errors when `sync` is set to `true` ([0b1162a](https://github.com/kwilteam/kwil-js/commit/0b1162addf31730ed4f7bf1a505e05eebc90038d))
+* kgw auth ([2900df4](https://github.com/kwilteam/kwil-js/commit/2900df43bcd3b138dc2bf28a47b6f9edc17e04d5))
+
 ## [0.9.0-beta.2](https://github.com/kwilteam/kwil-js/compare/v0.9.0-beta.1...v0.9.0-beta.2) (2025-02-12)
 
 
