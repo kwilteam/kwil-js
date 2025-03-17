@@ -77,7 +77,7 @@ function formatEncodedValue(val: ValueType | ValueType[]): EncodedValue {
  * @param {ValueType[]} values - An array of input values to be executed by an action.
  * @returns formatted values used for an action
  */
-export function encodeActionInputs(values: ValueType[]): EncodedValue[] {
+export function encodeValueType(values: ValueType[]): EncodedValue[] {
   return values.map((val) => formatEncodedValue(val));
 }
 

@@ -8,7 +8,6 @@ export type NonNil<T> = T extends Nil ? never : T;
 // allowed to be either the original type or null/undefined.
 export type Nillable<T> = T | Nil;
 export type Supplier<T> = () => T;
-export type Lazy<T> = (() => Promise<T>) | (() => T);
 export type Func<T, U> = (t: T) => U;
 export type Unary<T> = Func<T, T>;
 export type Runnable = () => void;
@@ -54,15 +53,6 @@ export namespace Promisy {
     return objects.isNil(promisy)
       ? Promise.reject<T>(new NillableError(nilError))
       : resolve(promisy as Promisy<T>);
-  }
-}
-
-export namespace Lazy {
-  export function of<T>(promisy: Promisy<T>): Lazy<Promise<T>> {
-    return (): Promise<T> => {
-      const fn = objects.requireNonNil(promisy);
-      return typeof fn === 'function' ? fn() : fn;
-    };
   }
 }
 

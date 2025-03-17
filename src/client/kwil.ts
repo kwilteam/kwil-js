@@ -12,7 +12,7 @@ import {
   EnvironmentType,
   PayloadType,
 } from '../core/enums';
-import { ActionBody, CallBody, NamedParams, transformActionInput, transformPositionalParam } from '../core/action';
+import { ActionBody, CallBody, isNamedParam, NamedParams, PositionalParams, transformActionInput, transformPositionalParam } from '../core/action';
 import { KwilSigner } from '../core/kwilSigner';
 import { wrap } from './intern';
 import { Funder } from '../funder/funder';
@@ -136,16 +136,22 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
 
     // ActionInput[] has been deprecated.
     // This transforms the ActionInput[] into NamedInput[] to support legacy ActionInput[]
-    let inputs: NamedParams[] = [];
+    let inputs: NamedParams[] | PositionalParams[] = [];
     if (actionBody.inputs && transformActionInput.isActionInputArray(actionBody.inputs)) {
       inputs = transformActionInput.toNamedParams(actionBody.inputs);
-    } else if (actionBody.inputs && transformPositionalParam.isPositionalParams(actionBody.inputs)) {
-      // handle positional parameters
-      inputs = transformPositionalParam.toNamedParams(actionBody.inputs); 
     } else {
-      // If the inputs are not an ActionInput[] or PositionalParam[], we assume they are NamedParams[]
       inputs = actionBody.inputs || [];
     }
+
+
+    
+    // else if (actionBody.inputs && transformPositionalParam.isPositionalParams(actionBody.inputs)) {
+    //   // handle positional parameters
+    //   inputs = transformPositionalParam.toNamedParams(actionBody.inputs); 
+    // } else {
+    //   // If the inputs are not an ActionInput[] or PositionalParam[], we assume they are NamedParams[]
+    //   inputs = actionBody.inputs || [];
+    // }
 
     let tx = Action.createTx(this, {
       namespace,
@@ -511,24 +517,23 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
     const namespace = resolveNamespace(callBody);
 
     // ActionInput[] is deprecated. So we are converting any ActionInput[] to an Entries[]
-    let inputs: NamedParams = {};
+    let inputs: NamedParams[] | PositionalParams[] = [];
     if (callBody.inputs && transformActionInput.isActionInputArray(callBody.inputs)) {
       // For a call only one entry is allowed, so we only need to convert the first ActionInput
-      inputs = transformActionInput.toSingleEntry(callBody.inputs);
-    } else if (callBody.inputs && transformPositionalParam.isPositionalParam(callBody.inputs)) {
-      // handle positional parameters
-      inputs = transformPositionalParam.toNamedParam(callBody.inputs);
-    } else if (callBody.inputs) {
-      inputs = callBody.inputs;
+      inputs = [transformActionInput.toSingleEntry(callBody.inputs)];
+    } else if (callBody.inputs && isNamedParam(callBody.inputs)) {
+      inputs = [callBody.inputs];
+    } else {
+      inputs = callBody.inputs ? [callBody.inputs] : [];
     }
-
+    
     // pre Challenge message
     let msg = Action.createTx<EnvironmentType.BROWSER>(this, {
       chainId: this.chainId,
       namespace,
       actionName: callBody.name,
       description: '',
-      actionInputs: [inputs],
+      actionInputs: inputs,
     });
 
     /**

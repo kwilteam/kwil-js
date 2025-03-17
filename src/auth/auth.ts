@@ -19,7 +19,7 @@ import { CallBody, NamedParams, transformActionInput, transformPositionalParam }
 import { sha256BytesToBytes } from '../utils/crypto';
 import { UnencodedActionPayload } from '../core/payload';
 import { encodeActionCall } from '../utils/kwilEncoding';
-import { encodeActionInputs } from '../utils/parameterEncoding';
+import { encodeValueType } from '../utils/parameterEncoding';
 
 interface AuthClient {
   getAuthenticateClient(): Promise<GenericResponse<KGWAuthInfo>>;
@@ -125,7 +125,7 @@ export class Auth<T extends EnvironmentType> {
     const payload: UnencodedActionPayload<PayloadType.CALL_ACTION> = {
       dbid: actionBody.namespace,
       action: actionBody.name,
-      arguments: encodeActionInputs(actionValues),
+      arguments: encodeValueType(actionValues),
     };
 
     const encodedPayload = encodeActionCall(payload);
