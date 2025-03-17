@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.9.1](https://github.com/kwilteam/kwil-js/compare/v0.9.0...v0.9.1) (2025-03-17)
+
+
+### Bug Fixes
+
+* fixes bug where kwil-js would check params when using positional params ([399eec1](https://github.com/kwilteam/kwil-js/commit/399eec1a3effbead74d001d3676b3f6991a35c21))
+
 ## [0.9.0](https://github.com/kwilteam/kwil-js/compare/v0.9.0-beta.3...v0.9.0) (2025-03-07)
 
 ## [0.9.0-beta.3](https://github.com/kwilteam/kwil-js/compare/v0.9.0-beta.2...v0.9.0-beta.3) (2025-03-03)
