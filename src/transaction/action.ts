@@ -1,5 +1,5 @@
 import { Kwil } from '../client/kwil';
-import { ActionOptions, NamedParams, NamespaceAction, ValidatedAction } from '../core/action';
+import { ActionOptions, isNamedParams, NamedParams, NamespaceAction, PositionalParams, ValidatedAction } from '../core/action';
 import { SignerSupplier } from '../core/signature';
 import {
   AccessModifier,
@@ -13,7 +13,7 @@ import { Transaction } from '../core/tx';
 import { PayloadTx } from './payloadTx';
 import { PayloadMsg } from '../message/payloadMsg';
 import { objects } from '../utils/objects';
-import { encodeActionInputs } from '../utils/parameterEncoding';
+import { encodeValueType } from '../utils/parameterEncoding';
 import { Base64String } from '../utils/types';
 
 const TXN_BUILD_IN_PROGRESS: NamedParams[] = [];
@@ -27,7 +27,7 @@ export class Action<T extends EnvironmentType> {
   public namespace: string;
   public chainId: string;
   public description: string;
-  public actionInputs: NamedParams[];
+  public actionInputs: NamedParams[] | PositionalParams[];
   public signer?: SignerSupplier;
   public identifier?: Uint8Array;
   public signatureType?: AnySignatureType;
@@ -170,7 +170,7 @@ export class Action<T extends EnvironmentType> {
    */
   private async buildTxPayload(
     privateMode: boolean,
-    actionInputs: NamedParams[]
+    actionInputs: NamedParams[] | PositionalParams[]
   ): Promise<UnencodedActionPayload<PayloadType.EXECUTE_ACTION>> {
     const payload: UnencodedActionPayload<PayloadType.EXECUTE_ACTION> = {
       dbid: this.namespace,
@@ -181,7 +181,7 @@ export class Action<T extends EnvironmentType> {
     // In private mode, we cannot validate the action inputs as we cannot run the selectQuery to get the schema.
     if (privateMode) {
       for (const actionInput of actionInputs) {
-        payload.arguments.push(encodeActionInputs(Object.values(actionInput)));
+        payload.arguments.push(encodeValueType(Object.values(actionInput)));
       }
 
       return payload;
@@ -193,7 +193,7 @@ export class Action<T extends EnvironmentType> {
     );
 
     // throw runtime error if action is a view action. view actions require a different payload structure than transactions.
-    if (modifiers && modifiers.includes(AccessModifier.VIEW)) {
+    if (modifiers.length > 0 && modifiers.includes(AccessModifier.VIEW)) {
       throw new Error(
         `Action / Procedure ${actionName} is a 'view' action. Please use kwil.call().`
       );
@@ -213,7 +213,7 @@ export class Action<T extends EnvironmentType> {
    */
   private async buildMsgPayload(
     privateMode: boolean,
-    actionInputs: NamedParams[]
+    actionInputs: NamedParams[] | PositionalParams[]
   ): Promise<UnencodedActionPayload<PayloadType.CALL_ACTION>> {
     const payload: UnencodedActionPayload<PayloadType.CALL_ACTION> = {
       dbid: this.namespace,
@@ -224,7 +224,7 @@ export class Action<T extends EnvironmentType> {
     // In private mode, we cannot validate the action inputs as we cannot run the selectQuery to get the schema.
     if (privateMode) {
       const actionValues = actionInputs.length > 0 ? Object.values(actionInputs[0]) : [];
-      payload.arguments = encodeActionInputs(actionValues);
+      payload.arguments = encodeValueType(actionValues);
 
       return payload;
     }
@@ -242,7 +242,7 @@ export class Action<T extends EnvironmentType> {
     }
 
     // throw runtime error if action is not a view action. transactions require a different payload structure than view actions.
-    if (modifiers && modifiers.includes(AccessModifier.VIEW) === false) {
+    if (modifiers.length > 0 && modifiers.includes(AccessModifier.VIEW) === false) {
       throw new Error(`Action ${actionName} is not a view only action. Please use kwil.execute().`);
     }
     payload.arguments = encodedActionInputs[0];
@@ -256,62 +256,75 @@ export class Action<T extends EnvironmentType> {
    * @param {ActionInput[]} actionInputs - An array of action inputs to be executed.
    * @returns {ValidatedAction} - An object containing the database namespace, action name, modifiers, and encoded action inputs.
    */
-  private async validatedActionRequest(actionInputs: NamedParams[]): Promise<ValidatedAction> {
-    // retrieve the schema for the database
-    const namespaceRequest = await this.kwil.getActions(this.namespace);
+  private async validatedActionRequest(actionInputs: NamedParams[] | PositionalParams[]): Promise<ValidatedAction> {
+    // if using namedParams, we need to validate that the action inputs and order
+    // namedParams look like { $param1: 'value1', $param2: 'value2' }
+    // positionalParams look like ['value1', 'value2']
+    if(isNamedParams(actionInputs)) {
+       // retrieve the schema for the database
+       const namespaceRequest = await this.kwil.getActions(this.namespace);
 
-    // Check if the request was successful
-    if (namespaceRequest.status !== 200) {
-      throw new Error(
-        `Failed to retrieve actions for namespace ${this.namespace}. Status: ${namespaceRequest.status}`
-      );
+       // Check if the request was successful
+       if (namespaceRequest.status !== 200) {
+         throw new Error(
+           `Failed to retrieve actions for namespace ${this.namespace}. Status: ${namespaceRequest.status}`
+         );
+       }
+ 
+       // Check if namespace has actions
+       if (!namespaceRequest.data || namespaceRequest.data.length === 0) {
+         throw new Error(
+           `No actions found for the namespace '${this.namespace}'. Please verify the namespace exists and contains the '${this.actionName}' action.`
+         );
+       }
+ 
+       const namespaceActions = namespaceRequest.data as NamespaceAction[];
+ 
+       // Find the action matching the requested name
+       const selectedAction = namespaceActions.find((a) => a.name === this.actionName);
+       if (!selectedAction) {
+         throw new Error(`Action '${this.actionName}' not found in namespace '${this.namespace}'.`);
+       }
+ 
+       // Validate that the action is public
+       if (!selectedAction.access_modifiers.includes(AccessModifier.PUBLIC)) {
+         throw new Error(`Action '${this.actionName}' is not a public action.`);
+       }
+ 
+       // ensure that no action inputs or values are missing
+       if (actionInputs) {
+         for (const actionInput of actionInputs) {
+           if (!this.validateActionInputs(selectedAction, actionInput)) {
+             // Should not reach this point as error is thrown in validateActionInputs
+             throw new Error(`Action inputs are invalid for action: ${selectedAction.name}.`);
+           }
+         }
+       }
+ 
+       const encodedActionInputs: EncodedValue[][] = [];
+       for (const actionInput of actionInputs) {
+         encodedActionInputs.push(encodeValueType(Object.values(actionInput)));
+       }
+ 
+       return {
+         actionName: selectedAction.name,
+         modifiers: selectedAction.access_modifiers,
+         encodedActionInputs,
+       };
     }
+    
+    let encValue: EncodedValue[][] = [];
 
-    // Check if namespace has actions
-    if (!namespaceRequest.data || namespaceRequest.data.length === 0) {
-      throw new Error(
-        `No actions found for the namespace '${this.namespace}'. Please verify the namespace exists and contains the '${this.actionName}' action.`
-      );
-    }
-
-    const namespaceActions = namespaceRequest.data as NamespaceAction[];
-
-    // Find the action matching the requested name
-    const selectedAction = namespaceActions.find((a) => a.name === this.actionName);
-    if (!selectedAction) {
-      throw new Error(`Action '${this.actionName}' not found in namespace '${this.namespace}'.`);
-    }
-
-    // Validate that the action is public
-    if (!selectedAction.access_modifiers.includes(AccessModifier.PUBLIC)) {
-      throw new Error(`Action '${this.actionName}' is not a public action.`);
-    }
-
-    // ensure that no action inputs or values are missing
-    if (actionInputs) {
-      for (const actionInput of actionInputs) {
-        if (!this.validateActionInputs(selectedAction, actionInput)) {
-          // Should not reach this point as error is thrown in validateActionInputs
-          throw new Error(`Action inputs are invalid for action: ${selectedAction.name}.`);
-        }
+    if (actionInputs.length > 0) {
+      for (const a of actionInputs) {
+        encValue.push(encodeValueType(a));
       }
-
-      const encodedActionInputs: EncodedValue[][] = [];
-      for (const actionInput of actionInputs) {
-        encodedActionInputs.push(encodeActionInputs(Object.values(actionInput)));
-      }
-
-      return {
-        actionName: selectedAction.name,
-        modifiers: selectedAction.access_modifiers,
-        encodedActionInputs,
-      };
     }
 
     return {
-      actionName: selectedAction.name,
-      modifiers: selectedAction.access_modifiers,
-      encodedActionInputs: [],
+      actionName: this.actionName,
+      modifiers: [],
+      encodedActionInputs: encValue,
     };
   }
 
@@ -354,7 +367,7 @@ export class Action<T extends EnvironmentType> {
     }
 
     // return true if using positional parameters
-    if(Object.keys(actionInputEntries).every(key => key.startsWith('$pstn_'))) {
+    if (Object.keys(actionInputEntries).every(key => key.startsWith('$pstn_'))) {
       return true;
     }
 
@@ -368,8 +381,7 @@ export class Action<T extends EnvironmentType> {
 
     if (missingParameters.size > 0) {
       throw new Error(
-        `Missing parameters: ${Array.from(missingParameters).join(', ')} for action '${
-          selectedAction.name
+        `Missing parameters: ${Array.from(missingParameters).join(', ')} for action '${selectedAction.name
         }'`
       );
     }
@@ -385,8 +397,7 @@ export class Action<T extends EnvironmentType> {
 
     if (incorrectParameters.size > 0) {
       throw new Error(
-        `Incorrect parameters: ${Array.from(incorrectParameters).join(', ')} for action '${
-          selectedAction.name
+        `Incorrect parameters: ${Array.from(incorrectParameters).join(', ')} for action '${selectedAction.name
         }'`
       );
     }

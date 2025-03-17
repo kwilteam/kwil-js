@@ -11,6 +11,23 @@ export type EntryType = Entry<ValueType> | Entry<ValueType[]>;
 
 export type NamedParams = Record<string, ValueType | ValueType[]>;
 
+export function isNamedParams(i: NamedParams[] | PositionalParams []): i is NamedParams[] {
+  let isNamedParams = false;
+
+  for (const p of i) {
+    if (isNamedParam(p)) {
+      isNamedParams = true;
+      break;
+    }
+  }
+
+  return isNamedParams;
+}      
+
+export function isNamedParam(i: NamedParams | PositionalParams): i is NamedParams {
+  return typeof i === "object" && i !== null && !Array.isArray(i);
+}
+
 export type Predicate = (k: [key: string, v: ValueType | ValueType[]]) => boolean;
 
 export type PositionalParams = ValueType[]
@@ -107,7 +124,7 @@ export interface ActionOptions {
   namespace: string;
   chainId: string;
   description: string;
-  actionInputs: NamedParams[];
+  actionInputs: NamedParams[] | PositionalParams[]
   signer?: SignerSupplier;
   identifier?: Uint8Array;
   signatureType?: AnySignatureType;
