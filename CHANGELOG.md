@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.9.2](https://github.com/kwilteam/kwil-js/compare/v0.9.1...v0.9.2) (2025-03-20)
+
+
+### Bug Fixes
+
+* call with empty array ([5d300ce](https://github.com/kwilteam/kwil-js/commit/5d300ce774a6b21eb9eccbfc9868c180618513fb))
+
 ### [0.9.1](https://github.com/kwilteam/kwil-js/compare/v0.9.0...v0.9.1) (2025-03-17)
 
 
