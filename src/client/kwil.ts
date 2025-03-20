@@ -12,7 +12,7 @@ import {
   EnvironmentType,
   PayloadType,
 } from '../core/enums';
-import { ActionBody, CallBody, isNamedParam, NamedParams, PositionalParams, transformActionInput, transformPositionalParam } from '../core/action';
+import { ActionBody, CallBody, isNamedParam, NamedParams, PositionalParams, transformActionInput } from '../core/action';
 import { KwilSigner } from '../core/kwilSigner';
 import { wrap } from './intern';
 import { Funder } from '../funder/funder';
