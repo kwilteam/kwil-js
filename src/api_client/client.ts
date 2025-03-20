@@ -6,7 +6,7 @@ import { ClientConfig } from './config';
 import { GenericResponse } from '../core/resreq';
 import { base64ToHex, bytesToHex, hexToBase64, hexToBytes } from '../utils/serial';
 import { TxInfoReceipt } from '../core/txQuery';
-import { CallClientResponse, Message, MsgReceipt } from '../core/message';
+import { CallClientResponse, Message } from '../core/message';
 import {
   AccountStatus,
   AuthErrorCodes,

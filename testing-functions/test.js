@@ -81,7 +81,7 @@ async function scratchpad() {
   // listDatabases(kwil)
   // ping(kwil)
   //   chainInfo(kwil)
-  // await execSingleAction(kwil, dbid, "add_post", wallet, address)
+  // await execSingleAction(kwil, 'main', "add_post", wallet, address)
   // await execSingleActionKwilSigner(kwil, dbid, "add_post", kwilSigner)
   // await select(kwil, dbid, "SELECT * FROM primitive_events")
   // bulkAction(kwil, dbid, "add_post", wallet, address)
@@ -115,7 +115,7 @@ async function scratchpad() {
   // executeGeneralAction(kwil, 'main', 'add_post', kwilSigner, post);
   // await executeGeneralView(kwil, 'main', 'return_caller', null, kwilSigner);
   // await executeGeneralView(kwil, dbid, "view_must_sign", null, kwilSigner)
-  // await executePositionalView(kwil, 'main', 'get_post_by_title')
+  await executePositionalView(kwil, 'main', 'return_all')
 
   // await execSql(kwil,
   //   'INSERT INTO number (id) VALUES ($id)',
@@ -135,9 +135,7 @@ async function executePositionalView(kwil, namespace, name) {
   const body = {
     namespace,
     name,
-    inputs: [
-      'Positional Test'
-    ]
+    inputs: [],
   };
 
   const res = await kwil.call(body);
@@ -159,7 +157,7 @@ async function executeGeneralAction(kwil, dbid, name, wallet, input) {
   const body = {
     name,
     namespace: dbid,
-    ...(input ? { inputs: [input] } : {}),
+    inputs: [{ $id:1}]
   };
 
   const res = await kwil.execute(body, wallet, true);

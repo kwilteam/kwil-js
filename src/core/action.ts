@@ -176,7 +176,7 @@ export const transformActionInput = {
    * @returns {boolean} - True if `inputs` is an array where every element is an ActionInput, otherwise false.
    */
   isActionInputArray(i: unknown): i is ActionInput[] {
-    return Array.isArray(i) && i.every((item) => item instanceof ActionInput);
+    return Array.isArray(i) && i.length > 0 && i.every((item) => item instanceof ActionInput);
   },
   /**
    * Transforms action inputs into entries format required by the API.

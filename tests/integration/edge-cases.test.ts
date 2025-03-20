@@ -45,6 +45,32 @@ describe('Edge cases', () => {
       });
     }, 10000);
 
+    it('should execute when an action has no params', async () => {
+      const actionBody: ActionBody = {
+        namespace,
+        name: 'add_post_no_param',
+        inputs: []
+      };
+
+      const result = await kwil.execute(actionBody, kwilSigner, true);
+      expect(result.data).toMatchObject<TxReceipt>({
+        tx_hash: expect.any(String),
+      });
+    }, 10000)
+
+    it('should call when a view has no params', async () => {
+      const callBody: CallBody = {
+        namespace,
+        name: 'read_posts_count',
+        inputs: []
+      }
+
+      const result = await kwil.call(callBody, kwilSigner);
+      expect(result.data).toMatchObject({
+        result: [{ count: "2" }]
+      });
+    }, 10000)
+
     it('should fail execute with named params', async () => {
       const actionBody: ActionBody = {
         namespace,

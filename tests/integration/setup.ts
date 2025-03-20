@@ -82,6 +82,10 @@ const testActions = [
     sql: `CREATE ACTION update_post($id uuid, $body text) PUBLIC { UPDATE posts SET post_body = $body WHERE id = $id; }`,
   },
   {
+    name: 'add_post_no_param',
+    sql: `CREATE ACTION add_post_no_param() PUBLIC { INSERT INTO posts (id, name, post_title, post_body) VALUES ('${uuidV4()}'::uuid, 'TestUser', 'Action Test', 'Testing action execution'); }`,
+  },
+  {
     name: 'delete_post',
     sql: `CREATE ACTION delete_post($id uuid) PUBLIC { DELETE FROM posts WHERE id = $id; }`,
   },
