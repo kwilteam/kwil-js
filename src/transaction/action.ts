@@ -1,5 +1,5 @@
 import { Kwil } from '../client/kwil';
-import { ActionOptions, isNamedParams, NamedParams, NamespaceAction, PositionalParams, ValidatedAction } from '../core/action';
+import { ActionOptions, isNamedParams, NamedParams, NamedTypes, NamespaceAction, PositionalParams, resolveParamTypes, ValidatedAction } from '../core/action';
 import { SignerSupplier } from '../core/signature';
 import {
   AccessModifier,
@@ -15,6 +15,7 @@ import { PayloadMsg } from '../message/payloadMsg';
 import { objects } from '../utils/objects';
 import { encodeValueType } from '../utils/parameterEncoding';
 import { Base64String } from '../utils/types';
+import { DataInfo } from '../core/database';
 
 const TXN_BUILD_IN_PROGRESS: NamedParams[] = [];
 
@@ -28,6 +29,7 @@ export class Action<T extends EnvironmentType> {
   public chainId: string;
   public description: string;
   public actionInputs: NamedParams[] | PositionalParams[];
+  public types?: DataInfo[] | NamedTypes
   public signer?: SignerSupplier;
   public identifier?: Uint8Array;
   public signatureType?: AnySignatureType;
@@ -70,6 +72,7 @@ export class Action<T extends EnvironmentType> {
       'actionInputs',
       'signatureType',
       'nonce',
+      'types',
     ]);
 
     this.signer = options.signer;
@@ -78,6 +81,7 @@ export class Action<T extends EnvironmentType> {
     this.nonce = options.nonce;
     this.challenge = options.challenge;
     this.signature = options.signature;
+    this.types = options.types;
   }
 
   /**
@@ -181,7 +185,8 @@ export class Action<T extends EnvironmentType> {
     // In private mode, we cannot validate the action inputs as we cannot run the selectQuery to get the schema.
     if (privateMode) {
       for (const actionInput of actionInputs) {
-        payload.arguments.push(encodeValueType(Object.values(actionInput)));
+        const value = resolveParamTypes(actionInput, this.types);
+        payload.arguments.push(encodeValueType(value));
       }
 
       return payload;
@@ -224,7 +229,8 @@ export class Action<T extends EnvironmentType> {
     // In private mode, we cannot validate the action inputs as we cannot run the selectQuery to get the schema.
     if (privateMode) {
       const actionValues = actionInputs.length > 0 ? Object.values(actionInputs[0]) : [];
-      payload.arguments = encodeValueType(actionValues);
+      const value = resolveParamTypes(actionValues, this.types);
+      payload.arguments = encodeValueType(value);
 
       return payload;
     }
@@ -303,7 +309,8 @@ export class Action<T extends EnvironmentType> {
  
        const encodedActionInputs: EncodedValue[][] = [];
        for (const actionInput of actionInputs) {
-         encodedActionInputs.push(encodeValueType(Object.values(actionInput)));
+          const value = resolveParamTypes(actionInput, this.types);
+          encodedActionInputs.push(encodeValueType(value));
        }
  
        return {
@@ -317,7 +324,8 @@ export class Action<T extends EnvironmentType> {
 
     if (actionInputs.length > 0) {
       for (const a of actionInputs) {
-        encValue.push(encodeValueType(a));
+        const value = resolveParamTypes(a, this.types);
+        encValue.push(encodeValueType(value));
       }
     }
 

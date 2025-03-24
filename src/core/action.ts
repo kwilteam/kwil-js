@@ -1,5 +1,6 @@
 import { objects } from '../utils/objects';
 import { isValueType, ValueType } from '../utils/types';
+import { DataInfo } from './database';
 import { AccessModifier } from './enums';
 import { BytesEncodingStatus } from './enums';
 import { EncodedValue } from './payload';
@@ -10,6 +11,62 @@ export type Entry<T extends ValueType | ValueType[]> = [string, T];
 export type EntryType = Entry<ValueType> | Entry<ValueType[]>;
 
 export type NamedParams = Record<string, ValueType | ValueType[]>;
+export type NamedTypes = Record<string, DataInfo>;
+
+export interface ParamsTypes {
+  v: ValueType;
+  o?: DataInfo;
+}
+
+export function resolveParamTypes(i: NamedParams | PositionalParams, types?: DataInfo[] | NamedTypes): ParamsTypes[] {
+  const paramTypes: ParamsTypes[] = [];
+
+  // if no types are provided, return paramtypes with no o property
+  if (!types) {
+    if (isNamedParam(i)) {
+      for (const [k, v] of Object.entries(i)) {
+        paramTypes.push({ v });
+      }
+    } else {
+      for (let j = 0; j < i.length; j++) {
+        paramTypes.push({ v: i[j] });
+      }
+    }
+    return paramTypes;
+  }
+
+  // handle named parameters
+  if (isNamedParam(i)) {
+    // handle named types
+    if (types && !Array.isArray(types)) {
+      for (const [k, v] of Object.entries(i)) {
+        paramTypes.push({ v, o: types[k] });
+      }
+    } else {
+      // handle positional types, assume the order of the types matches the order of the parameters
+      Object.entries(i).forEach(([k, v], idx) => {
+        paramTypes.push({ v, o: types[idx] });
+      });
+    }
+  } else {
+    // handle positional parameters
+    
+    // handle named types
+    if (types && !Array.isArray(types)) {
+      // assume that the order of the types matches the order of the parameters
+      const typeVals = Object.values(types);
+      for (let j = 0; j < i.length; j++) {
+        paramTypes.push({ v: i[j], o: typeVals[j] });
+      }
+    } else {
+      // assume that the order of the types matches the order of the parameters
+      for (let j = 0; j < i.length; j++) {
+        paramTypes.push({ v: i[j], o: types[j] });
+      }
+    }
+  }
+  return paramTypes;
+}
 
 export function isNamedParams(i: NamedParams[] | PositionalParams []): i is NamedParams[] {
   let isNamedParams = false;
@@ -66,6 +123,31 @@ export interface ActionBody {
    */
   inputs?: NamedParams[] | PositionalParams[] | ActionInput[];
   /**
+   * types is an array for the data types of each input
+   * You can use the DataType enum to specify the data type.
+   * Example:
+   * ```
+   * import { Utils } from 'kwil-js';
+   * 
+   * const { DataType } = Utils;
+   * 
+   * const body = {
+   *  inputs: ["Alice", 25, 1.25],
+   *  types: [DataType.Text, DataType.Int8, DataType.Numeric(3, 2)]
+   * }
+   * ```
+   * 
+   * If using named parameters, you can use the NamedTypes interface to specify the data types.
+   * Example:
+   * ```
+   * const body = {
+   * inputs: { $name: "Alice", $age: 25, $height: 1.25 },
+   * types: { $name: DataType.Text, $age: DataType.Int8, $height: DataType.Numeric(3, 2) }
+   * }
+   * ``
+   */ 
+  types?: DataInfo[] | NamedTypes;
+  /**
    * description is an optional description of the action.
    */
   description?: string;
@@ -109,6 +191,31 @@ export interface CallBody {
    */
   inputs?: NamedParams | PositionalParams | ActionInput[];
   /**
+   * types is an array for the data types of each input
+   * You can use the DataType enum to specify the data type.
+   * Example:
+   * ```
+   * import { Utils } from 'kwil-js';
+   * 
+   * const { DataType } = Utils;
+   * 
+   * const body = {
+   *  inputs: ["Alice", 25, 1.25],
+   *  types: [DataType.Text, DataType.Int8, DataType.Numeric(3, 2)]
+   * }
+   * ```
+   * 
+   * If using named parameters, you can use the NamedTypes interface to specify the data types.
+   * Example:
+   * ```
+   * const body = {
+   * inputs: { $name: "Alice", $age: 25, $height: 1.25 },
+   * types: { $name: DataType.Text, $age: DataType.Int8, $height: DataType.Numeric(3, 2) }
+   * }
+   * ``
+   */
+  types?: DataInfo[] | NamedTypes;
+  /**
    * authBody is an optional value for the read/view action to be called in private mode
    * AuthBody interface => consisting of the signature and challenge for the message
    */
@@ -125,6 +232,7 @@ export interface ActionOptions {
   chainId: string;
   description: string;
   actionInputs: NamedParams[] | PositionalParams[]
+  types?: DataInfo[] | NamedTypes;
   signer?: SignerSupplier;
   identifier?: Uint8Array;
   signatureType?: AnySignatureType;

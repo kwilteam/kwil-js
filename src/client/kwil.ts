@@ -163,6 +163,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       signatureType: kwilSigner.signatureType,
       nonce: actionBody.nonce,
       actionInputs: inputs,
+      types: actionBody.types,
     });
 
     const transaction = await tx.buildTx(this.authMode === AuthenticationMode.PRIVATE);
@@ -534,6 +535,7 @@ export abstract class Kwil<T extends EnvironmentType> extends Client {
       actionName: callBody.name,
       description: '',
       actionInputs: inputs,
+      types: callBody.types,
     });
 
     /**

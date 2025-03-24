@@ -15,7 +15,7 @@ import { objects } from '../utils/objects';
 import { AuthBody, executeSign } from '../core/signature';
 import { bytesToHex, hexToBytes, stringToBytes } from '../utils/serial';
 import { base64ToBytes, bytesToBase64 } from '../utils/base64';
-import { CallBody, NamedParams, transformActionInput, transformPositionalParam } from '../core/action';
+import { CallBody, NamedParams, resolveParamTypes, transformActionInput, transformPositionalParam } from '../core/action';
 import { sha256BytesToBytes } from '../utils/crypto';
 import { UnencodedActionPayload } from '../core/payload';
 import { encodeActionCall } from '../utils/kwilEncoding';
@@ -90,12 +90,12 @@ export class Auth<T extends EnvironmentType> {
    * This method should only be used if your Kwil Network is in private mode.
    *
    * @param {KwilSigner} signer - The signer for the authentication.
-   * @param {CallBody} actionBody - The body of the action to send. This should use the `ActionBody` interface.
+   * @param {CallBody} callBody - The body of the action to send. This should use the `ActionBody` interface.
    * @returns A promise that resolves a privateSignature => privateSignature = {sig: string (Base64), type: AnySignatureType}
    */
 
   public async authenticatePrivateMode(
-    actionBody: CallBody,
+    callBody: CallBody,
     signer: KwilSigner
   ): Promise<AuthBody> {
     // get Challenge
@@ -110,22 +110,23 @@ export class Auth<T extends EnvironmentType> {
  
     // ActionInput[] is deprecated. So we are converting any ActionInput[] to an Entries[]
     let inputs: NamedParams = {};
-    if (actionBody.inputs && transformActionInput.isActionInputArray(actionBody.inputs)) {
+    if (callBody.inputs && transformActionInput.isActionInputArray(callBody.inputs)) {
       // For a call only one entry is allowed, so we only need to convert the first ActionInput
-      inputs = transformActionInput.toSingleEntry(actionBody.inputs);
-    } else if(actionBody.inputs && transformPositionalParam.isPositionalParam(actionBody.inputs)) {
-      inputs = transformPositionalParam.toNamedParam(actionBody.inputs);
-    } else if (actionBody.inputs) {
-      inputs = actionBody.inputs;
+      inputs = transformActionInput.toSingleEntry(callBody.inputs);
+    } else if(callBody.inputs && transformPositionalParam.isPositionalParam(callBody.inputs)) {
+      inputs = transformPositionalParam.toNamedParam(callBody.inputs);
+    } else if (callBody.inputs) {
+      inputs = callBody.inputs;
     }
 
-    const actionValues = actionBody?.inputs ? Object.values(inputs) : [];
+    const actionValues = callBody?.inputs ? Object.values(inputs) : [];
+    const value = resolveParamTypes(actionValues, callBody?.types);
 
     // construct payload. If there are no prepared actions, then the payload is an empty array.
     const payload: UnencodedActionPayload<PayloadType.CALL_ACTION> = {
-      dbid: actionBody.namespace,
-      action: actionBody.name,
-      arguments: encodeValueType(actionValues),
+      dbid: callBody.namespace,
+      action: callBody.name,
+      arguments: encodeValueType(value),
     };
 
     const encodedPayload = encodeActionCall(payload);
@@ -133,8 +134,8 @@ export class Auth<T extends EnvironmentType> {
 
     const digest = sha256BytesToBytes(uInt8ArrayPayload).subarray(0, 20);
     const msg = generateSignatureText(
-      actionBody.namespace,
-      actionBody.name,
+      callBody.namespace,
+      callBody.name,
       bytesToHex(digest),
       msgChallenge
     );

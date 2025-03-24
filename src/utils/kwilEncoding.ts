@@ -1,4 +1,4 @@
-import { DataType } from '../core/database';
+import { DataInfo } from '../core/database';
 import { AccountId } from '../core/network';
 import {
   EncodedValue,
@@ -17,7 +17,7 @@ import {
 import { booleanToBytes, hexToBytes, numberToBytes, stringToBytes } from './serial';
 import { convertUuidToBytes, isUuid } from './uuid';
 import { ValueType } from './types';
-import { PayloadType } from '../core/enums';
+import { PayloadType, VarType } from '../core/enums';
 
 export function encodeAccountId(accountId: AccountId): Uint8Array {
   const encodedId = prefixBytesLength(hexToBytes(accountId.identifier));
@@ -179,7 +179,7 @@ function encodeEncodedValue(ev: EncodedValue): Uint8Array {
   return concatBytes(encodedVersion, encodedType, encodedData);
 }
 
-function encodeDataType(dt: DataType): Uint8Array {
+function encodeDataType(dt: DataInfo): Uint8Array {
   // I will use less comments here, since the general encoding flow follows the same as previous
   const dtVersion = 0;
 
@@ -195,7 +195,12 @@ function encodeDataType(dt: DataType): Uint8Array {
   return concatBytes(versionBytes, nameLength, nameBytes, isArray, metadataLength, precisionLength);
 }
 
-export function encodeValue(value: ValueType): Uint8Array {
+export function encodeValue(value: ValueType, o?: VarType): Uint8Array {
+  // handle override case
+  if (o) {
+    return overrideValue(value, o);
+  }
+
   // handle uuid case
   if (typeof value === 'string' && isUuid(value)) {
     return encodeNotNull(convertUuidToBytes(value));
@@ -228,6 +233,31 @@ export function encodeValue(value: ValueType): Uint8Array {
       return encodeNull();
     case 'bigint':
       throw new Error('bigint not supported. convert to string.');
+    default:
+      throw new Error('invalid scalar value');
+  }
+}
+
+function overrideValue(v: ValueType, o: VarType): Uint8Array {
+  if (v === null || v === undefined) {
+    return encodeNull()
+  }
+
+  switch (o) {
+    case VarType.NULL:
+      return encodeNull();
+    case VarType.TEXT:
+      return encodeNotNull(stringToBytes(v as string));
+    case VarType.INT8:
+      return encodeNotNull(numberToBytes(v as number));
+    case VarType.BOOL:
+      return encodeNotNull(booleanToBytes(v as boolean));
+    case VarType.NUMERIC:
+      return encodeNotNull(stringToBytes(v.toString()));
+    case VarType.UUID:
+      return encodeNotNull(convertUuidToBytes(v as string));
+    case VarType.BYTEA:
+      return encodeNotNull(v as Uint8Array);
     default:
       throw new Error('invalid scalar value');
   }

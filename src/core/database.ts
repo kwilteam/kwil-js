@@ -1,4 +1,3 @@
-import { QueryParams } from '../utils/types';
 import { AttributeType, IndexType, VarType } from './enums';
 import {
   CompiledKuneiform,
@@ -30,6 +29,87 @@ export interface DropBody {
   nonce?: number;
 }
 
+export interface DataInfo {
+  name: VarType;
+  is_array: boolean;
+  metadata?: Array<number> | Array<never> | null;
+}
+
+type DataInfoFactory = (p: number, s: number) => DataInfo;
+
+export namespace DataType {
+  export const Uuid: DataInfo = {
+    name: VarType.UUID,
+    is_array: false,
+    metadata: [0,0]
+  };
+  export const UuidArray: DataInfo = {
+    name: VarType.UUID,
+    is_array: true,
+    metadata: [0,0]
+  };
+  export const Text: DataInfo = {
+    name: VarType.TEXT,
+    is_array: false,
+    metadata: [0,0]
+  };
+  export const TextArray: DataInfo = {
+    name: VarType.TEXT,
+    is_array: true,
+    metadata: [0,0]
+  };
+  export const Int: DataInfo = {
+    name: VarType.INT8,
+    is_array: false,
+    metadata: [0,0]
+  };
+  export const IntArray: DataInfo = {
+    name: VarType.INT8,
+    is_array: true,
+    metadata: [0,0]
+  };
+  export const Boolean: DataInfo = {
+    name: VarType.BOOL,
+    is_array: false,
+    metadata: [0,0]
+  };
+  export const BooleanArray: DataInfo = {
+    name: VarType.BOOL,
+    is_array: true,
+    metadata: [0,0]
+  };
+  export const Numeric: DataInfoFactory = (precision: number, scale: number) => ({
+    name: VarType.NUMERIC,
+    is_array: false,
+    metadata: [precision, scale],
+  });
+  export const NumericArray: DataInfoFactory = (precision: number, scale: number) => ({
+    name: VarType.NUMERIC,
+    is_array: true,
+    metadata: [precision, scale],
+  });
+  export const Null: DataInfo = {
+    name: VarType.NULL,
+    is_array: false,
+    metadata: [0,0]
+  };
+  export const NullArray: DataInfo = {
+    name: VarType.NULL,
+    is_array: true,
+    metadata: [0,0]
+  };
+  export const Bytea: DataInfo = {
+    name: VarType.BYTEA,
+    is_array: false,
+    metadata: [0,0]
+  };
+  export const ByteaArray: DataInfo = {
+    name: VarType.BYTEA,
+    is_array: true,
+    metadata: [0,0]
+  };
+}
+
 
 
 /** DEPRECATED */
@@ -54,7 +134,7 @@ export interface Table {
 
 export interface Column {
   name: string;
-  type: DataType;
+  type: DataInfo;
   attributes: ReadonlyArray<Attribute>;
 }
 
@@ -113,15 +193,8 @@ export interface Procedure {
 
 export interface NamedType {
   name: string;
-  type: DataType;
-}
-
-export interface DataType {
-  name: VarType;
-  is_array: boolean;
-  metadata?: Array<number> | Array<never> | null;
-}
-
+  type: DataInfo;
+} 
 export interface ProcedureReturn {
   is_table: boolean;
   fields: ReadonlyArray<NamedType>;
@@ -129,6 +202,6 @@ export interface ProcedureReturn {
 
 export interface ForeignProcedure {
   name: string;
-  parameters: ReadonlyArray<DataType>;
+  parameters: ReadonlyArray<DataInfo>;
   return_types: ProcedureReturn;
 }
