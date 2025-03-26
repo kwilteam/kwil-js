@@ -236,6 +236,48 @@ const res = await kwil.getAccount("account_identifier", "custom_signer_enumerato
 
 ## Advanced Usage
 
+### Overriding Action Input Types
+
+By default, kwil-js will attempt to infer the input types of the action being executed. If you wish to override this behavior (for example, to store a string that looks like a uuid in a `text` column), you can add an additional field to the `actionBody` or `CallBody` object.
+
+The examples below show how to override the input types for executing an action; however, viewing actions can also be overridden in the same way.
+
+Using named inputs:
+
+```javascript
+import { Utils } from '@kwilteam/kwil-js';
+const { DataType } = Utils;
+
+const body = {
+    namespace: 'db_namespace',
+    name: 'action_name',
+    inputs: [
+        { $name: 'input_name', $id: 'some_uuid_value'}
+    ]
+    // optional: override input types
+    types: { $name: DataType.Text, $value: DataType.Uuid }
+} 
+
+await kwil.execute(body, kwilSigner);
+```
+
+Using positional inputs:
+
+```javascript
+import { Utils } from '@kwilteam/kwil-js';
+const { DataType } = Utils;
+
+const body = {
+    namespace: 'db_namespace',
+    name: 'action_name',
+    inputs: ['some_text_value', 'some_uuid_value']
+    // optional: override input types
+    types: [DataType.Text, DataType.Uuid]
+}
+
+await kwil.execute(body, kwilSigner);
+```
+
 ### Custom Signers
 
 If you wish to sign with something other than an EtherJS signer, you may pass a callback function that accepts and returns a `Uint8Array()` and the enumerator for the signature type used.

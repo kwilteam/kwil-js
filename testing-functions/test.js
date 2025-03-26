@@ -115,7 +115,7 @@ async function scratchpad() {
   // executeGeneralAction(kwil, 'main', 'add_post', kwilSigner, post);
   // await executeGeneralView(kwil, 'main', 'return_caller', null, kwilSigner);
   // await executeGeneralView(kwil, dbid, "view_must_sign", null, kwilSigner)
-  await executePositionalView(kwil, 'main', 'return_all')
+  await executePositionalView(kwil, 'main', 'return_all')   
 
   // await execSql(kwil,
   //   'INSERT INTO number (id) VALUES ($id)',

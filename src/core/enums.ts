@@ -7,7 +7,6 @@
 export enum VarType {
   UUID = 'uuid',
   TEXT = 'text',
-  INT = 'int',
   INT8 = 'int8',
   BOOL = 'bool',
   NUMERIC = 'numeric',

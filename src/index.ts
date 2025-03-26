@@ -23,6 +23,7 @@ import {
   ExtensionConfig as _ExtensionConfig,
   DeployBody as _DeployBody,
   DropBody as _DropBody,
+  DataType as _DataType,
 } from './core/database';
 import { GenericResponse as _GenericResponse } from './core/resreq';
 import { TxResult as _TxResult, TxInfoReceipt as _TxInfoReceipt } from './core/txQuery';
@@ -88,6 +89,10 @@ namespace Utils {
    * @deprecated This function is deprecated and will be removed in the next major release.
    */
   export const generateDBID = _generateDBID;
+  /**
+   * `DataType` holds the different data types that can be asserted as action inputs.
+   */
+  export import DataType = _DataType;
 }
 
 export { NodeKwil, WebKwil, KwilSigner, Types, Utils, Client };

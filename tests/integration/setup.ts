@@ -1,5 +1,5 @@
 import { v4 as uuidV4 } from 'uuid';
-import { KwilSigner, NodeKwil } from '../../src/index';
+import { KwilSigner, NodeKwil, Utils } from '../../src/index';
 import dotenv from 'dotenv';
 import { TxReceipt } from '../../src/core/tx';
 import { JsonRpcProvider, Wallet } from 'ethers';
@@ -152,6 +152,8 @@ async function dropTestSchema(namespace: string, kwil: any, kwilSigner: any) {
   await kwil.execSql(`DROP NAMESPACE ${namespace};`, {}, kwilSigner, true);
 }
 
+const { DataType } = Utils;
+
 export {
   kwil,
   wallet,
@@ -167,5 +169,6 @@ export {
   createGatewayActions,
   dropTestSchema,
   testActions,
-  grantAdminAccess
+  grantAdminAccess,
+  DataType
 };

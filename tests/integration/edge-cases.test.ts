@@ -1,18 +1,25 @@
 import { ActionBody, CallBody } from "../../src/core/action";
 import { TxReceipt } from "../../src/core/tx";
-import { createTestSchema, isKwildPrivateOn, kwil, kwilSigner, uuidV4 } from "./setup";
+import { createTestSchema, isKwildPrivateOn, kwil, kwilSigner, uuidV4, DataType } from "./setup";
 
 describe('Edge cases', () => {
   const namespace = 'edge_cases';
+  
+  beforeAll(async () => {
+    await createTestSchema(namespace, kwil, kwilSigner);
+  }, 20000);
+
+  afterAll(async () => {
+    await kwil.execSql(`DROP NAMESPACE ${namespace};`, {}, kwilSigner, true);
+  }, 20000);
+
   describe('Executing Actions and calling views when default role does not have SELECT permission', () => {
     beforeAll(async () => {
-      await createTestSchema(namespace, kwil, kwilSigner);
       await kwil.execSql('REVOKE SELECT FROM default;', {}, kwilSigner, true);
     }, 20000);
     const id = uuidV4();
 
     afterAll(async () => {
-      await kwil.execSql(`DROP NAMESPACE ${namespace};`, {}, kwilSigner, true);
       await kwil.execSql('GRANT SELECT TO default;', {}, kwilSigner, true);
     }, 20000);
 
@@ -91,6 +98,137 @@ describe('Edge cases', () => {
       await expect(kwil.call(callBody, kwilSigner)).rejects.toThrow();
     }, 10000);
   })
+
+  describe('Asserting types in action inputs', () => {
+    beforeAll(async () => {
+      await kwil.execSql(`{${namespace}}CREATE TABLE asserter (id text PRIMARY KEY);
+{${namespace}}CREATE ACTION insert_assert($id text) PUBLIC { INSERT INTO asserter (id) VALUES ($id);};
+{${namespace}}CREATE ACTION view_assert($id text) PUBLIC VIEW returns table(id text) { return SELECT * FROM asserter WHERE id = $id;};
+`, {}, kwilSigner, true);
+    }, 20000);
+
+    afterAll(async () => {
+      await kwil.execSql(`{${namespace}}DROP TABLE asserter;
+{${namespace}}DROP ACTION insert_assert;
+{${namespace}}DROP ACTION view_assert;`, {}, kwilSigner, true);        
+    }, 20000);
+
+    const id1 = uuidV4();
+
+
+    it('should execute an action with named params and named asserted types', async () => {
+      const body: ActionBody = {
+        namespace,
+        name: 'insert_assert',
+        inputs: [{ $id: id1 }],
+        types: { $id: DataType.Text }
+      }
+
+      const result = await kwil.execute(body, kwilSigner, true);
+      expect(result.data).toMatchObject<TxReceipt>({
+        tx_hash: expect.any(String),
+      });
+    }, 10000);
+
+    it('should execute an action with named params and positional types', async () => {
+      const body: ActionBody = {
+        namespace,
+        name: 'insert_assert',
+        inputs: [{ $id: uuidV4() }],
+        types: [DataType.Text]
+      }
+
+      const result = await kwil.execute(body, kwilSigner, true);
+      expect(result.data).toMatchObject<TxReceipt>({
+        tx_hash: expect.any(String),
+      });
+    }, 10000);
+
+    it('should execute an action with positional params and named asserted types', async () => {
+      // kwil-js will assume the order on the named types matches the order on the positional params
+      const body: ActionBody = {
+        namespace,
+        name: 'insert_assert',
+        inputs: [[uuidV4()]],
+        types: { $id: DataType.Text }
+      }
+
+      const result = await kwil.execute(body, kwilSigner, true);
+      expect(result.data).toMatchObject<TxReceipt>({
+        tx_hash: expect.any(String),
+      });
+    }, 10000);
+
+    it('should execute an action with positional params and positional types', async () => {
+      const body: ActionBody = {
+        namespace,
+        name: 'insert_assert',
+        inputs: [[uuidV4()]],
+        types: [DataType.Text]
+      }
+
+      const result = await kwil.execute(body, kwilSigner, true);
+      expect(result.data).toMatchObject<TxReceipt>({
+        tx_hash: expect.any(String),
+      });
+    }, 10000);
+
+    it('should call an action with named params and named asserted types', async () => {
+      const body: CallBody = {
+        namespace,
+        name: 'view_assert',
+        inputs: { $id: id1 },
+        types: { $id: DataType.Text }
+      }
+
+      const result = await kwil.call(body, kwilSigner);
+      expect(result.data).toMatchObject({
+        result: [{ id: id1 }]
+      });
+    }, 10000);
+
+    it('should call an action with named params and positional types', async () => {
+      const body: CallBody = {
+        namespace,
+        name: 'view_assert',
+        inputs: { $id: id1 },
+        types: [DataType.Text]
+      }
+
+      const result = await kwil.call(body, kwilSigner);
+      expect(result.data).toMatchObject({
+        result: [{ id: id1 }]
+      });
+    }, 10000);
+
+    it('should call an action with positional params and named asserted types', async () => {
+      const body: CallBody = {
+        namespace,
+        name: 'view_assert',
+        inputs: [id1],
+        types: { $id: DataType.Text }
+      }
+
+      const result = await kwil.call(body, kwilSigner);
+      expect(result.data).toMatchObject({
+        result: [{ id: id1 }]
+      });
+    }, 10000);
+
+    it('should call an action with positional params and positional types', async () => {
+      const body: CallBody = {
+        namespace,
+        name: 'view_assert',
+        inputs: [id1],
+        types: [DataType.Text]
+      }
+
+      const result = await kwil.call(body, kwilSigner);
+      expect(result.data).toMatchObject({
+        result: [{ id: id1 }]
+      });
+    }, 10000);
+  });
 })
 
 

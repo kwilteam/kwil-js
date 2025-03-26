@@ -9,7 +9,7 @@ import {
   Database,
   Procedure,
   ForeignProcedure,
-  DataType,
+  DataInfo,
   ProcedureReturn,
   NamedType,
 } from './database';
@@ -32,12 +32,12 @@ export type UnencodedActionPayload<T extends PayloadType.CALL_ACTION | PayloadTy
   };
 
 export interface EncodedValue {
-  type: DataType;
+  type: DataInfo;
   data: Uint8Array[];
 }
 
 export interface EncodedParameterValue {
-  type: DataType;
+  type: DataInfo;
   data: Base64String[];
 }
 
@@ -95,7 +95,7 @@ type CompiledColumn = Omit<Column, 'attributes' | 'type'> & {
   type: CompiledDataType;
 };
 
-export type CompiledDataType = Omit<DataType, 'name' | 'metadata'> & {
+export type CompiledDataType = Omit<DataInfo, 'name' | 'metadata'> & {
   name: string;
   metadata?: Array<number> | Array<never> | null;
 };

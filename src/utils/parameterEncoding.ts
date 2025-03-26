@@ -1,4 +1,5 @@
-import { DataType } from '../core/database';
+import { ParamsTypes } from '../core/action';
+import { DataInfo } from '../core/database';
 import { VarType } from '../core/enums';
 import { EncodedParameterValue, EncodedValue } from '../core/payload';
 import { bytesToBase64 } from './base64';
@@ -51,13 +52,13 @@ export function encodeRawStatementParameters(params: QueryParams) {
 }
 
 // Used by the executeSql() method and the encodeActionInputs() method
-function formatEncodedValue(val: ValueType | ValueType[]): EncodedValue {
-  const base = formatDataType(val);
+function formatEncodedValue(val: ValueType | ValueType[], o?: DataInfo): EncodedValue {
+  const base = formatDataType(val, o);
 
   if (Array.isArray(val)) {
     const encodedValues: Uint8Array[] = [];
     for (const v of val) {
-      encodedValues.push(encodeValue(v));
+      encodedValues.push(encodeValue(v, o?.name));
     }
 
     return {
@@ -68,7 +69,7 @@ function formatEncodedValue(val: ValueType | ValueType[]): EncodedValue {
 
   return {
     type: base.type,
-    data: [encodeValue(base.data)],
+    data: [encodeValue(base.data, o?.name)],
   };
 }
 
@@ -77,17 +78,25 @@ function formatEncodedValue(val: ValueType | ValueType[]): EncodedValue {
  * @param {ValueType[]} values - An array of input values to be executed by an action.
  * @returns formatted values used for an action
  */
-export function encodeValueType(values: ValueType[]): EncodedValue[] {
-  return values.map((val) => formatEncodedValue(val));
+export function encodeValueType(values: ParamsTypes[]): EncodedValue[] {
+  return values.map((val) => formatEncodedValue(val.v, val.o));
 }
 
-function formatDataType(val: ValueType | ValueType[]): {
-  type: DataType;
+function formatDataType(val: ValueType | ValueType[], o?: DataInfo): {
+  type: DataInfo;
   data: ValueType;
 } {
+  // handle override case
+  if (o) {
+    return {
+      type: o,
+      data: val,
+    };
+  }
+
   const { metadata, varType } = resolveValueType(val);
 
-  const dataType: DataType = {
+  const dataType: DataInfo = {
     name: varType,
     is_array: Array.isArray(val),
     metadata,
