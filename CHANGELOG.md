@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.9.3](https://github.com/kwilteam/kwil-js/compare/v0.9.2...v0.9.3) (2025-03-26)
+
+
+### Features
+
+* action input type override ([753c6e7](https://github.com/kwilteam/kwil-js/commit/753c6e79c2906e1e129b992e4d8595c36bd3078e))
+
 ### [0.9.2](https://github.com/kwilteam/kwil-js/compare/v0.9.1...v0.9.2) (2025-03-20)
 
 
