@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.9.4](https://github.com/kwilteam/kwil-js/compare/v0.9.3...v0.9.4) (2025-04-01)
+
+
+### Bug Fixes
+
+* uuid dependency ([2121137](https://github.com/kwilteam/kwil-js/commit/21211378e3c89be6064b0300cbba05c03c3d4744))
+
 ### [0.9.3](https://github.com/kwilteam/kwil-js/compare/v0.9.2...v0.9.3) (2025-03-26)
 
 
