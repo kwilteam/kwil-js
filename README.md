@@ -15,7 +15,7 @@ Make sure to use the correct version of the Kwil-JS SDK for the version of the [
 ## Installation
 
 ```bash
-npm i @kwilteam/kwil-js ethers
+npm i @kwilteam/kwil-js ethers uuid
 ```
 
 ## Initialization
